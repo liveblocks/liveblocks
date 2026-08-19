@@ -3,14 +3,15 @@ meta:
   title: "Sync"
   parentTitle: "Products"
   description:
-    "Add realtime collaboration to any surface in your product—from text editors
-    to whiteboards, flowcharts, forms, and beyond."
+    "Add realtime collaboration to any surface in your product—rich-text
+    editors, design tools, canvases, AI chats, flowcharts, spreadsheets, code
+    editors, and custom interfaces."
 ---
 
 Add realtime collaboration to any application with Sync. Multiple users can edit
-artifacts at the same time, and all changes are automatically synchronized and
-persisted. Use cases include rich-text editors, design tools, whiteboards,
-forms, flowcharts, spreadsheets, and fully custom interfaces.
+the same document at the same time, and changes are automatically synchronized
+and persisted. Use cases include rich-text editors, design tools, canvases, AI
+chats, flowcharts, spreadsheets, and custom interfaces.
 
 <Figure caption={<></>}>
   <MuxVideo
@@ -24,26 +25,57 @@ forms, flowcharts, spreadsheets, and fully custom interfaces.
 
 ## Features
 
+Liveblocks Sync is a hosted sync engine for building collaborative applications.
+
+- **Multiplayer collaboration**: Update the same document from multiple clients.
+- **Conflict-free data types**: Preserve simultaneous edits without writing
+  merge logic.
+- **Realtime presence**: Render cursors, avatar stacks, selections, and agent
+  activity.
+- **Feeds**: Persist streaming chats, agent state, activity streams, and
+  workflow messages.
+- **Optimistic updates**: Apply changes locally, then synchronize them in the
+  background.
+- **Server-side editing**: Read and update collaborative documents from a
+  trusted backend.
+- **Agentic editing**: Allow AI agents to modify realtime data at the same time
+  as humans.
+- **Multiplayer undo/redo**: Give each user a history that respects other
+  people’s edits.
+- **Version history**: Preview and restore meaningful document snapshots.
+- **Authentication and permissions**: Control who can read or edit each room.
+- **TypeScript-first data**: Define data, presence, events, user info, and
+  shapes in TypeScript.
+
+## What is a sync engine? [#what-is-a-sync-engine]
+
+Sync engines keep shared state consistent across connected clients, where those
+clients are humans or agents. Instead of creating an endpoint for each edit,
+wiring up WebSockets, and reconciling responses yourself, you update a shared
+document as if it were local state.
+
+Sync distributes changes, resolves concurrent edits, persists results, and
+catches clients up when they reconnect. This avoids stale documents, lost
+updates, and race conditions when several humans, agents, devices, or tabs can
+edit the same state.
+
+## Learn more
+
+Dive into the different aspects of Sync in the following sections.
+
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
-    title="Overview"
-    href="/docs/products/sync/overview"
-    description="Learn what Sync does and when to use it"
-    visual={<DocsIdeaIcon className="fill-product-icon-brand h-auto w-6" />}
+    title="Conflict resolution"
+    href="/docs/products/sync/conflict-resolution"
+    description="How concurrent changes are merged"
+    visual={<DocsConflictResolutionIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
     title="Data types"
     href="/docs/products/sync/data-types"
     description="Model collaborative state with Storage"
-    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
-  <DocsCard
-    type="technology"
-    title="Conflict resolution"
-    href="/docs/products/sync/conflict-resolution"
-    description="How concurrent changes are merged"
     visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
@@ -59,6 +91,13 @@ forms, flowcharts, spreadsheets, and fully custom interfaces.
     href="/docs/products/sync/presence"
     description="Show users, cursors, selections, and activity"
     visual={<DocsSyncPresenceIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Feeds"
+    href="/docs/products/sync/feeds"
+    description="Persist workflow state, streamed chats, more"
+    visual={<DocsFeedsIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
@@ -87,13 +126,6 @@ forms, flowcharts, spreadsheets, and fully custom interfaces.
     href="/docs/products/sync/broadcast-events"
     description="Send ephemeral events to connected clients"
     visual={<DocsBroadcastEventsIcon className="h-auto w-6" />}
-  />
-  <DocsCard
-    type="technology"
-    title="Feeds"
-    href="/docs/products/sync/feeds"
-    description="Persist workflow state, streamed chats, more"
-    visual={<DocsFeedsIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
@@ -146,13 +178,6 @@ forms, flowcharts, spreadsheets, and fully custom interfaces.
 
 ## Sync API Reference
 
-### Sync SDKs
-
-Use these SDKs to build whiteboards, forms, tables, or any custom interface.
-They integrate directly with
-[Storage data types](/docs/products/sync/data-types) and
-[Liveblocks Yjs](/docs/products/sync/yjs).
-
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
@@ -190,13 +215,6 @@ They integrate directly with
     description="@liveblocks/redux"
     visual={<DocsReduxIcon />}
   />
-</ListGrid>
-
-### Text editor SDKs
-
-Use these SDKs to add multiplayer editing to rich text editors.
-
-<ListGrid columns={2}>
   <DocsCard
     type="technology"
     title="Tiptap React"

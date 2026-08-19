@@ -466,12 +466,12 @@
             "path": "/products/sync/overview"
           },
           {
-            "title": "Data types",
-            "path": "/products/sync/data-types"
-          },
-          {
             "title": "Conflict resolution",
             "path": "/products/sync/conflict-resolution"
+          },
+          {
+            "title": "Data types",
+            "path": "/products/sync/data-types"
           },
           {
             "title": "Multiplayer undo/redo",
@@ -480,6 +480,10 @@
           {
             "title": "Presence",
             "path": "/products/sync/presence"
+          },
+          {
+            "title": "Feeds",
+            "path": "/products/sync/feeds"
           },
           {
             "title": "Server-side editing",
@@ -496,10 +500,6 @@
           {
             "title": "Broadcast events",
             "path": "/products/sync/broadcast-events"
-          },
-          {
-            "title": "Feeds",
-            "path": "/products/sync/feeds"
           },
           {
             "title": "Authentication and permissions",
