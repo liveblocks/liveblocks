@@ -17,7 +17,7 @@ Agents can read and modify your realtime [Sync](/docs/products/sync/overview)
 documents concurrently with your users. Generate changes with AI, then apply
 them with
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)—edits
-appears instantly for connected users.
+appear instantly for connected users.
 
 ```ts
 import { LiveObject } from "@liveblocks/client";
@@ -52,7 +52,7 @@ await liveblocks.mutateStorage("my-room-id", async ({ root }) => {
 // +++
 ```
 
-Otehr APIs can be used to enable
+Other APIs can be used to enable
 [server-side editing](/docs/products/sync/server-side-editing), such as the
 [JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch).
 AI models are already familiar with JSON Patch, allowing them to easily generate
@@ -105,16 +105,16 @@ await liveblocks.createVersionHistorySnapshot("my-room-id");
 ```
 
 In React, you can display a list of versions with
-[`useVersionHistory`](/docs/api-reference/liveblocks-react#useVersionHistory),
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions),
 show snapshot previews with
-[`useVersionHistoryStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData),
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData),
 and create revert buttons with
 [`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion).
 
 ```tsx
 import {
-  useVersionHistory,
-  useVersionHistoryStorageData,
+  useHistoryVersions,
+  useHistoryVersionStorageData,
   useRestoreToStorageVersion,
 } from "@liveblocks/react/suspense";
 import {
@@ -181,8 +181,8 @@ Note that
 [`HistoryVersionSummary`](/docs/api-reference/liveblocks-react#HistoryVersionSummary)
 and
 [`HistoryVersionSummaryList`](/docs/api-reference/liveblocks-react#HistoryVersionSummaryList)
-are optional rready-made components that display version history information
-with styled components..
+are optional ready-made components that display version history information
+with styled components.
 
 ## Show agent presence
 
@@ -190,7 +190,7 @@ Show what agents are working on inside your app by giving them
 [live presence](/docs/products/sync/presence) updates, such as selections,
 typing indicators, and online avatars.
 [`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-allows you to set your agent’s presence.In this example, `selectedShapeId`
+allows you to set your agent’s presence. In this example, `selectedShapeId`
 represents a shape that the agent is focused on, and editing.
 
 ```ts
@@ -310,7 +310,8 @@ function AgentStatus() {
 ```
 
 Feeds can also be used to build complete AI chat interfaces, from which agents
-can issue modifications. Learn more under [chat](/docs/use-cases/chat) use case.
+can issue modifications. Learn more under the [chat](/docs/use-cases/chat) use
+case.
 
 ## Leave AI comments
 
@@ -385,7 +386,7 @@ use case.
 
 Combining each of the features above, you can create a complete AI agentic
 editing experience that will modify a document, save a snapshot, display what
-it’s editing, stream live status, and save a history off the run.
+it’s editing, stream live status, and save a history of the run.
 
 ```ts file="server.ts"
 "use server";
