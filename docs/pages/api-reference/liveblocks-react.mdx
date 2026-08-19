@@ -3930,14 +3930,14 @@ needs. This will avoid unnecessary rerenders that happen with overselection.
 In order to select one item from a LiveMap within the storage tree with the
 `useStorage` method, you can use the example below:
 
-```ts
+```tsx showLineNumbers={false}
 const key = "errands";
 const myTodos = useStorage((root) => root.todoMap.get(key));
 ```
 
 In order to query a LiveMap, and filter for specific values:
 
-```ts
+```tsx showLineNumbers={false}
 const myTodos = useStorage(
   root => Array.from(root.todoMap.values()).filter(...),
   shallow,
@@ -3961,6 +3961,69 @@ const myTodos = useStorage(
   <PropertiesListItem name="data" type="T | null">
     The selected data from storage. Returns `null` while storage is still
     loading (in non-Suspense version).
+  </PropertiesListItem>
+</PropertiesList>
+
+### useMutableStorage [@badge=RoomProvider]
+
+Returns the current room's _mutable_ Storage root. Always a
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject).
+
+```tsx showLineNumbers={false}
+import { useMutableStorage } from "@liveblocks/react/suspense";
+
+function Editor() {
+  const root = useMutableStorage();
+  const liveText = root.get("document");
+
+  // Pass `liveText` to your editor binding
+  // ...
+}
+```
+
+Unlike [`useStorage`][], this hook is **not reactive**. Your component rerenders
+only once, when Storage has finished loading, and never again when the contents
+of the tree change. That’s the point: the `LiveText` you hand to an editor stays
+referentially stable, so your editor isn’t torn down on every keystroke.
+
+```tsx showLineNumbers={false}
+// Rerenders on every keystroke
+const text = useStorage((root) => root.document);
+
+// Rerenders only once, after Storage has loaded
+const liveText = useMutableStorage().get("document");
+```
+
+<Banner title="You are responsible for batching">
+
+If you make changes to Storage via `useMutableStorage`, you’re also responsible
+for batching mutations when you make them. This is unlike
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation), which
+automatically does that for you. You should always wrap related changes in
+[`Room.batch`](/docs/api-reference/liveblocks-client#Room.batch) yourself, so
+they’re sent as one update and undoable as a single step.
+
+```tsx showLineNumbers={false}
+const room = useRoom();
+const root = useMutableStorage();
+
+room.batch(() => {
+  root.get("settings").set("theme", "dark");
+  root.get("settings").set("fontSize", 14);
+});
+```
+
+</Banner>
+
+The non-Suspense version returns `null` while Storage is still loading. The
+[Suspense version][] suspends instead, and always returns the root.
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="root" type="LiveObject<TStorage> | null">
+    The mutable Storage root. Returns `null` while Storage is still loading (in
+    the non-Suspense version).
   </PropertiesListItem>
 </PropertiesList>
 

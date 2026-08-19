@@ -1,5 +1,11 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/react`
+
+- Add new hook `useMutableStorage()` to get direct access to the mutable Storage
+  root. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useMutableStorage).
+
 ## v3.24.0
 
 This release introduces `LiveText` (beta), a collaborative rich-text data
