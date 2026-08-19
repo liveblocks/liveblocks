@@ -1,5 +1,11 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/chat-sdk-adapter`
+
+- Allow `apiKey` and `webhookSecret` to be resolved per request, and add custom
+  `webhookVerifier` support for rotated credentials and webhook-forwarding
+  infrastructure such as Vercel Connect.
+
 ## v3.24.0
 
 This release introduces `LiveText` (beta), a collaborative rich-text data
