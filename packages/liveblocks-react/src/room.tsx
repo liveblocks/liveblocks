@@ -2804,7 +2804,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
               threadId,
               optimisticId,
               { resolved: true },
-              updatedAt
+              new Date()
             );
           },
           (err: Error) =>
@@ -2868,7 +2868,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
               threadId,
               optimisticId,
               { resolved: false },
-              updatedAt
+              new Date()
             );
           },
           (err: Error) =>

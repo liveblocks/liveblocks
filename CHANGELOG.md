@@ -1,10 +1,14 @@
 ## vNEXT (not yet released)
 
+## v3.24.1
+
 ### `@liveblocks/react`
 
 - Add new hook `useMutableStorage()` to get direct access to the mutable Storage
   root. See
   [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useMutableStorage).
+- Fix thread resolved/unresolved status being reverted under some conditions.
+  (Thanks @VihaanAgarwal for the contribution!)
 
 ## v3.24.0
 

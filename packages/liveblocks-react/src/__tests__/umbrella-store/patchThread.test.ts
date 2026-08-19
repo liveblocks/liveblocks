@@ -1,99 +1,81 @@
-import { kInternal } from "@liveblocks/core";
+import { createClient } from "@liveblocks/client";
 import { describe, expect, test } from "vitest";
 
 import { UmbrellaStore } from "../../umbrella-store";
 import { createComment, createThread } from "./_dummies";
 
-function makeSyncSource() {
-  return {
-    setSyncStatus: () => {},
-    destroy: () => {},
-  };
-}
-
-const NO_CLIENT = {
-  [kInternal]: {
-    as() {
-      return NO_CLIENT;
-    },
-    createSyncSource: makeSyncSource,
-  },
-} as any;
-
 describe("patchThread", () => {
-  test("a settled resolve survives a concurrent stale server refetch", () => {
-    const store = new UmbrellaStore(NO_CLIENT);
-
-    const thread = createThread({
-      id: "th_1",
-      roomId: "room_1",
-      createdAt: new Date("2024-01-01T00:00:00Z"),
-      updatedAt: new Date("2024-01-01T00:00:00Z"),
-      resolved: false,
-      comments: [
-        createComment({
-          threadId: "th_1",
-          roomId: "room_1",
-          createdAt: new Date("2024-01-01T00:00:00Z"),
-        }),
-      ],
-    });
+  test("should keep a settled resolve after a stale refetch", () => {
+    const store = createStore();
+    const thread = makeThread(false);
     store.updateThreadifications([thread], [], []);
 
-    // User resolves the thread; the REST call succeeds and the optimistic
-    // update is replaced by the real thing
-    const resolvedAt = new Date("2024-01-01T00:01:00Z");
+    const settledAt = new Date("2024-01-01T00:01:00Z");
     const optimisticId = store.optimisticUpdates.add({
       type: "mark-thread-as-resolved",
       threadId: thread.id,
-      updatedAt: resolvedAt,
+      updatedAt: settledAt,
     });
-    store.patchThread(thread.id, optimisticId, { resolved: true }, resolvedAt);
+    store.patchThread(thread.id, optimisticId, { resolved: true }, settledAt);
 
-    expect(store.outputs.threads.get().get(thread.id)?.resolved).toBe(true);
+    expect(store.outputs.threads.get().get(thread.id)).toMatchObject({
+      resolved: true,
+      updatedAt: settledAt,
+    });
 
-    // A THREAD_UPDATED (408) triggered refetch can still return a stale
-    // snapshot of the thread from before the resolve. It must not clobber
-    // the newer resolved state
+    // A refetch started before the mutation settled can return an older snapshot.
     store.updateThreadifications([thread], [], []);
 
-    expect(store.outputs.threads.get().get(thread.id)?.resolved).toBe(true);
+    expect(store.outputs.threads.get().get(thread.id)).toMatchObject({
+      resolved: true,
+      updatedAt: settledAt,
+    });
   });
 
-  test("a settled unresolve survives a concurrent stale server refetch", () => {
-    const store = new UmbrellaStore(NO_CLIENT);
-
-    const thread = createThread({
-      id: "th_1",
-      roomId: "room_1",
-      createdAt: new Date("2024-01-01T00:00:00Z"),
-      updatedAt: new Date("2024-01-01T00:00:00Z"),
-      resolved: true,
-      comments: [
-        createComment({
-          threadId: "th_1",
-          roomId: "room_1",
-          createdAt: new Date("2024-01-01T00:00:00Z"),
-        }),
-      ],
-    });
+  test("should keep a settled unresolve after a stale refetch", () => {
+    const store = createStore();
+    const thread = makeThread(true);
     store.updateThreadifications([thread], [], []);
 
-    const unresolvedAt = new Date("2024-01-01T00:01:00Z");
+    const settledAt = new Date("2024-01-01T00:01:00Z");
     const optimisticId = store.optimisticUpdates.add({
       type: "mark-thread-as-unresolved",
       threadId: thread.id,
-      updatedAt: unresolvedAt,
+      updatedAt: settledAt,
     });
-    store.patchThread(
-      thread.id,
-      optimisticId,
-      { resolved: false },
-      unresolvedAt
-    );
+    store.patchThread(thread.id, optimisticId, { resolved: false }, settledAt);
 
     store.updateThreadifications([thread], [], []);
 
-    expect(store.outputs.threads.get().get(thread.id)?.resolved).toBe(false);
+    expect(store.outputs.threads.get().get(thread.id)).toMatchObject({
+      resolved: false,
+      updatedAt: settledAt,
+    });
   });
 });
+
+function createStore() {
+  return new UmbrellaStore(
+    createClient({
+      publicApiKey: "pk_xxx",
+    })
+  );
+}
+
+function makeThread(resolved: boolean) {
+  const createdAt = new Date("2024-01-01T00:00:00Z");
+  return createThread({
+    id: "th_1",
+    roomId: "room_1",
+    createdAt,
+    updatedAt: createdAt,
+    resolved,
+    comments: [
+      createComment({
+        threadId: "th_1",
+        roomId: "room_1",
+        createdAt,
+      }),
+    ],
+  });
+}
