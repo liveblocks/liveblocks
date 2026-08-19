@@ -387,29 +387,27 @@ const { data: messages } = await liveblocks.getFeedMessages({ roomId, feedId });
 // +++
 
 // +++
-const { output: task } = await generateText({
-  model: "openai/gpt-5.6-sol",
-  output: Output.object({
-    schema: z.object({
-      title: z.string(),
-      assignee: z.string(),
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const tasks = root.get("tasks");
+
+  const { output: task } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        title: z.string(),
+        assignee: z.string(),
+      }),
     }),
-  }),
-  prompt: `Create a task from this conversation: ${JSON.stringify(messages)}`,
-});
-// +++
+    prompt: `Create a task from this conversation: ${JSON.stringify(messages)}. Here are the current tasks: ${tasks.toJSON()}`,
+  });
 
-// +++
-await liveblocks.mutateStorage(roomId, ({ root }) => {
-  root.get("tasks").set("task-1", new LiveObject(task));
-});
-// +++
+  tasks.set("task-1", new LiveObject(task));
 
-// +++
-await liveblocks.createFeedMessage({
-  roomId,
-  feedId,
-  data: { role: "assistant", content: `I’ve created “${task.title}”` },
+  await liveblocks.createFeedMessage({
+    roomId,
+    feedId,
+    data: { role: "assistant", content: `I’ve created “${task.title}”` },
+  });
 });
 // +++
 ```

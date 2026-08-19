@@ -323,7 +323,6 @@ humans. Finally, remove the agent’s presence to indicate that the agent is no
 longer working.
 
 ```ts
-import { LiveObject } from "@liveblocks/client";
 import { Liveblocks } from "@liveblocks/node";
 import { generateText, Output } from "ai";
 import { z } from "zod";
@@ -348,23 +347,22 @@ await liveblocks.setPresence(roomId, {
 // +++
 
 // +++
-const { output: newLinks } = await generateText({
-  model: "openai/gpt-5.6-sol",
-  output: Output.object({
-    schema: z.object({
-      title: z.string(),
-      status: z.enum(["todo", "in-progress", "done"]),
-    }),
-  }),
-  prompt: `Add related links to this issue: …`,
-});
-// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const document = root.toJSON();
 
-// +++
-await liveblocks.mutateStorage(roomId, ({ root }) => {
+  const { output: newLinks } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        links: z.array(z.string()),
+      }),
+    }),
+    prompt: `Add related links to this issue. Here is the issue and current links: ${document}`,
+  });
+
   const links = root.get("links");
 
-  for (const link of newLinks) {
+  for (const link of newLinks.links) {
     links.push(link);
   }
 });

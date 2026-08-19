@@ -106,24 +106,24 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 
 const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  secret: "{{SECRET_KEY}}",
 });
 
 // +++
-const { output: task } = await generateText({
-  model: "openai/gpt-5.6-sol",
-  output: Output.object({
-    schema: z.object({
-      title: z.string(),
-      status: z.enum(["todo", "in-progress", "done"]),
+await liveblocks.mutateStorage("my-room-id", async ({ root }) => {
+  const document = root.toJSON();
+
+  const { output: task } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        title: z.string(),
+        status: z.enum(["todo", "in-progress", "done"]),
+      }),
     }),
-  }),
-  prompt: "Create a task for reviewing the launch plan",
-});
-// +++
+    prompt: `Create a task for the launch plan. Here are current tasks: ${document}`,
+  });
 
-// +++
-await liveblocks.mutateStorage("my-room-id", ({ root }) => {
   root.get("tasks").set("task-1", new LiveObject(task));
 });
 // +++
@@ -164,7 +164,7 @@ Show what agents are working on inside your app by giving them
 [live presence](/docs/products/sync/presence) updates, such as selections,
 typing indicators, and online avatars.
 [`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-aloows you to set your agent’s presence.
+allows you to set your agent’s presence.
 
 ```ts
 // +++
@@ -293,7 +293,7 @@ import { Liveblocks, markdownToCommentBody } from "@liveblocks/node";
 import { generateText } from "ai";
 
 const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  secret: "{{SECRET_KEY}}",
 });
 
 // +++

@@ -448,19 +448,20 @@ await liveblocks.setPresence("my-room-id", {
 });
 // +++
 
-const { output: content } = await generateText({
-  model: "openai/gpt-5.6-sol",
-  output: Output.object({
-    schema: z.object({
-      content: z.string(),
-    }),
-  }),
-  prompt: "Write a paragraph about realtime collaboration",
-});
+await liveblocks.mutateStorage("my-room-id", async ({ root }) => {
+  const document = root.toJSON();
 
-await liveblocks.mutateStorage(roomId, ({ root }) => {
-  const document = root.get("document");
-  document.set("content", record.content);
+  const { output } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        content: z.string(),
+      }),
+    }),
+    prompt: `Write a paragraph about realtime collaboration. Here is the document: ${document}`,
+  });
+
+  root.get("document").set("content", output.content);
 });
 
 // +++

@@ -244,19 +244,17 @@ await liveblocks.setPresence(roomId, {
 // +++
 
 // +++
-const { output } = await generateText({
-  model: "openai/gpt-5.6-sol",
-  output: Output.object({
-    schema: z.object({
-      label: z.string(),
+await mutateFlow({ client: liveblocks, roomId }, async (flow) => {
+  const { output } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        label: z.string(),
+      }),
     }),
-  }),
-  prompt: `Write a concise label for a review step in a flowchart`,
-});
-// +++
+    prompt: `Add a review step to the flowchart. Here is the current flow: ${flow.toJSON()}`,
+  });
 
-// +++
-await mutateFlow({ client: liveblocks, roomId }, (flow) => {
   flow.updateNodeData("node-1", { label: output.label });
 
   flow.addEdge({

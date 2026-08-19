@@ -306,21 +306,20 @@ await liveblocks.setPresence(roomId, {
 // +++
 
 // +++
-const { output } = await generateText({
-  model: "openai/gpt-5.6-sol",
-  output: Output.object({
-    schema: z.object({
-      code: z.string(),
-    }),
-  }),
-  prompt: "Write a unit test for the function in the file",
-});
-// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const text = root.get("document");
 
-// +++
-await liveblocks.mutateStorage(roomId, ({ root }) => {
-  const document = root.get("document");
-  document.insert(document.length, `\n${output.code}`);
+  const { output } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        code: z.string(),
+      }),
+    }),
+    prompt: `Write a unit test for the file. Here is the current file: ${text.toJSON()}`,
+  });
+
+  text.insert(text.length, `\n${output.code}`);
 });
 // +++
 

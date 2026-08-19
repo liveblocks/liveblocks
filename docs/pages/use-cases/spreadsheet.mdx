@@ -289,23 +289,23 @@ await liveblocks.setPresence(roomId, {
 // +++
 
 // +++
-const { output: record } = await generateText({
-  model: "openai/gpt-5.6-sol",
-  output: Output.object({
-    schema: z.object({
-      name: z.string(),
-      status: z.string(),
-    }),
-  }),
-  prompt: `Create a record for a new lead in a CRM table`,
-});
-// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const rows = root.get("rows");
 
-// +++
-await liveblocks.mutateStorage(roomId, ({ root }) => {
+  const { output: record } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        name: z.string(),
+        status: z.string(),
+      }),
+    }),
+    prompt: `Create a cell for a new lead. Here are the current rows: ${rows.toJSON()}`,
+  });
+
   const rowId = crypto.randomUUID();
 
-  root.get("rows").set(rowId, new LiveObject(record));
+  rows.set(rowId, new LiveObject(record));
   root.get("rowOrder").push(rowId);
 });
 // +++

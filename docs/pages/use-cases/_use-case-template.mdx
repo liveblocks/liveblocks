@@ -264,21 +264,21 @@ await liveblocks.setPresence(roomId, {
 // +++
 
 // +++
-const { output: item } = await generateText({
-  model: "openai/gpt-5.6-sol",
-  output: Output.object({
-    schema: z.object({
-      x: z.number(),
-      y: z.number(),
-      label: z.string(),
-    }),
-  }),
-  prompt: "Create an item for the artifact",
-});
-// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const document = root.toJSON();
 
-// +++
-await liveblocks.mutateStorage(roomId, ({ root }) => {
+  const { output: item } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        x: z.number(),
+        y: z.number(),
+        label: z.string(),
+      }),
+    }),
+    prompt: `Create an item for the artifact. Here is the document: ${document}`,
+  });
+
   root.get("items").set("item-2", new LiveObject(item));
 });
 // +++
