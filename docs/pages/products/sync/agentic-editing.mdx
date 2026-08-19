@@ -9,105 +9,585 @@ AI agents can modify the same Sync document as the humans in your application
 using server-side APIs. Connected users receive changes in realtime, meaning
 agents can work visibly alongside humans, and take advantage of the same
 [conflict resolution](/docs/products/sync/conflict-resolution) that enables
-multiplayer collaboration.
+human collaboration.
 
-For imports, migrations, integrations, and other non-AI backend work, read
-[Server-side editing](/docs/products/sync/server-side-editing).
+## Edit Sync documents
 
-<Banner title="Build the complete workflow" type="info">
+Agents can read and modify your realtime [Sync](/docs/products/sync/overview)
+documents concurrently with your users. Generate changes with AI, then apply
+them with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)—edits
+appears instantly for connected users.
 
-Read
-[Enabling agentic workflows with Liveblocks](/docs/guides/enabling-agentic-workflows-with-liveblocks)
-for presence, Storage, webhooks, and multi-step examples.
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
 
-</Banner>
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
 
-## Choose an editing API [#choose-an-editing-api]
+// +++
+await liveblocks.mutateStorage("my-room-id", async ({ root }) => {
+  const shapes = root.get("shapes");
 
-Use
-[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
-from Node.js when the server uses `@liveblocks/node`.
+  const { output: shape } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        x: z.number(),
+        y: z.number(),
+        width: z.number(),
+        height: z.number(),
+        color: z.string(),
+      }),
+    }),
+    prompt: `Create a rectangle for the canvas. Here are current shapes: ${shapes.toJSON()}`,
+  });
+
+  shapes.set("shape-1", new LiveObject(shape));
+});
+// +++
+```
+
+Otehr APIs can be used to enable
+[server-side editing](/docs/products/sync/server-side-editing), such as the
+[JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch).
+AI models are already familiar with JSON Patch, allowing them to easily generate
+modifications from natural language instructions.
+
+```http
+PATCH /v2/rooms/my-room/storage/json-patch
+Content-Type: application/json
+
+[
+  {
+    "op": "add",
+    "path": "/shapes/-",
+    "value": {
+      "x": 50,
+      "y": 100,
+      "width": 20,
+      "height": 60,
+      "color": "red"
+    }
+  }
+]
+```
+
+Learn more in our
+[JSON Patch guide](/guides/modifying-storage-via-rest-api-with-json-patch).
+
+## Saving versions
+
+It’s recommended to use [version history](/docs/products/sync/version-history)
+to save versions of the Sync document before a modification is applied. This
+way, the user can revert their document to the previous state, in case they’d
+like to revert modifications made by the agent. You can manually create a
+version snapshot using
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot).
 
 ```ts
 import { Liveblocks } from "@liveblocks/node";
 
 const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  secret: "{{SECRET_KEY}}",
 });
 
-await liveblocks.mutateStorage("my-room-id", ({ root }) => {
-  root.get("tasks").push({
-    id: crypto.randomUUID(),
-    title: "Review the agent’s proposal",
-  });
-});
+// +++
+await liveblocks.createVersionHistorySnapshot("my-room-id");
+// +++
+
+// Apply modification
+// ...
 ```
 
-Use the
-[`Storage` JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
-from other languages or systems that already produce JSON Patch operations.
+In React, you can display a list of versions with
+[`useVersionHistory`](/docs/api-reference/liveblocks-react#useVersionHistory),
+show snapshot previews with
+[`useVersionHistoryStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData),
+and create revert buttons with
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion).
 
-```http
-PATCH /v2/rooms/my-room-id/storage/json-patch
-Content-Type: application/json
+```tsx
+import {
+  useVersionHistory,
+  useVersionHistoryStorageData,
+  useRestoreToStorageVersion,
+} from "@liveblocks/react/suspense";
+import {
+  HistoryVersionSummaryList,
+  HistoryVersionSummary,
+} from "@liveblocks/react-ui";
+import { useState } from "react";
 
-[
-  { "op": "replace", "path": "/status", "value": "review" }
-]
+function VersionHistory() {
+  // +++
+  const { versions, error, isLoading } = useHistoryVersions();
+  // +++
+  const [selectedVersionId, setSelectedVersionId] = useState(null);
+
+  return (
+    <HistoryVersionSummaryList>
+      // +++
+      {versions?.map((version) => (
+        // +++
+        <div>
+          <ClientSideSuspense fallback={<div>Loading...</div>}>
+            // +++
+            <VersionHistoryPreview versionId={version.id} />
+            // +++
+          </ClientSideSuspense>
+          <HistoryVersionSummary
+            onClick={() => {
+              setSelectedVersionId(version.id);
+            }}
+            key={version.id}
+            version={version}
+            selected={version.id === selectedVersionId}
+          />
+        </div>
+      ))}
+    </HistoryVersionSummaryList>
+  );
+}
+
+function VersionHistoryPreview({ versionId }: { versionId: string }) {
+  // +++
+  const { data, error, isLoading } = useHistoryVersionStorageData(versionId);
+  const restoreToStorageVersion = useRestoreToStorageVersion(versionId);
+  // +++
+
+  return (
+    <div>
+      <code>{JSON.stringify(data, null, 2)}</code>
+      <button
+        onClick={async () => {
+          // +++
+          await restoreToStorageVersion();
+          // +++
+        }}
+      >
+        ↩️ Restore
+      </button>
+    </div>
+  );
+}
 ```
 
-For large or frequent updates, prefer the native Node mutation API so the server
-does not need to reconstruct and patch the complete JSON document.
+Note that
+[`HistoryVersionSummary`](/docs/api-reference/liveblocks-react#HistoryVersionSummary)
+and
+[`HistoryVersionSummaryList`](/docs/api-reference/liveblocks-react#HistoryVersionSummaryList)
+are optional rready-made components that display version history information
+with styled components..
 
-## Create a version before a substantial edit [#create-a-version-first]
+## Show agent presence
 
-Create a manual version immediately before an agent applies a broad or
-destructive change. Users can then inspect the previous state or restore it.
+Show what agents are working on inside your app by giving them
+[live presence](/docs/products/sync/presence) updates, such as selections,
+typing indicators, and online avatars.
+[`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+allows you to set your agent’s presence.In this example, `selectedShapeId`
+represents a shape that the agent is focused on, and editing.
 
 ```ts
-await liveblocks.createVersionHistorySnapshot("my-room-id");
+import { Liveblocks } from "@liveblocks/node";
 
-await liveblocks.mutateStorage("my-room-id", ({ root }) => {
-  applyValidatedAgentChanges(root);
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
 });
+
+// +++
+await liveblocks.setPresence("my-room-id", {
+  userId: "ai-agent",
+  userInfo: { name: "AI agent", color: "#7c3aed" },
+  data: { selectedShapeId: "shape-1" },
+  ttl: 60,
+});
+// +++
 ```
 
-Read [Version history](/docs/products/sync/version-history) for automatic
-versions, previews, and restoration.
+After setting presence, you can read it in your app with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) like any human, so
+existing avatar stacks, cursors, and focus indicators show AI activity with no
+extra UI.
 
-## Show the agent working [#show-agent-presence]
+```tsx
+import { useOthers } from "@liveblocks/react/suspense";
 
-Use ephemeral presence to show that an agent is active, where it is focused, and
-what it is doing.
+function AgentPresence() {
+  // +++
+  const others = useOthers();
+  const agent = others.find((other) => other.id === "ai-agent");
+  // +++
+
+  // +++
+  return <div>{agent?.presence.data.selectedShapeId}</div>;
+  // +++
+}
+```
+
+Agent presence appears for a specific amount of seconds, the `ttl` value, before
+it disappears. To make it disappear, set `ttl` to the minimum value of 2
+seconds.
 
 ```ts
 await liveblocks.setPresence("my-room-id", {
-  userId: "agent-123",
-  data: { status: "editing", focusedId: "task-42" },
-  userInfo: { name: "Planning agent", color: "#7c3aed" },
-  ttl: 30,
+  userId: "ai-agent",
+  userInfo: { name: "AI agent", color: "#7c3aed" },
+  data: { selectedShapeId: "shape-1" },
+  // +++
+  ttl: 2,
+  // +++
 });
 ```
 
-Refresh the presence while work continues and let its time-to-live expire when
-the process stops unexpectedly. Persist the agent’s actual output in Storage.
+Learn more under the [presence](/docs/use-cases/presence) use case.
 
-## Validate agent changes [#validate-agent-changes]
+## Display agent status
 
-- Authenticate the human who requested the work.
-- Check that they can write to the room.
-- Validate IDs, paths, and generated values against the document schema.
-- Limit the number and size of operations.
-- Create a version before broad changes.
-- Record application-specific audit information outside the collaborative
-  document when required.
+Presence shows that an agent is in the room right now, but it disappears when
+the process ends. You can use [feeds](/docs/products/sync/feeds) to stream the
+agent’s working state (e.g. thinking, writing, complete), and save it
+permanently in a history. Create a status message with
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages)
+when work starts, then update it with
+[`Liveblocks.updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId)
+as the agent moves through each stage.
 
-Never expose a Liveblocks secret key to the browser. Run server mutations in a
-trusted backend or workflow.
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
 
-## Trigger follow-up work [#trigger-follow-up-work]
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
 
-Use [`storageUpdated`](/docs/api-reference/webhook-events#StorageUpdatedEvent)
-webhooks to index the new document, notify another service, or begin a
-subsequent workflow. Make webhook handlers idempotent because delivery can be
-retried.
+// +++
+await liveblocks.createFeedMessage({
+  roomId: "my-room-id",
+  feedId: "agent-status",
+  id: "current",
+  data: { status: "searching", label: "Searching documents…" },
+});
+// +++
+
+// +++
+await liveblocks.updateFeedMessage({
+  roomId: "my-room-id",
+  feedId: "agent-status",
+  messageId: "current",
+  data: { status: "writing", label: "Updating the launch plan…" },
+  updatedAt: Date.now(),
+});
+// +++
+```
+
+In React, read the latest status with
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages) and
+render it in your UI.
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function AgentStatus() {
+  // +++
+  const { messages } = useFeedMessages("agent-status");
+  const status = messages[messages.length - 1];
+  // +++
+
+  if (!status) {
+    return null;
+  }
+
+  return <p>{status.data.label}</p>;
+}
+```
+
+Feeds can also be used to build complete AI chat interfaces, from which agents
+can issue modifications. Learn more under [chat](/docs/use-cases/chat) use case.
+
+## Leave AI comments
+
+Agents can review content and leave contextual feedback with
+[Comments](/docs/products/comments). Generate feedback with AI, convert it with
+[`markdownToCommentBody`](/docs/api-reference/liveblocks-node#markdown-to-comment-body),
+and post it with
+[`Liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads)
+under the agent’s own user ID.
+
+```ts
+import { Liveblocks, markdownToCommentBody } from "@liveblocks/node";
+import { generateText } from "ai";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+const { text } = await generateText({
+  model: "openai/gpt-5.6-sol",
+  prompt: `Review this paragraph and suggest one improvement: ${paragraph}`,
+});
+// +++
+
+// +++
+await liveblocks.createThread({
+  roomId: "my-room-id",
+  data: {
+    comment: {
+      userId: "ai-agent",
+      body: markdownToCommentBody(text),
+    },
+    metadata: { paragraphId: "paragraph-4" },
+  },
+});
+// +++
+```
+
+In React, read the comments with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) and render them
+in your UI with [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread).
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { Thread } from "@liveblocks/react-ui";
+
+function Comments() {
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+You can also automatically trigger an agent when a user mentions it in a thread
+using the
+[`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent)
+webhook. Learn more under the [comments panel](/docs/use-cases/comments-panel)
+use case.
+
+## Putting it all together
+
+Combining each of the features above, you can create a complete AI agentic
+editing experience that will modify a document, save a snapshot, display what
+it’s editing, stream live status, and save a history off the run.
+
+```ts file="server.ts"
+"use server";
+
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { streamText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function generateShape(roomId: string, feedId: string) {
+  const newShapeId = "shape-" + crypto.randomUUID();
+
+  await Promise.all([
+    // Create a feed for this run
+    // +++
+    liveblocks.createFeed({
+      roomId,
+      feedId,
+    });
+    // +++
+
+    // Display the agent's presence
+    // +++
+    liveblocks.setPresence(roomId, {
+      userId: "ai-agent",
+      userInfo: { name: "AI agent", color: "#7c3aed" },
+      data: { selectedShapeId: newShapeId },
+      ttl: 60,
+    });
+    // +++
+
+    // Save a version of the document
+    // +++
+    liveblocks.createVersionHistorySnapshot(roomId);
+    // +++
+  ]);
+
+  await liveblocks.mutateStorage(roomId, async ({ root }) => {
+    const shapes = root.get("shapes");
+
+    // Stream in an AI response
+    // +++
+    const { partialOutputStream, output } = streamText({
+      model: "openai/gpt-5.6-sol",
+      output: Output.object({
+        schema: z.object({
+          x: z.number(),
+          y: z.number(),
+          width: z.number(),
+          height: z.number(),
+          color: z.string(),
+        }),
+      }),
+      prompt: `Create a shape for the canvas. Here are current shapes: ${shapes.toJSON()}`,
+    });
+    // +++
+
+    // Push each stream chunk into the feed
+    // +++
+    for await (const partialShape of partialOutputStream) {
+      await liveblocks.updateFeedMessage({
+        roomId,
+        feedId,
+        messageId: "current",
+        data: { status: "editing", shape: partialShape },
+        updatedAt: Date.now(),
+      });
+    }
+    // +++
+
+    // Add the new shape to Sync data
+    // +++
+    const shape = await output;
+    shapes.set(newShapeId, new LiveObject(shape));
+    // +++
+
+    // Send completion status to the feed
+    // +++
+    await liveblocks.updateFeedMessage({
+      roomId,
+      feedId,
+      messageId: "current",
+      data: { status: "complete", shape },
+      updatedAt: Date.now(),
+    });
+    // +++
+
+    // Hide the agent's presence
+    // +++
+    liveblocks.setPresence(roomId, {
+      userId: "ai-agent",
+      userInfo: { name: "AI agent", color: "#7c3aed" },
+      data: { selectedShapeId: newShapeId },
+      ttl: 2,
+    });
+    // +++
+  });
+}
+```
+
+In React, you can show all this live in the UI. A list of shapes is rendered,
+each shape with its own properties, with an outline displayed if the AI is
+editing the shape. A button to generate a new shape is shown, and when clicked,
+the agentic editing process is triggered, and the UI displays streamed updates
+instead of the button.
+
+```tsx file="app.tsx"
+import {
+  useFeedMessages,
+  useStorage,
+  useOthers,
+  useRoom,
+} from "@liveblocks/react/suspense";
+import { useCallback } from "react";
+import { generateShape } from "./server";
+
+function Canvas() {
+  // Get a list of all shapes
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  // Find the connected agent's presence
+  // +++
+  const others = useOthers();
+  const agent = others.find((other) => other.id === "ai-agent");
+  // +++
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <CreateShapeButton />
+      // +++
+      {shapes.map((shape) => (
+        // +++
+        <div
+          key={shape.id}
+          style={{
+            position: "absolute",
+
+            // Render the shape's parameters
+            // +++
+            left: shape.x,
+            top: shape.y,
+            width: shape.width,
+            height: shape.height,
+            backgroundColor: shape.color,
+            // +++
+
+            // Show an outline if the AI is editing this shape
+            // +++
+            outline:
+              agent?.presence?.selectedShapeId === shape.id
+                ? "2px solid red"
+                : "none",
+            // +++
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CreateShapeButton()
+  const roomId = useRoom().id;
+  const [feedId, setFeedId] = useState("feed-" + crypto.randomUUID());
+  const { messages } = useFeedMessages(feedId);
+
+  const handleCreateShape = useCallback(async () => {
+    // Run agentic editing
+    // +++
+    await generateShape(roomId, feedId);
+    // +++
+
+    // Completed, set a fresh feedId
+    setFeedId("feed-" + crypto.randomUUID());
+  }, [roomId]);
+
+  if (messages.length === 0) {
+    return (
+      // +++
+      <button onClick={handleCreateShape}>
+        // +++
+        ➕ Create Shape
+      </button>
+    );
+  }
+
+  // Get the last message (we only use one here)
+  const lastMessage = messages[messages.length - 1];
+
+  // Leave a status update, e.g. "editing: { x: 100, y: 100, ... }"
+  return (
+    <div>
+      // +++
+      <div>{lastMessage.data.status}</div>
+      <code>{JSON.stringify(lastMessage.data.shape, null, 2)}</code>
+      // +++
+    </div>
+  )
+}
+```
