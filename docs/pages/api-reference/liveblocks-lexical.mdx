@@ -111,7 +111,9 @@ export default function App() {
 }
 ```
 
-Wait for Storage to load, then nest
+Use
+[`useMutableStorage`](/docs/api-reference/liveblocks-react#useMutableStorage) to
+get the document root once Storage has loaded, then nest
 [`LiveblocksCollaborationPlugin`](#LiveblocksCollaborationPlugin) inside
 [`LexicalComposer`](https://lexical.dev/docs/react/plugins). Optionally add
 [`RemoteCursorsPlugin`](#RemoteCursorsPlugin) as a child to show remote carets:
@@ -119,7 +121,6 @@ Wait for Storage to load, then nest
 ```tsx file="Editor.tsx"
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
@@ -128,19 +129,11 @@ import {
   LiveblocksCollaborationPlugin,
   RemoteCursorsPlugin,
 } from "@liveblocks/lexical";
-import type { Room } from "@liveblocks/client";
-import { useRoom } from "@liveblocks/react/suspense";
+import { useMutableStorage } from "@liveblocks/react/suspense";
 import "@liveblocks/lexical/styles.css";
 
 export function Editor() {
-  const room = useRoom();
-  const root = useRoot(room);
-
-  if (root === null) {
-    return <div>Loading…</div>;
-  }
-
-  const document = root.get("document");
+  const document = useMutableStorage().get("document");
 
   return (
     <LexicalComposer
@@ -162,13 +155,6 @@ export function Editor() {
       </div>
     </LexicalComposer>
   );
-}
-
-function useRoot(room: Room) {
-  const subscribe = room.events.storageDidLoad.subscribeOnce;
-  const getSnapshot = room.getStorageOrNull;
-  const getServerSnapshot = useCallback(() => null, []);
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 ```
 
@@ -199,7 +185,7 @@ import { LiveblocksCollaborationPlugin } from "@liveblocks/lexical";
 <PropertiesList title="Props">
   <PropertiesListItem name="root" type="LiveRootNode" required>
     The Storage root document for the editor. Typically
-    `root.get("document")` after Storage has loaded.
+    `useMutableStorage().get("document")`.
   </PropertiesListItem>
   <PropertiesListItem name="children" type="ReactNode">
     Optional children. Place [`RemoteCursorsPlugin`](#RemoteCursorsPlugin) here
