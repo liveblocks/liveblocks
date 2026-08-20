@@ -628,6 +628,10 @@
         "path": "/use-cases/ai-collaboration"
       },
       {
+        "title": "AI activity feed",
+        "path": "/use-cases/ai-activity-feed"
+      },
+      {
         "title": "Canvas",
         "path": "/use-cases/canvas"
       },
@@ -652,12 +656,20 @@
         "path": "/use-cases/flowchart"
       },
       {
+        "title": "Forms",
+        "path": "/use-cases/forms"
+      },
+      {
         "title": "Inbox",
         "path": "/use-cases/inbox-tray"
       },
       {
         "title": "Presence",
         "path": "/use-cases/presence"
+      },
+      {
+        "title": "Share dialog",
+        "path": "/use-cases/share-dialog"
       },
       {
         "title": "Slideshow",
