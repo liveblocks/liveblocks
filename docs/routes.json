@@ -466,12 +466,8 @@
             "path": "/products/sync/conflict-resolution"
           },
           {
-            "title": "Data types",
-            "path": "/products/sync/data-types"
-          },
-          {
-            "title": "Multiplayer undo/redo",
-            "path": "/products/sync/multiplayer-undo-redo"
+            "title": "Storage",
+            "path": "/products/sync/storage"
           },
           {
             "title": "Presence",
@@ -628,7 +624,7 @@
     "title": "Use cases",
     "routes": [
       {
-        "title": "AI collaboration",
+        "title": "Agentic users",
         "path": "/use-cases/ai-collaboration"
       },
       {
@@ -644,7 +640,7 @@
         "path": "/use-cases/code-editor"
       },
       {
-        "title": "Comments panel",
+        "title": "Comments",
         "path": "/use-cases/comments-panel"
       },
       {
@@ -656,7 +652,7 @@
         "path": "/use-cases/flowchart"
       },
       {
-        "title": "Inbox tray",
+        "title": "Inbox",
         "path": "/use-cases/inbox-tray"
       },
       {

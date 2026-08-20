@@ -108,7 +108,7 @@ activity streams.
 
 Using [Sync](/docs/products/sync/overview), you can add realtime collaboration
 to your application state using
-[conflict-free data types](/docs/products/sync/data-types). In this snippet, a
+[conflict-free data types](/docs/products/sync/storage). In this snippet, a
 realtime “priority” property can be read and edited using
 [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and
 [`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
@@ -141,7 +141,7 @@ function IssuePriority() {
   )
 ```
 
-Learn more under [data types](/docs/products/sync/data-types) and
+Learn more under [Storage](/docs/products/sync/storage) and
 [conflict resolution](/docs/products/sync/conflict-resolution).
 
 ### Presence [#presence]
@@ -464,7 +464,7 @@ function AppUndoRedo() {
 ```
 
 History can also be paused, resumed, and disabled. Read
-[Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo) to learn
+[Multiplayer undo/redo](/docs/products/sync/storage#multiplayer-undo-redo) to learn
 more.
 
 ### File uploads [#file-uploads]
@@ -515,7 +515,7 @@ function UploadAttachment({ issueId }: { issueId: string }) {
 }
 ```
 
-Learn more under [File uploads](/docs/products/sync/data-types#LiveFile).
+Learn more under [File uploads](/docs/products/sync/storage#livefile).
 
 ### Comments [#comments]
 

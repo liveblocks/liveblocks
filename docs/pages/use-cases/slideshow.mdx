@@ -104,7 +104,7 @@ Store slide order in a
 by stable ID in a [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap).
 Each slide can be a
 [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) containing
-layout data and [`LiveText`](/docs/products/sync/data-types#livetext) for
+layout data and [`LiveText`](/docs/products/sync/storage#livetext) for
 collaborative text. This lets one user rearrange the deck while another edits a
 slide, without either change overwriting the other.
 
@@ -142,7 +142,7 @@ function SlideDeck() {
 
 Liveblocks applies changes optimistically and resolves simultaneous edits for
 you. Read [Conflict resolution](/docs/products/sync/conflict-resolution) and
-[Data types](/docs/products/sync/data-types) to choose the right structure for
+[Storage](/docs/products/sync/storage) to choose the right structure for
 each part of the deck.
 
 ### Presence [#presence]
@@ -411,13 +411,13 @@ function SlideshowToolbar() {
 ```
 
 Learn more under
-[Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo).
+[Multiplayer undo/redo](/docs/products/sync/storage#multiplayer-undo-redo).
 
 ### File uploads [#file-uploads]
 
 Upload images, videos, and other binary assets with
 [`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile), then save
-the returned [`LiveFile`](/docs/products/sync/data-types#livefile) in the
+the returned [`LiveFile`](/docs/products/sync/storage#livefile) in the
 slide’s Sync data. Resolve the reference for display with
 [`useFileUrl`](/docs/api-reference/liveblocks-react#useFileUrl).
 

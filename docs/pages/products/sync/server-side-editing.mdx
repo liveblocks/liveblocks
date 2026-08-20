@@ -22,8 +22,8 @@ There are two different ways to modify Sync data from your back end, using
 In these snippets, we’ll use the following document
 [type declaration](/docs/api-reference/liveblocks-react#typing-storage) as an
 example, a simple canvas with a
-[`LiveList`](/docs/products/sync/data-types#livelist) of
-[`LiveObject`](/docs/products/sync/data-types#liveobject) shapes
+[`LiveList`](/docs/products/sync/storage#livelist) of
+[`LiveObject`](/docs/products/sync/storage#liveobject) shapes
 
 ```ts file="liveblocks.config.ts"
 import { LiveList, LiveObject } from "@liveblocks/core";
@@ -52,7 +52,7 @@ declare global {
 Use
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
 to read and modify Sync data with the same
-[conflict-free data types](/docs/products/sync/data-types) used by the front
+[conflict-free data types](/docs/products/sync/storage) used by the front
 end. For example, to add a new shape from the server, get the `shapes` list with
 [`LiveObject.get`](/docs/api-reference/liveblocks-client#LiveObject.get), and
 push a new shape with

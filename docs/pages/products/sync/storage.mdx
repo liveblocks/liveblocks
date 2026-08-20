@@ -1,0 +1,332 @@
+---
+meta:
+  title: "Storage"
+  parentTitle: "Sync"
+  description:
+    "Model persistent collaborative state with conflict-free data types, and add
+    per-user undo and redo."
+---
+
+Storage is the persistent document inside Sync. Multiple users and agents can
+edit it at the same time;
+[conflict resolution](/docs/products/sync/conflict-resolution) preserves
+simultaneous changes, and the document remains after everyone disconnects.
+[Presence](/docs/products/sync/presence) is temporary; Storage is not.
+
+## Read and update Storage [#read-and-update-storage]
+
+Read Storage with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and modify it
+with [`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+
+```tsx
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+import { LiveObject } from "@liveblocks/client";
+
+function Canvas() {
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  // +++
+  const addShape = useMutation(({ storage }) => {
+    storage.get("shapes").push(
+      new LiveObject({
+        x: 50,
+        y: 100,
+        color: "red",
+      })
+    );
+  }, []);
+  // +++
+
+  // ...
+}
+```
+
+The first time a room is entered, set a default document with
+[`initialStorage`](/docs/api-reference/liveblocks-react#setting-initial-storage)
+on [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
+
+```tsx
+import { LiveList, LiveObject } from "@liveblocks/client";
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App({ children }: { children: React.ReactNode }) {
+  return (
+    <RoomProvider
+      id="my-room"
+      // +++
+      initialStorage={{
+        shapes: new LiveList([new LiveObject({ x: 50, y: 100, color: "red" })]),
+      }}
+      // +++
+    >
+      {children}
+    </RoomProvider>
+  );
+}
+```
+
+## Data types [#data-types]
+
+Build the document tree from conflict-free data types. Use JSON values for
+atomic fields, and a Live structure when nested fields should be edited
+independently.
+
+- [`LiveObject`](#liveobject): A record of named values
+- [`LiveList`](#livelist): An ordered collection
+- [`LiveMap`](#livemap): A key-value collection with dynamic keys
+- [`LiveText`](#livetext): Collaborative rich text
+- [`LiveFile`](#livefile): A reference to a file stored outside the document
+  tree
+
+All of these persist when every client has left the room.
+
+### LiveObject [#liveobject]
+
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) stores a record
+with fixed key names, similar to a JavaScript object. Use it for a person, a
+shape, or any other structured item. Nested Live values can be updated without
+replacing the whole object.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+
+const shape = new LiveObject({
+  x: 50,
+  y: 100,
+  color: "red",
+});
+
+shape.set("color", "blue");
+```
+
+If two clients set the same property at the same time, the last change received
+by Liveblocks wins. Unrelated properties are not overwritten.
+
+### LiveList [#livelist]
+
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) is an ordered
+collection. Concurrent inserts, deletes, and moves are merged so every client
+sees the same sequence.
+
+```ts
+import { LiveList, LiveObject } from "@liveblocks/client";
+
+const shapes = new LiveList([
+  new LiveObject({ x: 50, y: 100, color: "red" }),
+]);
+
+shapes.push(new LiveObject({ x: 80, y: 40, color: "blue" }));
+```
+
+### LiveMap [#livemap]
+
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) is a key-value
+collection for values that share a structure, such as shapes keyed by ID. If two
+clients update the same key, the last change received by Liveblocks wins.
+
+```ts
+import { LiveMap, LiveObject } from "@liveblocks/client";
+
+const shapes = new LiveMap([
+  ["shape-1", new LiveObject({ x: 50, y: 100, color: "red" })],
+]);
+
+shapes.set("shape-2", new LiveObject({ x: 80, y: 40, color: "blue" }));
+```
+
+### LiveText [#livetext]
+
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) is a collaborative
+rich-text document. Concurrent insertions, deletions, and formatting are merged
+automatically. Editor packages such as
+[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap),
+[`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexical), and
+[`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote)
+adapt it to those editors.
+
+```ts
+import { LiveText } from "@liveblocks/client";
+
+const caption = new LiveText("Untitled");
+```
+
+### LiveFile [#livefile]
+
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) is an immutable
+reference to a file uploaded to Liveblocks. Use it for images, videos, and other
+binaries that should not live in the JSON tree. Upload with
+[`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile), then
+store the returned `LiveFile` in Storage.
+
+```tsx
+import { useMutation, useUploadFile } from "@liveblocks/react/suspense";
+
+function UploadAttachment() {
+  const uploadFile = useUploadFile();
+
+  const addAttachment = useMutation(({ storage }, liveFile) => {
+    storage.get("attachments").push(liveFile);
+  }, []);
+
+  return (
+    <input
+      type="file"
+      onChange={async (event) => {
+        const file = event.currentTarget.files?.[0];
+        if (!file) return;
+        addAttachment(await uploadFile(file));
+      }}
+    />
+  );
+}
+```
+
+See [file size limits](/docs/pricing/limits) for upload constraints.
+
+## Typing Storage [#typing-storage]
+
+Declare the Storage shape in `liveblocks.config.ts` so hooks and mutations are
+typed.
+
+```ts file="liveblocks.config.ts"
+import { LiveList, LiveObject } from "@liveblocks/client";
+
+type Shape = LiveObject<{
+  x: number;
+  y: number;
+  color: string;
+}>;
+
+declare global {
+  interface Liveblocks {
+    Storage: {
+      shapes: LiveList<Shape>;
+    };
+  }
+}
+```
+
+Learn more under
+[typing Storage](/docs/api-reference/liveblocks-react#typing-storage).
+
+## Nested data [#nested-data]
+
+`LiveObject`, `LiveList`, and `LiveMap` can contain other Live structures, so
+you can model a document tree. `LiveFile` is a leaf and cannot contain children.
+
+```ts file="liveblocks.config.ts"
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+
+type Person = LiveObject<{
+  name: string;
+  pets: LiveList<string>;
+}>;
+
+declare global {
+  interface Liveblocks {
+    Storage: {
+      people: LiveMap<string, Person>;
+    };
+  }
+}
+```
+
+The
+[nesting data types tutorial](/docs/tutorial/react/getting-started/nesting-data-types)
+walks through a nested document in the editor.
+
+## Multiplayer undo/redo [#multiplayer-undo-redo]
+
+Each user has an independent undo stack. Undo reverts that user’s Storage
+changes and does not reverse work made by other collaborators.
+
+Use [`useUndo`](/docs/api-reference/liveblocks-react#useUndo) and
+[`useRedo`](/docs/api-reference/liveblocks-react#useRedo) to move through the
+stack, and [`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo) /
+[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo) to disable the
+buttons at either end.
+
+```tsx
+import {
+  useCanRedo,
+  useCanUndo,
+  useRedo,
+  useUndo,
+} from "@liveblocks/react/suspense";
+
+function HistoryButtons() {
+  // +++
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+  // +++
+
+  return (
+    <>
+      <button onClick={undo} disabled={!canUndo}>
+        Undo
+      </button>
+      <button onClick={redo} disabled={!canRedo}>
+        Redo
+      </button>
+    </>
+  );
+}
+```
+
+### Pause and resume history [#pause-resume]
+
+Pause history when a single gesture should count as one undo step, such as
+dragging a shape. Intermediate positions still sync to other clients, but undo
+restores the position from before the drag.
+
+```tsx
+import { useHistory } from "@liveblocks/react/suspense";
+
+function Canvas() {
+  const { pause, resume } = useHistory();
+
+  return <Shape onDragStart={() => pause()} onDragEnd={() => resume()} />;
+}
+```
+
+[`useHistory`](/docs/api-reference/liveblocks-react#useHistory) also exposes
+`disable` when a local change should not enter the stack at all. See
+[`Room.history`](/docs/api-reference/liveblocks-client#Room.history) for the
+client API.
+
+### Presence history [#presence-history]
+
+Undo only affects Storage by default. If a presence value should move with the
+document, such as the currently selected shape, pass `{ addToHistory: true }`
+when updating presence.
+
+```tsx
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function SelectShape({ shapeId }: { shapeId: string }) {
+  const updateMyPresence = useUpdateMyPresence();
+
+  return (
+    <button
+      onClick={() =>
+        updateMyPresence({ selectedShapeId: shapeId }, { addToHistory: true })
+      }
+    >
+      Select
+    </button>
+  );
+}
+```
+
+This also works with `setMyPresence` inside a mutation.
+
+Framework-specific walkthroughs:
+
+- [React](/docs/guides/how-to-use-liveblocks-multiplayer-undo-redo-with-react)
+- [Zustand](/docs/guides/how-to-use-liveblocks-multiplayer-undo-redo-with-zustand)
+- [Redux](/docs/guides/how-to-use-liveblocks-multiplayer-undo-redo-with-redux)
