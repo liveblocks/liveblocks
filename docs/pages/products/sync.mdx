@@ -25,7 +25,8 @@ chats, flowcharts, spreadsheets, and custom interfaces.
 
 ## Features
 
-Liveblocks Sync is a hosted sync engine for building collaborative applications.
+Liveblocks Sync, previously known as Storage, is a hosted sync engine for
+building collaborative apps.
 
 - **Multiplayer collaboration**: Update the same document from multiple clients.
 - **Conflict-free data types**: Preserve simultaneous edits without writing
@@ -59,6 +60,95 @@ catches clients up when they reconnect. This avoids stale documents, lost
 updates, and race conditions when several humans, agents, devices, or tabs can
 edit the same state.
 
+## How to use Sync
+
+Liveblocks Sync provides simple primitives for reading and writing collaborative
+state. For example, [storage](/docs/products/sync/storage) allows you to build a
+collaborative canvas by reading and writing to shared document with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+
+```tsx
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+import { LiveObject } from "@liveblocks/client";
+
+function Canvas() {
+  // Fetch realtime data, e.g. an array of shapes
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  // Update realtime data, e.g. add a new shape to the array
+  // +++
+  const addShape = useMutation(({ storage }) => {
+    const newShape = new LiveObject({
+      x: 50,
+      y: 100,
+      color: "red",
+    });
+    storage.get("shapes").push(newShape);
+  }, []);
+  // +++
+
+  // ...
+}
+```
+
+[Presence](/docs/products/sync/presence) is another primitive that allows you to
+render live activity with the
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook, for example
+realtime cursors or an avatar stack.
+
+```tsx
+import { useSelf, useOthers } from "@liveblocks/react/suspense";
+
+function AvatarStack() {
+  // Get an array of every other connected user
+  // +++
+  const others = useOthers();
+  // +++
+
+  // Render an avatar stack
+  return (
+    <div>
+      // +++
+      {others.map(({ connectionId, presence, info }) => (
+        <img key={connectionId} src={info.avatar} alt={info.name} />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+[Feeds](/docs/products/sync/feeds) allows you to create realtime paginated
+streams of data, such as AI chats. Stream messages from the client or server and
+display them with
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages).
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function Chat({ feedId }: { feedId: string }) {
+  // +++
+  const { messages } = useFeedMessages(feedId);
+  // +++
+
+  // Render a list of messages
+  return (
+    <div>
+      // +++
+      {messages.map((message) => (
+        <div key={message.id}>
+          {message.data.role}: {message.data.content}
+        </div>
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
 ## Learn more
 
 Dive into the different aspects of Sync in the following sections.
@@ -73,17 +163,10 @@ Dive into the different aspects of Sync in the following sections.
   />
   <DocsCard
     type="technology"
-    title="Data types"
-    href="/docs/products/sync/data-types"
-    description="Model collaborative state with Storage"
+    title="Storage"
+    href="/docs/products/sync/storage"
+    description="Persistent conflict-resolved documents"
     visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
-  <DocsCard
-    type="technology"
-    title="Multiplayer undo/redo"
-    href="/docs/products/sync/multiplayer-undo-redo"
-    description="Give each user an independent edit history"
-    visual={<DocsMultiplayerUndoRedoIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
