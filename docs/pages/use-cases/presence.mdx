@@ -1,0 +1,346 @@
+---
+meta:
+  title: "Presence"
+  parentTitle: "Use cases"
+  description:
+    "Show who’s online and what they’re doing with live cursors, avatar stacks,
+    selections, typing indicators, and AI agent presence."
+---
+
+With Liveblocks you can make collaboration visible in your app. Show who’s in
+the room with avatar stacks, where people are pointing with live cursors, what
+they’ve selected, and when AI agents are active—all with temporary state that
+updates in realtime and disappears when a user disconnects.
+
+<Figure
+  caption={
+    <>
+      Presence inside the <a href="/nextjs-starter-kit">Next.js Starter Kit</a>
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="QCbK802Wgxo00Z3kOoDVnAGJECsNNAy602RnkzcLwMAczc"
+    alt="Presence"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Live cursors**](#live-cursors): Show each collaborator’s pointer with
+  smooth, container-relative cursors.
+- [**Avatar stacks**](#avatar-stacks): Display everyone currently connected to
+  the room.
+- [**Selections**](#selections): Highlight the item each user is working on.
+- [**Text editor carets**](#text-editor-carets): Show carets and text selections
+  inside collaborative editors.
+- [**Typing indicators**](#typing-indicators): Show when someone is writing.
+- [**User information**](#user-information): Attach names, colors, and avatars
+  from your database.
+- [**Agent presence**](#agent-presence): Make AI agents appear alongside humans.
+- [**Permissions**](#permissions): Control who can join a room and share their
+  presence.
+
+## Get started [#get-started]
+
+Choose a starting point for your app.
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Get started with presence"
+    href="/docs/get-started/nextjs-presence"
+    description="Add live cursors and an avatar stack"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with React"
+    href="/docs/guides/how-to-use-liveblocks-presence-with-react"
+    description="Build a custom presence interface"
+    visual={<DocsReactIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented.
+[Presence](/docs/products/sync/presence) is part of
+[Sync](/docs/products/sync/overview)—each connected user has a JSON object that
+updates in realtime and disappears when their connection ends. Use it for
+anything that can vanish when a user leaves, and keep permanent content in
+[Storage](/docs/products/sync/data-types). Define the shape of your presence
+object with the
+[`Liveblocks` interface](/docs/api-reference/liveblocks-react#Typing-your-data)
+and set its initial value on
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
+
+### Live cursors [#live-cursors]
+
+The ready-made [`Cursors`](/docs/api-reference/liveblocks-react-ui#Cursors)
+component publishes your pointer position and renders everyone else’s. Cursor
+coordinates are percentage-based relative to the container, so they stay
+accurate across screen sizes, and movement is interpolated with springs.
+
+```tsx
+import { Cursors } from "@liveblocks/react-ui";
+
+function CollaborativeArea() {
+  return (
+    // +++
+    <Cursors className="relative h-full w-full">
+      <YourApp />
+    </Cursors>
+    // +++
+  );
+}
+```
+
+Customize how each cursor is rendered by passing a component through the
+`components` prop, or render several independent cursor areas in one room with
+`presenceKey`. For full control, position the single
+[`Cursor`](/docs/api-reference/liveblocks-react-ui#Cursor) component manually
+with the hooks shown under [Selections](#selections). Learn more under
+[presence](/docs/products/sync/presence).
+
+### Avatar stacks [#avatar-stacks]
+
+Show everyone currently connected with
+[`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack). Users
+present in multiple tabs are deduplicated, and avatars beyond `max` are grouped
+into a `+N` indicator.
+
+```tsx
+import { AvatarStack } from "@liveblocks/react-ui";
+
+function Header() {
+  // +++
+  return <AvatarStack max={5} variant="outline" />;
+  // +++
+}
+```
+
+Pass `userIds` to include additional users, such as people invited to the
+document but not currently online. To build a fully custom stack, read connected
+users with [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) and
+render their avatars yourself.
+
+### Selections [#selections]
+
+Show which item each user is working on by storing a selection in presence.
+Publish local changes with
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+and read everyone else with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers), then highlight
+the selected item in each user’s color.
+
+```tsx
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function Field({ id }: { id: string }) {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const others = useOthers();
+  // +++
+
+  const selectedBy = others.find((other) => other.presence.selection === id);
+
+  return (
+    <textarea
+      // +++
+      onFocus={() => updateMyPresence({ selection: id })}
+      onBlur={() => updateMyPresence({ selection: null })}
+      // +++
+      style={{
+        outline: selectedBy ? `2px solid ${selectedBy.info.color}` : "none",
+      }}
+    />
+  );
+}
+```
+
+The same pattern works for any temporary state your interface needs, such as an
+active tool, current slide, or open panel.
+
+### Text editor carets [#text-editor-carets]
+
+In collaborative text and code editors, each user’s caret and text selection
+appear in their color as they type. Unlike the patterns above, you don’t publish
+carets manually—they’re tied directly to the text editor integration, which
+synchronizes them with the collaborative text itself, so they stay accurate as
+the document changes around them. Learn more under the
+[text editor](/docs/use-cases/text-editor) and
+[code editor](/docs/use-cases/code-editor) use cases.
+
+### Typing indicators [#typing-indicators]
+
+Set a `typing` flag in presence on input, then clear it after a short timeout
+and when the input loses focus. Because presence is connection-specific, stale
+indicators disappear automatically if a user closes the tab.
+
+```tsx
+import { useRef } from "react";
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function Composer() {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const others = useOthers();
+  // +++
+  const timeoutId = useRef<number>();
+
+  const typingCount = others.filter((other) => other.presence.typing).length;
+
+  return (
+    <>
+      <input
+        onInput={() => {
+          // +++
+          updateMyPresence({ typing: true });
+          window.clearTimeout(timeoutId.current);
+          timeoutId.current = window.setTimeout(() => {
+            updateMyPresence({ typing: false });
+          }, 1000);
+          // +++
+        }}
+      />
+      {typingCount > 0 && <span>{typingCount} typing…</span>}
+    </>
+  );
+}
+```
+
+### User information [#user-information]
+
+Keep names, colors, and avatars in user information rather than presence—it
+comes from your database, stays consistent across a user’s connections, and
+can’t be spoofed by the client. Pass it to `userInfo` in your
+[authentication endpoint](/docs/authentication), then read it from the `info`
+property returned by `useOthers`, as shown under [Selections](#selections).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+export async function POST(request: Request) {
+  const user = __getUserFromSession__(request);
+
+  const { status, body } = await liveblocks.identifyUser(
+    { userId: user.id },
+    {
+      // +++
+      userInfo: {
+        name: user.name,
+        color: user.color,
+        avatar: user.avatar,
+      },
+      // +++
+    }
+  );
+
+  return new Response(body, { status });
+}
+```
+
+Configure
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+so the ready-made components can display the same profiles. Learn more under
+[Authentication](/docs/authentication).
+
+### Agent presence [#agent-presence]
+
+Servers and AI agents can publish presence with
+[`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
+The agent then appears in `useOthers` like any human, so the cursors, avatar
+stacks, selections, and typing indicators you already built show AI activity
+with no extra UI.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.setPresence("my-room-id", {
+  userId: "ai-agent",
+  userInfo: { name: "AI agent", color: "#7c3aed" },
+  data: { selection: "field-1", typing: true },
+  ttl: 60,
+});
+// +++
+```
+
+Presence expires after the time-to-live in seconds, so stale agents disappear
+automatically if a workflow crashes—refresh it while the agent works, and set
+`ttl: 2`, the minimum, to remove the agent when it finishes. When the agent also
+edits the document, learn more under
+[Agentic editing](/docs/products/sync/agentic-editing).
+
+### Permissions [#permissions]
+
+Each collaborative space is contained inside a room in your Liveblocks app, and
+permission groups can set access to it. For example, your app may have an editor
+group and a viewer group. This can be set when modifying or creating a room, for
+example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access
+    olivier: ["*:write"],
+  },
+});
+```
+
+More complex controls can be set too, learn more under
+[Permissions](/docs/authentication/permissions).
+
+## Examples [#examples]
+
+Explore complete examples that combine the features described above.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Live Cursors",
+      slug: "live-cursors/nextjs-live-cursors",
+      image: "/images/examples/thumbnails/live-cursors.jpg",
+    }}
+    technologies={["nextjs", "vuejs", "sveltekit", "solidjs", "javascript"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Avatar Stack",
+      slug: "live-avatar-stack/nextjs-live-avatars",
+      image: "/images/examples/thumbnails/live-avatar-stack.jpg",
+    }}
+    technologies={["nextjs", "nuxtjs", "vuejs", "sveltekit", "solidjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Form Selection",
+      slug: "live-form-selection/nextjs-live-form-selection",
+      image: "/images/examples/thumbnails/live-form-selection.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

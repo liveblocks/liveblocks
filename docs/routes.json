@@ -232,6 +232,11 @@
             "hidden": true
           },
           {
+            "title": "Custom canvas",
+            "path": "/get-started/nextjs-canvas-custom",
+            "hidden": true
+          },
+          {
             "title": "Tldraw",
             "path": "/get-started/nextjs-tldraw",
             "hidden": true
@@ -443,6 +448,332 @@
         "path": "/concepts"
       },
       {
+        "title": "Upgrading",
+        "path": "/upgrading",
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "title": "Products",
+    "routes": [
+      {
+        "title": "Sync",
+        "path": "/products/sync",
+        "routes": [
+          {
+            "title": "Conflict resolution",
+            "path": "/products/sync/conflict-resolution"
+          },
+          {
+            "title": "Data types",
+            "path": "/products/sync/data-types"
+          },
+          {
+            "title": "Multiplayer undo/redo",
+            "path": "/products/sync/multiplayer-undo-redo"
+          },
+          {
+            "title": "Presence",
+            "path": "/products/sync/presence"
+          },
+          {
+            "title": "Feeds",
+            "path": "/products/sync/feeds"
+          },
+          {
+            "title": "Server-side editing",
+            "path": "/products/sync/server-side-editing"
+          },
+          {
+            "title": "Agentic editing",
+            "path": "/products/sync/agentic-editing"
+          },
+          {
+            "title": "Version history",
+            "path": "/products/sync/version-history"
+          },
+          {
+            "title": "Broadcast events",
+            "path": "/products/sync/broadcast-events"
+          },
+          {
+            "title": "Authentication and permissions",
+            "path": "/products/sync/authentication-and-permissions"
+          },
+          {
+            "title": "Integrations",
+            "path": "/products/sync/integrations"
+          },
+          {
+            "title": "Yjs",
+            "path": "/products/sync/yjs"
+          }
+        ]
+      },
+      {
+        "title": "Comments",
+        "path": "/products/comments",
+        "routes": [
+          {
+            "title": "Overview",
+            "path": "/products/comments/overview"
+          },
+          {
+            "title": "Concepts",
+            "path": "/products/comments/concepts"
+          },
+          {
+            "title": "Users and mentions",
+            "path": "/products/comments/users-and-mentions"
+          },
+          {
+            "title": "Default components",
+            "path": "/products/comments/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/products/comments/hooks"
+          },
+          {
+            "title": "Metadata",
+            "path": "/products/comments/metadata"
+          },
+          {
+            "title": "Primitives",
+            "path": "/products/comments/primitives"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/products/comments/styling-and-customization"
+          },
+          {
+            "title": "Email notifications",
+            "path": "/products/comments/email-notifications"
+          }
+        ]
+      },
+      {
+        "title": "Notifications",
+        "path": "/products/notifications",
+        "routes": [
+          {
+            "title": "Overview",
+            "path": "/products/notifications/overview"
+          },
+          {
+            "title": "Concepts",
+            "path": "/products/notifications/concepts"
+          },
+          {
+            "title": "Default components",
+            "path": "/products/notifications/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/products/notifications/hooks"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/products/notifications/styling-and-customization"
+          },
+          {
+            "title": "Email notifications",
+            "path": "/products/notifications/email-notifications"
+          }
+        ]
+      },
+      {
+        "title": "AI Copilots",
+        "path": "/products/ai-copilots",
+        "hidden": true,
+        "routes": [
+          {
+            "title": "Features",
+            "path": "/products/ai-copilots/features"
+          },
+          {
+            "title": "Copilots",
+            "path": "/products/ai-copilots/copilots"
+          },
+          {
+            "title": "Default components",
+            "path": "/products/ai-copilots/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/products/ai-copilots/hooks"
+          },
+          {
+            "title": "Knowledge",
+            "path": "/products/ai-copilots/knowledge"
+          },
+          {
+            "title": "Tools",
+            "path": "/products/ai-copilots/tools"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/products/ai-copilots/styling-and-customization"
+          },
+          {
+            "title": "Troubleshooting",
+            "path": "/products/ai-copilots/troubleshooting"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Use cases",
+    "routes": [
+      {
+        "title": "AI collaboration",
+        "path": "/use-cases/ai-collaboration"
+      },
+      {
+        "title": "Canvas",
+        "path": "/use-cases/canvas"
+      },
+      {
+        "title": "Chat",
+        "path": "/use-cases/chat"
+      },
+      {
+        "title": "Code editor",
+        "path": "/use-cases/code-editor"
+      },
+      {
+        "title": "Comments panel",
+        "path": "/use-cases/comments-panel"
+      },
+      {
+        "title": "Custom app",
+        "path": "/use-cases/custom-app"
+      },
+      {
+        "title": "Flowchart",
+        "path": "/use-cases/flowchart"
+      },
+      {
+        "title": "Inbox tray",
+        "path": "/use-cases/inbox-tray"
+      },
+      {
+        "title": "Presence",
+        "path": "/use-cases/presence"
+      },
+      {
+        "title": "Slideshow",
+        "path": "/use-cases/slideshow"
+      },
+      {
+        "title": "Spreadsheet",
+        "path": "/use-cases/spreadsheet"
+      },
+      {
+        "title": "Text editor",
+        "path": "/use-cases/text-editor"
+      }
+    ]
+  },
+  {
+    "title": "Tools",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "Dev server",
+        "path": "/tools/dev-server"
+      },
+      {
+        "title": "DevTools extension",
+        "path": "/tools/devtools"
+      },
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/tools/nextjs-starter-kit"
+      },
+      {
+        "title": "Agent skills",
+        "path": "/tools/agent-skills"
+      },
+      {
+        "title": "MCP server",
+        "path": "/tools/mcp-server"
+      },
+      {
+        "title": "Frimousse",
+        "href": "https://frimousse.liveblocks.io"
+      },
+      {
+        "title": "Zen Router",
+        "href": "https://zenrouter.liveblocks.io"
+      }
+    ]
+  },
+  {
+    "title": "Integrations",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "Overview",
+        "path": "/integrations"
+      },
+      {
+        "title": "Bolt",
+        "path": "/integrations/bolt"
+      },
+      {
+        "title": "Claude Code",
+        "path": "/integrations/claude-code"
+      },
+      {
+        "title": "Claude Desktop",
+        "path": "/integrations/claude-desktop"
+      },
+      {
+        "title": "Codex",
+        "path": "/integrations/codex"
+      },
+      {
+        "title": "Cursor",
+        "path": "/integrations/cursor"
+      },
+      {
+        "title": "Lovable",
+        "path": "/integrations/lovable"
+      },
+      {
+        "title": "n8n",
+        "path": "/integrations/n8n-nodes"
+      },
+      {
+        "title": "Neon",
+        "path": "/integrations/neon"
+      },
+      {
+        "title": "PlanetScale",
+        "path": "/integrations/planetscale"
+      },
+      {
+        "title": "Replit",
+        "path": "/integrations/replit"
+      },
+      {
+        "title": "Supabase",
+        "path": "/integrations/supabase"
+      },
+      {
+        "title": "v0",
+        "path": "/integrations/v0"
+      }
+    ]
+  },
+  {
+    "title": "Platform",
+    "defaultCollapsed": true,
+    "routes": [
+      {
         "title": "Authentication",
         "path": "/authentication",
         "routes": [
@@ -521,281 +852,6 @@
         ]
       },
       {
-        "title": "Upgrading",
-        "path": "/upgrading",
-        "hidden": true
-      }
-    ]
-  },
-  {
-    "title": "Collaboration features",
-    "routes": [
-      {
-        "title": "Multiplayer",
-        "path": "/collaboration-features/multiplayer",
-        "routes": [
-          {
-            "title": "Text editor",
-            "path": "/collaboration-features/multiplayer/text-editor",
-            "routes": [
-              {
-                "title": "Tiptap",
-                "path": "/collaboration-features/multiplayer/text-editor/tiptap"
-              },
-              {
-                "title": "BlockNote",
-                "path": "/collaboration-features/multiplayer/text-editor/blocknote"
-              },
-              {
-                "title": "Lexical",
-                "path": "/collaboration-features/multiplayer/text-editor/lexical"
-              }
-            ]
-          },
-          {
-            "title": "Sync engine",
-            "path": "/collaboration-features/multiplayer/sync-engine",
-            "routes": [
-              {
-                "title": "Yjs",
-                "path": "/collaboration-features/multiplayer/sync-engine/liveblocks-yjs"
-              },
-              {
-                "title": "Storage",
-                "path": "/collaboration-features/multiplayer/sync-engine/liveblocks-storage"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "title": "Comments",
-        "path": "/collaboration-features/comments",
-        "routes": [
-          {
-            "title": "Concepts",
-            "path": "/collaboration-features/comments/concepts"
-          },
-          {
-            "title": "Users and mentions",
-            "path": "/collaboration-features/comments/users-and-mentions"
-          },
-          {
-            "title": "Default components",
-            "path": "/collaboration-features/comments/default-components"
-          },
-          {
-            "title": "Hooks",
-            "path": "/collaboration-features/comments/hooks"
-          },
-          {
-            "title": "Metadata",
-            "path": "/collaboration-features/comments/metadata"
-          },
-          {
-            "title": "Primitives",
-            "path": "/collaboration-features/comments/primitives"
-          },
-          {
-            "title": "Styling and customization",
-            "path": "/collaboration-features/comments/styling-and-customization"
-          },
-          {
-            "title": "Email notifications",
-            "path": "/collaboration-features/comments/email-notifications"
-          }
-        ]
-      },
-      {
-        "title": "Notifications",
-        "path": "/collaboration-features/notifications",
-        "routes": [
-          {
-            "title": "Concepts",
-            "path": "/collaboration-features/notifications/concepts"
-          },
-          {
-            "title": "Default components",
-            "path": "/collaboration-features/notifications/default-components"
-          },
-          {
-            "title": "Hooks",
-            "path": "/collaboration-features/notifications/hooks"
-          },
-          {
-            "title": "Styling and customization",
-            "path": "/collaboration-features/notifications/styling-and-customization"
-          },
-          {
-            "title": "Email notifications",
-            "path": "/collaboration-features/notifications/email-notifications"
-          }
-        ]
-      },
-      {
-        "title": "AI Collaboration",
-        "path": "/collaboration-features/ai-collaboration"
-      },
-      {
-        "title": "AI Copilots",
-        "path": "/collaboration-features/ai-copilots",
-        "routes": [
-          {
-            "title": "Features",
-            "path": "/collaboration-features/ai-copilots/features"
-          },
-          {
-            "title": "Copilots",
-            "path": "/collaboration-features/ai-copilots/copilots"
-          },
-          {
-            "title": "Default components",
-            "path": "/collaboration-features/ai-copilots/default-components"
-          },
-          {
-            "title": "Hooks",
-            "path": "/collaboration-features/ai-copilots/hooks"
-          },
-          {
-            "title": "Knowledge",
-            "path": "/collaboration-features/ai-copilots/knowledge"
-          },
-          {
-            "title": "Tools",
-            "path": "/collaboration-features/ai-copilots/tools"
-          },
-          {
-            "title": "Styling and customization",
-            "path": "/collaboration-features/ai-copilots/styling-and-customization"
-          },
-          {
-            "title": "Troubleshooting",
-            "path": "/collaboration-features/ai-copilots/troubleshooting"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "title": "Integrations",
-    "routes": [
-      {
-        "title": "Overview",
-        "path": "/integrations"
-      },
-      {
-        "title": "Bolt",
-        "path": "/integrations/bolt"
-      },
-      {
-        "title": "Claude Code",
-        "path": "/integrations/claude-code"
-      },
-      {
-        "title": "Claude Desktop",
-        "path": "/integrations/claude-desktop"
-      },
-      {
-        "title": "Codex",
-        "path": "/integrations/codex"
-      },
-      {
-        "title": "Cursor",
-        "path": "/integrations/cursor"
-      },
-      {
-        "title": "Lovable",
-        "path": "/integrations/lovable"
-      },
-      {
-        "title": "n8n",
-        "path": "/integrations/n8n-nodes"
-      },
-      {
-        "title": "Neon",
-        "path": "/integrations/neon"
-      },
-      {
-        "title": "PlanetScale",
-        "path": "/integrations/planetscale"
-      },
-      {
-        "title": "Replit",
-        "path": "/integrations/replit"
-      },
-      {
-        "title": "Supabase",
-        "path": "/integrations/supabase"
-      },
-      {
-        "title": "v0",
-        "path": "/integrations/v0"
-      }
-    ]
-  },
-  {
-    "title": "Errors",
-    "hidden": true,
-    "routes": [
-      {
-        "title": "atob polyfill is missing",
-        "path": "/errors/liveblocks-client/atob-polyfill"
-      },
-      {
-        "title": "RoomProvider id property is required",
-        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
-      },
-      {
-        "title": "Cross-linked Liveblocks versions are found in your project",
-        "path": "/errors/cross-linked"
-      },
-      {
-        "title": "Multiple copies of Liveblocks are being loaded in your project",
-        "path": "/errors/dupes"
-      },
-      {
-        "title": "Access token doesn't grant enough permissions",
-        "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
-      },
-      {
-        "title": "The type you provided for 'Presence' is not a valid JSON object",
-        "path": "/errors/Presence"
-      },
-      {
-        "title": "The type you provided for 'Storage' is not a valid LSON value",
-        "path": "/errors/Storage"
-      },
-      {
-        "title": "The type you provided for 'UserMeta' does not match its requirements",
-        "path": "/errors/UserMeta"
-      },
-      {
-        "title": "The type you provided for 'RoomEvent' is not a valid JSON value",
-        "path": "/errors/RoomEvent"
-      },
-      {
-        "title": "The type you provided for 'ThreadMetadata' does not match its requirements",
-        "path": "/errors/ThreadMetadata"
-      },
-      {
-        "title": "The type you provided for 'RoomInfo' does not match its requirements",
-        "path": "/errors/RoomInfo"
-      },
-      {
-        "title": "At least one of the custom notification kinds you provided for 'ActivitiesData' does not match its requirements",
-        "path": "/errors/ActivitiesData"
-      },
-      {
-        "title": "In order to use this channel, please set up your project first",
-        "path": "/errors/enable-a-notification-channel"
-      }
-    ]
-  },
-  {
-    "title": "Platform",
-    "defaultCollapsed": true,
-    "routes": [
-      {
         "title": "Data storage",
         "path": "/platform/data-storage"
       },
@@ -822,6 +878,10 @@
       {
         "title": "Management API",
         "path": "/platform/management-api"
+      },
+      {
+        "title": "Troubleshooting",
+        "path": "/api-reference/troubleshooting"
       },
       {
         "title": "Account management",
@@ -902,67 +962,74 @@
     ]
   },
   {
-    "title": "Tools",
-    "defaultCollapsed": true,
+    "title": "Errors",
+    "hidden": true,
     "routes": [
       {
-        "title": "Dev server",
-        "path": "/tools/dev-server"
+        "title": "atob polyfill is missing",
+        "path": "/errors/liveblocks-client/atob-polyfill"
       },
       {
-        "title": "DevTools extension",
-        "path": "/tools/devtools"
+        "title": "RoomProvider id property is required",
+        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
       },
       {
-        "title": "Next.js Starter Kit",
-        "path": "/tools/nextjs-starter-kit"
+        "title": "Cross-linked Liveblocks versions are found in your project",
+        "path": "/errors/cross-linked"
       },
       {
-        "title": "Agent skills",
-        "path": "/tools/agent-skills"
+        "title": "Multiple copies of Liveblocks are being loaded in your project",
+        "path": "/errors/dupes"
       },
       {
-        "title": "MCP server",
-        "path": "/tools/mcp-server"
+        "title": "Access token doesn't grant enough permissions",
+        "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
       },
       {
-        "title": "Frimousse",
-        "href": "https://frimousse.liveblocks.io"
+        "title": "The type you provided for 'Presence' is not a valid JSON object",
+        "path": "/errors/Presence"
       },
       {
-        "title": "Zen Router",
-        "href": "https://zenrouter.liveblocks.io"
+        "title": "The type you provided for 'Storage' is not a valid LSON value",
+        "path": "/errors/Storage"
+      },
+      {
+        "title": "The type you provided for 'UserMeta' does not match its requirements",
+        "path": "/errors/UserMeta"
+      },
+      {
+        "title": "The type you provided for 'RoomEvent' is not a valid JSON value",
+        "path": "/errors/RoomEvent"
+      },
+      {
+        "title": "The type you provided for 'ThreadMetadata' does not match its requirements",
+        "path": "/errors/ThreadMetadata"
+      },
+      {
+        "title": "The type you provided for 'RoomInfo' does not match its requirements",
+        "path": "/errors/RoomInfo"
+      },
+      {
+        "title": "At least one of the custom notification kinds you provided for 'ActivitiesData' does not match its requirements",
+        "path": "/errors/ActivitiesData"
+      },
+      {
+        "title": "In order to use this channel, please set up your project first",
+        "path": "/errors/enable-a-notification-channel"
       }
     ]
   },
   {
-    "title": "Upgrading",
-    "sort": "descending",
-    "defaultCollapsed": true,
+    "title": false,
     "routes": [
-      { "title": "Upgrading to 0.17", "path": "/upgrading/0.17" },
-      { "title": "Upgrading to 0.18", "path": "/upgrading/0.18" },
-      { "title": "Upgrading to 0.19", "path": "/upgrading/0.19" },
-      { "title": "Upgrading to 1.0", "path": "/upgrading/1.0" },
-      { "title": "Upgrading to 1.2", "path": "/upgrading/1.2" },
-      { "title": "Upgrading to 1.5", "path": "/upgrading/1.5" },
-      { "title": "Upgrading to 1.9", "path": "/upgrading/1.9" },
-      { "title": "Upgrading to 1.10", "path": "/upgrading/1.10" },
-      { "title": "Upgrading to 2.0", "path": "/upgrading/2.0" },
-      { "title": "Upgrading to 2.2", "path": "/upgrading/2.2" },
-      { "title": "Upgrading to 2.8", "path": "/upgrading/2.8" },
-      { "title": "Upgrading to 2.9", "path": "/upgrading/2.9" },
-      { "title": "Upgrading to 2.15", "path": "/upgrading/2.15" },
-      { "title": "Upgrading to 2.16", "path": "/upgrading/2.16" },
-      { "title": "Upgrading to 2.24", "path": "/upgrading/2.24" },
-      { "title": "Upgrading to 3.0", "path": "/upgrading/3.0" },
-      { "title": "Upgrading to 3.10", "path": "/upgrading/3.10" },
-      { "title": "Upgrading to 3.18", "path": "/upgrading/3.18" }
+      {
+        "title": "Overview",
+        "path": "/api-reference"
+      }
     ]
   },
   {
-    "title": "API Reference",
-    "defaultCollapsed": true,
+    "title": "Client",
     "routes": [
       {
         "title": "@liveblocks/client",
@@ -997,10 +1064,6 @@
         "path": "/api-reference/liveblocks-react-blocknote"
       },
       {
-        "title": "@liveblocks/node-prosemirror",
-        "path": "/api-reference/liveblocks-node-prosemirror"
-      },
-      {
         "title": "@liveblocks/react-lexical",
         "path": "/api-reference/liveblocks-react-lexical"
       },
@@ -1023,10 +1086,23 @@
       {
         "title": "@liveblocks/yjs",
         "path": "/api-reference/liveblocks-yjs"
-      },
+      }
+    ]
+  },
+  {
+    "title": "Server",
+    "routes": [
       {
         "title": "@liveblocks/node",
         "path": "/api-reference/liveblocks-node"
+      },
+      {
+        "title": "@liveblocks/node-prosemirror",
+        "path": "/api-reference/liveblocks-node-prosemirror"
+      },
+      {
+        "title": "@liveblocks/node-lexical",
+        "path": "/api-reference/liveblocks-node-lexical"
       },
       {
         "title": "@liveblocks/emails",
@@ -1045,8 +1121,87 @@
         "href": "/api-reference/rest-api-endpoints"
       },
       {
-        "title": "Troubleshooting",
-        "path": "/api-reference/troubleshooting"
+        "title": "Webhook events",
+        "path": "/api-reference/webhook-events"
+      }
+    ]
+  },
+  {
+    "title": "Upgrading",
+    "sort": "descending",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "Upgrading to 0.17",
+        "path": "/api-reference/upgrading/0.17"
+      },
+      {
+        "title": "Upgrading to 0.18",
+        "path": "/api-reference/upgrading/0.18"
+      },
+      {
+        "title": "Upgrading to 0.19",
+        "path": "/api-reference/upgrading/0.19"
+      },
+      {
+        "title": "Upgrading to 1.0",
+        "path": "/api-reference/upgrading/1.0"
+      },
+      {
+        "title": "Upgrading to 1.2",
+        "path": "/api-reference/upgrading/1.2"
+      },
+      {
+        "title": "Upgrading to 1.5",
+        "path": "/api-reference/upgrading/1.5"
+      },
+      {
+        "title": "Upgrading to 1.9",
+        "path": "/api-reference/upgrading/1.9"
+      },
+      {
+        "title": "Upgrading to 1.10",
+        "path": "/api-reference/upgrading/1.10"
+      },
+      {
+        "title": "Upgrading to 2.0",
+        "path": "/api-reference/upgrading/2.0"
+      },
+      {
+        "title": "Upgrading to 2.2",
+        "path": "/api-reference/upgrading/2.2"
+      },
+      {
+        "title": "Upgrading to 2.8",
+        "path": "/api-reference/upgrading/2.8"
+      },
+      {
+        "title": "Upgrading to 2.9",
+        "path": "/api-reference/upgrading/2.9"
+      },
+      {
+        "title": "Upgrading to 2.15",
+        "path": "/api-reference/upgrading/2.15"
+      },
+      {
+        "title": "Upgrading to 2.16",
+        "path": "/api-reference/upgrading/2.16"
+      },
+      {
+        "title": "Upgrading to 2.24",
+        "path": "/api-reference/upgrading/2.24"
+      },
+      {
+        "title": "Upgrading to 3.0",
+        "path": "/api-reference/upgrading/3.0"
+      },
+      {
+        "title": "Upgrading to 3.10",
+        "path": "/api-reference/upgrading/3.10"
+      },
+      {
+        "title": "Upgrading to 3.18",
+        "path": "/api-reference/upgrading/3.18"
       }
     ]
   }

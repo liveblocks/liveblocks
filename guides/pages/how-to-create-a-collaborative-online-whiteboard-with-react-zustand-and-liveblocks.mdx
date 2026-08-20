@@ -137,7 +137,7 @@ export default function App() {
 ## Create a canvas [#basic-canvas]
 
 Whiteboard shapes will be stored even after all users disconnect, so we will use
-Liveblocks storage to persist them.
+Storage to persist them.
 
 Add a `shapes` property to your store, and tell the middleware to sync and
 persist them with Liveblocks.
@@ -145,7 +145,7 @@ persist them with Liveblocks.
 To achieve that, we are going to use the middleware option
 [`storageMapping: { shapes: true }`](/docs/api-reference/liveblocks-zustand#middleware-option-storage-mapping).
 It means that the part of the state named `shapes` should be automatically
-synced with Liveblocks Storage.
+synced with Storage.
 
 ```ts file="src/store.ts" highlight="6-10,13,23,27"
 import create from "zustand";
@@ -442,7 +442,7 @@ rectangle.
 The middleware option
 [`presenceMapping: { selectedShape: true }`](/docs/api-reference/liveblocks-zustand#middleware-option-presence-mapping)
 means that we want to automatically sync the part of the state named
-`selectedShape` to Liveblocks Presence.
+`selectedShape` to Liveblocks presence.
 
 ```ts file="src/store.ts" highlight="5,7,16,29,32-34,39"
 /* ... */

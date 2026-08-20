@@ -1,0 +1,630 @@
+---
+meta:
+  title: "Chat"
+  parentTitle: "Use cases"
+  description:
+    "Build AI and human chat with persistent messages, streaming AI replies,
+    agentic document editing, typing indicators, and notifications."
+---
+
+With Liveblocks you can build realtime chat interfaces into your application,
+allowing humans and agents to work together. Chats can be multiplayer, and AI
+responses can be streamed in as they’re generated. Additionally, allow AI to
+edit your Sync documents through chat, alongside humans.
+
+<Figure
+  caption={
+    <>
+      Multiplayer chat in the{" "}
+      <a href="/examples/ai-slideshow/nextjs-ai-slideshow">
+        AI Slideshow Generator
+      </a>{" "}
+      example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="stfBLTwp1YciDLiv6e601WVZ7F6SB4DB3m8IvLMge02J8"
+    alt="Multiplayer chat"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+{/* prettier-ignore */}
+{/* DECIDE: Plain muliplayer AI chat
+
+<Figure
+  caption={
+    <>
+      AI chat in the{" "}
+      <a href="/examples/ai-elements-realtime/nextjs-ai-elements-realtime">
+        AI Elements Realtime
+      </a>{" "}
+      example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="mOlJcYzc1XF6Tzd3G5102p018phTs01aA7twrJGCaElF8M"
+    alt="AI chat"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+*/}
+
+## Features [#features]
+
+- [**Realtime messaging**](#realtime-messaging): Send persistent messages that
+  appear instantly for every participant.
+- [**UI libraries**](#ui-libraries): Render messages with AI Elements,
+  assistant-ui, shadcn/ui, or your own components.
+- [**Server-side messages**](#server-side-messages): Append system and
+  automation messages from your back end.
+- [**AI chat**](#ai-chat): Let AI read the conversation and reply alongside
+  humans.
+- [**Streaming AI replies**](#streaming-ai-replies): Stream responses token by
+  token into a persistent message.
+- [**Agentic editing**](#agentic-editing): Ask AI in the chat to edit your app’s
+  documents, without conflicts.
+- [**Multiple conversations**](#multiple-conversations): Model channels, direct
+  messages, and chats as feeds.
+- [**Message history**](#message-history): Load earlier messages in pages as
+  users scroll back.
+- [**Typing indicators and presence**](#presence): Show who’s online and typing,
+  including AI agents.
+- [**Notifications**](#notifications): Reach users who are away with in-app and
+  email notifications.
+- [**Permissions**](#permissions): Control who can read and send messages in
+  each conversation.
+
+## Get started [#get-started]
+
+Choose a starting point for your chat.
+
+<ListGrid columns={2} defaultVisibleItems={2}>
+  <DocsCard
+    type="technology"
+    title="Get started with feeds"
+    href="/docs/get-started/nextjs-feeds"
+    description="Build a persistent realtime message feed"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with an in-app inbox"
+    href="/docs/get-started/nextjs-notifications-in-app"
+    description="Notify users about new messages"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with presence"
+    href="/docs/get-started/nextjs-presence"
+    description="Show who’s online and typing"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented. Chat messages can be
+stored in [feeds](/docs/products/sync/feeds), part of
+[Sync](/docs/products/sync/overview)—each conversation is a feed, and each
+message holds JSON data whose schema you define, meaning the same building
+blocks work for human chat, AI chat, and combinations of the two.
+
+### Realtime messaging [#realtime-messaging]
+
+Read a conversation with
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages) and
+send messages with
+[`useCreateFeedMessage`](/docs/api-reference/liveblocks-react#useCreateFeedMessage).
+Messages are persistent and delivered in realtime, so every participant sees new
+messages instantly, and the full conversation is still there when they
+reconnect.
+
+```tsx
+import {
+  useCreateFeedMessage,
+  useFeedMessages,
+} from "@liveblocks/react/suspense";
+
+function Chat({ feedId }: { feedId: string }) {
+  // +++
+  const { messages } = useFeedMessages(feedId);
+  const createMessage = useCreateFeedMessage();
+  // +++
+
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id} data-role={message.data.role}>
+          {message.data.content}
+        </div>
+      ))}
+      <button
+        // +++
+        onClick={() => createMessage(feedId, { role: "user", content: "Hi!" })}
+        // +++
+      >
+        Send
+      </button>
+    </div>
+  );
+}
+```
+
+Messages can also be updated and deleted, and each change syncs instantly. Learn
+more under the [feeds overview](/docs/products/sync/feeds).
+
+### UI libraries [#ui-libraries]
+
+Feeds is headless—it stores and syncs your message data, but you own the UI and
+rendering. This means that you can easily integrate it into popular chat
+component libraries such as [AI Elements](https://ai-sdk.dev/elements),
+[assistant-ui](https://www.assistant-ui.com),
+[shadcn/ui](https://ui.shadcn.com), or your own design system.
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+import {
+  Conversation,
+  ConversationContent,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+
+function Chat({ feedId }: { feedId: string }) {
+  const { messages } = useFeedMessages(feedId);
+
+  return (
+    <Conversation>
+      <ConversationContent>
+        // +++
+        {messages.map((message) => (
+          <Message key={message.id} from={message.data.role}>
+            <MessageContent>
+              <MessageResponse>{message.data.content}</MessageResponse>
+            </MessageContent>
+          </Message>
+        ))}
+        // +++
+      </ConversationContent>
+    </Conversation>
+  );
+}
+```
+
+The
+[Realtime AI Elements Chats](/examples/ai-elements-realtime/nextjs-ai-elements-realtime)
+example contains a complete AI Elements integration, with streaming replies,
+reasoning, tool calls, and typing indicators.
+
+### Server-side messages [#server-side-messages]
+
+Back end processes can append messages with
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages),
+which is useful for sending [AI replies](#ai-chat), system events, workflow
+status, and more. Connected clients receive each message in realtime, through
+the same hooks used for human messages.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.createFeedMessage({
+  roomId: "support-room",
+  feedId: "ticket-123",
+  data: {
+    role: "system",
+    content: "Your ticket has been escalated to a specialist",
+  },
+});
+// +++
+```
+
+Messages can also be sent from workflow tools such as the
+[Liveblocks n8n integration](/docs/integrations/n8n-nodes), or with the
+[REST API](/docs/api-reference/rest-api-endpoints#Feeds).
+
+### AI chat [#ai-chat]
+
+Let AI take part in a conversation by triggering your back end when a user sends
+a message, generating a reply from the conversation history, then appending it
+with
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
+Use
+[`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+before and after generation so the agent appears online and typing alongside
+humans.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { generateText } from "ai";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "design-chat";
+const feedId = "chat-42";
+const agent: Liveblocks["UserMeta"] = {
+  id: "ai-agent",
+  info: { name: "AI agent", color: "#7c3aed" },
+};
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { typingIn: feedId },
+  ttl: 60,
+});
+// +++
+
+// +++
+const { data: messages } = await liveblocks.getFeedMessages({ roomId, feedId });
+
+const { text } = await generateText({
+  model: "openai/gpt-5.6-sol",
+  system: "You are a helpful assistant in a team chat.",
+  messages: messages.map((message) => ({
+    role: message.data.role,
+    content: message.data.content,
+  })),
+});
+// +++
+
+// +++
+await liveblocks.createFeedMessage({
+  roomId,
+  feedId,
+  data: { role: "assistant", content: text },
+});
+// +++
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { typingIn: null },
+  ttl: 2,
+});
+// +++
+```
+
+The same pattern works for humans and AI in one feed, for AI-only conversations,
+and for multiple agents replying in the same channel.
+
+### Streaming AI replies [#streaming-ai-replies]
+
+Long AI responses shouldn’t arrive all at once. To stream a reply token by
+token, create an empty assistant message first, then repeatedly update it with
+[`Liveblocks.updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId)
+as text is generated—every connected user sees the message grow in realtime,
+with no extra client wiring.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { streamText } from "ai";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "design-chat";
+const feedId = "chat-42";
+const messageId = "message-1";
+
+// +++
+await liveblocks.createFeedMessage({
+  roomId,
+  feedId,
+  id: messageId,
+  data: { role: "assistant", content: "" },
+});
+// +++
+
+const { textStream } = streamText({
+  model: "openai/gpt-5.6-sol",
+  prompt: "Summarize this conversation for the team",
+});
+
+// +++
+let content = "";
+for await (const chunk of textStream) {
+  content += chunk;
+
+  await liveblocks.updateFeedMessage({
+    roomId,
+    feedId,
+    messageId,
+    data: { role: "assistant", content },
+    updatedAt: Date.now(),
+  });
+}
+// +++
+```
+
+All connected users, and users that load the page when a response is generating,
+will see the exact message stream in realtime.
+
+### Agentic editing [#agentic-editing]
+
+Chat becomes more powerful when AI can take action actions in your app, not just
+reply. If you have a realtime app set up with [Sync](/docs/products/sync), you
+can generate results with AI and apply them to the room’s realtime document with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
+Edits appear instantly and merge with changes users are making at the same time
+using [conflict resolution](/docs/products/sync/conflict-resolution).
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "design-chat";
+const feedId = "chat-42";
+
+// +++
+const { data: messages } = await liveblocks.getFeedMessages({ roomId, feedId });
+// +++
+
+// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const tasks = root.get("tasks");
+
+  const { output: task } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        title: z.string(),
+        assignee: z.string(),
+      }),
+    }),
+    prompt: `Create a task from this conversation: ${JSON.stringify(messages)}. Here are the current tasks: ${tasks.toJSON()}`,
+  });
+
+  tasks.set("task-1", new LiveObject(task));
+
+  await liveblocks.createFeedMessage({
+    roomId,
+    feedId,
+    data: { role: "assistant", content: `I’ve created “${task.title}”` },
+  });
+});
+// +++
+```
+
+Learn more under [Agentic editing](/docs/products/sync/agentic-editing).
+
+### Multiple conversations [#multiple-conversations]
+
+Each room can contain many chats, each a separate feed under the hood. With
+[`useCreateFeed`](/docs/api-reference/liveblocks-react#useCreateFeed) you can
+create new chats and with
+[`useFeeds`](/docs/api-reference/liveblocks-react#useFeeds) you can list and
+link to all created chats.
+
+```tsx
+import { useCreateFeed, useFeeds } from "@liveblocks/react/suspense";
+
+function ChannelList() {
+  // +++
+  const { feeds } = useFeeds({ metadata: { kind: "channel" } });
+  const createFeed = useCreateFeed();
+  // +++
+
+  return (
+    <nav>
+      // +++
+      {feeds.map((feed) => (
+        <a key={feed.feedId} href={`/chat/${feed.feedId}`}>
+          {feed.metadata.title}
+        </a>
+      ))}
+      // +++
+      <button
+        onClick={
+          () =>
+            // +++
+            createFeed(crypto.randomUUID(), {
+              metadata: { kind: "channel", title: "New channel" },
+            })
+          // +++
+        }
+      >
+        New channel
+      </button>
+    </nav>
+  );
+}
+```
+
+Using feed metadata you can
+[filter and group chats](/docs/api-reference/liveblocks-react#useFeeds-filtering)
+by type, title, or other criteria.
+
+### Message history [#message-history]
+
+Long conversations load in pages. `useFeedMessages` returns up to 50 messages by
+default, along with pagination controls for loading earlier messages without
+replacing the ones already rendered.
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function MessageHistory({ feedId }: { feedId: string }) {
+  // +++
+  const { messages, fetchMore, hasFetchedAll, isFetchingMore } =
+    useFeedMessages(feedId, { limit: 20 });
+  // +++
+
+  return (
+    <>
+      {!hasFetchedAll && (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load earlier messages
+        </button>
+      )}
+      {messages.map((message) => (
+        <div key={message.id}>{message.data.content}</div>
+      ))}
+    </>
+  );
+}
+```
+
+Learn more under
+[paginating feed messages](/docs/api-reference/liveblocks-react#useFeedMessages-pagination).
+
+### Typing indicators and presence [#presence]
+
+You can create live presence indicators for each chat, such as a typing
+indicator or an avatar stack. With
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+and [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) you can pass
+your typing state to Liveblocks, then check if any other users are currently
+typing. Putting these two together enables you to create a simple realtime
+typing indicator.
+
+```tsx
+import { useRef } from "react";
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function Composer() {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const others = useOthers();
+  // +++
+  const timeoutId = useRef<number>();
+
+  const typingCount = others.filter((other) => other.presence.typing).length;
+
+  return (
+    <>
+      <input
+        onInput={() => {
+          // +++
+          updateMyPresence({ typing: true });
+          window.clearTimeout(timeoutId.current);
+          timeoutId.current = window.setTimeout(() => {
+            updateMyPresence({ typing: false });
+          }, 1000);
+          // +++
+        }}
+      />
+      {typingCount > 0 && <span>{typingCount} typing…</span>}
+    </>
+  );
+}
+```
+
+Agents published with `setPresence` in [AI chat](#ai-chat) appear in `useOthers`
+too, so the same indicator shows when AI is typing. Learn more in our
+[presence overview](/docs/products/sync/presence).
+
+### Notifications [#notifications]
+
+Users shouldn’t miss messages sent while they’re away—add an inbox tray to your
+app and trigger a custom notification when the user has a new messages to read.
+This is possible using
+[`Liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger),
+alongside the
+[Notifications UI components](/docs/products/notifications/default-components).
+
+```ts
+// +++
+await liveblocks.triggerInboxNotification({
+  userId: "olivier@example.com",
+  kind: "$chatMessage",
+  subjectId: "chat-42",
+  activityData: {
+    title: "Design chat",
+    preview: "Can you take a look at the new layout?",
+  },
+});
+// +++
+```
+
+Learn more in our [Notifications overview](/docs/products/notifications).
+
+### Permissions [#permissions]
+
+Each set of conversations is contained inside a room in your Liveblocks app, and
+Feeds has its own permission scopes—give viewers `feeds:read` and participants
+who can send messages `feeds:write`. This can be set when modifying or creating
+a room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group can read messages
+    viewers: ["feeds:read"],
+  },
+  usersAccesses: {
+    // "olivier" can send messages
+    olivier: ["feeds:write"],
+  },
+});
+```
+
+Server-side calls with a secret key are not limited by a user’s permissions, so
+validate application permissions before posting on a user’s behalf. More complex
+controls can be set too, learn more under
+[Permissions](/docs/authentication/permissions).
+
+## Examples [#examples]
+
+Explore complete examples that combine the features described above.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Realtime AI Elements Chats",
+      slug: "ai-elements-realtime/nextjs-ai-elements-realtime",
+      image: "/images/examples/thumbnails/ai-chats.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Spreadsheet",
+      slug: "ai-spreadsheet/nextjs-ai-spreadsheet",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Slideshow Generator",
+      slug: "ai-slideshow/nextjs-ai-slideshow",
+      image: "/images/examples/thumbnails/ai-slideshow.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

@@ -1,0 +1,422 @@
+# Liveblocks use case page template
+
+Follow this template when creating or substantially rewriting a file under
+`docs/pages/use-cases/`. It records the shared pattern established by the
+Canvas, Flowchart, and Slideshow pages.
+
+Before writing, read these three pages. Treat their current wording and APIs as
+more authoritative than an older copy of this template:
+
+- `docs/pages/use-cases/canvas.mdx`
+- `docs/pages/use-cases/flowchart.mdx`
+- `docs/pages/use-cases/slideshow.mdx`
+
+The page should explain which Liveblocks features make the use case possible. It
+is an overview, not a step-by-step guide. Keep every explanation practical, show
+a short implementation snippet, and send readers to the detailed product, API,
+get started, guide, and example pages.
+
+## Required page order
+
+Use this order:
+
+1. Frontmatter.
+2. One short opening paragraph describing what users can build.
+3. A `Figure` containing a `MuxVideo`, when a useful recording exists.
+4. `## Features`, with one linked bullet for every implementation section.
+5. `## Get started`, containing the most relevant Next.js guide cards.
+6. `## Implementation`, containing one `###` section per feature.
+7. `## Examples`, containing relevant `ExampleCard` components.
+
+All feature explanations belong under `## Implementation` as `###` headings.
+Every bullet at the top must link to its matching heading. Keep the bullets and
+headings in the same order.
+
+Use this default feature order, omitting features that do not apply and adding
+use-case-specific features where they are useful:
+
+1. Realtime collaboration
+2. Presence
+3. Use-case-specific realtime behavior, such as presentation mode
+4. Server-side editing
+5. Agentic editing
+6. Version history
+7. Multiplayer undo/redo
+8. File uploads
+9. Comments
+10. Permissions
+
+File uploads must appear above Comments. Server-side editing and Agentic editing
+are separate sections, and Agentic editing must immediately follow Server-side
+editing.
+
+## Copyable MDX skeleton
+
+Start from this structure, then replace every generic phrase and snippet with
+the vocabulary and data model of the use case. Do not publish placeholder copy.
+
+````mdx
+---
+meta:
+  title: "Use case"
+  parentTitle: "Use cases"
+  description:
+    "Build a collaborative artifact with synchronized content, presence, AI
+    editing, version history, and comments."
+---
+
+Create a collaborative artifact with Liveblocks. Synchronize its content, show
+live collaborators, edit it from the server, and let AI work alongside users.
+
+<Figure
+  caption={
+    <>
+      Multiplayer editing in the{" "}
+      <a href="/examples/example/nextjs-example">Example name</a> example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="MUX_PLAYBACK_ID"
+    alt="Example of a collaborative artifact"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Realtime collaboration**](#realtime-collaboration): Synchronize the
+  artifact's permanent content between users.
+- [**Presence**](#presence): Show live cursors, avatar stacks, selections, and
+  agent activity.
+- [**Server-side editing**](#server-side-editing): Let trusted backend processes
+  modify the artifact.
+- [**Agentic editing**](#agentic-editing): Let AI agents generate and apply
+  validated changes.
+- [**Version history**](#version-history): Save, preview, and restore complete
+  versions.
+- [**Multiplayer undo/redo**](#multiplayer-undo-redo): Give each user an
+  independent history of their changes.
+- [**File uploads**](#file-uploads): Add uploaded media and other assets.
+- [**Comments**](#comments): Attach review discussions to the artifact.
+- [**Permissions**](#permissions): Control who can view and edit it.
+
+## Get started [#get-started]
+
+Choose a starting point for your app.
+
+<ListGrid columns={2} defaultVisibleItems={4}>
+  <DocsCard
+    type="technology"
+    title="Get started with Sync"
+    href="/docs/get-started/nextjs"
+    description="Synchronize the artifact's content"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with presence"
+    href="/docs/get-started/nextjs-presence"
+    description="Show live collaborators and cursors"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with comments"
+    href="/docs/get-started/nextjs-comments-canvas"
+    description="Attach contextual comments"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented. Store permanent
+content in [Sync](/docs/products/sync/overview). Keep temporary cursors,
+selections, and interaction state in [presence](/docs/products/sync/presence).
+Use [Comments](/docs/products/comments) for review discussions and
+[feeds](/docs/products/sync/feeds) for durable AI workflow state.
+
+### Realtime collaboration [#realtime-collaboration]
+
+Explain which parts of the artifact are persistent and how its data model maps
+to Sync data types. Link the first mention of every API to its exact reference.
+Use [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) to read the
+shared data and
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation) to change it.
+
+```tsx
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+
+function Artifact() {
+  // +++
+  const items = useStorage((root) => root.items);
+  const addItem = useMutation(({ storage }, item) => {
+    storage.get("items").set(item.id, item);
+  }, []);
+  // +++
+
+  return <button onClick={() => addItem(createItem())}>{items.size}</button>;
+}
+```
+
+End with links to the most relevant Sync concepts, e.g. Learn more under
+[Conflict resolution](/docs/products/sync/conflict-resolution) and
+[Data types](/docs/products/sync/data-types).
+
+### Presence [#presence]
+
+Explain which state only matters while someone is connected. Publish local state
+with
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+and read collaborators with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function ArtifactPresence() {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const others = useOthers();
+  // +++
+
+  return (
+    <div
+      onPointerMove={(event) =>
+        updateMyPresence({ cursor: { x: event.clientX, y: event.clientY } })
+      }
+    >
+      {others.map((other) => (
+        <Collaborator key={other.connectionId} other={other} />
+      ))}
+    </div>
+  );
+}
+```
+
+Use `useOthers`, not `useOthersMapped`, in use case pages. Add
+[`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) or
+[`Cursor`](/docs/api-reference/liveblocks-react-ui#Cursor) when it makes the
+example more concrete.
+
+### Server-side editing [#server-side-editing]
+
+Explain what a trusted backend process might change. Use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+or the documented integration helper for the use case. The mutation should use
+the same data model as the client.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "artifact-room";
+
+// +++
+await liveblocks.mutateStorage(roomId, ({ root }) => {
+  root
+    .get("items")
+    .set("item-2", new LiveObject({ x: 20, y: 60, label: "New item" }));
+});
+// +++
+```
+
+Link to [Server-side editing](/docs/products/sync/server-side-editing).
+
+### Agentic editing [#agentic-editing]
+
+To allow AI agents to modify the artifact, generate changes with AI, then use
+the same mutation shown under [Server-side editing](#server-side-editing) to
+apply them. Use
+[`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+before and after generation so the agent appears in presence alongside humans.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "artifact-room";
+const agent: Liveblocks["UserMeta"] = {
+  id: "ai-agent",
+  info: { name: "AI agent", color: "#7c3aed" },
+};
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "thinking", editingId: null },
+  ttl: 60,
+});
+// +++
+
+// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const document = root.toJSON();
+
+  const { output: item } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        x: z.number(),
+        y: z.number(),
+        label: z.string(),
+      }),
+    }),
+    prompt: `Create an item for the artifact. Here is the document: ${document}`,
+  });
+
+  root.get("items").set("item-2", new LiveObject(item));
+});
+// +++
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "idle", editingId: null },
+  ttl: 2,
+});
+// +++
+```
+
+Additionally, use [feeds](/docs/products/sync/feeds) to store durable AI
+workflow state and pass progress updates to the UI. Link to
+[Agentic editing](/docs/products/sync/agentic-editing).
+
+### Version history [#version-history]
+
+Explain when to create a version, what the preview represents, and what gets
+restored. Show the smallest relevant combination of
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions),
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData),
+and
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion).
+
+### Multiplayer undo/redo [#multiplayer-undo-redo]
+
+Explain that each user gets an independent history. Show
+[`useUndo`](/docs/api-reference/liveblocks-react#useUndo),
+[`useRedo`](/docs/api-reference/liveblocks-react#useRedo), and batching when a
+single interaction produces many updates.
+
+### File uploads [#file-uploads]
+
+When the use case accepts uploads, explain where files appear in the artifact,
+use [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile), and link to
+the file upload documentation. Keep this section above Comments.
+
+### Comments [#comments]
+
+Explain what a comment is anchored to in this use case. Link to
+[Comments](/docs/products/comments) and show the smallest useful composer or
+thread rendering snippet.
+
+### Permissions [#permissions]
+
+Each {{use case}} is contained inside a room in your Liveblocks app, and
+permission groups can set access to the diagram. For example, your {{use case}}
+may have an editor group and a viewer group. This can be set when modifying or
+creating a room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access
+    olivier: ["*:write"],
+  },
+});
+```
+
+More complex controls can be set too, learn more under
+[Permissions](/docs/authentication/permissions).
+
+## Writing and snippet rules
+
+- Write short paragraphs that explain what the feature does in this specific use
+  case, why it matters, and how Liveblocks enables it.
+- Keep snippets brief and realistic. They should illustrate the feature, not
+  recreate a complete app or guide.
+- Link the first mention of an API, hook, component, product concept, guide, or
+  example to the exact relevant page or anchor.
+- Prefer hooks from `@liveblocks/react/suspense` in React snippets.
+- Use `// +++` around the important lines in a snippet. Never highlight import
+  lines.
+- Use `useOthers`, not `useOthersMapped`, on these pages.
+- Use the exact server-side mutation again in the Agentic editing section after
+  the generation step. Do not hide it behind a generic helper.
+- In Agentic editing, show the agent entering presence, generating validated
+  structured output, applying the mutation, and leaving presence. Keep these as
+  four flat, sequential phases.
+- Verify the current Vercel AI SDK APIs and an available model before writing a
+  new AI snippet. Do not copy a stale model name blindly.
+- Keep a video already present on the page. Give `MuxVideo` explicit `height`
+  and `width` props and use `Figure` for a linked caption.
+- Put get started cards before implementation details. Prefer the relevant
+  Next.js guides and use the same guide icon as neighboring cards.
+- Put complete examples at the bottom in `ExampleCard` components.
+- Write "Learn more under ..." at the end of implementation details when linking
+  to a product page.
+
+## Product language guardrails
+
+- **Sync** is the product and sync engine, formlery known as **Storage**.
+  Storage still remains in public API names and it refers to persistent data
+  inside Sync such as `useStorage`, `initialStorage`, and `mutateStorage`.
+- Do not rename or imply changes to public APIs.
+- Liveblocks Sync is hosted; do not say it can be self-hosted.
+- The products are **Sync**, **Comments**, and **Notifications**. Comments
+  contains threaded comments.
+- Feeds is part of Sync and is written lowercase (“feeds”) except at the start
+  of a sentence or heading. Link to `/docs/products/sync/feeds`.
+- Presence is part of Sync and is written lowercase (“presence”) except at the
+  start of a sentence or heading. Link to `/docs/products/sync/presence`.
+- Use LiveText for collaborative text editing. Do not describe LiveText as
+  coming soon. This is always the preference over Yjs, but Yjs can be mentioned
+  as an alternative.
+- Do not edit API reference pages while creating a use case page unless a link
+  is broken or the requested documentation requires a targeted correction.
+
+## Registration and verification
+
+When adding a new use case rather than rewriting an existing one:
+
+1. Add its page to `docs/routes.json`.
+2. Add its card to the docs overview if the other use cases are listed there.
+3. Add or reuse the correct use case icon. Match the neighboring icon size,
+   color behavior, and `1.5` stroke width.
+4. Record a redirect only when an already-public URL moves. Do not add a
+   redirect for a route introduced and renamed on the same unpublished branch.
+
+Before finishing:
+
+- Compare the final page with Canvas, Flowchart, and Slideshow.
+- Confirm every feature bullet reaches a matching `###` anchor.
+- Confirm every implementation heading has a short explanation, snippet, and
+  relevant links.
+- Check that all guide, product, API, and example links exist.
+- Run Prettier on every changed file.
+- Run `git diff --check` and review the diff. Docs-only edits do not require a
+  typecheck or a local docs server unless the user asks for one.
+````

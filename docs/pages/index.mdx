@@ -17,165 +17,138 @@ showTitle: false
       appearance: "primary",
     },
     {
-      title: "Browse examples",
-      href: "/examples",
+      title: "Copy prompt",
+      type: "copy-get-started-prompt",
     },
   ]}
 />
 
 <DocsHomepageGrid />
 
-## Collaboration features
+## Products
+
+Discover each Liveblocks product and how to use it.
 
 <ListGrid columns={2}>
-  <DocsCardFeature
-    feature="multiplayer"
-    href="/docs/collaboration-features/multiplayer"
+  <DocsCard
+    type="technology"
+    title="Sync"
+    href="/docs/products/sync"
+    description="Synchronize collaborative application state"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
   />
-  <DocsCardFeature
-    feature="comments"
-    href="/docs/collaboration-features/comments"
+  <DocsCard
+    type="technology"
+    title="Comments"
+    href="/docs/products/comments"
+    description="Add contextual threads, mentions, and reactions"
+    visual={<DocsMentionIcon className="fill-product-icon-brand h-auto w-6" />}
   />
-  <DocsCardFeature
-    feature="notifications"
-    href="/docs/collaboration-features/notifications"
-  />
-  <DocsCardFeature
-    feature="ai-collaboration"
-    href="/docs/collaboration-features/ai-collaboration"
-  />
-  <DocsCardFeature
-    feature="ai-copilots"
-    href="/docs/collaboration-features/ai-copilots"
+  <DocsCard
+    type="technology"
+    title="Notifications"
+    href="/docs/products/notifications"
+    description="Deliver inbox, email, and custom notifications"
+    visual={<DocsEmailIcon className="fill-product-icon-brand h-auto w-6" />}
   />
 </ListGrid>
 
-## API Reference
+## Use cases
 
-<ListGrid columns={2} defaultVisibleItems={6}>
+Explore different use cases for Liveblocks, and where to start with each.
+
+<ListGrid columns={2}>
   <DocsCard
     type="technology"
-    title="React"
-    href="/docs/api-reference/liveblocks-react"
-    description="@liveblocks/react"
-    visual={<DocsReactIcon />}
+    title="AI Collaboration"
+    href="/docs/use-cases/ai-collaboration"
+    description="Humans and agents working together"
+    visual={<DocsAiCollaborationIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="React UI"
-    href="/docs/api-reference/liveblocks-react-ui"
-    description="@liveblocks/react-ui"
-    visual={<DocsReactIcon />}
+    title="Canvas"
+    href="/docs/use-cases/canvas"
+    description="Whiteboards, design tools, spatial interfaces"
+    visual={<DocsCanvasIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="React Tiptap"
-    href="/docs/api-reference/liveblocks-react-tiptap"
-    description="@liveblocks/react-tiptap"
-    visual={<DocsReactIcon />}
+    title="Chat"
+    href="/docs/use-cases/chat"
+    description="Chat, support, communities, AI messages"
+    visual={<DocsFeedsIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="React BlockNote"
-    href="/docs/api-reference/liveblocks-react-blocknote"
-    description="@liveblocks/react-blocknote"
-    visual={<DocsReactIcon />}
+    title="Code editor"
+    href="/docs/use-cases/code-editor"
+    description="Code editing with CodeMirror and Monaco"
+    visual={<DocsCodeEditorIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="React Flow"
-    href="/docs/api-reference/liveblocks-react-flow"
-    description="@liveblocks/react-flow"
-    visual={<DocsReactIcon />}
+    title="Comments panel"
+    href="/docs/use-cases/comments-panel"
+    description="Reviews, feedback, annotations, discussions"
+    visual={<DocsMentionIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="React Lexical"
-    href="/docs/api-reference/liveblocks-react-lexical"
-    description="@liveblocks/react-lexical"
-    visual={<DocsReactIcon />}
+    title="Custom app"
+    href="/docs/use-cases/custom-app"
+    description="Build with Liveblocks collaboration primitives"
+    visual={<DocsCustomAppIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Node.js ProseMirror"
-    href="/docs/api-reference/liveblocks-node-prosemirror"
-    description="@liveblocks/node-prosemirror"
-    visual={<DocsNodejsIcon />}
+    title="Flowchart"
+    href="/docs/use-cases/flowchart"
+    description="Workflows, diagrams, process maps"
+    visual={<DocsFlowchartIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Node.js Lexical"
-    href="/docs/api-reference/liveblocks-node-lexical"
-    description="@liveblocks/node-lexical"
-    visual={<DocsNodejsIcon />}
+    title="Inbox tray"
+    href="/docs/use-cases/inbox-tray"
+    description="Inboxes, unread badges, emails, settings"
+    visual={<DocsEmailIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="JavaScript"
-    href="/docs/api-reference/liveblocks-client"
-    description="@liveblocks/client"
-    visual={<DocsJavascriptIcon />}
+    title="Presence"
+    href="/docs/use-cases/presence"
+    description="Cursors, avatars, selections, live activity"
+    visual={<DocsSyncPresenceIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Redux"
-    href="/docs/api-reference/liveblocks-redux"
-    description="@liveblocks/redux"
-    visual={<DocsReduxIcon />}
+    title="Slideshow"
+    href="/docs/use-cases/slideshow"
+    description="Presentations, pitch decks, collaborative slides"
+    visual={<DocsSlideshowIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Zustand"
-    href="/docs/api-reference/liveblocks-zustand"
-    description="@liveblocks/zustand"
-    visual={
-      <img
-        alt=""
-        src="/assets/zustand.png"
-        width={24}
-        height={24}
-        loading="lazy"
-      />
-    }
+    title="Spreadsheet"
+    href="/docs/use-cases/spreadsheet"
+    description="Spreadsheets, tables, grids, databases"
+    visual={<DocsTableIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Yjs"
-    href="/docs/api-reference/liveblocks-yjs"
-    description="@liveblocks/yjs"
-    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
-  <DocsCard
-    type="technology"
-    title="Node.js"
-    href="/docs/api-reference/liveblocks-node"
-    description="@liveblocks/node"
-    visual={<DocsNodejsIcon />}
-  />
-  <DocsCard
-    type="technology"
-    title="Node.js Emails"
-    href="/docs/api-reference/liveblocks-emails"
-    description="@liveblocks/emails"
-    visual={<DocsNodejsIcon />}
-  />
-  <DocsCard
-    type="technology"
-    title="Python"
-    href="/docs/api-reference/liveblocks-python"
-    description="Python SDK"
-    visual={<DocsPythonIcon />}
-  />
-  <DocsCard
-    type="technology"
-    title="REST API"
-    href="/docs/api-reference/rest-api-endpoints"
-    description="HTTP endpoints"
-    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
+    title="Text editor"
+    href="/docs/use-cases/text-editor"
+    description="Rich-text editing with Tiptap, Lexical, more"
+    visual={<DocsTextEditorIcon className="h-auto w-6" />}
   />
 </ListGrid>
 
 ## Examples
+
+Browse and download live code examples from our [example gallery](/examples).
+
+{/* TODO, add more relevant examples */}
 
 <ListGrid columns={2}>
   <ExampleCard
@@ -233,6 +206,169 @@ showTitle: false
     }}
     technologies={["nextjs"]}
     openInNewWindow
+  />
+</ListGrid>
+
+## API Reference
+
+Read detailed [API references](/docs/api-reference) for Liveblocks packages,
+REST API, and webhook events.
+
+<ListGrid columns={2} defaultVisibleItems={6}>
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React UI"
+    href="/docs/api-reference/liveblocks-react-ui"
+    description="@liveblocks/react-ui"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React Tiptap"
+    href="/docs/api-reference/liveblocks-react-tiptap"
+    description="@liveblocks/react-tiptap"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React BlockNote"
+    href="/docs/api-reference/liveblocks-react-blocknote"
+    description="@liveblocks/react-blocknote"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React Flow"
+    href="/docs/api-reference/liveblocks-react-flow"
+    description="@liveblocks/react-flow"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="CodeMirror"
+    href="/docs/api-reference/liveblocks-codemirror"
+    description="@liveblocks/codemirror"
+    visual={<DocsCodeEditorIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="ProseMirror"
+    href="/docs/api-reference/liveblocks-prosemirror"
+    description="@liveblocks/prosemirror"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React Lexical"
+    href="/docs/api-reference/liveblocks-react-lexical"
+    description="@liveblocks/react-lexical"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical"
+    href="/docs/api-reference/liveblocks-lexical"
+    description="@liveblocks/lexical"
+    visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js ProseMirror"
+    href="/docs/api-reference/liveblocks-node-prosemirror"
+    description="@liveblocks/node-prosemirror"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js Lexical"
+    href="/docs/api-reference/liveblocks-node-lexical"
+    description="@liveblocks/node-lexical"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux"
+    description="@liveblocks/redux"
+    visual={<DocsReduxIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/assets/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/api-reference/liveblocks-yjs"
+    description="@liveblocks/yjs"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js"
+    href="/docs/api-reference/liveblocks-node"
+    description="@liveblocks/node"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js Emails"
+    href="/docs/api-reference/liveblocks-emails"
+    description="@liveblocks/emails"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Chat SDK adapter"
+    href="/docs/api-reference/liveblocks-chat-sdk-adapter"
+    description="@liveblocks/chat-sdk-adapter"
+    visual={<DocsRobotIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Python"
+    href="/docs/api-reference/liveblocks-python"
+    description="Python SDK"
+    visual={<DocsPythonIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="REST API"
+    href="/docs/api-reference/rest-api-endpoints"
+    description="HTTP endpoints"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Webhook events"
+    href="/docs/api-reference/webhook-events"
+    description="HTTP webhook event types"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
   />
 </ListGrid>
 

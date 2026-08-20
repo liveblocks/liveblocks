@@ -1,0 +1,553 @@
+---
+meta:
+  title: "Spreadsheet"
+  parentTitle: "Use cases"
+  description:
+    "Build collaborative spreadsheets, tables, and data grids with synchronized
+    cells, live selections, AI editing, undo/redo, and comments."
+---
+
+Create a collaborative spreadsheet, table, or data grid with Liveblocks.
+Synchronize rows, columns, and cell values, show each user’s live selection, and
+let AI fill in data alongside your users. Get started with an integration, such
+as Handsontable, AG Grid, or build a custom table using primitives.
+
+<Figure
+  caption={
+    <>
+      Multiplayer editing in the{" "}
+      <a href="/examples/multiplayer-handsontable/nextjs-multiplayer-handsontable">
+        Multiplayer Handsontable
+      </a>{" "}
+      example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="J42MV2EQNiyBEdImApfGWq9bSdbhJU7JBVP3dZjVoxo"
+    alt="Example of a collaborative table"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Realtime collaboration**](#realtime-collaboration): Synchronize rows,
+  columns, and cell values between users.
+- [**Presence**](#presence): Show live cell selections, avatar stacks, and agent
+  activity.
+- [**Server-side editing**](#server-side-editing): Let trusted backend processes
+  import and update records.
+- [**Agentic editing**](#agentic-editing): Let AI agents generate and apply
+  validated table changes.
+- [**Version history**](#version-history): Save, preview, and restore complete
+  versions of the table.
+- [**Multiplayer undo/redo**](#multiplayer-undo-redo): Give each user an
+  independent history of their edits.
+- [**File uploads**](#file-uploads): Store uploaded attachments in cells.
+- [**Comments**](#comments): Attach discussions to rows and cells.
+- [**Permissions**](#permissions): Control who can view and edit the
+  spreadsheet.
+
+## Get started [#get-started]
+
+Choose the features you need for your spreadsheet. Each guide uses Next.js and
+can be combined with the others.
+
+<ListGrid columns={2} defaultVisibleItems={4}>
+  <DocsCard
+    type="technology"
+    title="Get started with Handsontable"
+    href="/docs/get-started/nextjs-multiplayer-handsontable"
+    description="Make a Handsontable data grid multiplayer"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Sync"
+    href="/docs/get-started/nextjs"
+    description="Set up a custom app with Sync"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Add comments to Handsontable"
+    href="/docs/get-started/nextjs-comments-handsontable"
+    description="Add cell comments to a Handsontable grid"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Add comments to AG Grid"
+    href="/docs/get-started/nextjs-comments-ag-grid"
+    description="Add cell comments to an AG Grid table"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with table comments"
+    href="/docs/get-started/nextjs-comments-table"
+    description="Attach comment threads to table cells"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with presence"
+    href="/docs/get-started/nextjs-presence"
+    description="Add realtime presence and selections"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented. Store permanent
+rows, columns, and cell values in [Sync](/docs/products/sync/overview). Keep
+temporary selections and active cells in
+[presence](/docs/products/sync/presence). The snippets below build a custom
+table, but the same data model works when rendering with a grid library such as
+AG Grid or Handsontable.
+
+### Realtime collaboration [#realtime-collaboration]
+
+Store rows by stable ID in a
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap), with each row a
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) keyed by column
+ID. Keep row and column order in
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) structures. Because
+each cell is a separate property, two users editing different cells in the same
+row merge cleanly, and sorting or reordering never conflicts with a cell edit.
+Read the table with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and update it
+with [`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+
+```tsx
+import { LiveObject } from "@liveblocks/client";
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+
+function Table() {
+  // +++
+  const columns = useStorage((root) => root.columns);
+  const rows = useStorage((root) => root.rows);
+  const rowOrder = useStorage((root) => root.rowOrder);
+  // +++
+
+  // +++
+  const setCell = useMutation(
+    ({ storage }, rowId: string, columnId: string, value: string) => {
+      storage.get("rows").get(rowId)?.set(columnId, value);
+    },
+    []
+  );
+  // +++
+
+  // +++
+  const addRow = useMutation(({ storage }) => {
+    const rowId = crypto.randomUUID();
+
+    storage.get("rows").set(rowId, new LiveObject({}));
+    storage.get("rowOrder").push(rowId);
+  }, []);
+  // +++
+
+  return (
+    <>
+      <table>
+        <tbody>
+          {rowOrder.map((rowId) => (
+            <tr key={rowId}>
+              {columns.map((columnId) => (
+                <td key={columnId}>
+                  <input
+                    // +++
+                    value={rows.get(rowId)?.[columnId] ?? ""}
+                    onChange={(event) =>
+                      setCell(rowId, columnId, event.target.value)
+                    }
+                    // +++
+                  />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button onClick={addRow}>Add row</button>
+    </>
+  );
+}
+```
+
+Liveblocks applies changes optimistically and resolves simultaneous edits for
+you. Read [Conflict resolution](/docs/products/sync/conflict-resolution) and
+[Data types](/docs/products/sync/data-types) to choose the right structure for
+each part of your table.
+
+### Presence [#presence]
+
+Use [presence](/docs/products/sync/presence) for information that only matters
+while someone is connected, such as their selected cell or the range they are
+highlighting. Add
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+to share a user’s selection and render other users’ selections with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers), for example as a
+colored outline around each user’s selected cell.
+
+```tsx
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function Cell({ rowId, columnId }: { rowId: string; columnId: string }) {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const selectedBy = useOthers((others) =>
+    others.find(
+      (other) =>
+        other.presence.selectedCell?.rowId === rowId &&
+        other.presence.selectedCell?.columnId === columnId
+    )
+  );
+  // +++
+
+  return (
+    <td
+      // +++
+      onFocus={() => updateMyPresence({ selectedCell: { rowId, columnId } })}
+      style={{ outline: selectedBy && `2px solid ${selectedBy.info.color}` }}
+      // +++
+    />
+  );
+}
+```
+
+Learn more under [presence](/docs/products/sync/presence).
+
+### Server-side editing [#server-side-editing]
+
+Trusted server processes can edit the spreadsheet from the back end with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage),
+for example to import records, sync a column with another system, or update a
+status when something changes elsewhere. The server reads and writes the same
+Sync data as connected users, so changes appear in realtime.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.mutateStorage("my-room-id", ({ root }) => {
+  const rowId = crypto.randomUUID();
+
+  root
+    .get("rows")
+    .set(rowId, new LiveObject({ name: "Acme Inc.", status: "Active" }));
+  root.get("rowOrder").push(rowId);
+});
+// +++
+```
+
+Learn more under [Server-side editing](/docs/products/sync/server-side-editing).
+
+### Agentic editing [#agentic-editing]
+
+To allow AI agents to modify your spreadsheet, generate your changes with AI
+then use [`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+to apply them. To show that AI is working in your app use
+[`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+to show it working—your agent will appear in [presence](#presence) alongside
+humans. Finally, remove the agent’s presence to indicate that the agent is no
+longer working.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "spreadsheet-room";
+const agent: Liveblocks["UserMeta"] = {
+  id: "ai-agent",
+  info: { name: "AI agent", color: "#7c3aed" },
+};
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "thinking", selectedCell: null },
+  ttl: 60,
+});
+// +++
+
+// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const rows = root.get("rows");
+
+  const { output: record } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        name: z.string(),
+        status: z.string(),
+      }),
+    }),
+    prompt: `Create a cell for a new lead. Here are the current rows: ${rows.toJSON()}`,
+  });
+
+  const rowId = crypto.randomUUID();
+
+  rows.set(rowId, new LiveObject(record));
+  root.get("rowOrder").push(rowId);
+});
+// +++
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "idle", selectedCell: null },
+  ttl: 2,
+});
+// +++
+```
+
+Additionally, you can use [feeds](/docs/products/sync/feeds) to store AI
+workflow state, and to pass agent status updates to the UI. Learn more under
+[Agentic editing](/docs/products/sync/agentic-editing).
+
+### Version history [#version-history]
+
+Create versions before importing data, running a bulk update, or letting an
+agent restructure the spreadsheet. Use
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
+to list versions,
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData)
+to build a read-only preview, and
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion)
+to restore the complete spreadsheet as one synchronized change.
+
+```tsx
+import { useRestoreToStorageVersion } from "@liveblocks/react/suspense";
+
+function RestoreSpreadsheet({ versionId }: { versionId: string }) {
+  // +++
+  const restore = useRestoreToStorageVersion(versionId);
+  // +++
+
+  // +++
+  return <button onClick={() => restore()}>Restore this version</button>;
+  // +++
+}
+```
+
+Automatic versions can be enabled in the dashboard, and meaningful versions can
+be created from your backend with
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+Learn more under [Version history](/docs/products/sync/version-history).
+
+### Multiplayer undo/redo [#multiplayer-undo-redo]
+
+Connect undo and redo to the spreadsheet toolbar with
+[`useUndo`](/docs/api-reference/liveblocks-react#useUndo),
+[`useRedo`](/docs/api-reference/liveblocks-react#useRedo),
+[`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo), and
+[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo). Each user’s
+history is independent, so undoing a cell edit does not reverse another
+collaborator’s work. Because a mutation is one history entry, a paste or fill
+that writes many cells becomes a single undo step.
+
+```tsx
+import {
+  useCanRedo,
+  useCanUndo,
+  useRedo,
+  useUndo,
+} from "@liveblocks/react/suspense";
+
+function SpreadsheetToolbar() {
+  // +++
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+  // +++
+
+  return (
+    <>
+      // +++
+      <button onClick={undo} disabled={!canUndo}>
+        Undo
+      </button>
+      <button onClick={redo} disabled={!canRedo}>
+        Redo
+      </button>
+      // +++
+    </>
+  );
+}
+```
+
+Learn more under
+[Multiplayer undo/redo](/docs/products/sync/multiplayer-undo-redo).
+
+### File uploads [#file-uploads]
+
+Attachment columns can hold images, documents, and other uploaded assets. Upload
+with [`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile),
+store the returned [`LiveFile`](/docs/products/sync/data-types#livefile) in the
+row’s cell, and resolve it for display with
+[`useFileUrl`](/docs/api-reference/liveblocks-react#useFileUrl).
+
+```tsx
+import type { LiveFile } from "@liveblocks/client";
+import { useMutation, useUploadFile } from "@liveblocks/react/suspense";
+
+function AttachmentCell({ rowId }: { rowId: string }) {
+  // +++
+  const uploadFile = useUploadFile();
+  const setAttachment = useMutation(
+    ({ storage }, liveFile: LiveFile) => {
+      storage.get("rows").get(rowId)?.set("attachment", liveFile);
+    },
+    [rowId]
+  );
+  // +++
+
+  return (
+    <input
+      type="file"
+      // +++
+      onChange={async (event) => {
+        const file = event.currentTarget.files?.[0];
+        if (file) setAttachment(await uploadFile(file));
+      }}
+      // +++
+    />
+  );
+}
+```
+
+Files are stored in the room, so the same [permissions](#permissions) that
+protect the table protect its attachments.
+
+### Comments [#comments]
+
+Use [Comments](/docs/products/comments) for discussions attached to the
+spreadsheet. Store the stable row and column IDs in thread metadata so a thread
+remains attached to its cell through sorting, filtering, and reordering. Filter
+threads with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) and
+create them with [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer).
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { Composer, Thread } from "@liveblocks/react-ui";
+
+function CellThreads({ rowId, columnId }: { rowId: string; columnId: string }) {
+  // +++
+  const { threads } = useThreads({
+    query: { metadata: { rowId, columnId } },
+  });
+  // +++
+
+  return (
+    <>
+      // +++
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      <Composer metadata={{ rowId, columnId }} />
+      // +++
+    </>
+  );
+}
+```
+
+The [table Comments quickstart](/docs/get-started/nextjs-comments-table) shows
+this pattern on a custom React table, and the
+[AG Grid](/docs/get-started/nextjs-comments-ag-grid) and
+[Handsontable](/docs/get-started/nextjs-comments-handsontable) guides show how
+to render comment indicators through each library’s custom cell renderers.
+
+### Permissions [#permissions]
+
+Each spreadsheet is contained inside a room in your Liveblocks app, and
+permission groups can set access to the table. For example, your spreadsheet may
+have an editor group and a viewer group. This can be set when modifying or
+creating a room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access
+    olivier: ["*:write"],
+  },
+});
+```
+
+More complex controls can be set too, learn more under
+[Permissions](/docs/authentication/permissions).
+
+## Examples [#examples]
+
+Explore complete examples that combine the features described above.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Spreadsheet",
+      slug: "ai-spreadsheet/nextjs-ai-spreadsheet",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Spreadsheet",
+      slug: "collaborative-spreadsheet-advanced/nextjs-spreadsheet-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Multiplayer Handsontable",
+      slug: "multiplayer-handsontable/nextjs-multiplayer-handsontable",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Handsontable Comments",
+      slug: "handsontable-comments/nextjs-comments-handsontable",
+      image: "/images/examples/thumbnails/comments-table.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

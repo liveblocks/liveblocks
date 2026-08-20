@@ -9,14 +9,15 @@ meta:
 
 Liveblocks is a realtime collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to add an AI agent that
-replies in [Comments](/docs/ready-made-features/comments) when mentioned in a
-thread, using [`@liveblocks/node`](/docs/api-reference/liveblocks-node), the
+replies in [Comments](/docs/products/comments) when mentioned in a thread, using
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node), the
 [Vercel AI SDK](https://ai-sdk.dev), and [Anthropic](https://anthropic.com), in
 your Next.js `/app` directory application.
 
 <Banner title="Live example">
 
-See the finished result in the [AI Comments](/examples/ai-comments/nextjs-comments-ai) example.
+See the finished result in the
+[AI Comments](/examples/ai-comments/nextjs-comments-ai) example.
 
 </Banner>
 
@@ -154,7 +155,7 @@ See the finished result in the [AI Comments](/examples/ai-comments/nextjs-commen
 
       Create an API route to receive Liveblocks webhooks. We’ll verify the
       request, only respond to
-      [`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent) events,
+      [`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent) events,
       and ignore comments that weren’t written by a human, otherwise the AI
       would reply to its own messages.
 
@@ -320,7 +321,7 @@ export async function handleAiCommentReply(data: {
           [testing webhooks locally](/docs/guides/how-to-test-webhooks-on-localhost).
       2. In the [dashboard](/dashboard), create a webhook endpoint that
           points to `/api/liveblocks-webhook` and enables the
-          [`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent)
+          [`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent)
           event.
       3. Copy your **webhook secret** (`whsec_...`) and add it to
           `.env.local` as `LIVEBLOCKS_WEBHOOK_SECRET_KEY`.
@@ -353,7 +354,7 @@ export async function handleAiCommentReply(data: {
 
     To stream the AI’s response into the comment in realtime, like in the
     [AI Comments example](/examples/ai-comments/nextjs-comments-ai), we can
-    take advantage of [Feeds](/docs/get-started/nextjs-feeds), streaming each
+    take advantage of [feeds](/docs/get-started/nextjs-feeds), streaming each
     chunk of reasoning and writing into the comment as it arrives.
 
     To get
@@ -800,7 +801,7 @@ Congratulations! You’ve set up an AI agent that replies to mentions in
 Liveblocks Comments threads.
 
 - [@liveblocks/node API reference](/docs/api-reference/liveblocks-node)
-- [Comments overview](/docs/ready-made-features/comments)
+- [Comments overview](/docs/products/comments)
 - [Webhooks documentation](/docs/platform/webhooks)
 - [How to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost)
 

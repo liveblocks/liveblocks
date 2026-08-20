@@ -1,0 +1,69 @@
+---
+meta:
+  title: "Overview"
+  parentTitle: "Notifications"
+  description:
+    "Learn how Liveblocks Notifications delivers collaboration activity in app,
+    by email, and through custom channels."
+---
+
+Liveblocks Notifications lets users catch up on collaboration activity across
+rooms. It provides a persistent inbox, unread state, subscription settings, and
+delivery workflows for built-in or custom notification kinds.
+
+<Banner title="Get started with Notifications" type="info">
+
+Build an [in-app inbox](/docs/get-started/nextjs-notifications-in-app), then add
+[email](/docs/get-started/nextjs-notifications-email), webhooks, or another
+channel when needed.
+
+</Banner>
+
+## Features [#features]
+
+- Realtime inbox notifications and unread counts
+- Ready-made inbox and notification components
+- Automatic notifications for comments and text mentions
+- Custom notification kinds for application events
+- Per-user room and channel settings
+- Email rendering and webhook delivery
+- Client, server, and REST APIs
+
+## Render an inbox [#render-an-inbox]
+
+Use the ready-made
+[`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList)
+to render notifications and handle built-in activity types.
+
+```tsx
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
+
+export function Inbox() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <InboxNotificationList>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </InboxNotificationList>
+  );
+}
+```
+
+Use [hooks](/docs/products/notifications/hooks) for custom rendering and the
+[default components](/docs/products/notifications/default-components) for the
+fastest setup.
+
+## Choose notification sources [#choose-notification-sources]
+
+[Comments](/docs/products/comments) and text editor mentions can create
+collaboration notifications automatically. Use custom notification kinds for
+events from your own product or back end.
+
+Read [Notifications concepts](/docs/products/notifications/concepts) for inbox
+notifications, activities, subscription settings, and delivery channels.

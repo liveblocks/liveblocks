@@ -312,7 +312,7 @@ the input. `isTyping` will be set when the user is writing a draft.
 The middleware option
 [`presenceMapping: { isTyping: true }`](/docs/api-reference/liveblocks-zustand#middleware-option-presence-mapping)
 means that we want to automatically sync the part of the state named `isTyping`
-to Liveblocks Presence.
+to Liveblocks presence.
 
 ```ts highlight="7-9,19-21,25" file="src/store.ts"
 import create from "zustand";
@@ -426,7 +426,7 @@ persist them with Liveblocks.
 To achieve that, we are going to use the middleware option
 [`storageMapping: { todos: true }`](/docs/api-reference/liveblocks-zustand#middleware-option-storage-mapping).
 It means that the part of the state named `todos` should be automatically synced
-with Liveblocks Storage.
+with Storage.
 
 ```ts highlight="6,8-9,19,21-29,34" file="src/store.ts"
 /* ... */

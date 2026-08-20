@@ -1,0 +1,144 @@
+---
+meta:
+  title: "Integrations"
+  parentTitle: "Sync"
+  description:
+    "Connect Sync to text editors, code editors, flowcharts, and state
+    management libraries."
+---
+
+Sync integrations connect Storage, LiveText, or Yjs to an existing editor,
+canvas, diagram, or state library. Start from the application surface you are
+building, then follow its get-started guide and API reference.
+
+## Text editors [#text-editors]
+
+For new text-editor integrations, use LiveText and an editor adapter where
+available. It keeps collaborative text inside Storage and shares Sync features
+such as history and agentic editing.
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Tiptap"
+    href="/docs/use-cases/text-editor"
+    description="LiveText and Yjs collaboration modes"
+    visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="BlockNote"
+    href="/docs/get-started/nextjs-blocknote"
+    description="Collaborative BlockNote documents"
+    visual={
+      <DocsBlocknotejsIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical"
+    href="/docs/get-started/nextjs-lexical"
+    description="Collaborative Lexical documents"
+    visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="ProseMirror"
+    href="/docs/api-reference/liveblocks-prosemirror"
+    description="@liveblocks/prosemirror"
+    visual={
+      <DocsJavascriptIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+</ListGrid>
+
+## Code editors [#code-editors]
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="CodeMirror"
+    href="/docs/use-cases/code-editor"
+    description="Build on LiveText or Liveblocks Yjs"
+    visual={<DocsCodeEditorIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Monaco"
+    href="/docs/get-started/yjs-monaco-react"
+    description="Connect Monaco through Liveblocks Yjs"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Canvas and flowcharts [#canvas-and-flowcharts]
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="React Flow"
+    href="/docs/use-cases/flowchart"
+    description="@liveblocks/react-flow"
+    visual={<DocsFlowchartIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="tldraw"
+    href="/docs/get-started/nextjs-tldraw"
+    description="Collaborative canvases and whiteboards"
+    visual={<DocsCanvasIcon className="h-auto w-6" />}
+  />
+</ListGrid>
+
+## State management [#state-management]
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/assets/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux"
+    description="@liveblocks/redux"
+    visual={<DocsReduxIcon />}
+  />
+</ListGrid>
+
+## Spreadsheets and data grids [#spreadsheets-and-data-grids]
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Handsontable"
+    href="/docs/use-cases/spreadsheet"
+    description="Synchronize cells, selections, and history"
+    visual={<DocsTableIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Custom tables"
+    href="/docs/use-cases/spreadsheet"
+    description="Combine Storage with table comments"
+    visual={<DocsTableIcon className="h-auto w-6" />}
+  />
+</ListGrid>
+
+## Yjs ecosystem [#yjs-ecosystem]
+
+Use [Liveblocks Yjs](/docs/products/sync/yjs) when an existing integration
+expects a `Y.Doc`, awareness, or another Yjs primitive. The
+[`@liveblocks/yjs` API reference](/docs/api-reference/liveblocks-yjs) covers the
+provider and configuration.
