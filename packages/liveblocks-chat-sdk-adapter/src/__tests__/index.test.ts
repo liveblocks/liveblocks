@@ -17,6 +17,8 @@ import {
   getRoomIdFromChannelId,
   LiveblocksAdapter,
   type LiveblocksAdapterConfig,
+  type LiveblocksSecretValue,
+  type LiveblocksWebhookVerifier,
 } from "../adapter";
 
 type AdapterConfig = LiveblocksAdapterConfig<BaseUserMeta, BaseGroupInfo>;
@@ -31,6 +33,8 @@ const mocks = vi.hoisted(() => {
   }
   return {
     MockLiveblocksError,
+    mockLiveblocksConstructor: vi.fn(),
+    mockWebhookHandlerConstructor: vi.fn(),
     mockVerifyRequest: vi.fn(),
     mockGetComment: vi.fn(),
     mockGetThread: vi.fn(),
@@ -47,7 +51,8 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("@liveblocks/node", () => ({
-  Liveblocks: vi.fn(function () {
+  Liveblocks: vi.fn(function (options: { secret: string }) {
+    mocks.mockLiveblocksConstructor(options);
     return {
       getComment: mocks.mockGetComment,
       getThread: mocks.mockGetThread,
@@ -62,7 +67,8 @@ vi.mock("@liveblocks/node", () => ({
       getAttachment: mocks.mockGetAttachment,
     };
   }),
-  WebhookHandler: vi.fn(function () {
+  WebhookHandler: vi.fn(function (secret: string) {
+    mocks.mockWebhookHandlerConstructor(secret);
     return {
       verifyRequest: mocks.mockVerifyRequest,
     };
@@ -71,17 +77,32 @@ vi.mock("@liveblocks/node", () => ({
 }));
 
 function createDummyAdapter(options?: {
+  apiKey?: LiveblocksSecretValue;
   botUserId?: string;
   resolveUsers?: AdapterConfig["resolveUsers"];
   resolveGroupsInfo?: AdapterConfig["resolveGroupsInfo"];
+  webhookSecret?: LiveblocksSecretValue;
+  webhookVerifier?: LiveblocksWebhookVerifier;
 }) {
-  return new LiveblocksAdapter({
-    apiKey: "sk_test_xxx",
-    webhookSecret: "whsec_test_xxx",
+  const baseConfig = {
+    apiKey: options?.apiKey ?? "sk_test_xxx",
     botUserId: options?.botUserId ?? "bot-user-id",
     botUserName: "Bot",
     resolveUsers: options?.resolveUsers,
     resolveGroupsInfo: options?.resolveGroupsInfo,
+  };
+
+  if (options?.webhookVerifier !== undefined) {
+    return new LiveblocksAdapter({
+      ...baseConfig,
+      webhookSecret: options.webhookSecret,
+      webhookVerifier: options.webhookVerifier,
+    });
+  }
+
+  return new LiveblocksAdapter({
+    ...baseConfig,
+    webhookSecret: options?.webhookSecret ?? "whsec_test_xxx",
   });
 }
 
@@ -130,6 +151,8 @@ function createDummyThread(
 
 describe("LiveblocksAdapter", () => {
   beforeEach(() => {
+    mocks.mockLiveblocksConstructor.mockReset();
+    mocks.mockWebhookHandlerConstructor.mockReset();
     mocks.mockVerifyRequest.mockReset();
     mocks.mockGetComment.mockReset();
     mocks.mockGetThread.mockReset();
@@ -266,7 +289,267 @@ describe("LiveblocksAdapter", () => {
     });
   });
 
+  describe("credential resolvers", () => {
+    test("resolves a fresh synchronous API key for every REST call", async () => {
+      const apiKey = vi
+        .fn<() => string>()
+        .mockReturnValueOnce("sk_first")
+        .mockReturnValueOnce("sk_second");
+      const adapter = createDummyAdapter({ apiKey });
+      const returnedComment = createDummyComment({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+        },
+      });
+      mocks.mockCreateComment.mockResolvedValue(returnedComment);
+
+      await adapter.postMessage("liveblocks:room_1:th_1", "First");
+      await adapter.postMessage("liveblocks:room_1:th_1", "Second");
+
+      expect(apiKey).toHaveBeenCalledTimes(2);
+      expect(mocks.mockLiveblocksConstructor).toHaveBeenNthCalledWith(1, {
+        secret: "sk_first",
+      });
+      expect(mocks.mockLiveblocksConstructor).toHaveBeenNthCalledWith(2, {
+        secret: "sk_second",
+      });
+    });
+
+    test("awaits an asynchronous API key resolver", async () => {
+      const apiKey = vi.fn(() => Promise.resolve("sk_async"));
+      const adapter = createDummyAdapter({ apiKey });
+
+      await adapter.deleteMessage("liveblocks:room_1:th_1", "cm_1");
+
+      expect(apiKey).toHaveBeenCalledTimes(1);
+      expect(mocks.mockLiveblocksConstructor).toHaveBeenCalledWith({
+        secret: "sk_async",
+      });
+    });
+
+    test("propagates API key resolver errors", async () => {
+      const error = new Error("could not resolve API key");
+      const adapter = createDummyAdapter({
+        apiKey: () => Promise.reject(error),
+      });
+
+      await expect(
+        adapter.deleteMessage("liveblocks:room_1:th_1", "cm_1")
+      ).rejects.toBe(error);
+      expect(mocks.mockDeleteComment).not.toHaveBeenCalled();
+    });
+
+    test("resolves a fresh API key when attachment data is fetched", async () => {
+      const apiKey = vi
+        .fn<() => string>()
+        .mockReturnValueOnce("sk_thread")
+        .mockReturnValueOnce("sk_attachment");
+      const adapter = createDummyAdapter({ apiKey });
+      mocks.mockGetThread.mockResolvedValue(
+        createDummyThread([
+          createDummyComment({
+            attachments: [
+              {
+                type: "attachment",
+                id: "att_1",
+                name: "test.txt",
+                mimeType: "text/plain",
+                size: 5,
+              },
+            ],
+            body: {
+              version: 1,
+              content: [{ type: "paragraph", children: [{ text: "x" }] }],
+            },
+          }),
+        ])
+      );
+      mocks.mockGetAttachment.mockResolvedValue({
+        url: "https://storage.example.com/att_1",
+      });
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response("hello", { status: 200 }));
+
+      const { messages } = await adapter.fetchMessages(
+        "liveblocks:room_1:th_1"
+      );
+      await messages[0]!.attachments[0]!.fetchData!();
+
+      expect(apiKey).toHaveBeenCalledTimes(2);
+      expect(mocks.mockLiveblocksConstructor).toHaveBeenNthCalledWith(2, {
+        secret: "sk_attachment",
+      });
+      fetchSpy.mockRestore();
+    });
+
+    test("resolves a fresh synchronous webhook secret for every request", async () => {
+      const webhookSecret = vi
+        .fn<() => string>()
+        .mockReturnValueOnce("whsec_first")
+        .mockReturnValueOnce("whsec_second");
+      const adapter = createDummyAdapter({ webhookSecret });
+      mocks.mockVerifyRequest.mockReturnValue({
+        type: "userEntered",
+        data: {},
+      });
+
+      await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        })
+      );
+      await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        })
+      );
+
+      expect(webhookSecret).toHaveBeenCalledTimes(2);
+      expect(mocks.mockWebhookHandlerConstructor).toHaveBeenNthCalledWith(
+        1,
+        "whsec_first"
+      );
+      expect(mocks.mockWebhookHandlerConstructor).toHaveBeenNthCalledWith(
+        2,
+        "whsec_second"
+      );
+    });
+
+    test("awaits an asynchronous webhook secret resolver", async () => {
+      const webhookSecret = vi.fn(() => Promise.resolve("whsec_async"));
+      const adapter = createDummyAdapter({ webhookSecret });
+      mocks.mockVerifyRequest.mockReturnValue({
+        type: "userEntered",
+        data: {},
+      });
+
+      const response = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(mocks.mockWebhookHandlerConstructor).toHaveBeenCalledWith(
+        "whsec_async"
+      );
+    });
+  });
+
   describe("handleWebhook", () => {
+    test("accepts a request verified by a custom webhook verifier", async () => {
+      const body = JSON.stringify({ type: "userEntered", data: {} });
+      const request = new Request("https://example.com/webhook", {
+        method: "POST",
+        body,
+      });
+      const webhookVerifier = vi.fn(() => true);
+      const adapter = createDummyAdapter({ webhookVerifier });
+
+      const response = await adapter.handleWebhook(request);
+
+      expect(response.status).toBe(200);
+      expect(webhookVerifier).toHaveBeenCalledWith(request, body);
+    });
+
+    test("awaits an asynchronous webhook verifier", async () => {
+      const adapter = createDummyAdapter({
+        webhookVerifier: () => Promise.resolve(true),
+      });
+
+      const response = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: JSON.stringify({ type: "userEntered", data: {} }),
+        })
+      );
+
+      expect(response.status).toBe(200);
+    });
+
+    test("returns 401 when the webhook verifier returns a falsy value", async () => {
+      const adapter = createDummyAdapter({ webhookVerifier: () => false });
+
+      const response = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        })
+      );
+
+      expect(response.status).toBe(401);
+    });
+
+    test("returns 401 when the webhook verifier throws", async () => {
+      const adapter = createDummyAdapter({
+        webhookVerifier: () => {
+          throw new Error("invalid token");
+        },
+      });
+
+      const response = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        })
+      );
+
+      expect(response.status).toBe(401);
+    });
+
+    test("uses the webhook verifier instead of a configured secret", async () => {
+      const webhookSecret = vi.fn(() => "whsec_unused");
+      const adapter = createDummyAdapter({
+        webhookSecret,
+        webhookVerifier: () => true,
+      });
+
+      const response = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: JSON.stringify({ type: "userEntered", data: {} }),
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(webhookSecret).not.toHaveBeenCalled();
+      expect(mocks.mockWebhookHandlerConstructor).not.toHaveBeenCalled();
+    });
+
+    test("uses a string returned by the webhook verifier as the event body", async () => {
+      const adapter = createDummyAdapter({
+        webhookVerifier: () =>
+          JSON.stringify({ type: "userEntered", data: {} }),
+      });
+
+      const response = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "not JSON",
+        })
+      );
+
+      expect(response.status).toBe(200);
+    });
+
+    test("returns 400 when a verified webhook body is invalid JSON", async () => {
+      const adapter = createDummyAdapter({ webhookVerifier: () => true });
+
+      const response = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "not JSON",
+        })
+      );
+
+      expect(response.status).toBe(400);
+    });
+
     test("returns 401 when verification fails", async () => {
       const adapter = createDummyAdapter();
       mocks.mockVerifyRequest.mockImplementation(() => {
