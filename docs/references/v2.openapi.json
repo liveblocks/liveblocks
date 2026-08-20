@@ -6963,7 +6963,7 @@
       "post": {
         "summary": "Create project",
         "x-badge": "Beta",
-        "description": "Creates a new project within your account. This endpoint requires the `write:all` scope. You can specify the project type, name, and version creation timeout. Upon success, returns information about the newly created project, including its ID, keys, region, and settings.",
+        "description": "Creates a new project within your account. This endpoint requires the `write:all` scope. You can specify the project type, name, region, and version creation timeout. Upon success, returns information about the newly created project, including its ID, keys, region, and settings.",
         "tags": ["Management"],
         "responses": {
           "200": {
@@ -7025,6 +7025,7 @@
                     "name": "Frimousse",
                     "description": "A lightweight, unstyled, and composable emoji picker for React.",
                     "type": "dev",
+                    "region": "earth",
                     "versionCreationTimeout": false
                   }
                 }
@@ -12011,6 +12012,7 @@
       "ManagementProjectRegion": {
         "title": "ManagementProjectRegion",
         "type": "string",
+        "description": "The region where the project's data is stored and processed.",
         "enum": ["earth", "eu", "fedramp"],
         "example": "earth"
       },
@@ -12218,6 +12220,10 @@
           "type": {
             "$ref": "#/components/schemas/ManagementProjectType"
           },
+          "region": {
+            "$ref": "#/components/schemas/ManagementProjectRegion",
+            "default": "earth"
+          },
           "versionCreationTimeout": {
             "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout",
             "default": false
@@ -12228,6 +12234,7 @@
           "name": "My Project",
           "description": "Project description",
           "type": "dev",
+          "region": "earth",
           "versionCreationTimeout": false
         }
       },

@@ -212,7 +212,6 @@ instead.
       ```tsx file="Editor.tsx"
       "use client";
 
-      import { useCallback, useSyncExternalStore } from "react";
       import { LexicalComposer } from "@lexical/react/LexicalComposer";
       import { ContentEditable } from "@lexical/react/LexicalContentEditable";
       import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
@@ -221,19 +220,11 @@ instead.
         LiveblocksCollaborationPlugin,
         RemoteCursorsPlugin,
       } from "@liveblocks/lexical";
-      import type { Room } from "@liveblocks/client";
-      import { useRoom } from "@liveblocks/react/suspense";
+      import { useMutableStorage } from "@liveblocks/react/suspense";
       import "@liveblocks/lexical/styles.css";
 
       export function Editor() {
-        const room = useRoom();
-        const root = useRoot(room);
-
-        if (root === null) {
-          return <div>Loading…</div>;
-        }
-
-        const document = root.get("document");
+        const document = useMutableStorage().get("document");
 
         return (
           <LexicalComposer
@@ -255,13 +246,6 @@ instead.
             </div>
           </LexicalComposer>
         );
-      }
-
-      function useRoot(room: Room) {
-        const subscribe = room.events.storageDidLoad.subscribeOnce;
-        const getSnapshot = room.getStorageOrNull;
-        const getServerSnapshot = useCallback(() => null, []);
-        return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
       }
       ```
 

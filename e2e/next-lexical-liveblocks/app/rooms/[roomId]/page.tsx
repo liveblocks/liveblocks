@@ -28,18 +28,22 @@ import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { $insertNodeToNearestRoot } from "@lexical/utils";
-import { LiveList, LiveObject, LiveText, type Room } from "@liveblocks/client";
+import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
 import {
   LiveblocksCollaborationPlugin,
   RemoteCursorsPlugin,
 } from "@liveblocks/lexical";
-import { ClientSideSuspense, RoomProvider, useRoom } from "@liveblocks/react";
+import {
+  ClientSideSuspense,
+  RoomProvider,
+  useMutableStorage,
+} from "@liveblocks/react/suspense";
 import {
   $getSelection,
   $isRangeSelection,
   COMMAND_PRIORITY_EDITOR,
 } from "lexical";
-import { use, useCallback, useEffect, useSyncExternalStore } from "react";
+import { use, useEffect } from "react";
 
 import { ImageNode } from "./nodes/ImageNode";
 import { MentionNode } from "./nodes/MentionNode";
@@ -102,17 +106,7 @@ export default function RoomPage({
 }
 
 function Editor() {
-  const room = useRoom();
-  const root = useRoot(room);
-  if (root === null) {
-    return (
-      <div className="p-4 text-neutral-500 dark:text-neutral-400">
-        Loading room data…
-      </div>
-    );
-  }
-
-  const document = root.get("document");
+  const document = useMutableStorage().get("document");
 
   return (
     <LexicalComposer
@@ -185,15 +179,6 @@ function HorizontalRulePlugin() {
   }, [editor]);
 
   return null;
-}
-
-function useRoot(room: Room) {
-  const subscribe = room.events.storageDidLoad.subscribeOnce;
-  const getSnapshot = room.getStorageOrNull;
-  const getServerSnapshot = useCallback(() => {
-    return null;
-  }, []);
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 const THEME = {

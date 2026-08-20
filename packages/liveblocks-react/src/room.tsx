@@ -64,6 +64,7 @@ import {
   HttpError,
   kInternal,
   makePoller,
+  nn,
   ServerMsgCode,
   stableStringify,
 } from "@liveblocks/core";
@@ -1371,7 +1372,7 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
 /**
  * @internal
  */
-function useMutableStorageRoot_withRoomContext<S extends LsonObject>(
+function useMutableStorage_withRoomContext<S extends LsonObject>(
   RoomContext: Context<OpaqueRoom | null>
 ): LiveObject<S> | null {
   const room = useRoom_withRoomContext<never, S, never, never, never, never>(
@@ -1383,16 +1384,19 @@ function useMutableStorageRoot_withRoomContext<S extends LsonObject>(
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
+function useMutableStorage<S extends LsonObject>(): LiveObject<S> | null {
+  return useMutableStorage_withRoomContext<S>(GlobalRoomContext);
+}
+
 /**
  * @internal
  */
 function useStorageRoot_withRoomContext<S extends LsonObject>(
   RoomContext: Context<OpaqueRoom | null>
 ): [root: LiveObject<S> | null] {
-  return [useMutableStorageRoot_withRoomContext<S>(RoomContext)];
+  return [useMutableStorage_withRoomContext<S>(RoomContext)];
 }
 
-// NOTE: This API exists for backward compatible reasons
 function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
   return useStorageRoot_withRoomContext<S>(GlobalRoomContext);
 }
@@ -1411,7 +1415,7 @@ function useStorage_withRoomContext<S extends LsonObject, T>(
   const room = useRoom_withRoomContext<never, S, never, never, never, never>(
     RoomContext
   );
-  const rootOrNull = useMutableStorageRoot_withRoomContext<S>(RoomContext);
+  const rootOrNull = useMutableStorage_withRoomContext<S>(RoomContext);
 
   const wrappedSelector = useCallback(
     (rootOrNull: Snapshot): Selection =>
@@ -2800,7 +2804,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
               threadId,
               optimisticId,
               { resolved: true },
-              updatedAt
+              new Date()
             );
           },
           (err: Error) =>
@@ -2864,7 +2868,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
               threadId,
               optimisticId,
               { resolved: false },
-              updatedAt
+              new Date()
             );
           },
           (err: Error) =>
@@ -3752,6 +3756,23 @@ export function useSuspendUntilStorageReady(): void {
 /**
  * @internal
  */
+function useMutableStorageSuspense_withRoomContext<S extends LsonObject>(
+  RoomContext: Context<OpaqueRoom | null>
+): LiveObject<S> {
+  useSuspendUntilStorageReady_withRoomContext(RoomContext);
+  return nn(
+    useMutableStorage_withRoomContext<S>(RoomContext),
+    "Storage should be loaded here"
+  );
+}
+
+function useMutableStorageSuspense<S extends LsonObject>(): LiveObject<S> {
+  return useMutableStorageSuspense_withRoomContext<S>(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
 function useStorageSuspense_withRoomContext<S extends LsonObject, T>(
   RoomContext: Context<OpaqueRoom | null>,
   selector: (root: ToJson<S>) => T,
@@ -4240,6 +4261,10 @@ export function createRoomContext<
     return useCanRedo_withRoomContext(BoundRoomContext);
   }
 
+  function useMutableStorage_withBoundRoomContext() {
+    return useMutableStorage_withRoomContext<S>(BoundRoomContext);
+  }
+
   function useStorageRoot_withBoundRoomContext() {
     return useStorageRoot_withRoomContext<S>(BoundRoomContext);
   }
@@ -4248,6 +4273,10 @@ export function createRoomContext<
     ...args: Parameters<typeof useStorage<S, T>>
   ) {
     return useStorage_withRoomContext<S, T>(BoundRoomContext, ...args);
+  }
+
+  function useMutableStorageSuspense_withBoundRoomContext() {
+    return useMutableStorageSuspense_withRoomContext<S>(BoundRoomContext);
   }
 
   function useStorageSuspense_withBoundRoomContext<T>(
@@ -4569,6 +4598,8 @@ export function createRoomContext<
     useCanRedo: useCanRedo_withBoundRoomContext as TRoomBundle["useCanRedo"],
 
     // prettier-ignore
+    useMutableStorage: useMutableStorage_withBoundRoomContext as TRoomBundle["useMutableStorage"],
+    // prettier-ignore
     useStorageRoot: useStorageRoot_withBoundRoomContext as TRoomBundle["useStorageRoot"],
     // prettier-ignore
     useStorage: useStorage_withBoundRoomContext as TRoomBundle["useStorage"],
@@ -4696,6 +4727,8 @@ export function createRoomContext<
       // prettier-ignore
       useCanRedo: useCanRedo_withBoundRoomContext as TRoomBundle["suspense"]["useCanRedo"],
 
+      // prettier-ignore
+      useMutableStorage: useMutableStorageSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useMutableStorage"],
       // prettier-ignore
       useStorageRoot: useStorageRoot_withBoundRoomContext as TRoomBundle["suspense"]["useStorageRoot"],
       // prettier-ignore
@@ -5300,6 +5333,37 @@ const _useStorageSuspense: TypedBundle["suspense"]["useStorage"] =
   useStorageSuspense;
 
 /**
+ * Returns the mutable Storage root, or `null` while Storage is still loading.
+ *
+ * Unlike `useStorage()`, this hook is not reactive: your component will
+ * re-render only once, when Storage has finished loading. It will not
+ * re-render when the contents of the returned tree change. Use it when you
+ * need direct access to a mutable Live structure, for example to hand
+ * a `LiveText` node to a text editor binding.
+ *
+ * @example
+ * const root = useMutableStorage();
+ * const liveText = root?.get("myLiveText");
+ */
+const _useMutableStorage: TypedBundle["useMutableStorage"] = useMutableStorage;
+
+/**
+ * Returns the mutable Storage root, suspending until Storage has finished
+ * loading.
+ *
+ * Unlike `useStorage()`, this hook is not reactive: your component will not
+ * re-render when the contents of the returned tree change. Use it when you
+ * need direct access to a mutable Live structure, for example to hand
+ * a `LiveText` node to a text editor binding.
+ *
+ * @example
+ * const root = useMutableStorage();
+ * const liveText = root.get("myLiveText");
+ */
+const _useMutableStorageSuspense: TypedBundle["suspense"]["useMutableStorage"] =
+  useMutableStorageSuspense;
+
+/**
  * Gets the current user once it is connected to the room.
  *
  * @example
@@ -5378,8 +5442,11 @@ function _useSelfSuspense(...args: any[]) {
 }
 
 /**
- * Returns the mutable (!) Storage root. This hook exists for
- * backward-compatible reasons.
+ * Returns the mutable (!) Storage root, wrapped in a 1-tuple.
+ *
+ * @deprecated Use {@link useMutableStorage} instead, which returns the root
+ * directly instead of wrapping it in a 1-tuple, and which does not return
+ * `null` in its Suspense version.
  *
  * @example
  * const [root] = useStorageRoot();
@@ -5453,6 +5520,8 @@ export {
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
   useMentionSuggestionsCache,
+  _useMutableStorage as useMutableStorage,
+  _useMutableStorageSuspense as useMutableStorageSuspense,
   _useMutation as useMutation,
   _useMyPresence as useMyPresence,
   _useOther as useOther,

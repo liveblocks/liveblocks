@@ -1,19 +1,17 @@
 "use client";
 
-import { ClientSideSuspense, RoomProvider, useRoom } from "@liveblocks/react";
+import {
+  ClientSideSuspense,
+  RoomProvider,
+  useMutableStorage,
+  useRoom,
+} from "@liveblocks/react/suspense";
 import {
   createLiveblocksPresencePlugin,
   createLiveblocksSyncPlugin,
 } from "@liveblocks/codemirror";
-import {
-  use,
-  useCallback,
-  useEffect,
-  useRef,
-  useSyncExternalStore,
-} from "react";
+import { use, useEffect, useRef } from "react";
 import { EditorState } from "@codemirror/state";
-import { Room } from "@liveblocks/client";
 import { LiveText } from "@liveblocks/core";
 import { EditorView } from "@codemirror/view";
 
@@ -41,16 +39,7 @@ export default function RoomPage({
 
 function Editor() {
   const room = useRoom();
-  const root = useRoot(room);
-  if (root == null) {
-    return <div>Loading room data…</div>;
-  }
-
-  return <EditorInner text={root.get("document")} />;
-}
-
-function EditorInner({ text }: { text: LiveText }) {
-  const room = useRoom();
+  const text = useMutableStorage().get("document");
   const container = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
 
@@ -80,13 +69,4 @@ function EditorInner({ text }: { text: LiveText }) {
       <div ref={container} className="h-full [&_.cm-editor]:h-full" />
     </div>
   );
-}
-
-function useRoot(room: Room) {
-  const subscribe = room.events.storageDidLoad.subscribeOnce;
-  const getSnapshot = room.getStorageOrNull;
-  const getServerSnapshot = useCallback(() => {
-    return null;
-  }, []);
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

@@ -2113,7 +2113,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     return this.#updateThread(
       threadId,
       optimisticId,
-      (thread) => ({ ...thread, ...compactObject(patch) }),
+      (thread) => ({ ...thread, ...compactObject(patch), updatedAt }),
       updatedAt
     );
   }
