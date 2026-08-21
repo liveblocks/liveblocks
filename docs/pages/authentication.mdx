@@ -391,6 +391,40 @@ const room = await liveblocks.getRoom("a32wQXid4A9");
 console.log(room.data.usersAccesses);
 ```
 
+## Token lifetime [#token-lifetime]
+
+Both ID tokens and access tokens are short-lived
+[JSON Web Tokens](https://en.wikipedia.org/wiki/JSON_Web_Token) that are
+currently valid for one hour after being issued. You don’t need to manage this
+yourself—the Liveblocks client caches tokens in memory, and automatically calls
+your authentication endpoint again when a token is about to expire.
+
+<Banner title="Don't cache tokens" type="warning">
+
+Never cache tokens yourself, or add caching to your authentication endpoint, as
+your client will not function correctly. The Liveblocks client handles caching
+for you, only requesting a new token when necessary.
+
+</Banner>
+
+### Revoking access [#revoking-access]
+
+How quickly a permission change takes effect depends on the token type you use:
+
+- **ID tokens**: permissions live on the room, and are checked “at the door”
+  every time a token is used to enter a room. Removing a user’s access with
+  [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
+  means they’ll be denied entry the next time they try to connect.
+- **Access tokens**: permissions are baked into the token itself when it’s
+  created. Removing a user’s access in your own system doesn’t invalidate tokens
+  that were already issued—those remain valid until they expire. If you need
+  access changes to apply promptly, we recommend [ID tokens](#id-token).
+
+To force a signed-out user to reauthenticate, for example after they log out of
+your app, call
+[`client.logout()`](/docs/api-reference/liveblocks-client#Client.logout), which
+purges cached tokens from the client’s memory.
+
 ## Select your framework [#select-your-framework]
 
 Select your framework for specific instructions on setting up ID token

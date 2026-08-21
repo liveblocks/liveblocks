@@ -21,6 +21,10 @@
       "name": "Authentication"
     },
     {
+      "id": "rooms",
+      "name": "Rooms"
+    },
+    {
       "id": "frameworks",
       "name": "Frameworks"
     },
