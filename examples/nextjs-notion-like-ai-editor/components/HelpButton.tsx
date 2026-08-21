@@ -35,15 +35,9 @@ const FEATURES: Feature[] = [
   },
   {
     icon: <CommentIcon />,
-    title: "Comments and threads",
+    title: "AI document creation",
     description:
-      "Highlight any text to leave comments and resolve discussion threads inline.",
-  },
-  {
-    icon: <AtIcon />,
-    title: "Mentions",
-    description:
-      "Type @ to mention teammates and notify them about the document.",
+      "Ask the AI chat to create new documents, pre-filled with generated content.",
   },
 ];
 
@@ -352,15 +346,6 @@ function EditIcon() {
     <FeatureIconBase>
       <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
       <path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z" />
-    </FeatureIconBase>
-  );
-}
-
-function AtIcon() {
-  return (
-    <FeatureIconBase>
-      <circle cx={12} cy={12} r={4} />
-      <path d="M16 8v5a3 3 0 006 0v-1a10 10 0 10-3.92 7.94" />
     </FeatureIconBase>
   );
 }

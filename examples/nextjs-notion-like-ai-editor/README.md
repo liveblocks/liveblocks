@@ -23,7 +23,7 @@
 
 This example shows how to build a collaborative text editor with an AI toolbar using [Liveblocks](https://liveblocks.io), [Lexical](https://lexical.dev/), [Vercel AI SDK](https://sdk.vercel.ai/), and [Next.js](https://nextjs.org/).
 
-As users edit the document, changes will be automatically persisted and synced—allowing for an editor that updates in real-time across clients. Users will also be able to see who see each other’s cursors in the document. Query AI to generate improvements and new content.
+As users edit the document, changes are automatically persisted and synced in real time across clients. Users can see each other's cursors in the document. Select text to open the custom AI floating toolbar and generate improvements, or use the AI chat page to draft new documents from Markdown.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/notion-like-ai-editor.png" width="536" alt="Collaborative Text Editor" />
 

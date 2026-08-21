@@ -1,5 +1,6 @@
 "use client";
 
+import { LiveList, LiveObject, LiveText } from "@liveblocks/client";
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
@@ -18,10 +19,30 @@ export function Room({
     <RoomProvider
       id={roomId}
       initialPresence={{
-        cursor: null,
+        selection: null,
       }}
       initialStorage={{
         title: "Untitled document",
+        document: new LiveObject({
+          kind: "root",
+          type: "root",
+          version: 1,
+          children: new LiveList([
+            new LiveObject({
+              kind: "element",
+              type: "paragraph",
+              version: 1,
+              children: new LiveList([
+                new LiveObject({
+                  kind: "text",
+                  type: "text",
+                  version: 1,
+                  content: new LiveText(),
+                }),
+              ]),
+            }),
+          ]),
+        }),
       }}
     >
       {children}

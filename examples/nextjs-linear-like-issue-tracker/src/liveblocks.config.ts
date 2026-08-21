@@ -1,4 +1,5 @@
-import { LiveList, LiveObject, ToJson } from "@liveblocks/client";
+import { LiveList, LiveObject, ToJson, type Json } from "@liveblocks/client";
+import type { LiveLexicalSelection, LiveRootNode } from "@liveblocks/lexical";
 import { Metadata, IssuePriorityId, IssueProgressId } from "@/config";
 
 declare global {
@@ -65,9 +66,11 @@ declare global {
       }>;
       labels: LiveList<string>;
       links: LiveList<string>;
+      document: LiveRootNode;
     };
     Presence: {
       editingTypes: string[];
+      selection: LiveLexicalSelection | null;
     };
     RoomInfo: {
       id: string;
@@ -76,4 +79,9 @@ declare global {
   }
 }
 
-export type ImmutableStorage = ToJson<Liveblocks["Storage"]>;
+export type ImmutableStorage = Omit<
+  ToJson<Liveblocks["Storage"]>,
+  "document"
+> & {
+  document?: Json;
+};

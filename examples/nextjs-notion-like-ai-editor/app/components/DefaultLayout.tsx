@@ -1,4 +1,3 @@
-import { Notifications } from "./Notifications";
 import { Logo } from "./Logo";
 import { createRoom } from "../utils/liveblocks";
 import { redirect } from "next/navigation";
@@ -36,7 +35,6 @@ export default async function DefaultLayout({
         </div>
 
         <div className="p-2 flex flex-col gap-0.5">
-          <Notifications />
           <CreateWithAiLink />
         </div>
 

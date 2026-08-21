@@ -1,7 +1,6 @@
 import "@/liveblocks.config";
 import { nanoid } from "nanoid";
 import { LiveList, LiveObject, toPlainLson } from "@liveblocks/client";
-import { withLexicalDocument } from "@liveblocks/node-lexical";
 import {
   getRoomId,
   type IssueLabelId,
@@ -10,8 +9,8 @@ import {
   type Metadata,
 } from "@/config";
 import { hideAiPresence } from "@/lib/ai-remote-presence";
-import { applyIssueDescriptionMarkdown } from "@/lib/apply-issue-description-markdown";
 import { ISSUE_LEXICAL_NODES } from "@/lib/issue-lexical-nodes";
+import { markdownToLiveDocument } from "@/lib/lexical-live-storage";
 import { liveblocks } from "@/liveblocks.server.config";
 
 export type CreateIssueRoomOptions = {
@@ -59,25 +58,16 @@ export async function createIssueRoomForAi(
     properties: new LiveObject({ progress, priority, assignedTo }),
     labels: new LiveList(labelIds),
     links: new LiveList(linkStrs),
+    document: markdownToLiveDocument(
+      options?.descriptionMarkdown ?? "",
+      ISSUE_LEXICAL_NODES
+    ),
   });
 
   await liveblocks.initializeStorageDocument(
     roomId,
     toPlainLson(initialStorage) as any
   );
-
-  const md = options?.descriptionMarkdown?.trim();
-  if (md) {
-    await applyIssueDescriptionMarkdown(roomId, md, "replace");
-  } else {
-    // Initialize Lexical with empty document
-    await withLexicalDocument(
-      { roomId, client: liveblocks, nodes: [...ISSUE_LEXICAL_NODES] },
-      async (doc) => {
-        await doc.update(() => {});
-      }
-    );
-  }
 
   await hideAiPresence(roomId);
 

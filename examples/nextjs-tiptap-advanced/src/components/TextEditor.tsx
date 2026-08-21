@@ -33,9 +33,12 @@ export function TextEditor() {
 
 // Collaborative text editor with simple rich text and live cursors
 export function Editor() {
-  const liveblocks = useLiveblocksExtension();
+  const liveblocks = useLiveblocksExtension({
+    collaborationMode: "liveblocks",
+    field: "document",
+  });
 
-  // Set up editor with plugins, and place user info into Yjs awareness and cursors
+  // Set up editor with plugins, and place user info into Liveblocks presence and cursors
   const editor = useEditor({
     immediatelyRender: false,
     editorProps: {

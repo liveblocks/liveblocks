@@ -16,7 +16,10 @@ import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
 
 export default function TiptapEditor() {
-  const liveblocks = useLiveblocksExtension();
+  const liveblocks = useLiveblocksExtension({
+    collaborationMode: "liveblocks",
+    field: "document",
+  });
 
   const editor = useEditor({
     immediatelyRender: false,

@@ -6,97 +6,85 @@ import { IssueLabels } from "@/components/IssueLabels";
 import { IssueActions } from "@/components/IssueActions";
 import { IssueAiButton } from "@/components/IssueAiButton";
 import { liveblocks } from "@/liveblocks.server.config";
-import { withLexicalDocument } from "@liveblocks/node-lexical";
 import { getRoomId } from "@/config";
 import { ISSUE_LEXICAL_NODES } from "@/lib/issue-lexical-nodes";
+import {
+  storageDocumentToMarkdown,
+  type StorageJsonNode,
+} from "@/lib/lexical-live-storage";
 import { IssueLinks } from "@/components/IssueLinks";
-import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
 import Link from "next/link";
 import { Status } from "./Status";
+import type { ImmutableStorage } from "@/liveblocks.config";
+
+type StorageJson = ImmutableStorage & {
+  document?: StorageJsonNode;
+};
 
 export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
 
-  // Get storage contents of room (e.g. issue properties) to render placeholder on load
-  async function fetchStorage() {
+  async function fetchIssueData() {
     "use cache";
-    const storagePromise = liveblocks.getStorageDocument(roomId, "json");
-    return storagePromise;
-  }
+    const storage = (await liveblocks.getStorageDocument(
+      roomId,
+      "json"
+    )) as StorageJson;
 
-  // Get content and convert it to markdown for displaying a placeholder
-  async function fetchContentHtml() {
-    "use cache";
-    const contentHtmlPromise = withLexicalDocument(
-      {
-        roomId,
-        client: liveblocks,
-        nodes: [...ISSUE_LEXICAL_NODES],
+    let markdown = storageDocumentToMarkdown(
+      storage.document,
+      ISSUE_LEXICAL_NODES
+    )
+      // Make new lines display correctly
+      .replace(/\n{2,}/g, (match) => "<p><br></p>".repeat(match.length - 1))
+      .replace(/\n(?!$)/g, "\n\n")
+      .replace(/(\n+)$/g, (match) => "<p><br></p>".repeat(match.length));
+
+    const rawHtml = await marked(markdown);
+
+    const contentHtml = sanitizeHtml(rawHtml, {
+      allowedTags: [
+        "p",
+        "br",
+        "strong",
+        "em",
+        "s",
+        "code",
+        "pre",
+        "blockquote",
+        "ul",
+        "ol",
+        "li",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "a",
+      ],
+      allowedAttributes: {
+        a: ["href", "name", "target", "rel"],
       },
-      async (doc) => {
-        let markdown = "";
+      allowedSchemes: ["http", "https", "mailto"],
+    });
 
-        doc.getEditorState().read(() => {
-          // Get markdown version of Lexical state
-          markdown = $convertToMarkdownString(TRANSFORMERS, undefined, true)
-            // Make new lines display correctly
-            .replace(/\n{2,}/g, (match) =>
-              "<p><br></p>".repeat(match.length - 1)
-            )
-            .replace(/\n(?!$)/g, "\n\n")
-            .replace(/(\n+)$/g, (match) => "<p><br></p>".repeat(match.length));
-        });
-
-        const rawHtml = await marked(markdown);
-
-        return sanitizeHtml(rawHtml, {
-          allowedTags: [
-            "p",
-            "br",
-            "strong",
-            "em",
-            "s",
-            "code",
-            "pre",
-            "blockquote",
-            "ul",
-            "ol",
-            "li",
-            "h1",
-            "h2",
-            "h3",
-            "h4",
-            "h5",
-            "h6",
-            "a",
-          ],
-          allowedAttributes: {
-            a: ["href", "name", "target", "rel"],
-          },
-          allowedSchemes: ["http", "https", "mailto"],
-        });
-      }
-    );
-    return contentHtmlPromise;
+    return { storage, contentHtml };
   }
 
   let error;
   let results;
 
   try {
-    results = await Promise.all([fetchStorage(), fetchContentHtml()]);
+    results = await fetchIssueData();
   } catch (err) {
     console.log(err);
     error = err;
   }
 
-  if (
-    error ||
-    !Array.isArray(results) ||
-    Object.keys(results[0]).length === 0
-  ) {
+  if (error || !results || Object.keys(results.storage).length === 0) {
     console.log(error);
     return (
       <div className="max-w-[840px] mx-auto pt-20">
@@ -114,7 +102,7 @@ export async function Issue({ issueId }: { issueId: string }) {
     );
   }
 
-  const [storage, contentHtml] = results;
+  const { storage, contentHtml } = results;
 
   return (
     <div className="h-full flex flex-col">
