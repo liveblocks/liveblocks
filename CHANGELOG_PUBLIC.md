@@ -20,7 +20,44 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 34 (2026-08-21)
 
+## v3.24.1
+
+### `@liveblocks/react`
+
+- Add new hook `useMutableStorage()` to get direct access to the mutable Storage
+  root. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useMutableStorage).
+- Fix thread resolved/unresolved status being reverted under some conditions.
+  Thank you for the contribution [@VihaanAgarwal](https://github.com/VihaanAgarwal)!
+
+## v3.24.0
+
+This release introduces `LiveText` (beta), a collaborative rich-text data
+structure for plain text with optional inline formatting.
+
+### `@liveblocks/client`
+
+- Storage updates delivered to deep subscribers now carry a `source` field,
+  saying whether the change was made by this client
+  (`{ origin: "local", via: "edit" | "undo" | "redo" }`) or by another one
+  (`{ origin: "remote" }`), see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#update-source).
+- Add `LiveText` for collaborative text editing with concurrent inserts, deletes,
+  and formatting changes.
+
+### `@liveblocks/codemirror`, `@liveblocks/lexical`, and `@liveblocks/prosemirror`
+
+- Introduce packages for integrating CodeMirror, Lexical, and ProseMirror editors
+  with Liveblocks Storage and `LiveText`.
+
+### `@liveblocks/react-tiptap`
+
+- Fix `useIsEditorReady()` so it correctly reports when the Tiptap editor is
+  ready. Thank you for the fix [@danilowoz](https://github.com/daniliwoz)!
+
 ## Contributors
+
+jrowny, nvie, nimeshnayaju, marcbouchenoire, VihaanAgarwal, danilowoz
 
 # Week 33 (2026-08-14)
 
