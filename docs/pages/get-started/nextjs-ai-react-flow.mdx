@@ -73,6 +73,33 @@ See the finished result in the [Collaborative Flowchart AI](/examples/collaborat
       OPENAI_API_KEY="sk-..."
       ```
 
+      <Banner title="Use OrcaRouter instead of OpenAI" type="info">
+
+This example also works with
+[OrcaRouter](https://www.orcarouter.ai), an OpenAI-compatible gateway
+that routes to models from many providers through a single endpoint. It
+also runs gateway-level, zero-trust security for AI agents on the same
+endpoint — screening every prompt/response and governing every tool
+call on a default-deny basis, with no application code changes.
+
+To use it, install the compatible provider and set the OrcaRouter key
+instead of the OpenAI key:
+
+```bash
+npm install @ai-sdk/openai-compatible
+```
+
+```env file=".env.local"
+LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+ORCAROUTER_API_KEY="sk-orca-..."
+```
+
+The agent picks the OpenAI-compatible gateway automatically when
+`ORCAROUTER_API_KEY` is set. You can override the endpoint and model
+with `ORCAROUTER_BASE_URL` and `ORCAROUTER_MODEL`.
+
+      </Banner>
+
     </StepContent>
 
   </Step>

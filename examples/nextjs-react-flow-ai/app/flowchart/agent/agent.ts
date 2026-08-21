@@ -1,3 +1,4 @@
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { openai } from "@ai-sdk/openai";
 import { Liveblocks } from "@liveblocks/node";
 import { mutateFlow } from "@liveblocks/react-flow/node";
@@ -38,6 +39,22 @@ const DEFAULT_BOUNDS_RADIUS = 200;
 const POSITION_ANIMATION_MIN_STEPS = 7;
 const POSITION_ANIMATION_MAX_STEPS = 14;
 const POSITION_ANIMATION_STEP_DISTANCE = 40;
+
+const ORCAROUTER_BASE_URL =
+  process.env.ORCAROUTER_BASE_URL ?? "https://api.orcarouter.ai/v1";
+const ORCAROUTER_MODEL = process.env.ORCAROUTER_MODEL ?? "orcarouter/auto";
+
+const orcarouter = createOpenAICompatible({
+  name: "orcarouter",
+  baseURL: ORCAROUTER_BASE_URL,
+  apiKey: process.env.ORCAROUTER_API_KEY,
+});
+
+function getChatModel() {
+  return process.env.ORCAROUTER_API_KEY
+    ? orcarouter.chatModel(ORCAROUTER_MODEL)
+    : openai("gpt-5.4-nano");
+}
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
@@ -151,7 +168,7 @@ export async function runFlowchartAgent(
         void options?.onProgress?.("Editing flowchart…");
 
         const result = await generateText({
-          model: openai("gpt-5.4-nano"),
+          model: getChatModel(),
           system: dedent`
           You edit a live collaborative React Flow flowchart.
 
@@ -181,7 +198,13 @@ export async function runFlowchartAgent(
             ${prompt}
           </user-message>
         `,
-          providerOptions: { openai: { reasoningEffort: "low" } },
+          providerOptions: process.env.ORCAROUTER_API_KEY
+            ? {
+                orcarouter: { reasoningEffort: "low" },
+              }
+            : {
+                openai: { reasoningEffort: "low" },
+              },
           tools: {
             addNode: tool({
               description: "Create one block node.",

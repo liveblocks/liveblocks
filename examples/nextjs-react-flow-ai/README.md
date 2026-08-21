@@ -24,7 +24,9 @@
 This example shows how to build a collaborative flowchart with an AI agent,
 powered by [Liveblocks](https://liveblocks.io),
 [React Flow](https://reactflow.dev/), [Next.js](https://nextjs.org/), the
-[Vercel AI SDK](https://sdk.vercel.ai/), and [OpenAI](https://openai.com).
+[Vercel AI SDK](https://sdk.vercel.ai/), and [OpenAI](https://openai.com). It
+also works with [OrcaRouter](https://www.orcarouter.ai), an OpenAI-compatible
+gateway, by setting the `ORCAROUTER_API_KEY` environment variable.
 
 You can place blocks, connect them, edit labels, undo and redo, add pinned
 comments on the canvas, and ask the AI to edit the diagram in real-time for
@@ -66,6 +68,25 @@ You need your own OpenAI API key to run the AI agent.
   [OpenAI Dashboard](https://platform.openai.com/api-keys)
 - Add your OpenAI API key to `.env.local` as the `OPENAI_API_KEY` environment
   variable
+
+### Setting up OrcaRouter (optional)
+
+Instead of OpenAI, the AI agent can run through
+[OrcaRouter](https://www.orcarouter.ai), an OpenAI-compatible gateway that
+routes to models from many providers through a single endpoint. It also runs
+gateway-level, zero-trust security for AI agents on the same endpoint —
+screening every prompt/response and governing every tool call on a default-deny
+basis, with no application code changes.
+
+- Create an account on [OrcaRouter](https://www.orcarouter.ai)
+- Create a new API key from your OrcaRouter dashboard
+- Add your OrcaRouter API key to `.env.local` as the `ORCAROUTER_API_KEY`
+  environment variable
+
+When `ORCAROUTER_API_KEY` is set, the AI agent uses OrcaRouter's
+OpenAI-compatible gateway with the `orcarouter/auto` model by default. You can
+override the endpoint and model with `ORCAROUTER_BASE_URL` and
+`ORCAROUTER_MODEL`.
 
 ### Manual setup
 

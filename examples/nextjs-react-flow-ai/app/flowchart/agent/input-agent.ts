@@ -8,7 +8,10 @@ export async function submitFlowchartAgentAction(
   _: FlowchartAgentActionState,
   formData: FormData
 ): Promise<FlowchartAgentActionState> {
-  if (!process.env.LIVEBLOCKS_SECRET_KEY || !process.env.OPENAI_API_KEY) {
+  if (
+    !process.env.LIVEBLOCKS_SECRET_KEY ||
+    (!process.env.OPENAI_API_KEY && !process.env.ORCAROUTER_API_KEY)
+  ) {
     return null;
   }
 
