@@ -55,9 +55,14 @@ structure for plain text with optional inline formatting.
 - Fix `useIsEditorReady()` so it correctly reports when the Tiptap editor is
   ready. Thank you for the fix [@danilowoz](https://github.com/daniliwoz)!
 
+## Website
+
+- New solutions pages, accessible by the top menu dropdown, detailing how Liveblocks
+  can be used in various industries, by various different users.
+
 ## Contributors
 
-jrowny, nvie, nimeshnayaju, marcbouchenoire, VihaanAgarwal, danilowoz
+jrowny, nvie, nimeshnayaju, marcbouchenoire, VihaanAgarwal, danilowoz, stacyschmitz, ctnicholas
 
 # Week 33 (2026-08-14)
 
