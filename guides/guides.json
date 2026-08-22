@@ -532,5 +532,19 @@
     "topics": ["state", "text-editors", "rest-api"],
     "technologies": ["react", "storage", "yjs", "react-ui"],
     "date": "2026-07-03"
+  },
+  {
+    "title": "How conflict resolution works in Liveblocks Sync",
+    "path": "/how-conflict-resolution-works-in-liveblocks-sync",
+    "topics": [],
+    "technologies": ["storage"],
+    "date": "2026-08-21"
+  },
+  {
+    "title": "LiveText vs Yjs",
+    "path": "/livetext-vs-yjs",
+    "topics": ["text-editors"],
+    "technologies": ["storage", "yjs"],
+    "date": "2026-08-21"
   }
 ]
