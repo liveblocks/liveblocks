@@ -1,0 +1,152 @@
+---
+meta:
+  title: "Markdown access"
+  parentTitle: "Build with AI"
+  description:
+    "Access Liveblocks documentation as Markdown for LLMs and AI coding tools."
+---
+
+Liveblocks docs are available as Markdown for AI coding tools and agents.
+
+Use page-specific Markdown first. It gives agents current Liveblocks context
+without loading the whole documentation site.
+
+```txt
+https://liveblocks.io/docs/tools/mcp-server.md
+```
+
+## Available files
+
+### Page-specific Markdown
+
+Add `.md` to a docs URL:
+
+```txt
+https://liveblocks.io/docs/tools/liveblocks-plugin.md
+https://liveblocks.io/docs/tools/mcp-server.md
+https://liveblocks.io/docs/api-reference/liveblocks-react.md
+```
+
+Use this as the default option when an agent needs help with one feature, API,
+or setup flow.
+
+### Documentation index
+
+Use `llms.txt` when your agent needs to find the right Liveblocks docs page:
+
+```txt
+https://liveblocks.io/llms.txt
+```
+
+### Full documentation
+
+Use `llms-full.txt` only when your tool can handle a large context file:
+
+```txt
+https://liveblocks.io/llms-full.txt
+```
+
+### Accept header
+
+You can also request Markdown from a docs URL with the `Accept: text/markdown`
+header:
+
+```bash
+curl -H "Accept: text/markdown" https://liveblocks.io/docs/tools/mcp-server
+```
+
+## Copy from the docs
+
+Every documentation page includes a **Copy page** button in the page actions.
+Use it to copy the current page as Markdown, then paste it into your AI
+assistant.
+
+This is the fastest way to:
+
+- Copy documentation for a specific topic.
+- Add that page to an AI assistant's context.
+- Ask questions about that specific Liveblocks feature.
+
+Use the **View as Markdown** action when you want to open the Markdown page in a
+new tab instead.
+
+## Usage with AI tools
+
+Ask your AI tool to fetch the smallest relevant Markdown page first.
+
+### Install the Liveblocks plugin
+
+```txt
+Read https://liveblocks.io/docs/tools/liveblocks-plugin.md and help me install
+the Liveblocks plugin.
+```
+
+### Review Liveblocks React code
+
+```txt
+Read https://liveblocks.io/docs/api-reference/liveblocks-react.md and review my
+Liveblocks React hooks.
+```
+
+### Find the right page first
+
+```txt
+Read https://liveblocks.io/llms.txt, find the right Liveblocks docs page for Yjs
+auth, then use that page as context.
+```
+
+## Project rules
+
+In tools like [Cursor](https://cursor.com/docs/context/rules), add Liveblocks
+Markdown URLs to project rules so the agent knows which docs to use for
+Liveblocks tasks.
+
+For example, create `.cursor/rules/liveblocks.mdc`:
+
+```md
+---
+description: "Use Liveblocks docs when working with Liveblocks or Yjs."
+globs: ["**/*.{ts,tsx,js,jsx}"]
+alwaysApply: false
+---
+
+When working with Liveblocks:
+
+- Start with https://liveblocks.io/llms.txt to find the relevant docs page.
+- Prefer page-specific Markdown URLs over the full docs file.
+- Use https://liveblocks.io/docs/api-reference/liveblocks-react.md for
+  Liveblocks React hooks.
+- Use https://liveblocks.io/docs/tools/mcp-server.md when setting up MCP.
+```
+
+## Benefits
+
+- Markdown format: Easier for LLMs to parse than rendered HTML.
+- Current docs: Uses the same source as the Liveblocks documentation site.
+- Focused context: Fetch one page with `.md` instead of loading the full docs.
+- Direct access: Agents can fetch docs without browser scraping.
+- Token control: Start with page-specific Markdown, then use `llms.txt` or
+  `llms-full.txt` only when needed.
+
+## Limits and troubleshooting
+
+### Use the smallest file that works
+
+`llms-full.txt` can be large. Use a page-specific `.md` URL when you already
+know which page is relevant.
+
+### If you receive HTML
+
+Check that the URL ends in `.md`, or send an `Accept: text/markdown` header. The
+header must explicitly include `text/markdown`.
+
+### If a Markdown URL is unavailable
+
+Check `https://liveblocks.io/llms.txt` for supported docs pages, then use the
+listed docs URL with `.md` added.
+
+## Related docs
+
+- [Liveblocks plugin](/docs/tools/liveblocks-plugin).
+- [MCP server](/docs/tools/mcp-server).
+- [Agent skills](/docs/tools/agent-skills).

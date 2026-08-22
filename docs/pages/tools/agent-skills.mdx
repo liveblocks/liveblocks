@@ -1,68 +1,71 @@
 ---
 meta:
   title: "Agent skills"
-  parentTitle: "Tools"
+  parentTitle: "Build with AI"
   description:
-    "Use Liveblocks agent skills to help develop your Liveblocks and Yjs apps
-    more easily."
+    "Use agent skills to help AI agents write Liveblocks and Yjs code."
 ---
 
-Create your Liveblocks applications more easily with our agent skills, designed
-to help AI coding assistants follow best practices for Liveblocks and Yjs. These
-skills use the [Agent Skills](https://agentskills.io/home) format.
+Help AI agents build Liveblocks and Yjs apps with official guidance.
 
-<PromptCta />
+Liveblocks skills teach agents how to handle auth, presence, Storage, comments,
+notifications, text editors, React patterns, and Yjs data modeling.
 
-<Figure>
-  <video autoPlay loop muted playsInline height={521} width={768}>
-    <source
-      src="/assets/agent-skills/agent-skills-claude.mp4"
-      type="video/mp4"
-    />
-  </video>
-</Figure>
+## Installation
 
-## Install
+Use the [Liveblocks plugin](/docs/tools/liveblocks-plugin) when your AI coding
+agent supports plugins. It includes the skills and MCP server configuration.
 
-Install with the following command:
+```bash
+npx plugins add liveblocks/liveblocks-plugin
+```
+
+If your AI tool does not support plugins, or you only want the skills, install
+them separately:
 
 ```bash
 npx skills add liveblocks/skills
 ```
 
-## Skills
+Configure the [MCP server](/docs/tools/mcp-server) separately only if your agent
+needs access to Liveblocks project data.
+
+## Advantages
+
+Build with official Liveblocks and Yjs recommendations.
+
+- Liveblocks best practices: Get guidance for rooms, auth, presence, Storage,
+  comments, notifications, text editors, and React integration.
+- Yjs best practices: Model shared documents, handle providers and updates, and
+  avoid common performance issues.
+- Automatic activation: Skills-compatible agents can use the guidance when a
+  Liveblocks or Yjs task is detected.
+- Standalone install: Use the skills in tools that do not support plugins.
+- Optional MCP access: Pair the skills with the MCP server when your agent needs
+  to inspect or modify project data.
+
+## Included skills
 
 ### liveblocks-best-practices
 
-Best practices for using Liveblocks. Contains 40+ comprehensive references
-related to each feature of Liveblocks. Use it when building, debugging, or
-answering questions about Liveblocks.
+Guidance for building, debugging, and reviewing Liveblocks code.
 
 ### yjs-best-practices
 
-Best practices for using Yjs. Contains info on fixing common issues, structuring
-your data efficiently, and avoiding bugs. Use it when building, debugging, or
-answering questions about Yjs.
+Guidance for Yjs data modeling, updates, providers, performance, and debugging.
 
-## Usage
+## Verify installation
 
-After installation, skills are automatically available in your AI tool. Your
-agent will use them when it judges they are relevant. For example, the following
-questions will trigger skills:
+Start a new session in your AI tool and ask:
 
 ```
-How do I handle unstable Wi-Fi connections with Liveblocks?
+Use Liveblocks best practices to review my auth setup.
 ```
 
-```
-How do I pass custom headers to my auth endpoint?
-```
+If the skills are loaded, your agent should use Liveblocks-specific guidance.
 
-```
-Why is my Y.Map growing so large?
-```
+## Learn more
 
-## Source code
-
-The source code is available in our
-[GitHub repository](https://github.com/liveblocks/skills).
+- [Liveblocks plugin](/docs/tools/liveblocks-plugin).
+- [MCP server](/docs/tools/mcp-server).
+- [Agent skills repository](https://github.com/liveblocks/skills).
