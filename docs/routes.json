@@ -494,8 +494,8 @@
             "path": "/products/sync/events"
           },
           {
-            "title": "Authentication and permissions",
-            "path": "/products/sync/authentication-and-permissions"
+            "title": "Permissions",
+            "path": "/products/sync/permissions"
           },
           {
             "title": "Integrations",

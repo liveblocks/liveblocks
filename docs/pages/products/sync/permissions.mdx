@@ -1,0 +1,216 @@
+---
+meta:
+  title: "Permissions"
+  parentTitle: "Sync"
+  description: "Control who can read or edit each Sync room."
+---
+
+Sync documents live inside [rooms](/docs/concepts#Rooms), and user permissions
+can be set per room, defining what each user can do, such as editing the
+document or only viewing it. Permissions are enforced on Liveblocks servers, so
+a read-only user can never modify a document, even with a modified client.
+
+<Banner>
+
+This guide is about Sync permissions, to learn about authentication, see our
+guide on [authenticating users](/docs/api-reference/authentication).
+
+</Banner>
+
+## Authenticating
+
+When [authenticating users with ID tokens](/docs/api-reference/authentication),
+each user is given a `userId` which represents their identity. Additionally,
+users can be assigned `groupIds` too, which allows permissions to be scoped to
+entire groups of users.
+
+```ts
+import { liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+const { status, body } = await liveblocks.identifyUser({
+  // +++
+  userId: "olivier@example.com",
+  groupIds: ["engineering", "product"],
+  // +++
+});
+```
+
+Both `userId` and `groupIds` are used to set permissions for users in the code
+snippets below.
+
+## Setting permissions
+
+Permissions can be set on three different levels when
+[creating](/docs/api-reference/liveblocks-node#post-rooms) or
+[updating](/docs/api-reference/liveblocks-node#post-rooms-roomId) a room:
+
+- `defaultAccesses` for everyone.
+- `groupsAccesses` for groups of users, matched by their `groupIds`.
+- `usersAccesses` for individual users, matched by their `userId`.
+
+For example, here’s a private document that only its creator can edit, while
+anyone in the `"engineering"` group can view it.
+
+```ts
+import { liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+const room = await liveblocks.updateRoom("my-room-id", {
+  // Private, no access by default
+  // +++
+  defaultAccesses: [],
+  // +++
+
+  // Everyone in "engineering" can view the document
+  groupsAccesses: {
+    // +++
+    engineering: ["*:read"],
+    // +++
+  },
+
+  // The creator has full access
+  usersAccesses: {
+    // +++
+    "olivier@example.com": ["*:write"],
+    // +++
+  },
+});
+```
+
+One use case for this is [creating share dialogs](/docs/use-cases/share-dialog)
+inside your application.
+
+### Storage permissions
+
+The base permissions `*:read` and `*:write` apply to everything in the room. To
+control access to the Sync document specifically, use the more granular
+`storage:read`, `storage:write`, and `storage:none` permissions, which apply to
+[Storage](/docs/products/sync/storage) and [Yjs](/docs/products/sync/yjs)
+documents.
+
+For example, you can give everyone write access to the room, while lowering
+access to the data storage itself so that only specific editors can change it.
+
+```ts
+const room = await liveblocks.updateRoom("my-room-id", {
+  // Everyone can use the room, but the document is read-only
+  defaultAccesses: [
+    // +++
+    "*:write",
+    "storage:read",
+    // +++
+  ],
+
+  // Editors can also edit the document
+  usersAccesses: {
+    "olivier@example.com": ["*:write"],
+  },
+});
+```
+
+### Feed permissions
+
+[Feeds](/docs/products/sync/feeds) have their own permissions too, with
+`feeds:read`, `feeds:write`, and `feeds:none` controlling access to every feed
+in the room. For example, in a document with a chat alongside it, you can let
+everyone send messages without being able to edit the document itself.
+
+```ts
+const room = await liveblocks.updateRoom("my-room-id", {
+  // Everyone can view the document and send chat messages
+  defaultAccesses: [
+    // +++
+    "*:read",
+    "feeds:write",
+    // +++
+  ],
+});
+```
+
+Or keep a feed server-only, for example a stream of agent workflow updates that
+users can watch, but that only your back end can write to.
+
+```ts
+["*:write", "feeds:read"];
+```
+
+### Other perrmissions
+
+Similar permissions exist for other room resources. Find the full list on the
+[permissions](/docs/api-reference/authentication/permissions) page.
+
+## Read-only permissions
+
+Users with `*:read` or `storage:read` access connect to the room as normal,
+receiving realtime updates and seeing other users’ presence, but any attempt to
+modify the document is rejected by the server. This makes read-only viewers,
+previews, and published documents easy to build, as no separate code path is
+needed.
+
+### Render read-only UI
+
+To render read-only UI elements for the current users, check for the `canWrite`
+property using the [`useSelf`](/docs/api-reference/liveblocks-react#useSelf)
+hook. An example of how to use this is to hide a toolbar from read-only users.
+
+```tsx
+import { useSelf } from "@liveblocks/react/suspense";
+
+function Toolbar() {
+  // +++
+  const canWrite = useSelf((me) => me.canWrite);
+  // +++
+
+  return canWrite ? <EditorToolbar /> : <ViewerBadge />;
+}
+```
+
+For integrations that already support read-only users, such as Tiptap, you pass
+the `canWrite` value to configuration options.
+
+```tsx
+import { useSelf } from "@liveblocks/react/suspense";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    collaborationMode: "liveblocks",
+  });
+
+  // +++
+  const canWrite = useSelf((me) => me.canWrite);
+  // +++
+
+  const editor = useEditor({
+    // +++
+    editable: canWrite,
+    // +++
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  // ...
+}
+```
+
+Remember that hiding UI is purely cosmetic, as permissions are enforced on
+Liveblocks servers either way.
+
+## Server access
+
+Your back end authenticates with your secret key and always has full access to
+every room, regardless of room permissions. This is what enables
+[server-side editing](/docs/products/sync/server-side-editing) and
+[agentic editing](/docs/products/sync/agentic-editing), but it also means you
+should check the current user’s access in your own endpoints before modifying
+documents on their behalf.
