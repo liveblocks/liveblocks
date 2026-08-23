@@ -462,10 +462,6 @@
         "path": "/products/sync",
         "routes": [
           {
-            "title": "Conflict resolution",
-            "path": "/products/sync/conflict-resolution"
-          },
-          {
             "title": "Storage",
             "path": "/products/sync/storage"
           },
