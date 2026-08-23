@@ -7,96 +7,197 @@ meta:
     documents."
 ---
 
-Version history records room snapshots so users can inspect earlier document
-states and restore them. A version can contain both the room’s Storage and Yjs
-documents.
+Version history lets users browse earlier versions of a document and restore
+them, like in Google Docs or Figma. Each version is a snapshot of a room,
+capturing both its [Storage](/docs/products/sync/storage) and
+[Yjs](/docs/products/sync/yjs) documents at a point in time. Versions are
+separate from
+[multiplayer undo/redo](/docs/products/sync/storage#multiplayer-undo-redo),
+which tracks each user’s individual changes—a version instead records a
+meaningful milestone that anyone can return to later.
 
-<Banner title="Follow the complete guide" type="info">
+<Banner title="Step-by-step guide">
 
-Read
-[How to add version history to your app](/docs/guides/how-to-add-version-history-to-your-app)
-for complete Storage and Yjs examples.
+This page is an overview for Storage, for a step-by-step setup guide, and to
+learn more about Yjs version history, read
+[how to add version history to your app](/docs/guides/how-to-add-version-history-to-your-app).
 
 </Banner>
 
-## When to create versions [#when-to-create-versions]
+## Creating versions
 
-Versions are useful:
+Versions can be created automatically at intervals,
+[enabled in your project’s dashboard](/docs/guides/how-to-add-version-history-to-your-app#Creating-versions),
+or manually from your back end with
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+Manual snapshots are useful at meaningful moments, for example:
 
-- Before an AI agent makes a broad change
-- When a user publishes, submits, or saves a milestone
-- At automatic intervals while a document is active
-- Before importing or migrating external data
-
-Enable automatic versions in the Liveblocks dashboard or create a meaningful
-snapshot from your backend.
+- When a user publishes, submits, or saves a document.
+- Before an [AI agent](/docs/products/sync/agentic-editing) makes a substantial
+  change, so users can recover the previous state.
+- Before importing or migrating external data.
 
 ```ts
-const snapshot = await liveblocks.createVersionHistorySnapshot("my-room-id");
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const { data } = await liveblocks.createVersionHistorySnapshot("my-room-id");
+// +++
+
+// { id: "vh_d75sF3..." }
+console.log(data);
 ```
 
-See
-[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot)
-for the server API.
+## Listing versions
 
-## List versions [#list-versions]
-
+On the client,
 [`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
-returns the versions for the current room.
+returns the current room’s versions, newest first. Render them with the
+ready-made
+[`HistoryVersionSummary`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummary)
+and
+[`HistoryVersionSummaryList`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummaryList)
+components, which display each version’s authors and date.
 
 ```tsx
-import { useHistoryVersions } from "@liveblocks/react";
+import { useState } from "react";
+import { useHistoryVersions } from "@liveblocks/react/suspense";
+import {
+  HistoryVersionSummary,
+  HistoryVersionSummaryList,
+} from "@liveblocks/react-ui";
 
-function VersionList() {
-  const { versions, isLoading, error } = useHistoryVersions();
+function VersionsSidebar() {
+  const [selectedVersionId, setSelectedVersionId] = useState<string>();
+  // +++
+  const { versions, isLoading } = useHistoryVersions();
+  // +++
 
-  if (isLoading) return <div>Loading versions…</div>;
-  if (error) return <div>Could not load versions.</div>;
+  if (isLoading) {
+    return <div>Loading versions…</div>;
+  }
 
-  return versions.map((version) => (
-    <time key={version.id}>{version.createdAt.toLocaleString()}</time>
-  ));
+  return (
+    <HistoryVersionSummaryList>
+      // +++
+      {versions.map((version) => (
+        <HistoryVersionSummary
+          key={version.id}
+          version={version}
+          selected={version.id === selectedVersionId}
+          onClick={() => setSelectedVersionId(version.id)}
+        />
+      ))}
+      // +++
+    </HistoryVersionSummaryList>
+  );
 }
 ```
 
-## Preview a version [#preview-a-version]
+These UI components are optional, but are a helpful starting point.
 
-Use
+## Previewing a version
+
 [`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData)
-to retrieve a read-only Storage tree for a version.
+returns the Storage data for a version, reconstructed as a read-only
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject). Use it to
+render a preview before the user decides to restore.
 
 ```tsx
-const { data, isLoading } = useHistoryVersionStorageData(selectedVersionId);
+import { useHistoryVersionStorageData } from "@liveblocks/react/suspense";
 
-if (isLoading) return <div>Loading preview…</div>;
+function VersionPreview({ versionId }: { versionId: string }) {
+  // +++
+  const { data, isLoading } = useHistoryVersionStorageData(versionId);
+  // +++
 
-return <pre>{JSON.stringify(data.toJSON(), null, 2)}</pre>;
+  if (isLoading) {
+    return <div>Loading version…</div>;
+  }
+
+  // Render a read-only preview of the document at this version
+  return <DocumentPreview document={data.toJSON()} />;
+}
 ```
 
-Use
-[`useHistoryVersionYjsData`](/docs/api-reference/liveblocks-react#useHistoryVersionYjsData)
-when previewing a Yjs document.
+Because an old version may not match your current `Storage` type, the data is
+typed as the more permissive `LsonObject`.
 
-## Restore Storage [#restore-storage]
+## Restoring a version
 
 [`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion)
-restores Storage as one synchronized, undoable change.
+returns a function that restores the room’s Storage to a given version.
 
 ```tsx
+import { useRestoreToStorageVersion } from "@liveblocks/react/suspense";
+
 function RestoreButton({ versionId }: { versionId: string }) {
+  // +++
   const restore = useRestoreToStorageVersion(versionId);
+  // +++
 
   return <button onClick={() => restore()}>Restore this version</button>;
 }
 ```
 
-Because the restoration is added to multiplayer history, a user can undo it if
-they change their mind.
+The restoration is applied as a single change and synchronized to everyone in
+the room. Because it’s added to the user’s undo history like any other edit,
+restoring is safe—a user who changes their mind can simply undo it.
 
-## Delete versions [#delete-versions]
+## Deleting versions
 
-Use
-[`useDeleteHistoryVersion`](/docs/api-reference/liveblocks-react#useDeleteHistoryVersion)
-when users are allowed to remove a snapshot. Confirm the action and handle
-loading and error states because deletion cannot be undone through document
-history.
+To allow users to remove a version, use
+[`useDeleteHistoryVersion`](/docs/api-reference/liveblocks-react#useDeleteHistoryVersion).
+Unlike restoring, deletion is permanent and can’t be undone, so it’s best to ask
+for confirmation first.
+
+```tsx
+import { useDeleteHistoryVersion } from "@liveblocks/react/suspense";
+
+function DeleteButton({ versionId }: { versionId: string }) {
+  // +++
+  const deleteHistoryVersion = useDeleteHistoryVersion();
+  // +++
+
+  return (
+    <button
+      onClick={() => {
+        if (confirm("Permanently delete this version?")) {
+          // +++
+          deleteHistoryVersion(versionId);
+          // +++
+        }
+      }}
+    >
+      Delete
+    </button>
+  );
+}
+```
+
+## Server-side access
+
+Versions can also be listed from your back end with
+[`Liveblocks.getVersionHistory`](/docs/api-reference/liveblocks-node#get-version-history),
+which supports pagination, for example to build custom tooling or scheduled
+exports.
+
+```ts
+import { liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const { data: versions, nextCursor } =
+  await liveblocks.getVersionHistory("my-room-id");
+// +++
+
+// [{ id: "vh_d75sF3...", createdAt: ..., authors: [...] }, ...]
+console.log(versions);
+```
