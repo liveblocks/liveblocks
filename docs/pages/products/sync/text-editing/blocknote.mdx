@@ -5,7 +5,16 @@ meta:
   description: "Learn about using Liveblocks with BlockNote"
 ---
 
-A quick overview of the packages for BlockNote.
+Liveblocks BlockNote allows you add collaboration to any
+[BlockNote](https://blocknotejs.org/) text editor, along with a number of
+related features. Each [collaborative room](/docs/concepts#Rooms) in your
+application can store one document each, and these documents are persisted on
+the cloud, visible on [your dashboard](/dashboard), and are integrated into
+other Liveblocks products such as [Comments](/docs/products/comments) and
+[Notifications](/docs/products/notifications).
+
+All documents created with BlockNote are **permanently stored**. You don’t need
+to sync, scale, or maintain any infrastructure.
 
 ## Get started now
 
@@ -28,22 +37,7 @@ Skip the information and get started now.
   />
 </ListGrid>
 
-## Concepts
-
-Liveblocks BlockNote allows you add collaboration to any
-[BlockNote](https://blocknotejs.org/) text editor, along with a number of
-related features. Each [collaborative room](/docs/concepts#Rooms) in your
-application can store one document each, and these documents are persisted on
-the cloud, visible on [your dashboard](/dashboard), and are integrated into
-other Liveblocks products such as [Comments](/docs/products/comments) and
-[Notifications](/docs/products/notifications).
-
-### Permanent storage
-
-All documents created with BlockNote are **permanently stored**. You don’t need
-to sync, scale, or maintain any infrastructure.
-
-### Users and mentions
+## Users and mentions
 
 Users and groups can be added to your document, and you can tag others inline.
 You can also easily enable mention suggestions for both users and groups.
@@ -89,7 +83,7 @@ function App() {
 }
 ```
 
-### Realtime editing
+## Realtime editing
 
 Your document can be edited in real-time by multiple users at once. Each user
 renders a cursor on screen that updates live as they move, select, and edit.
@@ -115,7 +109,7 @@ userInfo: {
 }
 ```
 
-### Annotations and comments
+## Annotations and comments
 
 Add [Comments](/docs/products/comments) to your text editor, allowing others to
 select words in the editor, and leave annotations. Each annotation creates a
@@ -163,7 +157,7 @@ alongside the editor which is great on desktop. To create a new thread use the
 button in the BlockNote toolbar, or
 [build a button yourself](/docs/api-reference/liveblocks-react-blocknote#Opening-the-composer).
 
-### Notifications
+## Notifications
 
 Add a [Notifications](/docs/products/notifications) UI to your application, and
 automatically notify users when they’ve been mentioned. Notifications also
@@ -207,7 +201,7 @@ Inline mentions also trigger
 notification webhook events. Learn more about
 [sending email notifications](/docs/products/notifications/email-notifications).
 
-### Multiple editors
+## Multiple editors
 
 It’s possible to use multiple BlockNote editors on a single page, and each
 editor having its own collaboration and extensions. You can enable this by
@@ -231,7 +225,7 @@ function TextEditor() {
 Learn more about
 [using multiple editors](/docs/api-reference/liveblocks-react-blocknote#Multiple-editors).
 
-### Liveblocks collaboration mode
+## Liveblocks collaboration mode
 
 BlockNote uses Yjs-backed collaboration by default. You can opt into
 Liveblocks-backed storage instead by passing `collaborationMode: "liveblocks"`.
@@ -255,7 +249,7 @@ function TextEditor() {
 In this mode, documents are stored in `root._tiptap_docs`, keyed by `field`.
 `offlineSupport_experimental` stays Yjs-only.
 
-### Offline support
+## Offline support
 
 Liveblocks BlockNote has an experimental option that enables offline support.
 Offline support means that once a document has been opened, it’s saved locally
@@ -280,7 +274,7 @@ function TextEditor() {
 Learn more about
 [offline support](/docs/api-reference/liveblocks-react-blocknote#Offline-support).
 
-### Version History
+## Version History
 
 Liveblocks BlockNote enables version history for your document. Versions can be
 automatically created when enabled in your project settings, or manually created

@@ -12,17 +12,121 @@ edit it at the same time, and conflict resolution merges simultaneous changes
 without losing unrelated edits. Documents remain after every user disconnects,
 unlike [presence](/docs/products/sync/presence), which is temporary.
 
-Documents are built from conflict-free data types, each resolving simultaneous
-edits differently. Learn more about each type under
-[data types](#data-types).
+## Conflict-free data types
 
-| Data type                                                             | Description                                                                                                      |
-| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject)       | A record of named values, like a JavaScript object. Ideal for structured items such as a shape or a person.       |
-| [`LiveList`](/docs/api-reference/liveblocks-client#LiveList)           | An ordered collection. Concurrent inserts, deletes, and moves merge so every client sees the same sequence.       |
-| [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap)             | A key-value collection with dynamic keys. Ideal for items keyed by ID, such as shapes on a canvas.                 |
-| [`LiveText`](/docs/api-reference/liveblocks-client#LiveText)           | Collaborative rich text. Simultaneous keystrokes and formatting merge character by character.                      |
-| [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile)           | An immutable reference to an uploaded file, such as an image or video, stored outside the document tree.          |
+Storage documents are built from conflict-free data types, each resolving
+simultaneous edits differently.
+
+<Table columns={["15%", "auto", "53%"]}>
+
+| Data type                   | Description                                               | Example value                                     |
+| --------------------------- | --------------------------------------------------------- | ------------------------------------------------- |
+| [`LiveObject`](#LiveObject) | A record of named values, similar to a JavaScript object. | `LiveObject({ x: 50, y: 100, color: "red" })`     |
+| [`LiveList`](#LiveList)     | An ordered collection, similar to a JavaScript array.     | `LiveList(["rectangle-1", "circle-2"])`           |
+| [`LiveMap`](#LiveMap)       | A key-value collection, similar to a JavaScript map.      | `LiveMap([["pierre", 152], ["alicia", 186]])`     |
+| [`LiveText`](#LiveText)     | A collection of text nodes, storing formatting data.      | `LiveText(["Hello world", { format: "bold" }])`   |
+| [`LiveFile`](#LiveFile)     | An immutable reference to an uploaded file.               | `LiveFile({ name: "photo.png", size: 984, ... })` |
+
+</Table>
+
+### LiveObject
+
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) is similar to a
+JavaScript object that is synchronized on all clients. Use this for storing
+records with fixed key names and where the values don’t necessarily have the
+same types, for example, a shape on a canvas.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+
+// Defining a LiveObject
+const shape = new LiveObject({
+  x: 50,
+  y: 100,
+  color: "red",
+});
+
+// Example methods
+shape.get("color");
+shape.set("color", "blue");
+shape.update({ x: 100, y: 200 });
+```
+
+### LiveList
+
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) is similar to a
+JavaScript array that is synchronized across clients. Use this for storing
+ordered collection of items, for example a list of layers on a canvas.
+
+```ts
+import { LiveList } from "@liveblocks/client";
+
+// Defining a LiveList
+const layers = new LiveList(["rectangle-1", "circle-2"]);
+
+// Example methods
+layers.push("triangle-3");
+layers.move(0, 2);
+layers.remove(1);
+```
+
+### LiveMap
+
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) is similar to a
+JavaScript map that is synchronized across clients. Use this for storing
+key-value pairs, for example a list of users and their upvotes.
+
+```ts
+import { LiveMap } from "@liveblocks/client";
+
+// Defining a LiveMap
+const users = new LiveMap([
+  ["pierre", 152],
+  ["alicia", 185],
+]);
+
+// Example methods
+users.keys();
+users.delete("alicia");
+users.set("pierre", 153);
+```
+
+### LiveText
+
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) is used to store
+collaborative rich text data. It’s generally most useful when used internally by
+a [text editing](/docs/products/sync/text-editing) integration, but it can be
+handled directly too.
+
+```ts
+import { LiveText } from "@liveblocks/client";
+
+// Defining a LiveText
+const text = new LiveText(["Hello", { format: "bold" }]);
+
+// Example methods
+text.insert(5, " world");
+text.replace(0, 5, "Hi");
+text.format(0, 2, { format: "italic" });
+```
+
+### LiveFile
+
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) is used to store a
+reference to a file uploaded to Liveblocks. Any kind of file can be uploaded
+with [`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile) and
+attached to your data tree.
+
+```ts
+import { LiveFile } from "@liveblocks/client";
+import { useUploadFile } from "@liveblocks/react/suspense";
+
+const uploadFile = useUploadFile();
+const liveFile = await uploadFile(file);
+
+// LiveFile<{ id: "fl_xxx", name: "photo.png", size: 12345, mimeType: "image/png" }>
+console.log(liveFile);
+```
 
 ## Setting up Storage [#setting-up-storage]
 
@@ -153,130 +257,6 @@ function ColorPicker({ index }: { index: number }) {
 Storage can also be modified from your back end and by AI agents—read
 [server-side editing](/docs/products/sync/server-side-editing) and
 [agentic editing](/docs/products/sync/agentic-editing).
-
-## Data types [#data-types]
-
-Build the document tree from conflict-free data types. Use plain JSON values for
-atomic fields, and a Live structure when nested fields should be edited
-independently.
-
-- [`LiveObject`](#liveobject): A record of named values
-- [`LiveList`](#livelist): An ordered collection
-- [`LiveMap`](#livemap): A key-value collection with dynamic keys
-- [`LiveText`](#livetext): Collaborative rich text
-- [`LiveFile`](#livefile): A reference to a file stored outside the document
-  tree
-
-Each type resolves conflicts differently, described below, and all of them
-persist after every client has left the room.
-
-### LiveObject [#liveobject]
-
-[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) stores a record
-with fixed key names, similar to a JavaScript object. Use it for a person, a
-shape, or any other structured item.
-
-```ts
-import { LiveObject } from "@liveblocks/client";
-
-const shape = new LiveObject({
-  x: 50,
-  y: 100,
-  color: "red",
-});
-
-shape.set("color", "blue");
-```
-
-If two clients set the same property at the same time, the last change received
-by Liveblocks wins. Unrelated properties are never overwritten—one user can move
-a shape while another recolors it, and both edits survive.
-
-### LiveList [#livelist]
-
-[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) is an ordered
-collection. Concurrent inserts, deletes, and moves are merged so every client
-sees the same sequence.
-
-```ts
-import { LiveList, LiveObject } from "@liveblocks/client";
-
-const shapes = new LiveList([new LiveObject({ x: 50, y: 100, color: "red" })]);
-
-shapes.push(new LiveObject({ x: 80, y: 40, color: "blue" }));
-```
-
-### LiveMap [#livemap]
-
-[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) is a key-value
-collection with dynamic keys, ideal for items keyed by ID, such as shapes on a
-canvas. If two clients update the same key at the same time, the last change
-received by Liveblocks wins.
-
-```ts
-import { LiveMap, LiveObject } from "@liveblocks/client";
-
-const shapes = new LiveMap([
-  ["shape-1", new LiveObject({ x: 50, y: 100, color: "red" })],
-]);
-
-shapes.set("shape-2", new LiveObject({ x: 80, y: 40, color: "blue" }));
-```
-
-### LiveText [#livetext]
-
-[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) is a collaborative
-rich-text document. Concurrent insertions, deletions, and formatting merge
-automatically, character by character, so multiple people can type in the same
-text without overwriting each other. Editor packages such as
-[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap),
-[`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexical), and
-[`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote)
-adapt it to those editors. Learn more under
-[text editing](/docs/products/sync/text-editing).
-
-```ts
-import { LiveText } from "@liveblocks/client";
-
-const caption = new LiveText("Untitled");
-```
-
-### LiveFile [#livefile]
-
-[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) is an immutable
-reference to a file uploaded to Liveblocks. Use it for images, videos, and other
-binaries that should not live in the JSON tree. Upload with
-[`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile), then
-store the returned `LiveFile` in Storage.
-
-```tsx
-import { useMutation, useUploadFile } from "@liveblocks/react/suspense";
-
-function UploadAttachment() {
-  // +++
-  const uploadFile = useUploadFile();
-  // +++
-
-  const addAttachment = useMutation(({ storage }, liveFile) => {
-    storage.get("attachments").push(liveFile);
-  }, []);
-
-  return (
-    <input
-      type="file"
-      onChange={async (event) => {
-        const file = event.currentTarget.files?.[0];
-        if (!file) return;
-        // +++
-        addAttachment(await uploadFile(file));
-        // +++
-      }}
-    />
-  );
-}
-```
-
-See [file size limits](/docs/pricing/limits) for upload constraints.
 
 ## Nested data [#nested-data]
 

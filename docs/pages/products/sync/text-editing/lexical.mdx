@@ -5,7 +5,16 @@ meta:
   description: "Learn about using Liveblocks with Lexical"
 ---
 
-A quick overview of the packages for Lexical.
+Liveblocks Lexical allows you to add collaboration to any
+[Lexical](https://lexical.dev/) text editor, along with a number of related
+features. Each [collaborative room](/docs/concepts#Rooms) in your application
+can store one document each, and these documents are persisted on the cloud,
+visible on [your dashboard](/dashboard), and are integrated into other
+Liveblocks products such as [Comments](/docs/products/comments) and
+[Notifications](/docs/products/notifications).
+
+All documents created with Lexical are **permanently stored**. You don’t need to
+sync, scale, or maintain any infrastructure.
 
 ## Get started now
 
@@ -42,22 +51,7 @@ Skip the information and get started now.
   />
 </ListGrid>
 
-## Concepts
-
-Liveblocks Lexical allows you to add collaboration to any
-[Lexical](https://lexical.dev/) text editor, along with a number of related
-features. Each [collaborative room](/docs/concepts#Rooms) in your application
-can store one document each, and these documents are persisted on the cloud,
-visible on [your dashboard](/dashboard), and are integrated into other
-Liveblocks products such as [Comments](/docs/products/comments) and
-[Notifications](/docs/products/notifications).
-
-### Permanent storage
-
-All documents created with Lexical are **permanently stored**. You don’t need to
-sync, scale, or maintain any infrastructure.
-
-### Users and mentions
+## Users and mentions
 
 Users and groups can be added to your document, and you can tag others inline.
 You can also easily enable mention suggestions for both users and groups.
@@ -103,7 +97,7 @@ function App() {
 }
 ```
 
-### Realtime editing
+## Realtime editing
 
 Your document can be edited in real-time by multiple users at once. Each user
 renders a cursor on screen that updates live as they move, select, and edit.
@@ -129,7 +123,7 @@ userInfo: {
 }
 ```
 
-### Toolbars
+## Toolbars
 
 Two toolbars are available allowing you to create a
 [static toolbar](/docs/api-reference/liveblocks-react-lexical#Toolbar), or a
@@ -197,7 +191,7 @@ function CustomButton() {
 }
 ```
 
-### Annotation comments
+## Annotation comments
 
 Add [Comments](/docs/products/comments) to your text editor, allowing others to
 select words in the editor, and leave annotations. Each annotation creates a
@@ -249,7 +243,7 @@ alongside the editor which is great on desktop. To create a new thread use the
 button in a [pre-built toolbar](#Toolbars), or
 [build a button yourself](/docs/api-reference/liveblocks-react-lexical#Opening-the-FloatingComposer).
 
-### Notifications
+## Notifications
 
 Add a [Notifications](/docs/products/notifications) UI to your application, and
 automatically notify users when they’ve been mentioned. Notifications also
@@ -293,7 +287,7 @@ Inline mentions also trigger
 notification webhook events. Learn more about
 [sending email notifications](/docs/products/notifications/email-notifications).
 
-### AI agents and editing on the server
+## AI agents and editing on the server
 
 Fetch and modify your text editor’s content from the server, enabling features
 such as AI agents. Easily make changes that update in real-time for every
@@ -327,7 +321,7 @@ await withLexicalDocument(
 );
 ```
 
-### Version History
+## Version History
 
 Liveblocks Lexical enables version history for your document. Versions can be
 automatically created when enabled in your project settings, or manually created
