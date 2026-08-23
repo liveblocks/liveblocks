@@ -75,7 +75,7 @@ This is an overview of how each feature can be implemented. Each document is a
 room in your Liveblocks app, and with
 [ID token authentication](/docs/authentication#id-token-room-permissions) the
 room itself stores who can access it. A share dialog is a UI over these room
-accesses—when a user invites someone or changes a role, the dialog calls your
+accesses. When a user invites someone or changes a role, the dialog calls your
 server, which updates the room with
 [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
 
@@ -96,7 +96,7 @@ const liveblocks = new Liveblocks({
 
 // +++
 await liveblocks.createRoom("document-a", {
-  // Private—no access by default
+  // Private, no access by default
   defaultAccesses: [],
 
   // The creator has full access
@@ -113,18 +113,17 @@ Liveblocks-specific accounts are needed.
 
 ### Inviting users [#inviting-users]
 
-When someone submits an email in the share dialog, your server grants access
-with
+When a user submits an email in the share dialog, your server grants access with
 [`Liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId).
-Only the accesses you pass are changed—existing members keep theirs. Set a
+Only the accesses you pass are changed, and existing members keep theirs. Set a
 user’s access to `null` to remove them.
 
 ```ts
 // +++
 await liveblocks.updateRoom("document-a", {
   usersAccesses: {
-    // Invite Quinn as an editor
-    "quinn@example.com": ["*:write"],
+    // Invite Stacy as an editor
+    "stacy@example.com": ["*:write"],
 
     // Remove Marc’s access
     "marc@example.com": null,
@@ -133,7 +132,7 @@ await liveblocks.updateRoom("document-a", {
 // +++
 ```
 
-Connected users are affected immediately—someone whose access is removed is
+Connected users are affected immediately, and someone whose access is removed is
 disconnected from the room.
 
 ### Roles [#roles]
@@ -152,7 +151,7 @@ const ROLES = {
 
 await liveblocks.updateRoom("document-a", {
   usersAccesses: {
-    "quinn@example.com": ROLES.commenter,
+    "stacy@example.com": ROLES.commenter,
   },
 });
 ```
@@ -164,7 +163,7 @@ more under [Permissions](/docs/authentication/permissions).
 
 Share a document with a whole team at once using `groupsAccesses`. Groups are
 custom strings that you attach to users with `groupIds` during
-[authentication](/docs/authentication#id-token-room-permissions)—for example
+[authentication](/docs/authentication#id-token-room-permissions), for example
 each user’s departments or workspaces.
 
 ```ts
@@ -196,7 +195,7 @@ await liveblocks.updateRoom("document-a", {
   // +++
 });
 
-// Back to private—invited members keep their access
+// Back to private, invited members keep their access
 await liveblocks.updateRoom("document-a", {
   // +++
   defaultAccesses: [],
@@ -216,7 +215,7 @@ Render the dialog’s member list by reading the room’s accesses with
 // +++
 const room = await liveblocks.getRoom("document-a");
 
-// { "olivier@example.com": ["*:write"], "quinn@example.com": ["*:read"] }
+// { "olivier@example.com": ["*:write"], "stacy@example.com": ["*:read"] }
 console.log(room.usersAccesses);
 // +++
 ```
@@ -248,8 +247,8 @@ function Member({ userId }: { userId: string }) {
 
 Inside the document, adapt the interface to the current user’s access with the
 `canWrite` and `canComment` properties on
-[`useSelf`](/docs/api-reference/liveblocks-react#useSelf)—for example hiding the
-toolbar from viewers, or only showing the share button to editors.
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf), for example hiding
+the toolbar from viewers, or only showing the share button to editors.
 
 ```tsx
 import { useSelf } from "@liveblocks/react/suspense";
@@ -263,8 +262,8 @@ function Toolbar() {
 }
 ```
 
-Permissions are enforced on Liveblocks servers, so hiding UI is purely
-cosmetic—read-only users can’t modify the document even with a modified client.
+Permissions are enforced on Liveblocks servers, so hiding UI is purely cosmetic,
+as read-only users can’t modify the document even with a modified client.
 
 ### Invite notifications [#invite-notifications]
 
@@ -277,7 +276,7 @@ deliver it by email.
 ```ts
 // +++
 await liveblocks.triggerInboxNotification({
-  userId: "quinn@example.com",
+  userId: "stacy@example.com",
   kind: "$documentShared",
   subjectId: "document-a",
   activityData: {

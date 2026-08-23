@@ -8,9 +8,27 @@ meta:
 ---
 
 Show your users what AI agents are doing in your app, as it happens. With
-Liveblocks you can build an activity feed that streams each agent’s events in
-realtime, updates entries live as work progresses, keeps a permanent history,
-and notifies users when an agent finishes or needs input.
+Liveblocks you can build a multiplayer activity feed that streams each agent’s
+events in realtime, updates entries live as work progresses, keeps a permanent
+history, and notifies users when an agent finishes or needs input.
+
+<Figure
+  caption={
+    <>
+      AI activity feed in the{" "}
+      <a href="/examples/ai-slideshow/nextjs-ai-slideshow">AI Slideshow</a>{" "}
+      example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="ULiZy8luxoWFEwZb5oslOX7l5f31hg4XgRGKC1GgpcA"
+    alt="AI activity feed"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
 
 ## Features [#features]
 
@@ -63,7 +81,7 @@ the others.
 
 This is an overview of how each feature can be implemented. Activity events are
 stored in [feeds](/docs/products/sync/feeds), part of
-[Sync](/docs/products/sync)—each agent or run publishes messages to a feed, and
+[Sync](/docs/products/sync). Each agent or run publishes messages to a feed, and
 each message holds JSON data whose schema you define. Use
 [presence](/docs/products/sync/presence) for the agent’s live in-room status and
 [Notifications](/docs/products/notifications) to reach users who are away.
@@ -98,15 +116,16 @@ function ActivityFeed({ feedId }: { feedId: string }) {
 }
 ```
 
-Feeds is headless—it stores and syncs your event data, but you own the rendering
-and design. Learn more under the [feeds overview](/docs/products/sync/feeds).
+Feeds is headless, meaning it stores and syncs your event data, but you handle
+the rendering and design. Learn more under the
+[feeds overview](/docs/products/sync/feeds).
 
 ### Publishing activity [#publishing-activity]
 
 Your agent’s back end appends events with
 [`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
-Publish one event per meaningful step—a search performed, a file edited, a tool
-called—and connected clients receive each one in realtime.
+Publish one event per meaningful step, such as a search performed, a file
+edited, or a tool called, and connected clients receive each one in realtime.
 
 ```ts
 import { Liveblocks } from "@liveblocks/node";
@@ -137,7 +156,7 @@ any other language with the
 Long-running steps shouldn’t sit frozen in the feed. Create an event when a step
 starts, then update the same message with
 [`Liveblocks.updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId)
-as the agent progresses—every connected user sees the entry change live, from
+as the agent progresses. Every connected user sees the entry change live, from
 “thinking” through to “complete”.
 
 ```ts
@@ -169,8 +188,9 @@ in the [chat](/docs/use-cases/chat#streaming-ai-replies) use case.
 
 ### AI presence [#ai-presence]
 
-The feed records what an agent has done—[presence](/docs/products/sync/presence)
-shows that it’s working right now. Publish the agent’s live state with
+The feed records what an agent has done, while
+[presence](/docs/products/sync/presence) shows that it’s working right now.
+Publish the agent’s live state with
 [`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
 when a run starts, and remove it when the run ends.
 
@@ -227,7 +247,7 @@ Learn more under
 ### Activity history [#activity-history]
 
 Every event is saved permanently, so users who reconnect can audit exactly what
-an agent did while they were away. Long histories load in pages—
+an agent did while they were away. Long histories load in pages, as
 [`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages)
 returns up to 50 events by default, with pagination controls for loading earlier
 activity.
@@ -286,7 +306,7 @@ Learn more under the [inbox](/docs/use-cases/inbox-tray) use case and our
 ### Permissions [#permissions]
 
 Each activity feed is contained inside a room in your Liveblocks app, and Feeds
-has its own permission scopes—users watching agent activity only need
+has its own permission scopes. Users watching agent activity only need
 `feeds:read`, while only your back end publishes events. This can be set when
 modifying or creating a room, for example with
 [`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
