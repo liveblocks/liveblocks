@@ -116,7 +116,7 @@ focused before adding ephemeral multiplayer state.
    `ClientSideSuspense`, and initial shapes. Use
    `publicApiKey={"{{PUBLIC_KEY}}"}` and room ID `my-canvas-room`, then wrap the
    page in the room. Keep production authentication out of the core tutorial and
-   link to `/docs/authentication` at the end.
+   link to `/docs/api-reference/authentication` at the end.
 4. **Render and select boxes** Read shapes with `useStorage`, render them in an
    absolutely positioned canvas, and keep the current selection in local state.
 5. **Add and delete boxes** Use `useMutation` to insert a new `LiveObject` under

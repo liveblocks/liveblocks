@@ -1,11 +1,12 @@
 ---
 meta:
-  title: "Set up access token permissions with Express"
+  title: "Set up access token permissions with Firebase"
   parentTitle: "Authentication"
-  description: "Learn how to setup access token permissions with Express."
+  description: "Learn how to setup access token permissions with Firebase."
 ---
 
-Follow the following steps to start configure your authentication endpoint where
+Follow the following steps to start configure your authentication endpoint and
+start building your own security logic.
 
 ## Quickstart
 
@@ -13,6 +14,8 @@ Follow the following steps to start configure your authentication endpoint where
   <Step>
     <StepTitle>Install the `liveblocks/node` package</StepTitle>
     <StepContent>
+      Let’s first install the `@liveblocks/node` package in your
+      Firebase functions project.
 
       ```bash
       npm install @liveblocks/node
@@ -26,31 +29,27 @@ Follow the following steps to start configure your authentication endpoint where
     <StepContent>
 
       Users need permission to interact with rooms, and you can
-      permit access in an `api/liveblocks-auth` endpoint by
-      creating the `liveblocks-auth.ts` file with the
-      following code. In here you can implement your security and define
+      permit access by creating a new Firebase [callable function](https://firebase.google.com/docs/functions/callable)
+      as shown below. In here you can implement your security and define
       the rooms that your user can enter.
 
-      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
+      With access tokens, you should always use a [naming pattern](/docs/api-reference/authentication/access-token#permissions)
       for your room IDs, as this enables you to easily allow
       access to a range of rooms at once. In the code snippet below, we’re using a naming pattern and wildcard `*`
       to give the user access to every room in their organization, and every room in their group.
 
 
-      ```ts file="liveblocks-auth.ts"
-      const express = require("express");
-      import { Liveblocks } from "@liveblocks/node";
+      ```js
+      const functions = require("firebase-functions");
+      const { Liveblocks } = require("@liveblocks/node");
 
       const liveblocks = new Liveblocks({
         secret: "{{SECRET_KEY}}",
       });
 
-      const app = express();
-      app.use(express.json());
-
-      app.post("/api/liveblocks-auth", (req, res) => {
+      exports.auth = functions.https.onCall(async (data, context) => {
         // Get the current user from your database
-        const user = __getUserFromDB__(req);
+        const user = __getUserFromDB__(data);
 
         // Start an auth session inside your endpoint
         const session = liveblocks.prepareSession(
@@ -65,15 +64,16 @@ Follow the following steps to start configure your authentication endpoint where
 
         // Authorize the user and return the result
         const { status, body } = await session.authorize();
-        return res.status(status).end(body);
+        return JSON.parse(body);
       });
       ```
 
       Read
-      [access token permission](/docs/authentication/access-token#permissions)
+      [access token permission](/docs/api-reference/authentication/access-token#permissions)
       to learn more about naming rooms and granting permissions with wildcards.
       Note that if a naming pattern doesn’t work for every room in your application, you can
       [grant access to individual rooms too](/docs/guides/how-to-grant-access-to-individual-rooms-with-access-tokens).
+
 
     </StepContent>
 
@@ -85,47 +85,20 @@ Follow the following steps to start configure your authentication endpoint where
       option with `authEndpoint` pointing to the endpoint you
       just created.
 
-      ```ts file="liveblocks.config.ts"
+      ```js
       import { createClient } from "@liveblocks/client";
+      import firebase from "firebase";
+      import "firebase/functions";
 
-      const client = createClient({
-        authEndpoint: "/api/liveblocks-auth",
+      firebase.initializeApp({
+        /* Firebase config */
       });
-      ```
 
-      If you need to pass custom headers or data to your endpoint, you can
-      use
-      [authEndpoint as a callback](/docs/api-reference/liveblocks-client#createClientCallback)
-      instead.
+      const auth = firebase.functions().httpsCallable("liveblocks-auth");
 
-      ```ts file="liveblocks.config.ts" isCollapsed isCollapsable
-      import { createClient } from "@liveblocks/client";
-
-      // Passing custom headers and body to your endpoint
+      // Create a Liveblocks client
       const client = createClient({
-        authEndpoint: async (room) => {
-          const headers = {
-            // Custom headers
-            // ...
-
-            "Content-Type": "application/json",
-          };
-
-          const body = JSON.stringify({
-            // Custom body
-            // ...
-
-            room,
-          });
-
-          const response = await fetch("/api/liveblocks-auth", {
-            method: "POST",
-            headers,
-            body,
-          });
-
-          return await response.json();
-        },
+        authEndpoint: async (room) => (await auth({ room })).data,
       });
       ```
 

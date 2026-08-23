@@ -16,7 +16,7 @@ which rooms, and apply these permissions yourself each time a user connects.
 Access tokens have [limitations when granting nested permissions](#limitations).
 If you’re looking to build an application with permissions at organization,
 group, and user levels, we recommend using
-[ID tokens](/docs/authentication#id-token) instead.
+[ID tokens](/docs/api-reference/authentication#id-token) instead.
 
 </Banner>
 
@@ -60,43 +60,43 @@ later.
 <ListGrid columns={3}>
   <DocsCard
     title="Next.js"
-    href="/docs/authentication/access-token/nextjs"
+    href="/docs/api-reference/authentication/access-token/nextjs"
     visual={<DocsNextjsIcon />}
   />
   <DocsCard
     title="Remix"
-    href="/docs/authentication/access-token/remix"
+    href="/docs/api-reference/authentication/access-token/remix"
     visual={<DocsRemixIcon />}
   />
   <DocsCard
     title="SvelteKit"
-    href="/docs/authentication/access-token/sveltekit"
+    href="/docs/api-reference/authentication/access-token/sveltekit"
     visual={<DocsSvelteIcon />}
   />
   <DocsCard
     title="Nuxt.js"
-    href="/docs/authentication/access-token/nuxtjs"
+    href="/docs/api-reference/authentication/access-token/nuxtjs"
     visual={<DocsNuxtjsIcon />}
   />
   <DocsCard
     title="Express"
-    href="/docs/authentication/access-token/express"
+    href="/docs/api-reference/authentication/access-token/express"
     visual={<DocsExpressIcon />}
   />
   <DocsCard
     title="Firebase"
-    href="/docs/authentication/access-token/firebase"
+    href="/docs/api-reference/authentication/access-token/firebase"
     visual={<DocsFirebaseIcon />}
   />
 </ListGrid>
 
 ## Workspace permissions [#permissions]
 
-Using [organizations](/docs/authentication/organizations), you can create
-workspaces in your application, compartmentalizing all resources such as inbox
-notifications and rooms. This includes everything associated with rooms such as
-comment threads, realtime data stored, and more. This allows you to add a
-workspace switcher to your application, separating each of your
+Using [organizations](/docs/api-reference/authentication/organizations), you can
+create workspaces in your application, compartmentalizing all resources such as
+inbox notifications and rooms. This includes everything associated with rooms
+such as comment threads, realtime data stored, and more. This allows you to add
+a workspace switcher to your application, separating each of your
 customers/organizations.
 
 <Figure>
@@ -314,7 +314,7 @@ for this to work correctly.
 #### Building complex permissions
 
 For this reason,
-**[we recommend using ID tokens for complex permissions](/docs/authentication#id-token-room-permissions)**.
+**[we recommend using ID tokens for complex permissions](/docs/api-reference/authentication#id-token-room-permissions)**.
 ID token authentication allows you to attach permissions to each room when it’s
 created or modified, which means you don’t need to check permissions yourself,
 and no naming pattern is required.
@@ -333,32 +333,32 @@ authentication.
 <ListGrid columns={3}>
   <DocsCard
     title="Next.js"
-    href="/docs/authentication/access-token/nextjs"
+    href="/docs/api-reference/authentication/access-token/nextjs"
     visual={<DocsNextjsIcon />}
   />
   <DocsCard
     title="Remix"
-    href="/docs/authentication/access-token/remix"
+    href="/docs/api-reference/authentication/access-token/remix"
     visual={<DocsRemixIcon />}
   />
   <DocsCard
     title="SvelteKit"
-    href="/docs/authentication/access-token/sveltekit"
+    href="/docs/api-reference/authentication/access-token/sveltekit"
     visual={<DocsSvelteIcon />}
   />
   <DocsCard
     title="Nuxt.js"
-    href="/docs/authentication/access-token/nuxtjs"
+    href="/docs/api-reference/authentication/access-token/nuxtjs"
     visual={<DocsNuxtjsIcon />}
   />
   <DocsCard
     title="Express"
-    href="/docs/authentication/access-token/express"
+    href="/docs/api-reference/authentication/access-token/express"
     visual={<DocsExpressIcon />}
   />
   <DocsCard
     title="Firebase"
-    href="/docs/authentication/access-token/firebase"
+    href="/docs/api-reference/authentication/access-token/firebase"
     visual={<DocsFirebaseIcon />}
   />
 </ListGrid>

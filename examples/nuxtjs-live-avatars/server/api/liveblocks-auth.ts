@@ -2,7 +2,7 @@ import { Liveblocks } from "@liveblocks/node";
 
 /**
  * Authenticating your Liveblocks application
- * https://liveblocks.io/docs/authentication
+ * https://liveblocks.io/docs/api-reference/authentication
  */
 
 const config = useRuntimeConfig();

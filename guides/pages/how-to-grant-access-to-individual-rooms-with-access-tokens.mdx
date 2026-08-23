@@ -9,14 +9,15 @@ meta:
 
 If you’re looking to build an application with permissions at organization,
 group, and user levels, we recommend using
-[ID tokens](/docs/authentication#id-token) instead. Access tokens have
-[limitations when granting nested permissions](#limitations).
+[ID tokens](/docs/api-reference/authentication#id-token) instead. Access tokens
+have [limitations when granting nested permissions](#limitations).
 
 </Banner>
 
-With [access tokens](/docs/authentication/access-token) we always recommend
-using a [naming pattern](/docs/authentication/access-token#Naming-pattern) to
-grant access to multiple rooms at once, for example every room in a user’s
+With [access tokens](/docs/api-reference/authentication/access-token) we always
+recommend using a
+[naming pattern](/docs/api-reference/authentication/access-token#Naming-pattern)
+to grant access to multiple rooms at once, for example every room in a user’s
 organization.
 
 ```ts

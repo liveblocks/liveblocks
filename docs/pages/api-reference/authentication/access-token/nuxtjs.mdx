@@ -31,7 +31,7 @@ start building your own security logic.
       following code. This is where you will implement your security and
       define the rooms that the user has access to.
 
-      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
+      With access tokens, you should always use a [naming pattern](/docs/api-reference/authentication/access-token#permissions)
       for your room IDs, as this enables you to easily allow
       access to a range of rooms at once. In the code snippet below, we’re using a naming pattern and wildcard `*`
       to give the user access to every room in their organization, and every room in their group.
@@ -65,7 +65,7 @@ start building your own security logic.
       ```
 
       Read
-      [access token permission](/docs/authentication/access-token#permissions)
+      [access token permission](/docs/api-reference/authentication/access-token#permissions)
       to learn more about naming rooms and granting permissions with wildcards.
       Note that if a naming pattern doesn’t work for every room in your application, you can
       [grant access to individual rooms too](/docs/guides/how-to-grant-access-to-individual-rooms-with-access-tokens).

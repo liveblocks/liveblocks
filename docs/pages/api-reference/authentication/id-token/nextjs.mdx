@@ -1,12 +1,12 @@
 ---
 meta:
-  title: "Set up access token permissions with Remix"
+  title: "Set up ID token permissions with Next.js"
   parentTitle: "Authentication"
-  description: "Learn how to setup access token permissions with Remix."
+  description: "Learn how to setup ID token permissions with Next.js."
 ---
 
 Follow the following steps to start configure your authentication endpoint and
-start building your own security logic.
+start building your own security logic in Next.js’ `/app` directory.
 
 ## Quickstart
 
@@ -23,54 +23,79 @@ start building your own security logic.
 
   </Step>
   <Step>
+    <StepTitle>Add your project’s secret key</StepTitle>
+    <StepContent>
+
+      Create a new `.env.local` file and add your Liveblocks secret key from the [dashboard](/dashboard/apikeys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
-      Users need permission to interact with rooms, and you can
-      permit access in an `api/liveblocks-auth` endpoint by
-      creating the `app/routes/api/liveblocks-auth.ts` file with the
-      following code. In here you can implement your security and define
-      the rooms that your user can enter.
+      Users can only interact with rooms they have access to. You can
+      configure permission access in an `api/liveblocks-auth` endpoint by
+      creating the `app/api/liveblocks-auth/route.ts` file with the
+      following code. This is where you will implement your security and
+      define if the current user has access to a specific room.
 
-      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
-      for your room IDs, as this enables you to easily allow
-      access to a range of rooms at once. In the code snippet below, we’re using a naming pattern and wildcard `*`
-      to give the user access to every room in their organization, and every room in their group.
-
-
-      ```ts file="app/routes/api/liveblocks-auth.ts"
-      import type { ActionFunction } from "@remix-run/node";
+      ```ts file="app/api/liveblocks-auth/route.ts"
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
-        secret: "{{SECRET_KEY}}",
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
       });
 
-      export const action: ActionFunction = async ({ request }) => {
+      export async function POST(request: Request) {
         // Get the current user from your database
         const user = __getUserFromDB__(request);
 
-        // Start an auth session inside your endpoint
-        const session = liveblocks.prepareSession(
-          user.id,
-          { userInfo: user.metadata },  // Optional
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser(
+          {
+            userId: user.id,
+            groupIds, // Optional
+          },
+          { userInfo: user.metadata },
         );
 
-        // Use a naming pattern to allow access to rooms with wildcards
-        // Giving the user read access on their org, and write access on their group
-        session.allow(`${user.organization}:*`, ["*:read"]);
-        session.allow(`${user.organization}:${user.group}:*`, ["*:write"]);
-
-        // Authorize the user and return the result
-        const { status, body } = await session.authorize();
         return new Response(body, { status });
       }
       ```
 
-      Read
-      [access token permission](/docs/authentication/access-token#permissions)
-      to learn more about naming rooms and granting permissions with wildcards.
-      Note that if a naming pattern doesn’t work for every room in your application, you can
-      [grant access to individual rooms too](/docs/guides/how-to-grant-access-to-individual-rooms-with-access-tokens).
+      Here’s an example using the older API routes format in `/pages`.
+
+      ```ts file="pages/api/liveblocks-auth.ts" isCollapsed isCollapsable
+      import { Liveblocks } from "@liveblocks/node";
+      import type { NextApiRequest, NextApiResponse } from "next";
+
+      const liveblocks = new Liveblocks({
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+      });
+
+      export default async function handler(request: NextApiRequest, response: NextApiResponse) {
+        // Get the current user from your database
+        const user = __getUserFromDB__(request);
+
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser(
+          {
+            userId: user.id,
+            groupIds, // Optional
+          },
+          { userInfo: user.metadata },
+        );
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        response.status(status).send(body);
+      }
+      ```
 
     </StepContent>
 
@@ -123,6 +148,38 @@ start building your own security logic.
     </StepContent>
 
   </Step>
+  <Step>
+    <StepTitle>Set permission accesses to a room</StepTitle>
+    <StepContent>
+      A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
+      Permissions are then checked when users try to connect to a room. For security purposes,
+      [room permissions](/docs/api-reference/authentication#id-token-room-permissions) can only be set on the back-end through `@liveblocks/node` or our REST API.
+      For instance, you can use [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms)
+      to create a new room with read-only public access levels while giving write access to specific groups and users.
+
+      ```ts highlight="7-15"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+      });
+
+      const room = await liveblocks.createRoom("my-room-id", {
+        defaultAccesses: ["*:read"],
+        groupsAccesses: {
+          "my-group-id": ["*:write"],
+        },
+        usersAccesses: {
+          "my-user-id": ["*:write"],
+        },
+      });
+      ```
+
+      For more information, make sure to read the section on [room permissions](/docs/api-reference/authentication#id-token-room-permissions).
+
+    </StepContent>
+
+  </Step>
   <Step lastStep>
     <StepTitle>Attach metadata to users</StepTitle>
       <StepContent>
@@ -153,20 +210,23 @@ start building your own security logic.
         When authenticating, you can then pass the user’s metadata to
         `prepareSession` in the endpoint we’ve just created.
 
-        ```ts file="app/routes/api/liveblocks-auth.ts" highlight="8-12"
+        ```ts file="app/api/liveblocks-auth/route.ts" highlight="11-15"
         // Get the current user from your database
         const user = __getUserFromDB__(request);
 
-        // Start an auth session inside your endpoint
-        const session = liveblocks.prepareSession(
-          user.id,
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser(
+          {
+            userId: user.id,
+            groupIds, // Optional
+          },
           {
             userInfo: {
               name: user.name,
               avatar: user.avatarUrl,
               colors: user.colorArray,
             }
-          }
+          },
         );
         ```
 
@@ -174,7 +234,7 @@ start building your own security logic.
         [`useSelf`](/docs/api-reference/liveblocks-react#useSelf).
 
         ```tsx highlight="4"
-        export { useSelf } from "../liveblocks.config.ts";
+        export { useSelf } from "@liveblocks/react/suspense";
 
         function Component() {
           const { name, avatar, colors } = useSelf((me) => me.info);
@@ -201,7 +261,7 @@ console.log(self.info);
 
 <Figure>
   <Image
-    src="/assets/access-token-auth-diagram.png"
+    src="/assets/id-token-auth-diagram.png"
     alt="Auth diagram"
     width={768}
     height={576}

@@ -72,8 +72,8 @@ This is an overview of how each feature can be implemented.
 [Sync](/docs/products/sync/overview)—each connected user has a JSON object that
 updates in realtime and disappears when their connection ends. Use it for
 anything that can vanish when a user leaves, and keep permanent content in
-[Storage](/docs/products/sync/storage). Define the shape of your presence
-object with the
+[Storage](/docs/products/sync/storage). Define the shape of your presence object
+with the
 [`Liveblocks` interface](/docs/api-reference/liveblocks-react#Typing-your-data)
 and set its initial value on
 [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
@@ -218,8 +218,9 @@ function Composer() {
 Keep names, colors, and avatars in user information rather than presence—it
 comes from your database, stays consistent across a user’s connections, and
 can’t be spoofed by the client. Pass it to `userInfo` in your
-[authentication endpoint](/docs/authentication), then read it from the `info`
-property returned by `useOthers`, as shown under [Selections](#selections).
+[authentication endpoint](/docs/api-reference/authentication), then read it from
+the `info` property returned by `useOthers`, as shown under
+[Selections](#selections).
 
 ```ts
 import { Liveblocks } from "@liveblocks/node";
@@ -251,7 +252,7 @@ export async function POST(request: Request) {
 Configure
 [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
 so the ready-made components can display the same profiles. Learn more under
-[Authentication](/docs/authentication).
+[Authentication](/docs/api-reference/authentication).
 
 ### Agent presence [#agent-presence]
 
@@ -309,7 +310,7 @@ await liveblocks.createRoom(`my-room-id`, {
 ```
 
 More complex controls can be set too, learn more under
-[Permissions](/docs/authentication/permissions).
+[Permissions](/docs/api-reference/authentication/permissions).
 
 ## Examples [#examples]
 

@@ -179,7 +179,7 @@ Link to:
 - `/docs/products/sync/data-types`
 - `/docs/products/sync/presence`
 - `/docs/products/sync/conflict-resolution`
-- `/docs/authentication`
+- `/docs/api-reference/authentication`
 - `@liveblocks/react` and `@liveblocks/client` API anchors
 
 Suggested videos:

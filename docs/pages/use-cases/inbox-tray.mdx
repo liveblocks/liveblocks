@@ -3,21 +3,19 @@ meta:
   title: "Inbox"
   parentTitle: "Use cases"
   description:
-    "Build an in-app inbox with unread badges, automatic comment and
-    mention notifications, custom notification kinds, user settings, and email
-    delivery."
+    "Build an in-app inbox with unread badges, automatic comment and mention
+    notifications, custom notification kinds, user settings, and email delivery."
 ---
 
-Create an inbox with Liveblocks. Show new activity in realtime, receive
-comment and mention notifications automatically, trigger custom notifications
-from your back end, and deliver missed activity by email, Slack, Microsoft
-Teams, and more.
+Create an inbox with Liveblocks. Show new activity in realtime, receive comment
+and mention notifications automatically, trigger custom notifications from your
+back end, and deliver missed activity by email, Slack, Microsoft Teams, and
+more.
 
 <Figure
   caption={
     <>
-      Inbox inside the{" "}
-      <a href="/nextjs-starter-kit">Next.js Starter Kit</a>
+      Inbox inside the <a href="/nextjs-starter-kit">Next.js Starter Kit</a>
     </>
   }
 >
@@ -421,10 +419,10 @@ and format the message yourself. Learn more under
 ### Workspace inboxes [#workspace-inboxes]
 
 If your app has multiple workspaces or tenants, use
-[organizations](/docs/authentication/organizations) to give each user a separate
-inbox per workspace. Notifications from rooms created with an `organizationId`
-belong to that organization automatically, and custom notifications can be
-assigned to one when triggered.
+[organizations](/docs/api-reference/authentication/organizations) to give each
+user a separate inbox per workspace. Notifications from rooms created with an
+`organizationId` belong to that organization automatically, and custom
+notifications can be assigned to one when triggered.
 
 ```ts
 await liveblocks.triggerInboxNotification({
@@ -452,7 +450,8 @@ const { body, status } = await liveblocks.identifyUser({
 });
 ```
 
-Learn more under [Organizations](/docs/authentication/organizations).
+Learn more under
+[Organizations](/docs/api-reference/authentication/organizations).
 
 ## Examples [#examples]
 

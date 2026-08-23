@@ -130,10 +130,11 @@ const client = createClient({
     name="authEndpoint"
     detailedType="string | async ((room?: string) => CustomAuthenticationResult)"
   >
-    The URL of your back end’s [authentication endpoint](/docs/authentication)
-    as a string, or an async callback function that returns a Liveblocks token
-    result. Either `authEndpoint` or `publicApiKey` are required. Learn more
-    about [using a URL string](#createClientAuthEndpoint) and [using a
+    The URL of your back end’s [authentication
+    endpoint](/docs/api-reference/authentication) as a string, or an async
+    callback function that returns a Liveblocks token result. Either
+    `authEndpoint` or `publicApiKey` are required. Learn more about [using a URL
+    string](#createClientAuthEndpoint) and [using a
     callback](#createClientCallback).
   </PropertiesListItem>
   <PropertiesListItem name="publicApiKey" type="string">
@@ -244,7 +245,7 @@ const client = createClient({
 ### createClient with auth endpoint [#createClientAuthEndpoint]
 
 If you are not using a public key, you need to set up your own `authEndpoint`.
-Please refer to our [Authentication guide](/docs/authentication).
+Please refer to our [Authentication guide](/docs/api-reference/authentication).
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -6934,12 +6935,12 @@ const user = room.getSelf();
   <PropertiesListItem name="canWrite" type="boolean">
     `true` if the user can mutate the Room’s Storage and/or YDoc, `false` if
     they can only read but not mutate it. Set via your [room
-    permissions](/docs/authentication#id-token-room-permissions).
+    permissions](/docs/api-reference/authentication#id-token-room-permissions).
   </PropertiesListItem>
   <PropertiesListItem name="canComment" type="boolean">
     `true` if the user can leave a comment in the room, `false` if they can only
     read comments but not leave them. Set via your [room
-    permissions](/docs/authentication#id-token-room-permissions).
+    permissions](/docs/api-reference/authentication#id-token-room-permissions).
   </PropertiesListItem>
 </PropertiesList>
 

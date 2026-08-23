@@ -7,9 +7,10 @@ meta:
 
 Permissions define what an authenticated user can do with Liveblocks resources
 such as rooms, comments, and feeds. When using
-[ID token authentication](/docs/authentication), permissions are set on rooms.
-With [access tokens](/docs/authentication/access-token), you permissions are
-granted when a user authenticates.
+[ID token authentication](/docs/api-reference/authentication), permissions are
+set on rooms. With
+[access tokens](/docs/api-reference/authentication/access-token), you
+permissions are granted when a user authenticates.
 
 <Table columns={["28%", "18%", "auto"]}>
 
@@ -156,7 +157,7 @@ Private threads are only available on Team and Enterprise plans.
 
 With ID tokens, use permissions in `defaultAccesses`, `groupsAccesses`, and
 `usersAccesses` when you
-[create or update rooms](/docs/authentication#id-token-room-permissions). With
-access tokens, use permissions when you
-[allow access to rooms](/docs/authentication/access-token#room-permissions) in
-an authentication endpoint.
+[create or update rooms](/docs/api-reference/authentication#id-token-room-permissions).
+With access tokens, use permissions when you
+[allow access to rooms](/docs/api-reference/authentication/access-token#room-permissions)
+in an authentication endpoint.

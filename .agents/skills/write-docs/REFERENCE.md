@@ -17,18 +17,18 @@ meta:
 
 Use this current map when deciding where a page or link belongs:
 
-| Surface        | Files                                                           | Canonical URLs             |
-| -------------- | --------------------------------------------------------------- | -------------------------- |
-| Docs overview  | `docs/pages/index.mdx`                                          | `/docs`                    |
-| Products       | `docs/pages/products`                                           | `/docs/products/...`       |
-| Use cases      | `docs/pages/use-cases`                                          | `/docs/use-cases/...`      |
-| API reference  | `docs/pages/api-reference` and `docs/pages/api-reference.mdx`   | `/docs/api-reference/...`  |
-| Get started    | `docs/pages/get-started`                                        | `/docs/get-started/...`    |
-| Tools          | `docs/pages/tools`                                              | `/docs/tools/...`          |
-| Integrations   | `docs/pages/integrations` and `docs/pages/integrations.mdx`     | `/docs/integrations/...`   |
-| Platform       | `docs/pages/platform`                                           | `/docs/platform/...`       |
-| Authentication | `docs/pages/authentication` and `docs/pages/authentication.mdx` | `/docs/authentication/...` |
-| Pricing        | `docs/pages/pricing`                                            | `/docs/pricing/...`        |
+| Surface        | Files                                                                                       | Canonical URLs                           |
+| -------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Docs overview  | `docs/pages/index.mdx`                                                                      | `/docs`                                  |
+| Products       | `docs/pages/products`                                                                       | `/docs/products/...`                     |
+| Use cases      | `docs/pages/use-cases`                                                                      | `/docs/use-cases/...`                    |
+| API reference  | `docs/pages/api-reference` and `docs/pages/api-reference.mdx`                               | `/docs/api-reference/...`                |
+| Get started    | `docs/pages/get-started`                                                                    | `/docs/get-started/...`                  |
+| Tools          | `docs/pages/tools`                                                                          | `/docs/tools/...`                        |
+| Integrations   | `docs/pages/integrations` and `docs/pages/integrations.mdx`                                 | `/docs/integrations/...`                 |
+| Platform       | `docs/pages/platform`                                                                       | `/docs/platform/...`                     |
+| Authentication | `docs/pages/api-reference/authentication` and `docs/pages/api-reference/authentication.mdx` | `/docs/api-reference/authentication/...` |
+| Pricing        | `docs/pages/pricing`                                                                        | `/docs/pricing/...`                      |
 
 Product documentation moved from `docs/pages/collaboration-features` to
 `docs/pages/products`. Use `/docs/products/...` for canonical product links; do
@@ -45,10 +45,9 @@ Use case pages live under `docs/pages/use-cases`. They combine the relevant
 products and APIs for one application type, then link to get started guides and
 complete examples rather than reproducing a step-by-step guide.
 
-Authentication is grouped under Platform in `docs/routes.json`, but its files
-and canonical URLs remain under `authentication`. Treat `docs/routes.json` as
-the source of truth for sidebar grouping because a page's navigation section
-does not always match its directory.
+Authentication is the first group in API Reference, immediately after its
+overview. Its files and canonical URLs live under
+`api-reference/authentication`.
 
 API reference pages remain under `docs/pages/api-reference`. Do not move or
 rewrite API reference pages as a side effect of the product information

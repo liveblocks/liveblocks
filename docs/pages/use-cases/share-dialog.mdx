@@ -56,7 +56,7 @@ on each room.
   <DocsCard
     type="technology"
     title="Set up ID token authentication"
-    href="/docs/authentication/id-token/nextjs"
+    href="/docs/api-reference/authentication/id-token/nextjs"
     description="Store permissions on each room"
     visual={<DocsNextjsIcon />}
   />
@@ -73,18 +73,18 @@ on each room.
 
 This is an overview of how each feature can be implemented. Each document is a
 room in your Liveblocks app, and with
-[ID token authentication](/docs/authentication#id-token-room-permissions) the
-room itself stores who can access it. A share dialog is a UI over these room
+[ID token authentication](/docs/api-reference/authentication#id-token-room-permissions)
+the room itself stores who can access it. A share dialog is a UI over these room
 accesses. When a user invites someone or changes a role, the dialog calls your
 server, which updates the room with
 [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
 
 ### Room permissions [#room-permissions]
 
-Each room holds [permissions](/docs/authentication/permissions) at three levels:
-`defaultAccesses` for everyone, `groupsAccesses` for teams, and `usersAccesses`
-for individuals. Create documents as private by default, with only the creator
-having access, using
+Each room holds [permissions](/docs/api-reference/authentication/permissions) at
+three levels: `defaultAccesses` for everyone, `groupsAccesses` for teams, and
+`usersAccesses` for individuals. Create documents as private by default, with
+only the creator having access, using
 [`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
 
 ```ts
@@ -108,8 +108,8 @@ await liveblocks.createRoom("document-a", {
 ```
 
 Users are matched by the `userId` and `groupIds` set when
-[authenticating](/docs/authentication#id-token-room-permissions) them, so no
-Liveblocks-specific accounts are needed.
+[authenticating](/docs/api-reference/authentication#id-token-room-permissions)
+them, so no Liveblocks-specific accounts are needed.
 
 ### Inviting users [#inviting-users]
 
@@ -157,14 +157,14 @@ await liveblocks.updateRoom("document-a", {
 ```
 
 More granular scopes exist too, such as `storage:read` and `feeds:write`. Learn
-more under [Permissions](/docs/authentication/permissions).
+more under [Permissions](/docs/api-reference/authentication/permissions).
 
 ### Team sharing [#team-sharing]
 
 Share a document with a whole team at once using `groupsAccesses`. Groups are
 custom strings that you attach to users with `groupIds` during
-[authentication](/docs/authentication#id-token-room-permissions), for example
-each user’s departments or workspaces.
+[authentication](/docs/api-reference/authentication#id-token-room-permissions),
+for example each user’s departments or workspaces.
 
 ```ts
 // +++
@@ -179,8 +179,8 @@ await liveblocks.updateRoom("document-a", {
 
 Anyone authenticated with the `engineering` group ID can now open the document,
 including people who join the team later. In multi-tenant apps, use
-[organizations](/docs/authentication/organizations) to keep each workspace’s
-rooms and users separate.
+[organizations](/docs/api-reference/authentication/organizations) to keep each
+workspace’s rooms and users separate.
 
 ### Public link access [#public-access]
 

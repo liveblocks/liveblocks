@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { getRandomUser } from "@/database";
 
 // Authenticating your Liveblocks application
-// https://liveblocks.io/docs/authentication
+// https://liveblocks.io/docs/api-reference/authentication
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,

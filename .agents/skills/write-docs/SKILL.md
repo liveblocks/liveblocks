@@ -40,7 +40,8 @@ places users are likely to look.
 ## Workflow
 
 1. Identify the docs surface:
-   - API reference: every new public API, prop, option, return value, or type.
+   - API reference: every new public API, prop, option, return value, or type,
+     plus Authentication under `docs/pages/api-reference/authentication`.
    - Product pages: product concepts, features, and workflows under
      `docs/pages/products`, with canonical URLs under `/docs/products`.
    - Use case pages: explanations of how several Liveblocks features combine for

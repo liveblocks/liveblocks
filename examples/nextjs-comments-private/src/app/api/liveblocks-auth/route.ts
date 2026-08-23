@@ -5,7 +5,7 @@ import { EXTERNAL_USER_TYPE, getUserType, USER_ID_SEARCH_PARAM } from "@/user";
 
 /**
  * Authenticating your Liveblocks application
- * https://liveblocks.io/docs/authentication
+ * https://liveblocks.io/docs/api-reference/authentication
  */
 
 const liveblocks = new Liveblocks({

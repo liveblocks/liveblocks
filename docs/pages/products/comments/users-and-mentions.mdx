@@ -45,7 +45,8 @@ const session = liveblocks.prepareSession("charlie.layne@example.com", {
 ```
 
 There are two different authentication methods—make sure to follow an
-[authentication guide for your framework](/docs/authentication) to get started.
+[authentication guide for your framework](/docs/api-reference/authentication) to
+get started.
 
 ## Adding user information
 
@@ -386,11 +387,12 @@ filter out any groups that the user doesn’t have access to.
 
 #### First-party multi-tenancy
 
-Using the Liveblocks [organizations](/docs/authentication/organizations)
-feature, you can create groups with the same ID in different organizations. This
-is an easy way to compartmentalize resources in your app for each organization.
-In the snippet below, both organizations have an engineering team, but because
-separate organizations are used, they are different groups.
+Using the Liveblocks
+[organizations](/docs/api-reference/authentication/organizations) feature, you
+can create groups with the same ID in different organizations. This is an easy
+way to compartmentalize resources in your app for each organization. In the
+snippet below, both organizations have an engineering team, but because separate
+organizations are used, they are different groups.
 
 ```ts
 const group = await liveblocks.createGroup({

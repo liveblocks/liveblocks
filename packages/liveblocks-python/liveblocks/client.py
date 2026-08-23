@@ -2551,7 +2551,7 @@ class Liveblocks:
         is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a
         list of permissions to assign the user for any room that matches that name exactly (or starts with
         the pattern’s prefix). For tips, see [Manage permissions with access
-        tokens](https://liveblocks.io/docs/authentication/access-token).
+        tokens](https://liveblocks.io/docs/api-reference/authentication/access-token).
 
         Args:
             body (AuthorizeUserRequestBody):  Example: {'userId': 'user-123', 'userInfo': {'name':
@@ -2585,7 +2585,7 @@ class Liveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication#id-token-room-
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-
         permissions) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
@@ -2606,7 +2606,7 @@ class Liveblocks:
         If you want to use group permissions, you can also declare which `groupIds` this user belongs to.
         The group ID values are yours, but they will have to match the group IDs you assign permissions to
         when assigning permissions to rooms, see [Manage permissions with ID
-        tokens](https://liveblocks.io/docs/authentication#id-token-room-permissions)).
+        tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-permissions)).
 
         Additionally, you can set custom metadata to the token, which will be publicly accessible by other
         clients through the `user.info` property. This is useful for storing static data like avatar images
@@ -6133,7 +6133,7 @@ class AsyncLiveblocks:
         is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a
         list of permissions to assign the user for any room that matches that name exactly (or starts with
         the pattern’s prefix). For tips, see [Manage permissions with access
-        tokens](https://liveblocks.io/docs/authentication/access-token).
+        tokens](https://liveblocks.io/docs/api-reference/authentication/access-token).
 
         Args:
             body (AuthorizeUserRequestBody):  Example: {'userId': 'user-123', 'userInfo': {'name':
@@ -6167,7 +6167,7 @@ class AsyncLiveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication#id-token-room-
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-
         permissions) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
@@ -6188,7 +6188,7 @@ class AsyncLiveblocks:
         If you want to use group permissions, you can also declare which `groupIds` this user belongs to.
         The group ID values are yours, but they will have to match the group IDs you assign permissions to
         when assigning permissions to rooms, see [Manage permissions with ID
-        tokens](https://liveblocks.io/docs/authentication#id-token-room-permissions)).
+        tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-permissions)).
 
         Additionally, you can set custom metadata to the token, which will be publicly accessible by other
         clients through the `user.info` property. This is useful for storing static data like avatar images
