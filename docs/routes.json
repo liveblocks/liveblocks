@@ -474,6 +474,32 @@
             "path": "/products/sync/feeds"
           },
           {
+            "title": "Events",
+            "path": "/products/sync/events"
+          },
+          {
+            "title": "Text editing",
+            "path": "/products/sync/text-editing",
+            "routes": [
+              {
+                "title": "Tiptap",
+                "path": "/products/sync/text-editing/tiptap"
+              },
+              {
+                "title": "Lexical",
+                "path": "/products/sync/text-editing/lexical"
+              },
+              {
+                "title": "BlockNote",
+                "path": "/products/sync/text-editing/blocknote"
+              },
+              {
+                "title": "Yjs",
+                "path": "/products/sync/text-editing/yjs"
+              }
+            ]
+          },
+          {
             "title": "Server-side editing",
             "path": "/products/sync/server-side-editing"
           },
@@ -486,20 +512,12 @@
             "path": "/products/sync/version-history"
           },
           {
-            "title": "Events",
-            "path": "/products/sync/events"
-          },
-          {
             "title": "Permissions",
             "path": "/products/sync/permissions"
           },
           {
             "title": "Integrations",
             "path": "/products/sync/integrations"
-          },
-          {
-            "title": "Yjs",
-            "path": "/products/sync/yjs"
           }
         ]
       },

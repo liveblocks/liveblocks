@@ -44,7 +44,8 @@ building collaborative apps.
 - **Multiplayer undo/redo**: Give each user a history that respects other
   people’s edits.
 - **Version history**: Preview and restore meaningful document snapshots.
-- **Permissions**: Control who can read or edit each room.
+- **Permissions**: Control which users, or groups of users, can read or edit
+  each data.
 - **TypeScript-first data**: Define data, presence, events, user info, and
   shapes in TypeScript.
 
@@ -62,11 +63,17 @@ edit the same state.
 
 ## How to use Sync
 
-Liveblocks Sync provides simple primitives for reading and writing collaborative
-state. For example, [storage](/docs/products/sync/storage) allows you to build a
-collaborative canvas by reading and writing to shared document with
+Sync provides a number of React and JavaScript primitives for building
+collaborative applications.
+
+### Primitive examples
+
+[Storage](/docs/products/sync/storage) is a primitive that allows you to read
+and write to collaborative state, enabling you to build any kind of multiplayer
+document. For example, with
 [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and
-[`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation) you can build
+a collaborative canvas.
 
 ```tsx
 import { useMutation, useStorage } from "@liveblocks/react/suspense";
@@ -95,9 +102,8 @@ function Canvas() {
 ```
 
 [Presence](/docs/products/sync/presence) is another primitive that allows you to
-render live activity with the
-[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook, for example
-realtime cursors or an avatar stack.
+render realtime user activity, such as realtime cursors or an avatar stack, with
+the [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook.
 
 ```tsx
 import { useSelf, useOthers } from "@liveblocks/react/suspense";
@@ -123,7 +129,7 @@ function AvatarStack() {
 
 [Feeds](/docs/products/sync/feeds) allows you to create realtime paginated
 streams of data, useful for storing workflow state or AI chats. Stream messages
-from the client or server and display them with
+from client or server and display them live with
 [`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages).
 
 ```tsx
@@ -148,6 +154,10 @@ function Chat({ feedId }: { feedId: string }) {
   );
 }
 ```
+
+This is just a short sample of Sync’s offering; many other primitivies, hooks,
+components, and integrations are available for building your collaborative
+application.
 
 ## Learn more
 
@@ -184,10 +194,10 @@ Dive into the different aspects of Sync in the following sections.
   />
   <DocsCard
     type="technology"
-    title="Version history"
-    href="/docs/products/sync/version-history"
-    description="Preview and restore earlier document versions"
-    visual={<DocsVersionHistoryIcon className="h-auto w-6" />}
+    title="Text editing"
+    href="/docs/products/sync/text-editing"
+    description="Collaborative text editing with LiveText & Yjs"
+    visual={<DocsTextEditorIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
@@ -202,6 +212,13 @@ Dive into the different aspects of Sync in the following sections.
     href="/docs/products/sync/agentic-editing"
     description="Let AI agents edit shared data alongside users"
     visual={<DocsAgenticEditingIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Version history"
+    href="/docs/products/sync/version-history"
+    description="Preview and restore earlier document versions"
+    visual={<DocsVersionHistoryIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
@@ -220,7 +237,7 @@ Dive into the different aspects of Sync in the following sections.
   <DocsCard
     type="technology"
     title="Yjs"
-    href="/docs/products/sync/yjs"
+    href="/docs/products/sync/text-editing/yjs"
     description="Use the Yjs ecosystem with Liveblocks"
     visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
   />
@@ -296,21 +313,23 @@ Dive into the different aspects of Sync in the following sections.
     title="Tiptap React"
     href="/docs/api-reference/liveblocks-react-tiptap"
     description="@liveblocks/react-tiptap"
-    visual={<DocsReactIcon />}
+    visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
     title="BlockNote React"
     href="/docs/api-reference/liveblocks-react-blocknote"
     description="@liveblocks/react-blocknote"
-    visual={<DocsReactIcon />}
+    visual={
+      <DocsBlocknotejsIcon className="fill-product-icon-brand h-auto w-6" />
+    }
   />
   <DocsCard
     type="technology"
     title="Lexical React"
     href="/docs/api-reference/liveblocks-react-lexical"
     description="@liveblocks/react-lexical"
-    visual={<DocsReactIcon />}
+    visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"

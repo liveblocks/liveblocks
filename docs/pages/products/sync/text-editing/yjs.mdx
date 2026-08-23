@@ -1,7 +1,7 @@
 ---
 meta:
   title: "Yjs"
-  parentTitle: "Sync"
+  parentTitle: "Text editing"
   description:
     "Connect Sync to the Yjs ecosystem, shared types, awareness, and editor
     integrations."
@@ -15,8 +15,9 @@ between clients.
 
 LiveText is the better choice for new text-editor integrations. It stores
 collaborative text directly in Storage and works with different editor adapters.
-Read the [Text editor use case](/docs/use-cases/text-editor) to choose an
-integration.
+Read [text editing](/docs/products/sync/text-editing) to compare the two
+approaches, and the [text editor use case](/docs/use-cases/text-editor) to
+choose an integration.
 
 Use Yjs when an existing library expects a `Y.Doc`, when you need Yjs shared
 types or awareness, or when integrating with an established Yjs ecosystem.
@@ -133,17 +134,63 @@ If you’re using our Tiptap, BlockNote, or Lexical plugins, ready-made
 components preview and restore versions for you. Learn how to set this up in our
 [version history guide](/docs/guides/how-to-add-version-history-to-your-app).
 
-## Text and code editor integrations
+## Get started
 
-Liveblocks Yjs integrates with popular text and code editors such as Slate,
-Monaco, and CodeMirror. Check our get started guides for more information on
-different editors.
+Choose a starting point for your Yjs-backed editor.
 
-<Button asChild>
-  <a href="/docs/use-cases/text-editor">Compare text editor integrations</a>
-</Button>
+<ListGrid columns={2} defaultVisibleItems={4}>
+  <DocsCard
+    type="technology"
+    title="Get started with SuperDoc"
+    href="/docs/get-started/yjs-superdoc-react"
+    description="Yjs-backed document editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Monaco"
+    href="/docs/get-started/yjs-monaco-react"
+    description="Yjs-backed code editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Slate"
+    href="/docs/get-started/yjs-slate-react"
+    description="Yjs-backed text editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Quill"
+    href="/docs/get-started/yjs-quill-react"
+    description="Yjs-backed text editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with CodeMirror"
+    href="/docs/get-started/yjs-codemirror-react"
+    description="Yjs-backed code editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Tiptap and Yjs"
+    href="/docs/get-started/nextjs-tiptap"
+    description="Yjs-backed text editor with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Lexical and Yjs"
+    href="/docs/get-started/nextjs-lexical"
+    description="Yjs-backed text editor with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
 
-## Yjs guides
+### How-to guides
 
 <ListGrid columns={2}>
   <DocsCard
@@ -155,16 +202,16 @@ different editors.
   />
   <DocsCard
     type="technology"
-    title="Use Y.Doc on the server"
-    href="/docs/guides/how-to-use-your-ydoc-on-the-server"
-    description="Access Yjs data from your back end"
+    title="Yjs best practices"
+    href="/docs/guides/yjs-best-practices-and-tips"
+    description="Tips for building with Yjs"
     visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Yjs best practices"
-    href="/docs/guides/yjs-best-practices-and-tips"
-    description="Tips for building with Yjs"
+    title="Use Y.Doc on the server"
+    href="/docs/guides/how-to-use-your-ydoc-on-the-server"
+    description="Access Yjs data from your back end"
     visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
@@ -176,9 +223,10 @@ different editors.
   />
 </ListGrid>
 
-## API Reference
+### API Reference
 
 <ListGrid columns={2}>
+  {" "}
   <DocsCard
     type="technology"
     title="Yjs"
@@ -193,18 +241,30 @@ different editors.
     description="@liveblocks/node"
     visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
   />
-  <DocsCard
-    type="technology"
-    title="REST API"
-    href="/docs/api-reference/rest-api-endpoints#Yjs"
-    description="HTTP endpoints"
-    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
 </ListGrid>
 
-## Examples using Liveblocks Yjs
+### Examples
 
 <ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative Text Editor (SuperDoc)",
+      slug: "collaborative-text-editor/nextjs-yjs-superdoc",
+      image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Code Editor",
+      slug: "collaborative-code-editor",
+      image: "/images/examples/thumbnails/code-editor.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
   <ExampleCard
     example={{
       title: "Collaborative Text Editor (Slate)",
@@ -219,16 +279,6 @@ different editors.
       title: "Collaborative Text Editor (Quill)",
       slug: "collaborative-text-editor/nextjs-yjs-quill",
       image: "/images/examples/thumbnails/text-editor.jpg",
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Collaborative Code Editor",
-      slug: "collaborative-code-editor",
-      image: "/images/examples/thumbnails/code-editor.jpg",
-      advanced: true,
     }}
     technologies={["nextjs"]}
     openInNewWindow
