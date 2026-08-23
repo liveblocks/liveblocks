@@ -3,42 +3,39 @@ meta:
   title: "Integrations"
   parentTitle: "Sync"
   description:
-    "Connect Sync to text editors, code editors, flowcharts, and state
-    management libraries."
+    "Official Liveblocks packages for text editors, code editors, flowcharts,
+    and state management libraries, plus guides for other tools."
 ---
 
 Sync integrations connect Storage, LiveText, or Yjs to an existing editor,
-canvas, diagram, or state library. Start from the application surface you are
-building, then follow its get-started guide and API reference.
+canvas, diagram, or state library. Official packages are built and maintained
+by Liveblocks, and further below you’ll find guides for connecting other
+libraries yourself.
 
-## Text editors [#text-editors]
+## Official packages [#official-packages]
 
-For new text-editor integrations, use LiveText and an editor adapter where
-available. It keeps collaborative text inside Storage and shares Sync features
-such as history and agentic editing.
+Each package has full API reference documentation and a get-started guide.
 
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
     title="Tiptap"
-    href="/docs/use-cases/text-editor"
-    description="LiveText and Yjs collaboration modes"
-    visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
+    href="/docs/api-reference/liveblocks-react-tiptap"
+    description="@liveblocks/react-tiptap"
+    visual={<DocsReactIcon />}
   />
   <DocsCard
     type="technology"
     title="BlockNote"
-    href="/docs/get-started/nextjs-blocknote"
-    description="Collaborative BlockNote documents"
-    visual={
-      <DocsBlocknotejsIcon className="fill-product-icon-brand h-auto w-6" />
-    }
+    href="/docs/api-reference/liveblocks-react-blocknote"
+    description="@liveblocks/react-blocknote"
+    visual={<DocsReactIcon />}
   />
   <DocsCard
     type="technology"
     title="Lexical"
-    href="/docs/get-started/nextjs-lexical"
-    description="Collaborative Lexical documents"
+    href="/docs/api-reference/liveblocks-react-lexical"
+    description="@liveblocks/react-lexical"
     visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
@@ -46,53 +43,22 @@ such as history and agentic editing.
     title="ProseMirror"
     href="/docs/api-reference/liveblocks-prosemirror"
     description="@liveblocks/prosemirror"
-    visual={
-      <DocsJavascriptIcon className="fill-product-icon-brand h-auto w-6" />
-    }
+    visual={<DocsJavascriptIcon />}
   />
-</ListGrid>
-
-## Code editors [#code-editors]
-
-<ListGrid columns={2}>
   <DocsCard
     type="technology"
     title="CodeMirror"
-    href="/docs/use-cases/code-editor"
-    description="Build on LiveText or Liveblocks Yjs"
+    href="/docs/api-reference/liveblocks-codemirror"
+    description="@liveblocks/codemirror"
     visual={<DocsCodeEditorIcon className="h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Monaco"
-    href="/docs/get-started/yjs-monaco-react"
-    description="Connect Monaco through Liveblocks Yjs"
-    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
-</ListGrid>
-
-## Canvas and flowcharts [#canvas-and-flowcharts]
-
-<ListGrid columns={2}>
-  <DocsCard
-    type="technology"
     title="React Flow"
-    href="/docs/use-cases/flowchart"
+    href="/docs/api-reference/liveblocks-react-flow"
     description="@liveblocks/react-flow"
     visual={<DocsFlowchartIcon className="h-auto w-6" />}
   />
-  <DocsCard
-    type="technology"
-    title="tldraw"
-    href="/docs/get-started/nextjs-tldraw"
-    description="Collaborative canvases and whiteboards"
-    visual={<DocsCanvasIcon className="h-auto w-6" />}
-  />
-</ListGrid>
-
-## State management [#state-management]
-
-<ListGrid columns={2}>
   <DocsCard
     type="technology"
     title="Zustand"
@@ -115,30 +81,63 @@ such as history and agentic editing.
     description="@liveblocks/redux"
     visual={<DocsReduxIcon />}
   />
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/api-reference/liveblocks-yjs"
+    description="@liveblocks/yjs"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
 </ListGrid>
 
-## Spreadsheets and data grids [#spreadsheets-and-data-grids]
+## Other libraries [#other-libraries]
+
+These libraries don’t have an official Liveblocks package, but we have guides
+for connecting them yourself, typically through
+[Liveblocks Yjs](/docs/products/sync/yjs) or
+[Storage](/docs/products/sync/storage).
 
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
-    title="Handsontable"
-    href="/docs/use-cases/spreadsheet"
-    description="Synchronize cells, selections, and history"
-    visual={<DocsTableIcon className="h-auto w-6" />}
+    title="Monaco"
+    href="/docs/get-started/yjs-monaco-react"
+    description="Connect Monaco through Liveblocks Yjs"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
-    title="Custom tables"
-    href="/docs/use-cases/spreadsheet"
-    description="Combine Storage with table comments"
+    title="Quill"
+    href="/docs/get-started/yjs-quill-react"
+    description="Connect Quill through Liveblocks Yjs"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Slate"
+    href="/docs/get-started/yjs-slate-react"
+    description="Connect Slate through Liveblocks Yjs"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="SuperDoc"
+    href="/docs/get-started/yjs-superdoc-react"
+    description="Connect SuperDoc through Liveblocks Yjs"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="tldraw"
+    href="/docs/get-started/nextjs-tldraw"
+    description="Collaborative canvases and whiteboards"
+    visual={<DocsCanvasIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Handsontable"
+    href="/docs/get-started/nextjs-multiplayer-handsontable"
+    description="Synchronize cells, selections, and history"
     visual={<DocsTableIcon className="h-auto w-6" />}
   />
 </ListGrid>
-
-## Yjs ecosystem [#yjs-ecosystem]
-
-Use [Liveblocks Yjs](/docs/products/sync/yjs) when an existing integration
-expects a `Y.Doc`, awareness, or another Yjs primitive. The
-[`@liveblocks/yjs` API reference](/docs/api-reference/liveblocks-yjs) covers the
-provider and configuration.
