@@ -490,8 +490,8 @@
             "path": "/products/sync/version-history"
           },
           {
-            "title": "Broadcast events",
-            "path": "/products/sync/broadcast-events"
+            "title": "Events",
+            "path": "/products/sync/events"
           },
           {
             "title": "Authentication and permissions",

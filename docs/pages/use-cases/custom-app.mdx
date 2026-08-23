@@ -240,8 +240,8 @@ You can keep some app data in your own database rather than in
 [Sync](/docs/products/sync/overview), and still make it feel realtime. When a
 user saves a change through your API, use
 [`useBroadcastEvent`](/docs/api-reference/liveblocks-react#useBroadcastEvent) to
-send a transient [broadcast event](/docs/products/sync/broadcast-events) to the
-other connected clients, and
+send a transient [broadcast event](/docs/products/sync/events) to the other
+connected clients, and
 [`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener) to
 revalidate the cached data when it arrives, for example with SWR.
 
@@ -283,8 +283,7 @@ function IssueSettings() {
 
 Broadcast events are not persisted—use them for signals, not for state. Read
 [revalidating API data with SWR](/docs/guides/revalidate-api-data-with-swr) for
-the full pattern, and learn more under
-[broadcast events](/docs/products/sync/broadcast-events).
+the full pattern, and learn more under [events](/docs/products/sync/events).
 
 ### Server-side editing [#server-side-editing]
 
@@ -464,8 +463,8 @@ function AppUndoRedo() {
 ```
 
 History can also be paused, resumed, and disabled. Read
-[Multiplayer undo/redo](/docs/products/sync/storage#multiplayer-undo-redo) to learn
-more.
+[Multiplayer undo/redo](/docs/products/sync/storage#multiplayer-undo-redo) to
+learn more.
 
 ### File uploads [#file-uploads]
 
