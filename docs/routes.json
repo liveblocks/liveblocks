@@ -1104,10 +1104,6 @@
         "path": "/api-reference/liveblocks-lexical"
       },
       {
-        "title": "@liveblocks/node-lexical",
-        "path": "/api-reference/liveblocks-node-lexical"
-      },
-      {
         "title": "@liveblocks/redux",
         "path": "/api-reference/liveblocks-redux"
       },
