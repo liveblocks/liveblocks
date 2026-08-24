@@ -84,7 +84,7 @@ export function useMentionSuggestions(roomId: string, search?: string) {
       Math.abs(performance.now() - lastInvokedAt.current) >
         MENTION_SUGGESTIONS_DEBOUNCE
     ) {
-      // If on the debounce's leading edge (either because it's the first invokation or enough
+      // If on the debounce's leading edge (either because it's the first invocation or enough
       // time has passed since the last debounce), get mention suggestions immediately.
       void getMentionSuggestions();
     } else {

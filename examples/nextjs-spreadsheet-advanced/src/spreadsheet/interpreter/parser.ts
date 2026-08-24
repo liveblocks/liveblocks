@@ -8,7 +8,7 @@ export enum NodeKind {
   CellRange,
   NumberLiteral,
   Addition,
-  Substraction,
+  Subtraction,
   Multiplication,
   Division,
   Modulo,
@@ -26,7 +26,7 @@ export type Expression =
   | Multiplication
   | NumberLiteral
   | Ref
-  | Substraction
+  | Subtraction
   | UnaryMinus
   | UnaryPlus;
 
@@ -59,8 +59,8 @@ export interface Addition extends BinaryExpression {
   kind: NodeKind.Addition;
 }
 
-export interface Substraction extends BinaryExpression {
-  kind: NodeKind.Substraction;
+export interface Subtraction extends BinaryExpression {
+  kind: NodeKind.Subtraction;
 }
 
 export interface Multiplication extends BinaryExpression {
@@ -192,7 +192,7 @@ export default function parser(tokens: Token[]): Node {
       if (testAndConsume(SyntaxKind.PlusToken)) {
         node = { kind: NodeKind.Addition, left: node, right: term() };
       } else if (testAndConsume(SyntaxKind.MinusToken)) {
-        node = { kind: NodeKind.Substraction, left: node, right: term() };
+        node = { kind: NodeKind.Subtraction, left: node, right: term() };
       } else {
         break;
       }

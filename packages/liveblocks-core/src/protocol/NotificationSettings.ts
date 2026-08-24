@@ -32,7 +32,7 @@ export type NotificationChannelSettings = {
  * Base definition of notification settings.
  * Plain means it's a simple object coming from the remote backend.
  *
- * It's the raw settings object where somme channels cannot exists
+ * It's the raw settings object where some channels cannot exists
  * because there are no notification kinds enabled on the dashboard.
  * And this object isn't yet proxied by the creator factory `createNotificationSettings`.
  */

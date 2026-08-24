@@ -803,7 +803,7 @@ export function generateArbitraries() {
       return fc
         .string({ unit: base96Char() })
         .map(
-          (p) => p.trimEnd() // Strip trailling "zeroes"
+          (p) => p.trimEnd() // Strip trailing "zeroes"
         )
         .filter((p) => p.length > 0)
         .map((p) => p as Pos);

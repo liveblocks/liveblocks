@@ -4,7 +4,7 @@ import {
   CommandBar,
   CommandBarBar,
   CommandBarCommand,
-  CommandBarSeperator,
+  CommandBarSeparator,
   CommandBarValue,
 } from "@/components/CommandBar"
 import { RowSelectionState, Table } from "@tanstack/react-table"
@@ -25,7 +25,7 @@ function DataTableBulkEditor<TData>({
         <CommandBarValue>
           {Object.keys(rowSelection).length} selected
         </CommandBarValue>
-        <CommandBarSeperator />
+        <CommandBarSeparator />
         <CommandBarCommand
           label="Edit"
           action={() => {
@@ -33,7 +33,7 @@ function DataTableBulkEditor<TData>({
           }}
           shortcut={{ shortcut: "e" }}
         />
-        <CommandBarSeperator />
+        <CommandBarSeparator />
         <CommandBarCommand
           label="Delete"
           action={() => {
@@ -41,7 +41,7 @@ function DataTableBulkEditor<TData>({
           }}
           shortcut={{ shortcut: "d" }}
         />
-        <CommandBarSeperator />
+        <CommandBarSeparator />
         <CommandBarCommand
           label="Reset"
           action={() => {

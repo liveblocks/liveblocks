@@ -146,7 +146,7 @@ export async function withProsemirrorDocument<T>(
       );
     },
     /**
-     * Provide a callback to modify documetns with prosemirrors's standard api.
+     * Provide a callback to modify documents with prosemirrors's standard api.
      */
     async update(modifyFn) {
       const { ydoc, fragment, state, mapping } = liveblocksState;

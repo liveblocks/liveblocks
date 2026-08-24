@@ -415,7 +415,7 @@ describe("useRoomInfo", () => {
     unmount();
   });
 
-  test("should return an error if resolveRoomsInfo returns undefined for a specifc room ID", async () => {
+  test("should return an error if resolveRoomsInfo returns undefined for a specific room ID", async () => {
     const roomId = nanoid();
 
     const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>

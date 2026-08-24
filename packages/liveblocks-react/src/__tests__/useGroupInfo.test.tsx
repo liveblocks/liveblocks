@@ -417,7 +417,7 @@ describe("useGroupInfo", () => {
     unmount();
   });
 
-  test("should return an error if resolveGroupsInfo returns undefined for a specifc group ID", async () => {
+  test("should return an error if resolveGroupsInfo returns undefined for a specific group ID", async () => {
     const roomId = nanoid();
 
     const resolveGroupsInfo = vi.fn(({ groupIds }: ResolveGroupsInfoArgs) =>

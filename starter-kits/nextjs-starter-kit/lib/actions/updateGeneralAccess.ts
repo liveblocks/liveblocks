@@ -157,7 +157,7 @@ export async function updateGeneralAccess({
     };
   }
 
-  // If successful, covert to custom document format and return
+  // If successful, convert to custom document format and return
   const document: Document = buildDocument(updatedRoom);
   return { data: document };
 }

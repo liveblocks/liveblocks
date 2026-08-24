@@ -1048,7 +1048,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (
         <div>
-          <p>Oops, couldnt load notifications.</p>
+          <p>Oops, couldn't load notifications.</p>
           <button onClick={resetErrorBoundary}>Retry</button>
         </div>
       );

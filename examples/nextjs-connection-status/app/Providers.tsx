@@ -10,7 +10,7 @@ export function Providers({ children }: PropsWithChildren) {
       baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       throttle={16}
       // Try changing the lostConnectionTimeout value to increase
-      // or reduct the time it takes to reconnect
+      // or reduce the time it takes to reconnect
       // lostConnectionTimeout={5000}
     >
       <Suspense>{children}</Suspense>
