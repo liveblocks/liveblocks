@@ -7,7 +7,7 @@ import { Toolbar } from "./toolbar";
 import { useLiveTextEditor } from "./use-live-text-editor";
 
 // A collaborative text editor built on the LiveText primitive and a plain contenteditable
-// We generally recommend using a rich-text editor framework such aas Tiptap, BlockNote, Lexical, etc.
+// We generally recommend using a rich-text editor framework such as Tiptap, BlockNote, Lexical, etc.
 // This is an example of a way you could construct your own using LiveText and presence.
 export function Editor() {
   const {

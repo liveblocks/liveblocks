@@ -680,7 +680,7 @@ describe("LiveList", () => {
 
       await expectStorage(
         { items: ["A", "B"] }
-        // Updates are not tested here because undo/redo is not symetric
+        // Updates are not tested here because undo/redo is not symmetric
       );
 
       await assertUndoRedo();

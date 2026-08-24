@@ -70,7 +70,7 @@ the [`/docs/pages`](./pages) directory.
 ```
 
 If the MDX file location is different than its URL, the `file` property can be
-used to explicitely specify the file location.
+used to explicitly specify the file location.
 
 ```json
 {

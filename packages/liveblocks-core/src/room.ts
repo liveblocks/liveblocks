@@ -4333,7 +4333,7 @@ export function createRoom<
       markInboxNotificationAsRead,
     },
 
-    // Explictly make the internal field non-enumerable, to avoid aggressive
+    // Explicitly make the internal field non-enumerable, to avoid aggressive
     // freezing when used with Immer
     kInternal,
     { enumerable: false }

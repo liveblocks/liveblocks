@@ -104,7 +104,7 @@ export async function withLexicalDocument<T>(
       editor.update(() => {}, { discrete: true });
     },
     /**
-     * Provide a callback to modify documetns with Lexical's standard api. All calls are discrete.
+     * Provide a callback to modify documents with Lexical's standard api. All calls are discrete.
      */
     update: async (modifyFn) => {
       // Flush any pending updates (there really shouldn't be any?), this may be a NOOP

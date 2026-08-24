@@ -122,7 +122,7 @@ describe("useCreateThread", () => {
     expect(result.current.threadData.threads?.[0]).toEqual(thread);
     expect(thread.visibility).toBe(visibility);
 
-    // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
+    // We're using the createdDate overridden by the server to ensure the optimistic update have been properly deleted
     await vi.waitFor(() =>
       expect(result.current.threadData.threads?.[0]?.createdAt).toEqual(
         fakeCreatedAt
@@ -288,7 +288,7 @@ describe("useCreateThread", () => {
     expect(result.current.threadData.threads?.[0]).toEqual(thread);
     expect(thread.comments[0]?.metadata).toEqual(commentMetadata);
 
-    // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
+    // We're using the createdDate overridden by the server to ensure the optimistic update have been properly deleted
     await vi.waitFor(() => {
       const serverThread = result.current.threadData.threads?.[0];
       expect(serverThread?.createdAt).toEqual(fakeCreatedAt);
