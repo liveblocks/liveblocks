@@ -10,7 +10,7 @@ can be set per room, defining what each user can do, such as editing the
 document or only viewing it. Permissions are enforced on Liveblocks servers, so
 a read-only user can never modify a document, even with a modified client.
 
-<Banner>
+<Banner title="Authenticate first">
 
 This guide is about Sync permissions, to learn about authentication, see our
 guide on [authenticating users](/docs/api-reference/authentication).
@@ -93,8 +93,7 @@ The base permissions `*:read` and `*:write` apply to everything in the room. To
 control access to the Sync document specifically, use the more granular
 `storage:read`, `storage:write`, and `storage:none` permissions, which apply to
 [Storage](/docs/products/sync/storage) and
-[Yjs](/docs/products/sync/text-editing/yjs)
-documents.
+[Yjs](/docs/products/sync/text-editing/yjs) documents.
 
 For example, you can give everyone write access to the room, while lowering
 access to the data storage itself so that only specific editors can change it.
