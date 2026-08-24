@@ -5,3 +5,277 @@ meta:
     "Learn how Liveblocks Sync resolves conflicts when multiple users edit the
     same data"
 ---
+
+When several people edit the same data at the same time, Liveblocks Sync decides
+what the result should be. Most of the time you never notice this happening.
+Occasionally you’ll see a result you didn’t expect: an item that ends up in a
+different position than the one you chose, or a value that settles on someone
+else’s edit rather than yours. These outcomes follow a small set of rules, and
+once you know them you can predict how your data will merge, and structure it so
+that it merges the way you want.
+
+Liveblocks Sync spans Storage, Presence, Broadcast, and Feeds. Conflict
+resolution only applies to Storage, not to Presence, Broadcast, or Feeds.
+
+## The server decides the order
+
+Liveblocks Sync is not a peer-to-peer system in which clients talk directly to
+each other. Every room has a single point on our servers where changes are
+applied, one after another, in the order they arrive. That order is the
+authority: every client receives the same sequence of changes and replays it,
+which is why everyone ends up with the same view of the data.
+
+This is what "last writer wins" means in practice. It doesn’t mean the last
+person to click, and it doesn’t mean the most recent change by wall-clock time.
+It means the last change to reach the server. When two people edit the same
+value a fraction of a second apart, the result can be decided by whose
+connection was faster rather than by who acted first.
+
+## Your changes apply immediately, then are confirmed
+
+When you change something, it applies to your own copy of the data right away,
+before the server has seen it. The change is also queued as pending until the
+server confirms it.
+
+While a change of yours is pending, Liveblocks can hold back other people’s
+changes to that same value, so it doesn’t briefly flip to their value and then
+back to yours. When your change is confirmed, the server’s authoritative version
+is applied. If someone else’s change to the same value arrived first, this is
+the moment your value wins over theirs.
+
+Changes you make while offline are queued in the same way, and are sent when you
+reconnect.
+
+You can tell whether your changes have been synchronized with the server with
+[`useSyncStatus`](/docs/api-reference/liveblocks-react#useSyncStatus).
+
+```tsx
+import { useSyncStatus } from "@liveblocks/react/suspense";
+
+function SaveIndicator() {
+  const syncStatus = useSyncStatus({ smooth: true });
+
+  return syncStatus === "synchronizing" ? (
+    <span>Saving…</span>
+  ) : (
+    <span>Saved</span>
+  );
+}
+```
+
+## Liveblocks only merges what it can see
+
+Storage is a tree of Live structures and JSON values. `LiveObject`, `LiveMap`,
+`LiveList`, and `LiveText` are nodes in that tree, and can be nested inside one
+another. Everything else is a JSON value, and JSON values are always leaves: a
+Live structure can hold a JSON value, but no Live structure can sit underneath
+one.
+
+Automatic conflict resolution applies only to Live structures. Even though a
+JSON value can also be an object or an array, it makes no difference to
+Liveblocks. JSON values are always considered opaque values, and Liveblocks
+never looks inside them or applies conflict resolution. They’re also immutable:
+you never edit a JSON value in place, you replace it with a new one, so every
+change is a change to the whole value. When two people change a JSON value the
+last edit will overwrite the other.
+
+Because of this, most of the time you’ll want to use Live structures, so that
+people editing different parts of the same thing both keep their edits. But
+there are times when you want to deliberately treat a value as a single unit and
+opt-out of conflict resolution. Examples are a color value stored as
+`{ r, g, b }`, or a 3D point stored as `[x, y, z]`. These values only make sense
+as a unit.
+
+```ts
+// A LiveObject: people drag one shape while someone else recolors it, so each
+// field has to merge on its own
+type Shape = LiveObject<{ x: number; y: number; color: Color }>;
+
+// A LiveList: people add todos at the same time, and every one should survive
+type Todos = LiveList<string>;
+
+// Not a LiveObject: r, g and b only mean anything together, and merging one
+// person’s red with another’s green would give you a yellow nobody picked
+type Color = { r: number; g: number; b: number };
+
+// Not a LiveList: the three coordinates describe one position and always move
+// together, so replacing the point as a whole is what you want
+type Point = [x: number, y: number, z: number];
+```
+
+## How each data structure resolves conflicts
+
+Each structure resolves conflicts differently, and choosing the right one for
+your data is the main lever you have over how it merges.
+
+| Structure                          | When two people change the same thing                   |
+| ---------------------------------- | ------------------------------------------------------- |
+| `LiveObject`                       | The last change to reach the server wins, per key       |
+| `LiveMap`                          | The last change to reach the server wins, per key       |
+| `LiveList.insert`, `LiveList.push` | Both items are kept, and the server decides their order |
+| `LiveList.set`                     | The last change to reach the server wins, per position  |
+| `LiveText`                         | Both sets of edits are kept and merged                  |
+| `LiveFile`                         | Immutable, the last change to reach the server wins     |
+| Any JSON value                     | Immutable, the last change to reach the server wins     |
+
+### LiveObject and LiveMap resolve conflicts per key
+
+Conflicts are resolved per key, not per structure. If one person changes a
+shape’s `x` while another changes its `fill`, both changes survive. They never
+conflict, because they touch different keys.
+
+When two people write to the same key, one of the two values is kept whole and
+the other is overwritten. Values are not merged, so if both people write an
+object to the same key, the result is one of the two objects rather than a
+combination of them. Writing a plain value to a key that currently holds a
+nested structure removes that structure and everything inside it.
+
+<Banner title="Should I use LiveObject or LiveMap?">
+
+Choosing whether to use LiveObject or LiveMap for your application **is not a
+conflict resolution decision**, since they behave identically in this area. Use
+a `LiveObject` for a record with a fixed set of known keys whose values have
+different types, such as a shape with `x`, `y`, and `fill`. Use a `LiveMap` for
+an index of many entries that share the same shape and whose keys you don’t know
+ahead of time, such as every shape on a canvas keyed by id.
+
+</Banner>
+
+### LiveList items have positions, not indexes
+
+An item in a `LiveList` doesn’t know its index. It carries a position, and the
+list is ordered by sorting those positions. Inserting an item means choosing a
+position between its two neighbors.
+
+This is why two people inserting at index 0 at the same moment both keep their
+item. Neither insert overwrites the other. The server decides which position
+comes first, and the item that arrives second is placed immediately after the
+first.
+
+The `push` method on LiveList is a special case, because it’s resolved on the
+server against the real end of the list, and guaranteed to be placed after every
+existing item. This means `push(item)` and `insert(item, list.length)` are not
+equivalent when several people are editing: `insert` chooses a position based on
+the list as that client currently sees it, which may already be out of date. Use
+`push` when you mean to append.
+
+The `set(index, item)` method replaces the item at that position rather than
+editing it, so two people calling `set` on the same index produce a single item
+rather than a merge of the two. `move` rewrites an item’s position, and doesn’t
+record an intention such as "put this after B". Starting from `["A", "B", "C"]`,
+if you move `A` to the end while someone else moves `B` to the end at the same
+time, both moves are applied as positions, and everyone ends up with
+`["C", "B", "A"]`. Only one of the two items can actually be last, so the person
+who moved `B` doesn’t get the result they asked for.
+
+### LiveText adjusts positions instead of choosing a winner
+
+Every structure above resolves a conflict by keeping one value and discarding
+the other. With LiveText, however, instead of choosing between the two changes,
+the Liveblocks server rewrites the edit positions in cases of conflict in
+whichever change arrives second, so that it still means what its author meant,
+and applies both changes.
+
+Say two people start from `"Hello world"`, and Alice inserts `"big "` at index 6
+while Bob inserts `"!"` at index 11.
+
+If Bob’s edit reaches the server first, the text becomes `"Hello world!"`.
+Alice’s index 6 is before his insert, so it still points where she meant it to,
+and her edit applies unchanged.
+
+If Alice’s edit reaches the server first, the text becomes `"Hello big world"`.
+Bob’s index 11 now points four characters too early, so it’s rewritten to 15
+before his edit is applied.
+
+Either way the result is `"Hello big world!"`, and neither person lost what they
+typed.
+
+Inline formatting is the exception to this. If two people apply the same
+attribute to the same characters at once, the change that reaches the server
+last wins. Attributes applied by different people in different locations in the
+`LiveText` both survive.
+
+This is the reason to hold text in a `LiveText` rather than in a string field.
+When two people type into the same string key, one of the two values is kept and
+the other is overwritten, so one person’s sentence is lost. When they type into
+the same `LiveText`, both sets of edits are present in the result.
+
+```ts
+import type { LiveObject, LiveText } from "@liveblocks/client";
+
+// A string key: one of the two edits is overwritten
+type NoteWithString = LiveObject<{ body: string }>;
+
+// A LiveText: both edits are kept
+type NoteWithLiveText = LiveObject<{ body: LiveText }>;
+```
+
+A `LiveText` holds a flat sequence of text with optional inline attributes such
+as `{ bold: true }`. It can’t contain other Live structures, so it is always a
+leaf in the tree. For the choice between `LiveText` and Yjs, see
+[LiveText vs Yjs](/docs/guides/livetext-vs-yjs).
+
+## Results that surprise people
+
+### An item ends up in a different position than the one you chose
+
+Two people added an item to the same place in a list at the same time, and yours
+appears after theirs even though you clicked first.
+
+Both clients chose the same position, and the one whose change reached the
+server second was placed immediately after the first. Both items are kept, which
+is usually what you want. If you meant to add to the end of the list, use `push`
+rather than `insert`, because `push` always appends after every existing item.
+
+### Two moves produce an order neither person chose
+
+You dragged an item to the end of a list, and it isn’t at the end.
+
+This is the `move` behaviour described above: because a move is stored as a
+position rather than as an intention, two people moving different items to the
+same place are resolved independently rather than combined. Everyone sees the
+same list, but not necessarily the list either person had in mind. If the exact
+order carries meaning that has to survive concurrent edits, store it explicitly
+rather than relying on `move` alone.
+
+### An edit applies on your screen but never reaches anyone else
+
+You changed a nested object and can see the change, but nobody else does, and it
+disappears on reload.
+
+Another client replaced that object while you were holding a reference to it.
+The replaced object is no longer part of Storage, so changes made through it
+apply to your own copy, are never synced, and Liveblocks logs a warning.
+
+This only bites when a reference outlives the mutation that read it, which in
+React usually means keeping a Live structure in state. Store the id instead, and
+read the structure from Storage each time you change it.
+
+```tsx
+// ❌ Avoid: holds a node that another client may replace
+const [shape, setShape] = useState<LiveObject<Shape> | null>(null);
+
+// ✅ Prefer: holds the id, and reads the node at the point it changes it
+const [shapeId, setShapeId] = useState<string | null>(null);
+
+const setFill = useMutation(({ storage }, id: string, fill: string) => {
+  storage.get("shapes").get(id)?.set("fill", fill);
+}, []);
+```
+
+### Undo replays, it doesn’t rebase
+
+Undo applies the inverse of your original change as a new change, without taking
+into account what has happened since. Most of the time this is exactly what you
+want. But if someone else has changed the same value since your original edit,
+undoing yours can overwrite their newer value.
+
+## Learn more
+
+For more information about the data structures in Liveblocks Sync and how they
+behave, check out these resources:
+
+- [Storage data structures](/docs/api-reference/liveblocks-client#Storage)
+- [Liveblocks Storage](/docs/collaboration-features/multiplayer/sync-engine/liveblocks-storage)
+- [LiveText vs Yjs](/docs/guides/livetext-vs-yjs)
+- [How to use Liveblocks multiplayer undo/redo with React](/docs/guides/how-to-use-liveblocks-multiplayer-undo-redo-with-react)
