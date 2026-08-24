@@ -188,7 +188,7 @@ export default function transformer(
 
     // Create global declaration
     if (Object.values(globalTypes).some((type) => type !== null)) {
-      const intrface = j.tsInterfaceDeclaration(
+      const iface = j.tsInterfaceDeclaration(
         j.identifier("Liveblocks"),
         j.tsInterfaceBody([
           ...(globalTypes.Presence
@@ -234,7 +234,7 @@ export default function transformer(
         ])
       );
 
-      intrface.comments = [
+      iface.comments = [
         j.commentLine(
           " For more information, see https://liveblocks.io/docs/api-reference/liveblocks-client#TypeScript"
         ),
@@ -243,7 +243,7 @@ export default function transformer(
       // HACK: It's not possible to generate a `declare global` block, so we generate a `declare module global` block instead and later find-and-replace it
       const globalDeclaration = j.declareModule(
         j.identifier("global"),
-        j.blockStatement([intrface])
+        j.blockStatement([iface])
       );
 
       (root.get() as ASTPath<File>).node.program.body.push(globalDeclaration);
@@ -328,11 +328,11 @@ export default function transformer(
       });
   }
 
-  const ouput = isDirty ? root.toSource(options) : file.source;
+  const output = isDirty ? root.toSource(options) : file.source;
 
   if (shouldUpdateDeclareGlobal) {
-    return ouput.replace("declare module global", "declare global");
+    return output.replace("declare module global", "declare global");
   } else {
-    return ouput;
+    return output;
   }
 }

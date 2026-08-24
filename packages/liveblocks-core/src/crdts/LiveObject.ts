@@ -254,7 +254,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     if (this._pool.getNode(id) !== undefined) {
       if (this.#unackedOpsByKey.get(key) === opId) {
-        // Acknowlegment from local operation
+        // Acknowledgment from local operation
         this.#unackedOpsByKey.delete(key);
       }
 
@@ -267,7 +267,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     } else if (this.#unackedOpsByKey.get(key) === undefined) {
       // Remote operation with no local change => apply operation
     } else if (this.#unackedOpsByKey.get(key) === opId) {
-      // Acknowlegment from local operation
+      // Acknowledgment from local operation
       this.#unackedOpsByKey.delete(key);
       return { modified: false };
     } else {
@@ -429,10 +429,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         // Track locally-generated opId to preserve optimistic update
         this.#unackedOpsByKey.set(key, nn(op.opId));
       } else if (this.#unackedOpsByKey.get(key) === undefined) {
-        // Not modified localy so we apply update
+        // Not modified locally so we apply update
         isModified = true;
       } else if (this.#unackedOpsByKey.get(key) === op.opId) {
-        // Acknowlegment from local operation
+        // Acknowledgment from local operation
         this.#unackedOpsByKey.delete(key);
         continue;
       } else {

@@ -884,7 +884,7 @@ describe("useThreads", () => {
     }
   });
 
-  test("shoud fetch threads for a given query with a startsWith filter", async () => {
+  test("should fetch threads for a given query with a startsWith filter", async () => {
     const roomId = nanoid();
     const liveblocksEngineeringThread = dummyThreadData({
       roomId,

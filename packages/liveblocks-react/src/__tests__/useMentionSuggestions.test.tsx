@@ -348,7 +348,7 @@ describe("useMentionSuggestions", () => {
     unmount();
   });
 
-  test("should debounce the invokations of resolveMentionSuggestions", async () => {
+  test("should debounce the invocations of resolveMentionSuggestions", async () => {
     const roomId = nanoid();
 
     const resolveMentionSuggestions = vi.fn(

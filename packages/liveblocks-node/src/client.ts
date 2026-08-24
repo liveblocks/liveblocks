@@ -1635,7 +1635,7 @@ export class Liveblocks {
   }
 
   /**
-   * Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. Duplicates can happen if a user is in the requested room with multiple browser tabs opened.
+   * Returns a list of users currently present in the requested room. For better performance, we recommend to call this endpoint every 10 seconds maximum. Duplicates can happen if a user is in the requested room with multiple browser tabs opened.
    * @param roomId The id of the room to get the users from.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of users currently present in the requested room.

@@ -150,11 +150,11 @@ export class LiveMap<
     } else if (!source.optimistic) {
       const lastUpdateOpId = this.#unacknowledgedSet.get(key);
       if (lastUpdateOpId === opId) {
-        // Acknowlegment from local operation
+        // Acknowledgment from local operation
         this.#unacknowledgedSet.delete(key);
         return { modified: false };
       } else if (lastUpdateOpId !== undefined) {
-        // Another local set has overriden the value, so we do nothing
+        // Another local set has overridden the value, so we do nothing
         return { modified: false };
       }
     }

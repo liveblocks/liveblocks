@@ -623,7 +623,7 @@ function Canvas() {
                 />
               )}
             <MultiplayerGuides />
-            {/* Drawing in progress. Still not commited to the storage. */}
+            {/* Drawing in progress. Still not committed to the storage. */}
             {pencilDraft != null && pencilDraft.length > 0 && (
               <Path
                 points={pencilDraft}

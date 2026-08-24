@@ -30,7 +30,7 @@ function useRandom() {
  *        value={todos}
  *        chatId="chat-1234" />
  *
- * By mounting this component, the AI will get access to this knwoledge.
+ * By mounting this component, the AI will get access to this knowledge.
  * By unmounting this component, the AI will no longer have access to it.
  * It can choose to use or ignore this knowledge in its responses.
  */

@@ -120,7 +120,7 @@ describe("useCreateComment", () => {
 
     expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
 
-    // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
+    // We're using the createdDate overridden by the server to ensure the optimistic update have been properly deleted
     await vi.waitFor(() =>
       expect(result.current.threads?.[0]?.comments[1]?.createdAt).toEqual(
         fakeCreatedAt
@@ -214,7 +214,7 @@ describe("useCreateComment", () => {
     expect(result.current.subscription.status).toEqual("subscribed");
     expect(result.current.subscription.unreadSince).toEqual(comment.createdAt);
 
-    // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
+    // We're using the createdDate overridden by the server to ensure the optimistic update have been properly deleted
     await vi.waitFor(() =>
       expect(result.current.subscription.unreadSince).toEqual(fakeCreatedAt)
     );
@@ -362,7 +362,7 @@ describe("useCreateComment", () => {
     expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
     expect(comment.metadata).toEqual(metadata);
 
-    // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
+    // We're using the createdDate overridden by the server to ensure the optimistic update have been properly deleted
     await vi.waitFor(() => {
       const serverComment = result.current.threads?.[0]?.comments[1];
       expect(serverComment?.createdAt).toEqual(fakeCreatedAt);
