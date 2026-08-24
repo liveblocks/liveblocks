@@ -187,6 +187,11 @@
             "hidden": true
           },
           {
+            "title": "ProseMirror",
+            "path": "/get-started/nextjs-prosemirror",
+            "hidden": true
+          },
+          {
             "title": "React Flow",
             "path": "/get-started/nextjs-react-flow",
             "hidden": true
@@ -209,6 +214,11 @@
           {
             "title": "BlockNote",
             "path": "/get-started/nextjs-blocknote",
+            "hidden": true
+          },
+          {
+            "title": "BlockNote Storage",
+            "path": "/get-started/nextjs-blocknote-storage",
             "hidden": true
           },
           {
