@@ -5,9 +5,9 @@ meta:
   description: "Read and edit collaborative documents from your back end."
 ---
 
-Sync data can be modified from your back end, using the same conflict
-resolution that enables multiplayer collaboration on the front end. This allows you to create initial
-room data, schedule jobs, run migrations,
+Sync data can be modified from your back end, using the same conflict resolution
+that enables multiplayer collaboration on the front end. This allows you to
+create initial room data, schedule jobs, run migrations,
 [enable agentic editing](/docs/products/sync/agentic-editing), and more.
 
 ## Server-side Sync APIs
@@ -51,8 +51,8 @@ declare global {
 Use
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
 to read and modify Sync data with the same
-[conflict-free data types](/docs/products/sync/storage) used by the front
-end. For example, to add a new shape from the server, get the `shapes` list with
+[conflict-free data types](/docs/products/sync/storage) used by the front end.
+For example, to add a new shape from the server, get the `shapes` list with
 [`LiveObject.get`](/docs/api-reference/liveblocks-client#LiveObject.get), and
 push a new shape with
 [`LiveList.push`](/docs/api-reference/liveblocks-client#LiveList.push). It may

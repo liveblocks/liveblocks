@@ -190,7 +190,7 @@ documents.set("document-1", document);
 
 ## Using Storage
 
-### Set up
+### Setting up
 
 Before using Storage, first decide on the shape of your document, and set the
 `Storage` type in your Liveblocks config file. This makes every hook and
@@ -339,7 +339,7 @@ Storage can also be modified from your back end and by AI agents, learn more
 under [server-side editing](/docs/products/sync/server-side-editing) and
 [agentic editing](/docs/products/sync/agentic-editing).
 
-### Reading and writing
+### Creating a multiplayer component
 
 Putting together [`useStorage`](/docs/api-reference/liveblocks-react#useStorage)
 and [`useMutation`](/docs/api-reference/liveblocks-react#useMutation), you can
@@ -514,9 +514,89 @@ provides a `setMyPresence` helper, so that you don't need to import
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
 separately.
 
-## Agentic and server-side editing
+### Version history
 
-You can read and edit Storage from the server, and allow AI agents to make
-changes too. To learn more about how to do this, read the
-[agentic editing](/docs/products/sync/agentic-editing) and
-[server-side editing](/docs/products/sync/server-side-editing) pages.
+Storage supports version history, allowing you to snapshot document states and
+revert to previous versions of the document.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const { data } = await liveblocks.createVersionHistorySnapshot("my-room");
+// +++
+```
+
+To learn more about how to do this, read the
+[version history](/docs/products/sync/version-history) page.
+
+### Server-side editing
+
+You can read and edit Storage directly from the server, using conflict-free data
+types or JSON Patch.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+await liveblocks.mutateStorage("my-room", ({ root }) => {
+  const shapes = root.get("shapes");
+
+  const newShape = new LiveObject({
+    x: 250,
+    y: 300,
+    color: "purple",
+  });
+
+  shapes.push(newShape);
+});
+// +++
+```
+
+To learn more about how to do this, read the
+[server-side editing](/docs/products/sync/server-side-editing) page.
+
+### Agentic editing
+
+AI agents can generate changes for your document, using Node.js methods or JSON
+Patch.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+await liveblocks.mutateStorage("my-room-id", async ({ root }) => {
+  const shapes = root.get("shapes");
+
+  const { output: shape } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        x: z.number(),
+        y: z.number(),
+        color: z.string(),
+      }),
+    }),
+    prompt: `Create a rectangle for the canvas. Here are current shapes: ${shapes.toJSON()}`,
+  });
+
+  shapes.set(new LiveObject(shape));
+});
+```
+
+To learn more about how to do this, read the
+[agentic editing](/docs/products/sync/agentic-editing) page.
