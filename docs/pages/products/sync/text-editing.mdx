@@ -13,47 +13,75 @@ text without overwriting each other. There are two ways to add text editing:
 [LiveText](#livetext), the recommended choice for new applications, and
 [Yjs](#yjs), for editors that require the Yjs ecosystem.
 
-<ListGrid columns={2}>
-  <DocsCard
-    type="technology"
-    title="Tiptap"
-    href="/docs/products/sync/text-editing/tiptap"
-    description="Add collaboration to your Tiptap editor"
-    visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
-  <DocsCard
-    type="technology"
-    title="Lexical"
-    href="/docs/products/sync/text-editing/lexical"
-    description="Add collaboration to your Lexical editor"
-    visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
-  <DocsCard
-    type="technology"
-    title="BlockNote"
-    href="/docs/products/sync/text-editing/blocknote"
-    description="Add collaboration to your BlockNote editor"
-    visual={
-      <DocsBlocknotejsIcon className="fill-product-icon-brand h-auto w-6" />
-    }
-  />
-  <DocsCard
-    type="technology"
-    title="Yjs"
-    href="/docs/products/sync/text-editing/yjs"
-    description="Use the Yjs ecosystem with Liveblocks"
-    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
-</ListGrid>
+## Supported editors [#supported-editors]
+
+### LiveText editors [#livetext-editors]
+
+<Table columns={["12%", "33%", "auto", "14%"]}>
+
+| Editor                                                  | Official integration                                                            | Built-in features                                          | Guide                                                     |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------- |
+| [Tiptap](/docs/products/sync/text-editing/tiptap)       | [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap)       | Sync, carets, comments, mentions, notifications, toolbars. | [Get started](/docs/get-started/nextjs-tiptap-storage)    |
+| [BlockNote](/docs/products/sync/text-editing/blocknote) | [`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote) | Sync, carets, comments, mentions, notifications.           | [Get started](/docs/get-started/nextjs-blocknote-storage) |
+| [Lexical](/docs/products/sync/text-editing/lexical)     | [`@liveblocks/lexical`](/docs/api-reference/liveblocks-lexical)                 | Sync, carets.                                              | [Get started](/docs/get-started/nextjs-lexical-storage)   |
+| [ProseMirror](https://prosemirror.net)                  | [`@liveblocks/prosemirror`](/docs/api-reference/liveblocks-prosemirror)         | Sync, carets.                                              | [Get started](/docs/get-started/nextjs-prosemirror)       |
+| [CodeMirror](https://codemirror.net)                    | [`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror)           | Sync, carets.                                              | [Get started](/docs/get-started/nextjs-codemirror)        |
+
+</Table>
+
+<Table columns={["14%", "13%", "13%", "13%", "13%", "13%", "auto"]}>
+
+| Editor                                                  | Sync | Carets | Comments | Notifications | Toolbars | Guide                                                     |
+| ------------------------------------------------------- | ---- | ------ | -------- | ------------- | -------- | --------------------------------------------------------- |
+| [Tiptap](/docs/products/sync/text-editing/tiptap)       | ✅   | ✅     | ✅       | ✅            | ✅       | [Get started](/docs/get-started/nextjs-tiptap-storage)    |
+| [BlockNote](/docs/products/sync/text-editing/blocknote) | ✅   | ✅     | ✅       | ✅            |          | [Get started](/docs/get-started/nextjs-blocknote-storage) |
+| [Lexical](/docs/products/sync/text-editing/lexical)     | ✅   | ✅     |          |               |          | [Get started](/docs/get-started/nextjs-lexical-storage)   |
+| [ProseMirror](https://prosemirror.net)                  | ✅   | ✅     |          |               |          | [Get started](/docs/get-started/nextjs-prosemirror)       |
+| [CodeMirror](https://codemirror.net)                    | ✅   | ✅     |          |               |          | [Get started](/docs/get-started/nextjs-codemirror)        |
+
+</Table>
+
+### Yjs editors [#yjs-editors]
+
+<Table columns={["12%", "33%", "auto", "14%"]}>
+
+| Editor                                                  | Official integration                                                            | Built-in features                                                               | Guide                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| [Tiptap](/docs/products/sync/text-editing/tiptap)       | [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap)       | Sync, carets, comments, mentions, notifications, toolbars, AI, offline support. | [Get started](/docs/get-started/nextjs-tiptap)        |
+| [BlockNote](/docs/products/sync/text-editing/blocknote) | [`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote) | Sync, carets, comments, mentions, notifications, offline support.               | [Get started](/docs/get-started/nextjs-blocknote)     |
+| [Lexical](/docs/products/sync/text-editing/lexical)     | [`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexical)     | Sync, carets, comments, mentions, notifications, toolbars.                      | [Get started](/docs/get-started/nextjs-lexical)       |
+| [Slate](https://www.slatejs.org)                        | [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs)                         | Sync, carets.                                                                   | [Get started](/docs/get-started/yjs-slate-react)      |
+| [Quill](https://quilljs.com)                            | [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs)                         | Sync, carets.                                                                   | [Get started](/docs/get-started/yjs-quill-react)      |
+| [Monaco](https://microsoft.github.io/monaco-editor/)    | [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs)                         | Sync, carets.                                                                   | [Get started](/docs/get-started/yjs-monaco-react)     |
+| [CodeMirror](https://codemirror.net)                    | [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs)                         | Sync, carets.                                                                   | [Get started](/docs/get-started/yjs-codemirror-react) |
+| [SuperDoc](https://superdoc.dev)                        | [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs)                         | Sync, carets.                                                                   | [Get started](/docs/get-started/yjs-superdoc-nextjs)  |
+
+</Table>
+
+<Table
+  columns={["13%", "13%", "13%", "13%", "13%", "13%", "13%", "auto"]}
+>
+
+| Editor                                                  | Sync | Carets | Comments | Notifications | Toolbars | Offline | Guide                                                 |
+| ------------------------------------------------------- | ---- | ------ | -------- | ------------- | -------- | ------- | ----------------------------------------------------- |
+| [Tiptap](/docs/products/sync/text-editing/tiptap)       | ✅   | ✅     | ✅       | ✅            | ✅       | ✅      | [Get started](/docs/get-started/nextjs-tiptap)        |
+| [BlockNote](/docs/products/sync/text-editing/blocknote) | ✅   | ✅     | ✅       | ✅            |          | ✅      | [Get started](/docs/get-started/nextjs-blocknote)     |
+| [Lexical](/docs/products/sync/text-editing/lexical)     | ✅   | ✅     | ✅       | ✅            | ✅       |         | [Get started](/docs/get-started/nextjs-lexical)       |
+| [Slate](https://www.slatejs.org)                        | ✅   | ✅     |          |               |          |         | [Get started](/docs/get-started/yjs-slate-react)      |
+| [Quill](https://quilljs.com)                            | ✅   | ✅     |          |               |          |         | [Get started](/docs/get-started/yjs-quill-react)      |
+| [Monaco](https://microsoft.github.io/monaco-editor/)    | ✅   | ✅     |          |               |          |         | [Get started](/docs/get-started/yjs-monaco-react)     |
+| [CodeMirror](https://codemirror.net)                    | ✅   | ✅     |          |               |          |         | [Get started](/docs/get-started/yjs-codemirror-react) |
+| [SuperDoc](https://superdoc.dev)                        | ✅   | ✅     |          |               |          |         | [Get started](/docs/get-started/yjs-superdoc-nextjs)  |
+
+</Table>
 
 ## LiveText [#livetext]
 
 [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) is the
-conflict-free rich text data type inside
-[Storage](/docs/products/sync/storage). Because it’s part of the document tree,
-text fields live alongside your other data—a document can hold captions on
-shapes, cells in a table, or several full editors, each edited collaboratively
-and independently.
+conflict-free rich text data type inside [Storage](/docs/products/sync/storage).
+Because it’s part of the document tree, text fields live alongside your other
+data—a document can hold captions on shapes, cells in a table, or several full
+editors, each edited collaboratively and independently.
 
 ### Connect an editor [#connect-an-editor]
 
@@ -135,9 +163,8 @@ declare global {
 }
 ```
 
-Edit the text inside a
-[mutation](/docs/products/sync/storage#updating-storage), and concurrent
-keystrokes from other users are merged automatically.
+Edit the text inside a [mutation](/docs/products/sync/storage#updating-storage),
+and concurrent keystrokes from other users are merged automatically.
 
 ```tsx
 import { useMutation } from "@liveblocks/react/suspense";
@@ -183,9 +210,8 @@ and [agentic editing](/docs/products/sync/agentic-editing).
 ## Yjs [#yjs]
 
 [Liveblocks Yjs](/docs/products/sync/text-editing/yjs) connects a room to a
-`Y.Doc`,
-Liveblocks persisting and synchronizing the Yjs document for you. Choose Yjs
-instead of LiveText when an editor binding expects a `Y.Doc`—such as
+`Y.Doc`, Liveblocks persisting and synchronizing the Yjs document for you.
+Choose Yjs instead of LiveText when an editor binding expects a `Y.Doc`—such as
 [Slate](/docs/get-started/yjs-slate-react),
 [Quill](/docs/get-started/yjs-quill-react),
 [Monaco](/docs/get-started/yjs-monaco-react),
@@ -197,5 +223,39 @@ Our Tiptap, Lexical, and BlockNote packages also support Yjs-backed
 collaboration, which is currently required for their
 [offline support](/docs/api-reference/liveblocks-react-tiptap#Offline-support)
 and [AI toolbar](/docs/api-reference/liveblocks-react-tiptap#AiToolbar)
-features. Read the [Yjs page](/docs/products/sync/text-editing/yjs) for
-details.
+features. Read the [Yjs page](/docs/products/sync/text-editing/yjs) for details.
+
+## Package overview pages
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Tiptap"
+    href="/docs/products/sync/text-editing/tiptap"
+    description="Add collaboration to your Tiptap editor"
+    visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical"
+    href="/docs/products/sync/text-editing/lexical"
+    description="Add collaboration to your Lexical editor"
+    visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="BlockNote"
+    href="/docs/products/sync/text-editing/blocknote"
+    description="Add collaboration to your BlockNote editor"
+    visual={
+      <DocsBlocknotejsIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/products/sync/text-editing/yjs"
+    description="Use the Yjs ecosystem with Liveblocks"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
