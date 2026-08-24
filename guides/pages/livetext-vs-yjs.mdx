@@ -4,3 +4,178 @@ meta:
   description:
     "Learn the differences between LiveText and Yjs, and when to use each"
 ---
+
+Liveblocks gives you two ways to sync text: `LiveText`, which stores text inside
+Liveblocks Storage, and Yjs, which stores it in a separate universe. Both merge
+concurrent edits, and with either one you can build an editor where several
+people type in the same paragraph at the same time and everyone ends up with the
+same result.
+
+So the choice between them isn’t about how well they resolve conflicts. It’s
+about where your text lives, and what you get around it. This guide explains
+that difference, and ends with a table showing which editors each one supports,
+if you’d rather skip ahead to the answer.
+
+## One document, or two
+
+A `LiveText` is a node in your Storage tree, sitting alongside `LiveObject`,
+`LiveList`, and `LiveMap`. Text is part of the same document as the rest of your
+collaborative data, and you read and write it with the same APIs.
+
+A Yjs document is a `Y.Doc` that lives in the same room, but is otherwise
+separate. It has its own lifecycle, its own API, and its own binary format. If
+you use Yjs for text and Storage for the rest of your app data, you have two
+documents in one room, each synced and stored independently.
+
+Neither arrangement is a compromise on correctness. The difference shows up in
+everything that surrounds the text, which is easiest to see in an app where text
+is one field among many.
+
+## Example: a slide deck
+
+A deck is structured data and text at the same time. Slides sit in an order,
+each slide holds text boxes with a position and a size, and each box holds
+words. With `LiveText`, all of it is one tree.
+
+```ts
+type Storage = {
+  slides: LiveList<
+    LiveObject<{
+      notes: LiveText;
+      boxes: LiveList<
+        LiveObject<{
+          x: number;
+          y: number;
+          width: number;
+          height: number;
+          text: LiveText;
+        }>
+      >;
+    }>
+  >;
+};
+```
+
+**Text sits next to its geometry.** A box’s position and its words are keys on
+the same `LiveObject`. One person drags a box across the slide while another
+rewrites the sentence inside it, and both changes survive, because they’re
+changes to different keys.
+
+**Moving a box and typing in it undo together.** Both go through the room’s
+history, in the order they happened. Split across two documents, they land in
+two separate histories with no ordering between them.
+
+**Exporting the deck is one read.** Rendering a thumbnail or generating a PDF
+needs the geometry and the words together, and from Storage that’s a single JSON
+document, on the client through `useStorage` or on the server through the
+Storage APIs.
+
+**Restoring an old version restores the whole deck.** Version history snapshots
+capture Storage and Yjs together, but
+[restoring Storage](/docs/guides/how-to-add-version-history-to-your-app) affects
+Storage only, and leaves a Yjs document untouched. If your layout is in Storage
+and your text is in a `Y.Doc`, restoring yesterday’s version brings back
+yesterday’s layout with today’s words still in the boxes.
+
+You can build this deck on Yjs, but you have to choose how. Keep the deck
+structure in Storage and the text in a `Y.Doc`, and you’re maintaining two
+documents cross-referenced by id, with the split history and restore behavior
+above. Or model the entire deck in Yjs, geometry included, using `Y.Map` and
+`Y.Array`, which gives you one document again but moves your structured data out
+of Storage, so the Storage APIs no longer apply to it. `LiveText` removes the
+choice.
+
+## What else comes with LiveText
+
+**Text is readable as plain data.** `useStorage` returns a `LiveText` as an
+array of segments, where each segment is a string or a `[text, attributes]`
+pair, so you can read or render text without attaching an editor.
+
+```tsx
+import { useStorage } from "@liveblocks/react/suspense";
+
+function SlideNotes({ index }: { index: number }) {
+  const notes = useStorage((root) => root.slides[index]?.notes);
+
+  // e.g. [["Remember ", { bold: true }], ["the demo"]]
+  return <p>{notes?.map(([text]) => text).join("")}</p>;
+}
+```
+
+The same is true from your backend.
+[`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage),
+a wrapper around the
+[Get Storage Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
+endpoint, returns the whole tree in a single pass, so a deck’s slides, boxes,
+positions, and text arrive together as one JSON document with no editor and no
+`Y.Doc` involved.
+
+**The same server-side APIs as the rest of Storage.**
+[`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage) hands you
+the real Storage tree, so you can call `insert` and `format` on a `LiveText`
+from your backend. Through the Storage REST API a `LiveText` is replaced as a
+whole, since paths pointing inside one aren’t addressable, so incremental edits
+from the server go through `mutateStorage`.
+
+**Annotations are inline attributes.** Attributes are arbitrary JSON, not just
+formatting flags, so a comment, highlight, or link is
+`format(index, length, { commentId })`. The attribute belongs to those
+characters, so it travels with them as people type around it, and disappears
+with them if the text is deleted.
+
+**Nothing extra to set up.** There’s no second provider to construct or tear
+down. The editor syncs once Storage has loaded.
+
+## What comes with Yjs
+
+**A large ecosystem of editor bindings.** Yjs has bindings for editors that
+`LiveText` doesn’t have an integration for yet, including Slate, Quill, Monaco,
+and tldraw, along with anything else built on Yjs. If your editor is in that
+group, Yjs is the way to sync it.
+
+**Subdocuments.** A large document can be split into subdocuments that load
+individually, rather than all at once.
+
+**XXX.** Anything else to mention here?
+
+## Editor support
+
+**XXX Please double-check if this table is correct!**
+
+| Editor                              | With LiveText                                                    | With Yjs                                                                                 |
+| ----------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Tiptap                              | `@liveblocks/react-tiptap`, `collaborationMode: "liveblocks"`    | Same package, used by default                                                            |
+| BlockNote                           | `@liveblocks/react-blocknote`, `collaborationMode: "liveblocks"` | Same package, used by default                                                            |
+| Lexical                             | `@liveblocks/lexical`                                            | `@liveblocks/react-lexical` (XXX, weird split, can we make this one package like above?) |
+| ProseMirror                         | `@liveblocks/prosemirror`                                        | `@liveblocks/yjs` with `y-prosemirror`                                                   |
+| CodeMirror                          | `@liveblocks/codemirror`                                         | `@liveblocks/yjs` with `y-codemirror.next`                                               |
+| Slate, Quill, Monaco, tldraw, other | Not supported yet                                                | `@liveblocks/yjs` with the editor’s Yjs binding                                          |
+
+Three details worth knowing before you decide:
+
+- For **Tiptap and BlockNote**, this is a single option on a package you’re
+  already using. Comments, mentions, cursors, and toolbars work the same in
+  either mode.
+- XXX Any other honest drawbacks to LiveText we should call out here?
+
+## Which to choose
+
+Use `LiveText` when your editor appears in the LiveText column and text is one
+field among many. Decks, canvases, boards, wikis, and record-based tools all
+have this shape: the words matter, but so do the positions, the ordering, the
+properties, and the links between things. Keeping all of it in one document
+means one set of APIs, one history, one snapshot to restore, and text you can
+read as ordinary data anywhere in your app.
+
+Use Yjs when your editor only has a Yjs binding, or when you need something only
+Yjs provides.
+
+## Learn more
+
+For more information about storing and syncing text with Liveblocks, check out
+these resources:
+
+- [`LiveText`](/docs/api-reference/liveblocks-client#LiveText)
+- [How conflict resolution works in Liveblocks Sync](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+- [Liveblocks Yjs](/docs/api-reference/liveblocks-yjs)
+- [Yjs best practices and tips](/docs/guides/yjs-best-practices-and-tips)
