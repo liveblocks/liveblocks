@@ -32,7 +32,8 @@ simultaneous edits differently.
 ### LiveObject
 
 [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) is similar to a
-JavaScript object that is synchronized on all clients. Use this for storing
+JavaScript object that is synchronized on all clients—users can update different
+properties at the same time, and changes are merged together. Use it for storing
 records with fixed key names and where the values don’t necessarily have the
 same types, for example, a shape on a canvas.
 
@@ -55,8 +56,10 @@ shape.update({ x: 100, y: 200 });
 ### LiveList
 
 [`LiveList`](/docs/api-reference/liveblocks-client#LiveList) is similar to a
-JavaScript array that is synchronized across clients. Use this for storing
-ordered collection of items, for example a list of layers on a canvas.
+JavaScript array that is synchronized across clients—users can delete, insert,
+and move items at the same time as others, and changes are merged together. Use
+it for storing ordered collection of items, for example a list of layers on a
+canvas.
 
 ```ts
 import { LiveList } from "@liveblocks/client";
@@ -73,8 +76,10 @@ layers.remove(1);
 ### LiveMap
 
 [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) is similar to a
-JavaScript map that is synchronized across clients. Use this for storing
-key-value pairs, for example a list of users and their upvotes.
+JavaScript map that is synchronized across clients—users can update, delete, and
+insert items at the same time as others, and changes are merged together
+automatically. Use it for storing key-value pairs, for example a list of users
+and their upvotes.
 
 ```ts
 import { LiveMap } from "@liveblocks/client";
@@ -94,8 +99,10 @@ users.set("pierre", 153);
 ### LiveText
 
 [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) is used to store
-collaborative rich text data. It’s generally most useful when used internally by
-a [text editing](/docs/products/sync/text-editing) integration, but it can be
+collaborative rich text data—users can insert, replace, and format text at the
+same time as others, and changes are merged together automatically. It’s
+generally most useful when used internally by a
+[text editing](/docs/products/sync/text-editing) integration, but it can be
 handled directly too.
 
 ```ts
@@ -128,11 +135,65 @@ const liveFile = await uploadFile(file);
 console.log(liveFile);
 ```
 
+### Nesting data types
+
+`LiveObject`, `LiveList`, and `LiveMap` can each contain other live structures,
+allowing you to build a full JSON-like document tree. Each part of the structure
+can be edited independently, and changes are merged together automatically. For
+example, a `LiveList` of shapes may contain `LiveObject` shapes.
+
+```ts
+import { LiveMap, LiveObject } from "@liveblocks/client";
+
+const shape = new LiveObject({
+  x: 50,
+  y: 100,
+  color: "red",
+});
+
+const shapes = new LiveList([shape]);
+```
+
+In the following complex example, all data types are used, and some
+modifications are made.
+
+```ts title="Complex example" isCollapsable isCollapsed
+import { LiveMap, LiveObject } from "@liveblocks/client";
+
+// Setting up a collection of documents
+const documents = new LiveMap([]);
+
+// Creating a new document
+const document = new LiveObject({
+  meta: new LiveObject({
+    title: "Untitled",
+    createdAt: new Date().getTime(),
+    tags: new LiveList(["article"]),
+  }),
+  header: await uploadFile(file),
+  content: new LiveText(["Hello world"]),
+});
+
+// Updating meta properties
+const meta = document.get("meta");
+meta.set("title", "My article");
+meta.get("tags").push("technology");
+
+// Updating the content
+document
+  .get("content")
+  .insert(0, "This week, I learned…", { format: "italic" });
+
+// Adding the document to the collection
+documents.set("document-1", document);
+```
+
 ## Setting up Storage [#setting-up-storage]
 
-Before reading or updating Storage, decide on the shape of your document, and
-set the `Storage` type in your config file. This makes every hook and mutation
-fully typed. In this example, this canvas document holds a list of shapes.
+Before using Storage, first decide on the shape of your document, and set the
+`Storage` type in your Liveblocks config file. This makes every hook and
+mutation in your app fully typed, with TypeScript. In this example, this canvas
+document holds a list of shapes.
 
 ```tsx file="liveblocks.config.ts"
 import { LiveList, LiveObject } from "@liveblocks/client";
@@ -182,12 +243,17 @@ function App({ children }: { children: React.ReactNode }) {
 }
 ```
 
+Now that the type has been set, and the initial document has been created, you
+can now start to use Storage in your application.
+
 ## Reading Storage [#reading-storage]
 
 [`useStorage`](/docs/api-reference/liveblocks-react#useStorage) reads a part of
-the document, returning it as an immutable value. The selected part updates in
-realtime as any user or agent edits it, and the component only re-renders when
-that part changes.
+the document, returning it as an immutable JSON value. For example, a `LiveList`
+is converted into a plain JavaScript array, making it easy to render it in your
+component. Using a selector function like `(root) => root.shapes`, you can fetch
+only the part of the document you need, and it will re-render in realtime as
+other users make changes.
 
 ```tsx
 import { useStorage } from "@liveblocks/react/suspense";
@@ -199,9 +265,11 @@ function Canvas() {
 
   return (
     <>
+      // +++
       {shapes.map((shape, index) => (
         <Shape key={index} x={shape.x} y={shape.y} color={shape.color} />
       ))}
+      // +++
     </>
   );
 }
