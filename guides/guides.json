@@ -536,7 +536,7 @@
   {
     "title": "How conflict resolution works in Liveblocks Sync",
     "path": "/how-conflict-resolution-works-in-liveblocks-sync",
-    "topics": [],
+    "topics": ["storage", "state"],
     "technologies": ["storage"],
     "date": "2026-08-21"
   },
