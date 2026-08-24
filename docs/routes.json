@@ -1101,7 +1101,8 @@
       },
       {
         "title": "@liveblocks/lexical",
-        "path": "/api-reference/liveblocks-lexical"
+        "path": "/api-reference/liveblocks-lexical",
+        "hidden": true
       },
       {
         "title": "@liveblocks/redux",

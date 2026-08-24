@@ -23,7 +23,6 @@ text without overwriting each other. There are two ways to add text editing:
 | ------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------- |
 | [Tiptap](/docs/products/sync/text-editing/tiptap)       | [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap)       | Sync, carets, comments, mentions, notifications, toolbars. | [Get started](/docs/get-started/nextjs-tiptap-storage)    |
 | [BlockNote](/docs/products/sync/text-editing/blocknote) | [`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote) | Sync, carets, comments, mentions, notifications.           | [Get started](/docs/get-started/nextjs-blocknote-storage) |
-| [Lexical](/docs/products/sync/text-editing/lexical)     | [`@liveblocks/lexical`](/docs/api-reference/liveblocks-lexical)                 | Sync, carets.                                              | [Get started](/docs/get-started/nextjs-lexical-storage)   |
 | [ProseMirror](https://prosemirror.net)                  | [`@liveblocks/prosemirror`](/docs/api-reference/liveblocks-prosemirror)         | Sync, carets.                                              | [Get started](/docs/get-started/nextjs-prosemirror)       |
 | [CodeMirror](https://codemirror.net)                    | [`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror)           | Sync, carets.                                              | [Get started](/docs/get-started/nextjs-codemirror)        |
 
@@ -35,7 +34,6 @@ text without overwriting each other. There are two ways to add text editing:
 | ------------------------------------------------------- | ---- | ------ | -------- | ------------- | -------- | --------------------------------------------------------- |
 | [Tiptap](/docs/products/sync/text-editing/tiptap)       | ✅   | ✅     | ✅       | ✅            | ✅       | [Get started](/docs/get-started/nextjs-tiptap-storage)    |
 | [BlockNote](/docs/products/sync/text-editing/blocknote) | ✅   | ✅     | ✅       | ✅            |          | [Get started](/docs/get-started/nextjs-blocknote-storage) |
-| [Lexical](/docs/products/sync/text-editing/lexical)     | ✅   | ✅     |          |               |          | [Get started](/docs/get-started/nextjs-lexical-storage)   |
 | [ProseMirror](https://prosemirror.net)                  | ✅   | ✅     |          |               |          | [Get started](/docs/get-started/nextjs-prosemirror)       |
 | [CodeMirror](https://codemirror.net)                    | ✅   | ✅     |          |               |          | [Get started](/docs/get-started/nextjs-codemirror)        |
 
@@ -89,7 +87,6 @@ Editor packages connect popular text editors to LiveText, adding realtime
 collaboration, live cursors, comments, mentions, and ready-made toolbars.
 
 - [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap)
-- [`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexical)
 - [`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote)
 
 For example, here’s a collaborative Tiptap editor. Passing
@@ -137,11 +134,10 @@ function TextEditor() {
 
 To render multiple editors on one page, give each a separate
 [`field`](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors) value.
-Follow the [Tiptap](/docs/get-started/nextjs-tiptap-storage),
-[Lexical](/docs/get-started/nextjs-lexical-storage), or
-[BlockNote](/docs/get-started/nextjs-blocknote) get started guides for a full
-setup, or read the [text editor use case](/docs/use-cases/text-editor) to see
-every feature in place.
+Follow the [Tiptap](/docs/get-started/nextjs-tiptap-storage) or
+[BlockNote](/docs/get-started/nextjs-blocknote-storage) get started guides for a
+full setup, or read the [text editor use case](/docs/use-cases/text-editor) to
+see every feature in place.
 
 ### Text fields in your document [#text-fields]
 
