@@ -706,7 +706,7 @@ marcbouchenoire, ctnicholas, nvie, ofoucherot
 ## v3.18.0
 
 For full upgrade instructions, see the
-[3.18 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.18).
+[3.18 upgrade guide](https://liveblocks.io/docs/upgrading/3.18).
 
 ### `@liveblocks/client`
 
@@ -1216,9 +1216,9 @@ or:
 - New guide:
   [The new Storage engine and its benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
 - Updated
-  [overview information on Storage](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage).
+  [overview information on Storage](https://liveblocks.io/docs/collaboration-features/multiplayer/sync-engine/liveblocks-storage).
 - Updated
-  [overview inforamtion on Yjs](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs).
+  [overview inforamtion on Yjs](https://liveblocks.io/docs/collaboration-features/multiplayer/sync-engine/liveblocks-yjs).
 
 ## Dashboard
 
@@ -1554,14 +1554,14 @@ ctnicholas, mmavko
 ## Documentation
 
 - New section on
-  [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions#Group-mentions).
+  [group mentions](https://liveblocks.io/docs/collaboration-features/comments/users-and-mentions#Group-mentions).
 - Updated other information on the
-  [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
+  [users and mentions](https://liveblocks.io/docs/collaboration-features/comments/users-and-mentions)
   page.
 - Updated [Organizations](https://liveblocks.io/docs/authentication/organizations) page with
   new information.
 - Add information on
-  [AI web search](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge#Web-search)
+  [AI web search](https://liveblocks.io/docs/collaboration-features/ai-copilots/knowledge#Web-search)
   in overview pages.
 
 ## Dashboard
@@ -1611,7 +1611,7 @@ ctnicholas, pierrelevaillant, jrowny, nimeshnayaju
 ## Documentation
 
 - New guide:
-  [Upgrading to 3.10](https://liveblocks.io/docs/platform/upgrading/3.10).
+  [Upgrading to 3.10](https://liveblocks.io/docs/upgrading/3.10).
 - New guide:
   [Migrating from Tiptap 2 to 3](https://liveblocks.io/docs/guides/migrating-from-tiptap-2-to-3).
 - New guide:
@@ -1637,13 +1637,13 @@ jrowny, marcbouchenoire, nvie, ctnicholas
   [Next.js](https://liveblocks.io/docs/get-started/nextjs-ai-copilots) and
   [React](https://liveblocks.io/docs/get-started/react-ai-copilots).
 - New AI Copilots overview pages:
-  - [Copilots](https://liveblocks.io/docs/ready-made-features/ai-copilots/copilots).
-  - [Default components](https://liveblocks.io/docs/ready-made-features/ai-copilots/default-components).
-  - [Hooks](https://liveblocks.io/docs/ready-made-features/ai-copilots/hooks).
-  - [Knowledge](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge).
-  - [Tools](https://liveblocks.io/docs/ready-made-features/ai-copilots/tools).
-  - [Styling and customization](https://liveblocks.io/docs/ready-made-features/ai-copilots/styling-and-customization).
-  - [Troubleshooting](https://liveblocks.io/docs/ready-made-features/ai-copilots/troubleshooting).
+  - [Copilots](https://liveblocks.io/docs/collaboration-features/ai-copilots/copilots).
+  - [Default components](https://liveblocks.io/docs/collaboration-features/ai-copilots/default-components).
+  - [Hooks](https://liveblocks.io/docs/collaboration-features/ai-copilots/hooks).
+  - [Knowledge](https://liveblocks.io/docs/collaboration-features/ai-copilots/knowledge).
+  - [Tools](https://liveblocks.io/docs/collaboration-features/ai-copilots/tools).
+  - [Styling and customization](https://liveblocks.io/docs/collaboration-features/ai-copilots/styling-and-customization).
+  - [Troubleshooting](https://liveblocks.io/docs/collaboration-features/ai-copilots/troubleshooting).
 - New guide:
   [How to use fallback AI models in AI Copilots](https://liveblocks.io/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots).
 
@@ -1716,7 +1716,7 @@ ctnicholas, nimeshnayaju
 ## Documentation
 
 - New sections on
-  [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
+  [notification batching](https://liveblocks.io/docs/collaboration-features/notifications/concepts#Notification-batching).
 - Better clarity on Storage/Yjs limits.
 
 ## Contributors
@@ -1823,7 +1823,7 @@ jrowny, ctnicholas
 
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
-[group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
+[group mentions](https://liveblocks.io/docs/collaboration-features/comments/users-and-mentions)
 and [tenants](https://liveblocks.io/docs/authentication/organizations) in the docs.
 
 ### `@liveblocks/client`
@@ -2185,8 +2185,8 @@ ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
 
 ## Doocumentation
 
-- Improved [Limits](https://liveblocks.io/docs/platform/limits) page.
-- Improved [Plans](https://liveblocks.io/docs/platform/plans) page.
+- Improved [Limits](https://liveblocks.io/docs/pricing/limits) page.
+- Improved [Plans](https://liveblocks.io/docs/pricing/plans) page.
 
 ## Contributors
 
@@ -2362,13 +2362,13 @@ We’ve used this as an opportunity to tidy up some of our existing APIs, ensuri
 consistency throughout our offering.
 
 For full upgrade instructions and codemods, see the
-[3.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.0).
+[3.0 upgrade guide](https://liveblocks.io/docs/upgrading/3.0).
 
 ### All packages
 
 - TypeScript 5.0 is now the minimum supported version.
 - Remove deprecated APIs, see
-  [the deprecated section](https://liveblocks.io/docs/platform/upgrading/3.0#deprecated)
+  [the deprecated section](https://liveblocks.io/docs/upgrading/3.0#deprecated)
   in the upgrade guide to learn more.
 
 ### `@liveblocks/react`
@@ -2480,7 +2480,7 @@ We are also using this opportunity to rename some of the concepts around
 notifications and notification settings to improve clarity. None of these
 changes are breaking but you can learn more about them, their rationale, and how
 to automatically apply them with a codemod in our
-[Upgrade Guide for 2.24](https://liveblocks.io/docs/platform/upgrading/2.24).
+[Upgrade Guide for 2.24](https://liveblocks.io/docs/upgrading/2.24).
 
 ### `@liveblocks/react-ui`
 
@@ -2590,7 +2590,7 @@ ctnicholas, marcbouchenoire, ofoucherot, flowflorent
 ## Documentation
 
 - New
-  [AI Copilots features](https://liveblocks.io/docs/ready-made-features/ai-copilots/features)
+  [AI Copilots features](https://liveblocks.io/docs/collaboration-features/ai-copilots/features)
   page, highlighting all upcoming features.
 - Mention first day free policy.
 - Small updates to docs homepage
@@ -2780,9 +2780,9 @@ nvie, sugardarius, ctnicholas, marcbouchenoire
 - API reference for
   [`@liveblocks/react-blocknoite`](https://liveblocks.io/docs/api-reference/liveblocks-react-blocknote).
 - Updated
-  [get started guides for BlockNote](https://liveblocks.io/docs/get-started/text-editor/blocknote).
+  [get started guides for BlockNote](https://liveblocks.io/docs/get-started/multiplayer/text-documents/blocknote).
 - New
-  [BlockNote overview](https://liveblocks.io/docs/ready-made-features/text-editor/blocknote)
+  [BlockNote overview](https://liveblocks.io/docs/collaboration-features/multiplayer/text-editor/blocknote)
   page.
 - Updated guide on
   [modifying Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
@@ -2870,7 +2870,7 @@ ctnicholas, marcbouchenoire, pierrelevaillant
 - New guide:
   [How to create a notification settings panel](https://liveblocks.io/docs/guides/how-to-create-a-notification-settings-panel).
 - Improved
-  [Notifications overview](https://liveblocks.io/docs/ready-made-features/notifications)
+  [Notifications overview](https://liveblocks.io/docs/collaboration-features/notifications)
   pages, adding info on user notification settings.
 - Improved existing webhooks guides, adding more context about notification
   channels, and how to create a settings panel.
@@ -3131,9 +3131,9 @@ await liveblocks.deleteNotificationSettings({ userId });
     [`updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings),
     [`deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).
 - Rewrote email notification overview pages for
-  [Comments](https://liveblocks.io/docs/ready-made-features/comments/email-notifications)
+  [Comments](https://liveblocks.io/docs/collaboration-features/comments/email-notifications)
   and
-  [Notifications](https://liveblocks.io/docs/ready-made-features/notifications/email-notifications).
+  [Notifications](https://liveblocks.io/docs/collaboration-features/notifications/email-notifications).
 - Adjusted existing notification guides to work with new dashboard settings.
 - Improved information structure for
   [`useInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-react#useInboxNotifications).
@@ -3303,7 +3303,7 @@ useErrorListener((err: LiveblocksError) => {
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/upgrading/2.16) to
 learn how to adapt your code.
 
 #### Filtering by absence of metadata
@@ -3326,7 +3326,7 @@ useThreads({
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/upgrading/2.16) to
 learn how to adapt your code.
 
 #### Bug fixes
@@ -3464,7 +3464,7 @@ rollup, esbuild, etc) to also down-compile code from dependencies inside
 
 ## Documentation
 
-- [Upgrade guide for 2.15](https://liveblocks.io/docs/platform/upgrading/2.15).
+- [Upgrade guide for 2.15](https://liveblocks.io/docs/upgrading/2.15).
 - Added links to email templates in guides and API reference.
 
 ## Contributors
@@ -3732,7 +3732,7 @@ ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
 - [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap)
   API reference.
 - New
-  [Tiptap overview page](https://liveblocks.io/docs/ready-made-features/text-editor/tiptap).
+  [Tiptap overview page](https://liveblocks.io/docs/collaboration-features/multiplayer/text-editor/tiptap).
 - Restructured getting started, adding new guides for using
   `@liveblocks/react-tiptap` on
   [Next.js](https://liveblocks.io/docs/get-started/nextjs-tiptap) and
@@ -3742,7 +3742,7 @@ ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
 - Updated guide on
   [sending emails when comments are created](https://liveblocks.io/docs/guides/how-to-send-email-notifications-of-unread-comments).
 - Updated
-  [email notifications overview](https://liveblocks.io/docs/ready-made-features/comments/email-notifications).
+  [email notifications overview](https://liveblocks.io/docs/collaboration-features/comments/email-notifications).
 
 ## Examples
 
@@ -3799,7 +3799,7 @@ sugardarius, nimeshnayaju, marcbouchenoire, jrowny, ctnicholas
 ## Documentation
 
 - Improved clarity on Notifications being
-  [project-based](http://liveblocks.io/docs/ready-made-features/notifications/concepts#Project-based).
+  [project-based](http://liveblocks.io/docs/collaboration-features/notifications/concepts#Project-based).
 - Typo fixes.
 
 ## Contributors
@@ -3950,7 +3950,7 @@ marcbouchenoire, sugardarius, pierrelevaillant, nvie
 
 We are introducing attachments to allow users to add files to their comments,
 for more information about this change please read our
-[Upgrade Guide for 2.8](https://liveblocks.io/docs/platform/upgrading/2.8).
+[Upgrade Guide for 2.8](https://liveblocks.io/docs/upgrading/2.8).
 
 ### `@liveblocks/react-ui`
 
@@ -4342,9 +4342,9 @@ jrowny, nvie, marcbouchenoire
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
-[threads](https://liveblocks.io/docs/ready-made-features/comments/concepts#Threads),
+[threads](https://liveblocks.io/docs/collaboration-features/comments/concepts#Threads),
 for more information about this change please read our
-[Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/upgrading/2.2).
 
 ### `@liveblocks/react`
 
@@ -4528,7 +4528,7 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 - Create new guide on
   [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
 - Updated
-  [Lexical product page](https://liveblocks.io/docs/ready-made-features/text-editor/lexical)
+  [Lexical product page](https://liveblocks.io/docs/collaboration-features/multiplayer/text-editor/lexical)
   with new information.
 - Improved Lexical get started guides.
 - Improved
@@ -4597,7 +4597,7 @@ const client = createClient(/* options */);
 ```
 
 For full upgrade instructions and codemods, see the
-[2.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/2.0).
+[2.0 upgrade guide](https://liveblocks.io/docs/upgrading/2.0).
 
 ### `create-liveblocks-app`
 
@@ -4664,10 +4664,10 @@ For full upgrade instructions and codemods, see the
   [`LiveblocksProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#Liveblocks)
   props, details on typing, and more.
 - Added a set of product pages for
-  [Notifications](https://liveblocks.io/docs/ready-made-features/notifications),
+  [Notifications](https://liveblocks.io/docs/collaboration-features/notifications),
   with info on concepts, components, hooks, styling, and email notifications.
 - Added product page for
-  [Lexical](https://liveblocks.io/docs/ready-made-features/text-editor/lexical)
+  [Lexical](https://liveblocks.io/docs/collaboration-features/multiplayer/text-editor/lexical)
   summarising all its features.
 - Restructured and updated existing product pages for our new products.
 - More information on the
@@ -4685,7 +4685,7 @@ For full upgrade instructions and codemods, see the
 - Updated API references for new type improvements.
 - Updated various guides for new type improvements.
 - Updated images and text on
-  [How Liveblocks works](https://liveblocks.io/docs/concepts/how-liveblocks-works)
+  [How Liveblocks works](https://liveblocks.io/docs/concepts)
   page.
 
 ## Website
@@ -5800,7 +5800,7 @@ Non-existent.
 # v1.0.0
 
 This major release marks the maturity of Liveblocks. For upgrade instructions,
-see the [1.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/1.0).
+see the [1.0 upgrade guide](https://liveblocks.io/docs/upgrading/1.0).
 
 ## `@liveblocks/node`
 
@@ -6077,7 +6077,7 @@ In **@liveblocks/react**:
 # v0.18.0
 
 For information, please read our
-[Upgrade Guide for 0.18](https://liveblocks.io/docs/platform/upgrading/0.18).
+[Upgrade Guide for 0.18](https://liveblocks.io/docs/upgrading/0.18).
 
 ## New React hooks ✨
 
@@ -6105,7 +6105,7 @@ For information, please read our
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17)
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/upgrading/0.17)
   for instructions.
 - Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
@@ -6249,7 +6249,7 @@ Fix `@liveblocks/nodes` packaging.
 # v0.17.0
 
 For information, please read our
-[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/upgrading/0.17).
 
 ## TypeScript improvements ✨
 
@@ -6260,7 +6260,7 @@ longer need to provide any extra type annotations anywhere for your Liveblocks
 code! 🙌
 
 To learn how to set that up, follow the instructions in our
-[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/upgrading/0.17).
 
 - No more `any` types used (in `@liveblocks/client` and `@liveblocks/react`)
 - All APIs that work with Presence data will now require it to be
@@ -6316,9 +6316,9 @@ It's surprisingly simple!
 - In **@liveblocks/react**:
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
-    [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
+    [Recommended Upgrade Steps section](https://liveblocks.io/docs/upgrading/0.17#recommended-upgrade-steps)
     within our
-    [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
+    [Upgrade Guide](https://liveblocks.io/docs/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`

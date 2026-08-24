@@ -11,12 +11,12 @@ A quick overview of the packages for Lexical.
 
 Liveblocks Lexical allows you to add collaboration to any
 [Lexical](https://lexical.dev/) text editor, along with a number of related
-features. Each [collaborative room](/docs/concepts/how-liveblocks-works#Rooms)
+features. Each [collaborative room](/docs/concepts#Rooms)
 in your application can store one document each, and these documents are
 persisted on the cloud, visible on [your dashboard](/dashboard), and are
 integrated into other Liveblocks products such as
-[Comments](/docs/ready-made-features/comments) and
-[Notifications](/docs/ready-made-features/notifications).
+[Comments](/docs/collaboration-features/comments) and
+[Notifications](/docs/collaboration-features/notifications).
 
 ### Permanent storage
 
@@ -165,9 +165,9 @@ function CustomButton() {
 
 ### Annotation comments
 
-Add [Comments](/docs/ready-made-features/comments) to your text editor, allowing
+Add [Comments](/docs/collaboration-features/comments) to your text editor, allowing
 others to select words in the editor, and leave annotations. Each annotation
-creates a [thread](/docs/ready-made-features/comments/concepts#Threads), and
+creates a [thread](/docs/collaboration-features/comments/concepts#Threads), and
 inside each you can reply, use emoji reactions, mention others, and more.
 
 <Figure>
@@ -190,7 +190,7 @@ Add a floating Comments composer to your text editor using
 </LexicalComposer>
 ```
 
-Add [`useThreads`](/docs/ready-made-features/comments/hooks#threads-hook)
+Add [`useThreads`](/docs/collaboration-features/comments/hooks#threads-hook)
 alongside
 [`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
 and
@@ -218,7 +218,7 @@ button in a [pre-built toolbar](#Toolbars), or
 
 ### Notifications
 
-Add a [Notifications](/docs/ready-made-features/notifications) UI to your
+Add a [Notifications](/docs/collaboration-features/notifications) UI to your
 application, and automatically notify users when they’ve been mentioned.
 Notifications also allows you to trigger sending emails, Slack, or any other
 kind of notification, using our webhooks.
@@ -257,7 +257,7 @@ export function CollaborativeApp() {
 Inline mentions also trigger
 [`TextMention`](/docs/platform/webhooks#TextMention-notification) notification
 webhook events. Learn more about
-[sending email notifications](/docs/ready-made-features/notifications/email-notifications).
+[sending email notifications](/docs/collaboration-features/notifications/email-notifications).
 
 ### AI agents and editing on the server
 

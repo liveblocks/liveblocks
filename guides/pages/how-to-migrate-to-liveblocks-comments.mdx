@@ -59,7 +59,7 @@ const room = await liveblocks.createRoom(roomId, {
 
 Next up is creating threads in the room. Before starting, make sure you
 understand the
-[concepts behind Comments](/docs/ready-made-features/comments/concepts). When a
+[concepts behind Comments](/docs/collaboration-features/comments/concepts). When a
 thread is created, the first comment is also created, and you can do this with
 [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads)
 or the
@@ -208,7 +208,7 @@ const reaction = await liveblocks.addCommentReaction({
 
 There’s no need to migrate users to Comments, as the only user information
 Liveblocks stores
-[is each user’s ID](/docs/ready-made-features/comments/users-and-mentions).
+[is each user’s ID](/docs/collaboration-features/comments/users-and-mentions).
 Other user info is retrieved in-app by Comments with
 [`resolveUserInfo`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
 
