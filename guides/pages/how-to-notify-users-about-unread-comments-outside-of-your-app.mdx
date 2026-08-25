@@ -30,7 +30,7 @@ In this guide we’ll be learning how to notify users about unread comments
 outside of your app, and more specifically, we’ll be looking at how to:
 
 - Trigger events based on unread comments using the
-  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook
+  [`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent) webhook
   event.
 - Fetch unread comments using the
   [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package.
@@ -39,7 +39,7 @@ outside of your app, and more specifically, we’ll be looking at how to:
 
 This guide assumes you already have a Liveblocks Comments project set up. If you
 don’t have one yet, you can
-[get started with Comments](/docs/get-started/comments), and come back after
+[get started with Comments](/docs/get-started/nextjs-comments), and come back after
 you’re set up.
 
 </Banner>
@@ -66,7 +66,7 @@ Learn more about Notifications for Comments in the
 
 Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
 send requests to your API endpoint when certain events occurs. One webhook we
-provide is the [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent)
+provide is the [`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent)
 webhook, which is triggered for each participating user in a thread, and can be
 used to send external notifications to your users.
 
@@ -80,7 +80,7 @@ You can send notifications via different channels, such as email, Slack,
 Microsoft Teams, and Web Push. In our dashboard, you can enable notifications on
 certain channels, and in this guide, we’ll be using the Slack channel. You must
 always enable the correct channel to ensure your
-[`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook events
+[`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent) webhook events
 are triggered, and this guide will take you through setting it up.
 
 <Banner title="Which notification channel?">
@@ -341,7 +341,7 @@ export async function POST(request: Request) {
 After verifying the request, we can then check we’re receiving the correct type
 of event, on the correct channel. There are different `notification` events, and
 in this case we’d like to check for
-[thread notification](/docs/platform/webhooks#Thread-notification), as we’re
+[thread notification](/docs/api-reference/webhook-events#Thread-notification), as we’re
 specifically listening for new comments. We can do this using
 [`ThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent),
 making sure to check for the `slack` channel.
@@ -409,7 +409,7 @@ thread’s data. To do this we’ll need to add our project’s secret key from
 [the dashboard](/dashboard/api-keys) to the Liveblocks client (_not_ the webhook
 secret key we used earlier), before awaiting the following functions:
 [`getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId)
-and [`getThread`](/docs/api-reference/liveblocks-node#get-thread).
+and [`getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).
 
 ```ts
 import {
@@ -808,7 +808,7 @@ Great, we’re successfully sending external notifications to users when comment
 are left unread! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
-  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent).
+  [`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent).
 - How to use the [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
   package to fetch and render unread thread data.
 - How to hook it up to an external service, such as Slack.

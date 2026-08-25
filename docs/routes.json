@@ -459,7 +459,7 @@
       },
       {
         "title": "Upgrading",
-        "path": "/upgrading",
+        "path": "/api-reference/upgrading",
         "hidden": true
       }
     ]

@@ -481,7 +481,7 @@ endpoint, `authEndpoint` can be provided as a custom callback. You should return
 the token created with
 [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
 or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
-learn more in [authentication guide](/docs/rooms/authentication).
+learn more in [authentication guide](/docs/api-reference/authentication).
 
 ```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
@@ -3589,7 +3589,7 @@ function App() {
 ```
 
 The type received in your Storage will match the type passed. Learn more under
-[typing your data](#typing-your-data).
+[typing your data](#Typing-your-data).
 
 ```tsx
 import { useMutation } from "@liveblocks/react/suspense";
@@ -4381,7 +4381,7 @@ to use `useBatch`, or call `room.batch()` manually.
 
 Because mutations are batched with
 [`room.batch`](/docs/api-reference/liveblocks-client#Room.batch), which
-[cannot take an `async` function](/docs/api-reference/liveblocks-client#Doesn't-work-with-async-functions),
+[cannot take an `async` function](/docs/api-reference/liveblocks-client#Doesn’t-work-with-async-functions),
 the mutation function passed to `useMutation` cannot be `async` either.
 
 ```tsx
@@ -7318,7 +7318,7 @@ export const {
 ```
 
 To upgrade to Liveblocks 2.0 and the new typing system, follow the
-[2.0 migration guide](/docs/platform/upgrading/2.0).
+[2.0 migration guide](/docs/api-reference/upgrading/2.0).
 
 ### User [#user-type]
 

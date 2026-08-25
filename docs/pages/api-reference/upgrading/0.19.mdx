@@ -69,7 +69,7 @@ import { unstable_batchedUpdates } from "react-dom"; // 👈
 ```
 
 For additional context, see the
-[troubleshooting guide](/docs/platform/troubleshooting#stale-props-zombie-child)
+[troubleshooting guide](/docs/api-reference/troubleshooting#stale-props-zombie-child)
 
 ### @liveblocks/redux [#redux]
 
@@ -221,7 +221,7 @@ APIs that aren’t intended for direct consumption.
 
 #### New shouldInitiallyConnect option [@hidden]
 
-Similar to the [`shouldInitiallyConnect`](#react-shouldInitiallyConnect) prop in
+Similar to the [`shouldInitiallyConnect`](#New-shouldInitiallyConnect-prop) prop in
 `@liveblocks/react`, we added a `shouldInitiallyConnect` option to
 `client.enter`. The default value is `true`. You may want to set it to `false`
 when using SSR, or if you would prefer to establish the WebSocket connection

@@ -260,7 +260,7 @@ endpoint, `authEndpoint` can be provided as a custom callback. You should return
 the token created with
 [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
 or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
-learn more in [authentication guide](/docs/rooms/authentication).
+learn more in [authentication guide](/docs/api-reference/authentication).
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -815,7 +815,7 @@ const { room, leave } = client.enterRoom("my-room-id", {
 });
 ```
 
-Note that it’s possible to [add types to your room](#typing-your-data).
+Note that it’s possible to [add types to your room](#Typing-your-data).
 
 <PropertiesList title="Returns">
   <PropertiesListItem
@@ -823,7 +823,7 @@ Note that it’s possible to [add types to your room](#typing-your-data).
     type="Room<Presence, Storage, UserMeta, RoomEvent>"
   >
     A [Room](#Room), used for building your Liveblocks application. Learn more
-    about [typing your room](#typing-your-data).
+    about [typing your room](#Typing-your-data).
   </PropertiesListItem>
   <PropertiesListItem name="leave" type="() => void">
     A function that’s used to leave the room and disconnect.
@@ -941,7 +941,7 @@ const room = client.getRoom("my-room");
 
 It’s unlikely you’ll need this API if you’re using the newer
 [`client.enterRoom`][] API. Note that it’s possible to
-[add types to your room](#typing-your-data).
+[add types to your room](#Typing-your-data).
 
 <PropertiesList title="Returns">
   <PropertiesListItem
@@ -950,7 +950,7 @@ It’s unlikely you’ll need this API if you’re using the newer
   >
     A [Room](#Room), used for building your Liveblocks application. Returns
     `null` if the room has not yet been joined by the current client. Learn more
-    about [typing your room](#typing-your-data).
+    about [typing your room](#Typing-your-data).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1342,7 +1342,7 @@ console.log(presence);
 ```
 
 Presence is set with [`updatePresence`](#Room.updatePresence) and can be typed
-when you [enter a room](#enter-room-typing-a-room). The example above is using
+when you [enter a room](#Typing-with-client.enter). The example above is using
 the following type:
 
 ```ts file="liveblocks.config.ts"
@@ -1360,7 +1360,7 @@ declare global {
     An object holding the Presence value for the currently connected user.
     Presence is set with [`updatePresence`](#Room.updatePresence). Will always
     be JSON-serializable. `TPresence` is the `Presence` type you set yourself,
-    [learn more](#Typing-presence).
+    [learn more](#Typing-Presence).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1495,7 +1495,7 @@ between different events on the receiving end.
 
 #### Typing multiple events [#typing-multiple-events]
 
-When [defining your types](#typing-your-data), you can pass a `RoomEvent` type
+When [defining your types](#Typing-your-data), you can pass a `RoomEvent` type
 in your config file to receive type hints in your app. To define multiple
 different custom events, use a union.
 
@@ -1706,7 +1706,7 @@ declare global {
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your room](#typing-your-data).
+[typing your room](#Typing-your-data).
 
 ```ts
 const { root } = await room.getStorage();
@@ -1934,7 +1934,7 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
 
 #### Typing events
 
-When [defining your types](#typing-your-data), you can pass a `RoomEvent` type
+When [defining your types](#Typing-your-data), you can pass a `RoomEvent` type
 to your config file to receive type hints in your app. To define multiple
 different custom events, use a union.
 
@@ -2035,7 +2035,7 @@ declare global {
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your data](#typing-your-data).
+[typing your data](#Typing-your-data).
 
 ```ts
 const unsubscribe = room.subscribe("my-presence", (presence) => {
@@ -2095,7 +2095,7 @@ declare global {
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your data](#typing-your-data).
+[typing your data](#Typing-your-data).
 
 ```ts
 const unsubscribe = room.subscribe("others", (others, event) => {
@@ -4613,7 +4613,7 @@ declare global {
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your data](#typing-your-data).
+[typing your data](#Typing-your-data).
 
 ```ts
 const { root } = await room.getStorage();

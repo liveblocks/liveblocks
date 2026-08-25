@@ -44,8 +44,8 @@ Various types of Liveblocks data can be synched to Supabase with webhooks.
 
 | Name                     | Description                     | Relevant webhook                                                           | Relevant API                                                                         |
 | ------------------------ | ------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Rooms                    | Created rooms and metadata.     | [`roomUpdated`](/docs/api-reference/webhook-events#RoomUpdatedEvent)       | [`getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId)                    |
-| Active users             | Currently connected users.      | [`userEntered`](/docs/api-reference/webhook-events#UserEnteredEvent)       | [`getActiveUsers`](/docs/api-reference/liveblocks-node#get-active-users)             |
+| Rooms                    | Created rooms and metadata.     | [`roomCreated`](/docs/api-reference/webhook-events#RoomCreatedEvent)       | [`getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId)                    |
+| Active users             | Currently connected users.      | [`userEntered`](/docs/api-reference/webhook-events#UserEnteredEvent)       | [`getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomId-active-users)             |
 | Storage                  | Custom realtime document state. | [`storageUpdated`](/docs/api-reference/webhook-events#StorageUpdatedEvent) | [`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage) |
 | React Flow               | Flowchart state.                | [`storageUpdated`](/docs/api-reference/webhook-events#StorageUpdatedEvent) | [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow)                 |
 | Yjs                      | `Y.Doc` document state.         | [`ydocUpdated`](/docs/api-reference/webhook-events#YDocUpdatedEvent)       | [`getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc)        |

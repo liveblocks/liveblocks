@@ -279,7 +279,7 @@ getMentionsFromCommentBody(commentBody, (mention) => mention.kind === "user");
 
 ## Notification settings [#notification-settings]
 
-2.24 [introduced a few naming changes](/docs/platform/upgrading/2.24) around the
+2.24 [introduced a few naming changes](/docs/api-reference/upgrading/2.24) around the
 concepts of “notification settings” and “subscription settings” to improve
 clarity. 3.0 [removes the aliases for the previous names](#deprecated) but it
 also introduces one change that we couldn’t make in 2.24:
@@ -350,7 +350,7 @@ multiple versions ago.
 - The `code` property has been removed from `LiveblocksError`, use
   `LiveblocksError.context.code` instead for better TypeScript support.
 - The deprecated aliases from the
-  [2.24 naming changes](/docs/platform/upgrading/2.24) have been removed, use
+  [2.24 naming changes](/docs/api-reference/upgrading/2.24) have been removed, use
   their new names instead. There’s a codemod available to automatically use the
   new names: `npx @liveblocks/codemod@latest rename-notification-settings`.
 

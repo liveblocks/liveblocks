@@ -16,7 +16,7 @@ ground-up rearchitecture that removes server-side memory limits, enabling faster
 initial loads and support for much larger documents. The switch was **seamless
 and required no code changes**. Both the
 [Storage data model](/docs/products/sync/storage) and
-[Yjs documents](/docs/products/sync/yjs) in Sync run on top of the v2 engine.
+[Yjs documents](/docs/products/sync/text-editing/yjs) in Sync run on top of the v2 engine.
 
 ## What are the benefits?
 
@@ -38,7 +38,7 @@ Initial load time will be faster, especially for larger documents: the server
 can start streaming immediately without buffering, and our wire protocol has
 been compacted to reduce transmission overhead.
 
-Several [previously documented platform limits](/docs/platform/limits) have been
+Several [previously documented platform limits](/docs/pricing/limits) have been
 raised significantly for rooms on the v2 engine:
 
 | Item                    | v1 limit | v2 limit |

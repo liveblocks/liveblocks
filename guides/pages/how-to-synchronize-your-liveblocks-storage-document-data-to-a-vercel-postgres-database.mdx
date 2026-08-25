@@ -20,7 +20,7 @@ In this guide we’ll be linking a Sync application up to a
 that Storage document data is automatically synchronized. This is enabled
 through the following:
 
-- [StorageUpdated](/docs/platform/webhooks#StorageUpdatedEvent) webhook event
+- [StorageUpdated](/docs/api-reference/webhook-events#StorageUpdatedEvent) webhook event
 - [`getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage)
   from [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
 
@@ -37,7 +37,7 @@ spreadsheet)(/examples/collaborative-spreadsheet-advanced/nextjs-spreadsheet-adv
 
 ### This specific webhook is throttled
 
-Note that the [StorageUpdated](/docs/platform/webhooks#StorageUpdatedEvent)
+Note that the [StorageUpdated](/docs/api-reference/webhook-events#StorageUpdatedEvent)
 webhook event is throttled at a rate of _once every 60 seconds_. This is because
 Storage can update up to _60 times per second_, and it would be impractical to
 run the webhook this frequently.

@@ -26,8 +26,8 @@ This guide assumes that you’re already familiar with
 [React](https://reactjs.org/) and [Redux](https://redux.js.org/). If you’re not
 using Redux, we recommend reading one of our dedicated whiteboard tutorials:
 
-- [React tutorial](/docs/tutorials/collaborative-online-whiteboard/react)
-- [React + Zustand tutorial](/docs/tutorials/collaborative-online-whiteboard/react-zustand)
+- [React tutorial](/docs/get-started/whiteboard)
+- [React + Zustand tutorial](/docs/guides/how-to-create-a-collaborative-online-whiteboard-with-react-zustand-and-liveblocks)
 
 A live demo and the source code for this guide are
 [in our examples](/examples/collaborative-whiteboard/redux-whiteboard).
@@ -66,7 +66,7 @@ key. For more info, see the
 
 Create a new file `src/store.js` and initialize the Liveblocks client with your
 public API key. Then add our
-[enhancer](/docs/api-reference/liveblocks-redux#enhancer) to your store
+[enhancer](/docs/api-reference/liveblocks-redux#Enhancer) to your store
 configuration.
 
 ```js file="src/store.js"
@@ -169,7 +169,7 @@ Add a `shapes` property to your store, and configure the enhancer to sync and
 persist them with Liveblocks.
 
 To achieve that, we are going to use the enhancer option
-[`storageMapping: { shapes: true }`](/docs/api-reference/liveblocks-redux#middleware-option-storage-mapping).
+[`storageMapping: { shapes: true }`](/docs/api-reference/liveblocks-redux#enhancer-option-storage-mapping).
 It means that the part of the state named `shapes` should be automatically
 synced with Storage.
 
@@ -475,7 +475,7 @@ selected shape id. `selectedShape` will be set when the user select or insert a
 rectangle.
 
 The middleware option
-[`presenceMapping: { selectedShape: true }`](/docs/api-reference/liveblocks-redux#middleware-option-presence-mapping)
+[`presenceMapping: { selectedShape: true }`](/docs/api-reference/liveblocks-redux#enhancer-option-presence-mapping)
 means that we want to automatically sync the part of the state named
 `selectedShape` to Liveblocks presence.
 
