@@ -104,7 +104,7 @@ can be combined with the others.
 ## Implementation [#implementation]
 
 This is an overview of how each feature can be implemented. Store permanent
-rows, columns, and cell values in [Sync](/docs/products/sync/overview). Keep
+rows, columns, and cell values in [Sync](/docs/products/sync). Keep
 temporary selections and active cells in
 [presence](/docs/products/sync/presence). The snippets below build a custom
 table, but the same data model works when rendering with a grid library such as
@@ -402,7 +402,7 @@ Learn more under
 
 Attachment columns can hold images, documents, and other uploaded assets. Upload
 with [`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile),
-store the returned [`LiveFile`](/docs/products/sync/storage#livefile) in the
+store the returned [`LiveFile`](/docs/products/sync/storage#LiveFile) in the
 row’s cell, and resolve it for display with
 [`useFileUrl`](/docs/api-reference/liveblocks-react#useFileUrl).
 

@@ -128,7 +128,7 @@ Choose a starting point for your code editor.
 
 This is an overview of how each feature can be implemented using the
 [`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror) package.
-Code files are stored in [Sync](/docs/products/sync/overview) and live
+Code files are stored in [Sync](/docs/products/sync) and live
 selections are broadcast using [presence](/docs/products/sync/presence).
 
 ### Realtime collaboration [#realtime-collaboration]
@@ -137,7 +137,7 @@ Using
 [`createLiveblocksSyncPlugin`](/docs/api-reference/liveblocks-codemirror#createLiveblocksSyncPlugin),
 you can set up a CodeMirror editors that stores your code as a
 [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) using
-[Sync](/docs/products/sync/overview). Local edits are written to Sync, remote
+[Sync](/docs/products/sync). Local edits are written to Sync, remote
 edits are applied to the editor, and concurrent changes are merged
 character-by-character.
 

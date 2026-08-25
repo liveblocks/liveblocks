@@ -91,7 +91,7 @@ Choose a starting point for your slideshow.
 ## Implementation [#implementation]
 
 This is an overview of how each feature can be implemented. Store permanent
-slide content, order, and layout in [Sync](/docs/products/sync/overview). Keep
+slide content, order, and layout in [Sync](/docs/products/sync). Keep
 temporary cursors, selections, and presentation state in
 [presence](/docs/products/sync/presence). Use
 [Comments](/docs/products/comments) for review discussions and
@@ -104,7 +104,7 @@ Store slide order in a
 by stable ID in a [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap).
 Each slide can be a
 [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) containing
-layout data and [`LiveText`](/docs/products/sync/storage#livetext) for
+layout data and [`LiveText`](/docs/products/sync/storage#LiveText) for
 collaborative text. This lets one user rearrange the deck while another edits a
 slide, without either change overwriting the other.
 
@@ -416,7 +416,7 @@ Learn more under
 
 Upload images, videos, and other binary assets with
 [`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile), then save
-the returned [`LiveFile`](/docs/products/sync/storage#livefile) in the slide’s
+the returned [`LiveFile`](/docs/products/sync/storage#LiveFile) in the slide’s
 Sync data. Resolve the reference for display with
 [`useFileUrl`](/docs/api-reference/liveblocks-react#useFileUrl).
 

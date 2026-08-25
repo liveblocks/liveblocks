@@ -98,7 +98,7 @@ Choose a starting point for your app.
 ## Implementation [#implementation]
 
 This is an overview of how each feature can be implemented, using an issue
-tracker as the example app. [Sync](/docs/products/sync/overview) can be used to
+tracker as the example app. [Sync](/docs/products/sync) can be used to
 store any type of permanent realtime data, such as issues.
 [Presence](/docs/products/sync/presence) can hold temporary selections and
 interaction state, and [feeds](/docs/products/sync/feeds) can store durable
@@ -106,7 +106,7 @@ activity streams.
 
 ### Realtime collaboration [#realtime-collaboration]
 
-Using [Sync](/docs/products/sync/overview), you can add realtime collaboration
+Using [Sync](/docs/products/sync), you can add realtime collaboration
 to your application state using
 [conflict-free data types](/docs/products/sync/storage). In this snippet, a
 realtime “priority” property can be read and edited using
@@ -236,7 +236,7 @@ more under [feeds](/docs/products/sync/feeds).
 ### Revalidating API data [#revalidating-api-data]
 
 You can keep some app data in your own database rather than in
-[Sync](/docs/products/sync/overview), and still make it feel realtime. When a
+[Sync](/docs/products/sync), and still make it feel realtime. When a
 user saves a change through your API, use
 [`useBroadcastEvent`](/docs/api-reference/liveblocks-react#useBroadcastEvent) to
 send a transient [broadcast event](/docs/products/sync/events) to the other
@@ -281,7 +281,7 @@ function IssueSettings() {
 ```
 
 Broadcast events are not persisted—use them for signals, not for state. Read
-[revalidating API data with SWR](/docs/guides/revalidate-api-data-with-swr) for
+[revalidating API data with SWR](/guides/revalidate-api-data-with-swr) for
 the full pattern, and learn more under [events](/docs/products/sync/events).
 
 ### Server-side editing [#server-side-editing]
@@ -513,7 +513,7 @@ function UploadAttachment({ issueId }: { issueId: string }) {
 }
 ```
 
-Learn more under [File uploads](/docs/products/sync/storage#livefile).
+Learn more under [File uploads](/docs/products/sync/storage#LiveFile).
 
 ### Comments [#comments]
 
@@ -548,7 +548,7 @@ function IssueComments({ issueId }: { issueId: string }) {
 }
 ```
 
-Learn more under [comments](/docs/products/sync/comments).
+Learn more under [Comments](/docs/products/comments).
 
 ### Notifications [#notifications]
 

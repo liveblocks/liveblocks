@@ -649,7 +649,7 @@
     "routes": [
       {
         "title": "Agentic users",
-        "path": "/use-cases/ai-collaboration"
+        "path": "/use-cases/agentic-users"
       },
       {
         "title": "AI activity feed",
@@ -669,7 +669,7 @@
       },
       {
         "title": "Comments",
-        "path": "/use-cases/comments-panel"
+        "path": "/use-cases/comments"
       },
       {
         "title": "Custom app",
@@ -685,7 +685,7 @@
       },
       {
         "title": "Inbox",
-        "path": "/use-cases/inbox-tray"
+        "path": "/use-cases/inbox"
       },
       {
         "title": "Presence",

@@ -86,14 +86,14 @@ the others.
 ## Implementation [#implementation]
 
 This is an overview of how each feature can be implemented. Agents edit shared
-documents through [Sync](/docs/products/sync/overview), appear in
+documents through [Sync](/docs/products/sync), appear in
 [presence](/docs/products/sync/presence) like human users, publish working
 status and chat through [feeds](/docs/products/sync/feeds), and reply to
 [comments](/docs/products/comments).
 
 ### Agentic editing [#agentic-editing]
 
-Agents can read and modify your realtime [Sync](/docs/products/sync/overview)
+Agents can read and modify your realtime [Sync](/docs/products/sync)
 documents concurrently with your users. Generate changes with AI, then apply
 them with
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)—edits
@@ -320,7 +320,7 @@ await liveblocks.createThread({
 You can also automatically trigger an agent when a user mentions it in a thread
 using the
 [`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent)
-webhook. Learn more under the [comments](/docs/use-cases/comments-panel)
+webhook. Learn more under the [comments](/docs/use-cases/comments)
 use case.
 
 ## Examples [#examples]

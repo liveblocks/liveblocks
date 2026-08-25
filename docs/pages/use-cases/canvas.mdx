@@ -100,7 +100,7 @@ coordinates or objects.
 
 ### Realtime collaboration [#realtime-collaboration]
 
-Using [Sync](/docs/products/sync/overview), you can add realtime collaboration
+Using [Sync](/docs/products/sync), you can add realtime collaboration
 to your canvas. One way to build this is to store canvas objects in a
 [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap), keyed by stable IDs,
 and create each shape in the canvas as a
@@ -424,9 +424,8 @@ function CanvasHistoryVersions() {
 You can also manually create snapshots with
 [`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot),
 and use
-[ready-made components](/docs/api-reference/liveblocks-react-ui#VersionHistory)
-to render the list of snapshots and restore to a specific version. can be used
-to create a manual snapshot. Read
+[ready-made components](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummaryList)
+to render the list of snapshots and restore to a specific version. Read
 [Version history](/docs/products/sync/version-history) to learn more.
 
 ### Multiplayer undo/redo [#multiplayer-undo-redo]
@@ -516,7 +515,7 @@ function UploadFile() {
 }
 ```
 
-Learn more under [File uploads](/docs/products/sync/storage#livefile).
+Learn more under [File uploads](/docs/products/sync/storage#LiveFile).
 
 ### Comments [#comments]
 
