@@ -21,16 +21,16 @@
 </p>
 
 This example shows how to build a realtime, multiplayer AI chat with
-[Liveblocks Feeds](https://liveblocks.io/docs/collaboration-features/ai-collaboration),
+[Liveblocks Feeds](https://liveblocks.io/docs/products/sync/feeds),
 [Next.js](https://nextjs.org/), and [AI Elements](https://ai-sdk.dev/elements).
 
 Each chat is a feed inside a Liveblocks room, so messages sync instantly to
 everyone connected, complete with shared presence (avatar stack and a live "AI
 is thinking…" status). The AI reply is generated on the server and streamed back
-into the feed with `@liveblocks/node` (`createFeedMessage` + `updateFeedMessage`),
-then rendered live for all users through the `useFeedMessages` hook — including
-reasoning, chain of thought, tool calls, sources, and token usage via AI
-Elements.
+into the feed with `@liveblocks/node` (`createFeedMessage` +
+`updateFeedMessage`), then rendered live for all users through the
+`useFeedMessages` hook — including reasoning, chain of thought, tool calls,
+sources, and token usage via AI Elements.
 
 ## Getting started
 

@@ -28,7 +28,8 @@ list and feel free to give them credit at the end of a line, e.g.:
   root. See
   [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useMutableStorage).
 - Fix thread resolved/unresolved status being reverted under some conditions.
-  Thank you for the contribution [@VihaanAgarwal](https://github.com/VihaanAgarwal)!
+  Thank you for the contribution
+  [@VihaanAgarwal](https://github.com/VihaanAgarwal)!
 
 ## v3.24.0
 
@@ -42,13 +43,13 @@ structure for plain text with optional inline formatting.
   (`{ origin: "local", via: "edit" | "undo" | "redo" }`) or by another one
   (`{ origin: "remote" }`), see
   [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#update-source).
-- Add `LiveText` for collaborative text editing with concurrent inserts, deletes,
-  and formatting changes.
+- Add `LiveText` for collaborative text editing with concurrent inserts,
+  deletes, and formatting changes.
 
 ### `@liveblocks/codemirror`, `@liveblocks/lexical`, and `@liveblocks/prosemirror`
 
-- Introduce packages for integrating CodeMirror, Lexical, and ProseMirror editors
-  with Liveblocks Storage and `LiveText`.
+- Introduce packages for integrating CodeMirror, Lexical, and ProseMirror
+  editors with Liveblocks Storage and `LiveText`.
 
 ### `@liveblocks/react-tiptap`
 
@@ -57,12 +58,13 @@ structure for plain text with optional inline formatting.
 
 ## Website
 
-- New solutions pages, accessible by the top menu dropdown, detailing how Liveblocks
-  can be used in various industries, by various different users.
+- New solutions pages, accessible by the top menu dropdown, detailing how
+  Liveblocks can be used in various industries, by various different users.
 
 ## Contributors
 
-jrowny, nvie, nimeshnayaju, marcbouchenoire, VihaanAgarwal, danilowoz, stacyschmitz, ctnicholas
+jrowny, nvie, nimeshnayaju, marcbouchenoire, VihaanAgarwal, danilowoz,
+stacyschmitz, ctnicholas
 
 # Week 33 (2026-08-14)
 
@@ -850,7 +852,7 @@ nvie, ctnicholas, stevenfabre, marcbouchenoire
 
 - New page: [n8n nodes](https://liveblocks.io/docs/integrations/n8n-nodes).
 - New page:
-  [AI Collaboration](https://liveblocks.io/docs/collaboration-features/ai-collaboration).
+  [AI Collaboration](https://liveblocks.io/docs/use-cases/agentic-users).
 - New get started:
   [Next.js + Realtime feeds](https://liveblocks.io/docs/get-started/nextjs-feeds).
 - New get started:
