@@ -9,7 +9,6 @@ Liveblocks gives you two ways to sync text:
 
 - Store the editor document in Liveblocks Storage, with text represented by
   `LiveText` nodes.
-
 - Store the editor document in a separate `Y.Doc` synchronized through
   `@liveblocks/yjs`.
 
@@ -146,17 +145,15 @@ individually, rather than all at once.
 IndexedDB. After a document has been opened once, it can load immediately from
 the browser and continue accepting edits without a network connection.
 
-**XXX.** Anything else to mention here?
 
 ## Editor support
 
-**XXX Please double-check if this table is correct!**
 
 | Editor                              | With LiveText                                                    | With Yjs                                                                                 |
 | ----------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Tiptap                              | `@liveblocks/react-tiptap`, `collaborationMode: "liveblocks"`    | Same package, used by default                                                            |
 | BlockNote                           | `@liveblocks/react-blocknote`, `collaborationMode: "liveblocks"` | Same package, used by default                                                            |
-| Lexical                             | `@liveblocks/lexical`                                            | `@liveblocks/react-lexical` (XXX, weird split, can we make this one package like above?) |
+| Lexical                             | Not supported yet                                            | `@liveblocks/react-lexical` |
 | ProseMirror                         | `@liveblocks/prosemirror`                                        | `@liveblocks/yjs` with `y-prosemirror`                                                   |
 | CodeMirror                          | `@liveblocks/codemirror`                                         | `@liveblocks/yjs` with `y-codemirror.next`                                               |
 | Slate, Quill, Monaco, tldraw, other | Not supported yet                                                | `@liveblocks/yjs` with the editor’s Yjs binding                                          |
@@ -168,7 +165,6 @@ Three details worth knowing before you decide:
   either mode.
 - Tiptap and BlockNote AI and experimental IndexedDB support currently require
   Yjs mode.
-- XXX Any other honest drawbacks to LiveText we should call out here?
 
 ## Which to choose
 
