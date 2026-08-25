@@ -14,8 +14,8 @@ unlike [presence](/docs/products/sync/presence), which is temporary.
 
 ## Conflict-free data types
 
-Storage documents are built from conflict-free data types, each resolving
-simultaneous edits differently.
+Storage documents are built from conflict-free data types, each
+[resolving simultaneous edits differently](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync).
 
 <Table columns={["15%", "auto", "53%"]}>
 
@@ -116,6 +116,12 @@ text.insert(5, " world");
 text.replace(0, 5, "Hi");
 text.format(0, 2, { format: "italic" });
 ```
+
+`LiveText` supports
+[Tiptap](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode),
+[BlockNote](/docs/api-reference/liveblocks-blocknote#Liveblocks-collaboration-mode),
+[ProseMirror](/docs/api-reference/liveblocks-prosemirror), and
+[CodeMirror](/docs/api-reference/liveblocks-codemirror).
 
 ### LiveFile
 
