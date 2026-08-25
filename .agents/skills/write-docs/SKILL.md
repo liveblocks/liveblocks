@@ -82,8 +82,12 @@ places users are likely to look.
      `tutorial/tutorials.json`.
 
 5. Verify:
-   - Inspect changed MDX for broken links, malformed JSX, heading hierarchy, and
-     route or guide registration.
+   - Run the docs link checker after making changes:
+     `node scripts/check-docs-links.mts`
+     It validates internal `/docs/*` links and `#anchors` in `docs/pages`,
+     `guides/pages`, and `tutorial` — the same check CI runs on docs PRs.
+   - Inspect changed MDX for malformed JSX, heading hierarchy, and route or
+     guide registration.
 
 ## Style Rules
 

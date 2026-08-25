@@ -209,6 +209,8 @@ Each repetition should be short and contextual, not copied wholesale.
 
 ## Checks Before Finishing
 
+- Run `node scripts/check-docs-links.mts` to catch broken internal links and
+  anchors before opening a PR.
 - New public APIs have arguments, options, returns, and snippets.
 - New docs pages are added to `docs/routes.json`.
 - New guides are added under `guides/pages` and registered in
