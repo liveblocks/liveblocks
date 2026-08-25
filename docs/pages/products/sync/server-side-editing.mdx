@@ -188,8 +188,8 @@ await mutateFlow({ client, roomId: "my-room-id" }, (flow) => {
 
 ### ProseMirror, Tiptap, and BlockNote
 
-You can edit ProseMirror, Tiptap, and BlockNote text documents from the server
-using
+When using Yjs-backed documents, you can edit ProseMirror, Tiptap, and BlockNote
+text documents from the server using
 [`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror#withProsemirrorDocument).
 In this example, new text is inserted into the document.
 
@@ -216,9 +216,14 @@ await withProsemirrorDocument(
 // +++
 ```
 
+Edit Storage-backed documents using
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+instead.
+
 ### Lexical
 
-You can edit Lexical text documents from the server using
+When using Yjs-backed documents, you can edit Lexical text content from the
+server using
 [`withLexicalDocument`](/docs/api-reference/liveblocks-node-lexical#withLexicalDocument).
 In this example, the document is updated with a new paragraph containing a text
 node.
@@ -248,3 +253,7 @@ await withLexicalDocument(
 );
 // +++
 ```
+
+Edit Storage-backed documents using
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+instead.

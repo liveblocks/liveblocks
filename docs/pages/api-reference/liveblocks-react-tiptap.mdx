@@ -2203,7 +2203,13 @@ function TextEditors() {
 <Banner>
 
 [`offlineSupport_experimental`](#Offline-support) and [`ai`](#AiToolbar) require
-the default Yjs collaboration mode (`collaborationMode: "yjs"`).
+the default Yjs collaboration mode (`collaborationMode: "yjs"`), as do
+server-side editing with
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
+and text mention emails with
+[`@liveblocks/emails`](/docs/api-reference/liveblocks-emails). To edit
+Storage-backed documents from the server, use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
 
 </Banner>
 

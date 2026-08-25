@@ -361,7 +361,14 @@ function Editors() {
 }
 ```
 
-`offlineSupport_experimental` and `ai` stay Yjs-only. Follow the
+`offlineSupport_experimental` and `ai` stay Yjs-only, as do server-side editing
+with
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
+and text mention emails with
+[`@liveblocks/emails`](/docs/api-reference/liveblocks-emails)—to edit
+Storage-backed documents from the server, use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
+Follow the
 [React](/docs/get-started/react-tiptap-storage) or
 [Next.js](/docs/get-started/nextjs-tiptap-storage) Storage get started guides,
 or read the full

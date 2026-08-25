@@ -247,7 +247,12 @@ function TextEditor() {
 ```
 
 In this mode, documents are stored in `root._tiptap_docs`, keyed by `field`.
-`offlineSupport_experimental` stays Yjs-only.
+`offlineSupport_experimental` stays Yjs-only, as do server-side editing with
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
+and text mention emails with
+[`@liveblocks/emails`](/docs/api-reference/liveblocks-emails)—to edit
+Storage-backed documents from the server, use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
 
 ## Offline support
 

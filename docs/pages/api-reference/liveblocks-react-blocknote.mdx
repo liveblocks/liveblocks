@@ -1012,7 +1012,13 @@ function TextEditors() {
 }
 ```
 
-`offlineSupport_experimental` and `ai` require the default Yjs mode.
+`offlineSupport_experimental` and `ai` require the default Yjs mode, as do
+server-side editing with
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
+and text mention emails with
+[`@liveblocks/emails`](/docs/api-reference/liveblocks-emails). To edit
+Storage-backed documents from the server, use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
 
 #### Offline support [@badge=experimental]
 
