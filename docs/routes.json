@@ -960,6 +960,14 @@
         "path": "/errors/ThreadMetadata"
       },
       {
+        "title": "The type you provided for 'FeedMetadata' is not a valid JSON value",
+        "path": "/errors/FeedMetadata"
+      },
+      {
+        "title": "The type you provided for 'FeedMessageData' is not a valid JSON value",
+        "path": "/errors/FeedMessageData"
+      },
+      {
         "title": "The type you provided for 'RoomInfo' does not match its requirements",
         "path": "/errors/RoomInfo"
       },

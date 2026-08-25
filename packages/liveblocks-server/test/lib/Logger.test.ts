@@ -138,7 +138,7 @@ describe("Logger", () => {
   });
 
   describe("optional apis (.o)", () => {
-    test("optional calls arguments are not evalutated", () => {
+    test("optional calls arguments are not evaluated", () => {
       const warningTarget = new MockTarget("warning");
       const errorTarget = new MockTarget("error");
       const logger = new Logger([warningTarget, errorTarget]);

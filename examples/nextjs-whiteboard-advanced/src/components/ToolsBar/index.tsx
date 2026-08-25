@@ -92,7 +92,7 @@ export default function ToolsBar({
             }}
           />
         </div>
-        <div className={styles.seperator}></div>
+        <div className={styles.separator}></div>
         <div className={styles.tools_panel_section}>
           <UndoButton onClick={undo} disabled={!canUndo} />
           <RedoButton onClick={redo} disabled={!canRedo} />

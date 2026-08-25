@@ -67,7 +67,7 @@ describe("Storage", () => {
       ]);
     });
 
-    test("remote action with multipe updates on same object", async () => {
+    test("remote action with multiple updates on same object", async () => {
       const { roomA, roomB, storageA, storageB } = await prepareStorageTest<{
         a: number;
         b?: number;

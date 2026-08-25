@@ -555,7 +555,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      *        description="The current list of todos"
      *        value={todos} />
      *
-     * By mounting this component, the AI will get access to this knwoledge.
+     * By mounting this component, the AI will get access to this knowledge.
      * By unmounting this component, the AI will no longer have access to it.
      * It can choose to use or ignore this knowledge in its responses.
      */
@@ -640,7 +640,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      *        description="The current list of todos"
      *        value={todos} />
      *
-     * By mounting this component, the AI will get access to this knwoledge.
+     * By mounting this component, the AI will get access to this knowledge.
      * By unmounting this component, the AI will no longer have access to it.
      * It can choose to use or ignore this knowledge in its responses.
      */

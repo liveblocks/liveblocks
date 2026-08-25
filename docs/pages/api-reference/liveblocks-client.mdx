@@ -6635,6 +6635,12 @@ declare global {
     // Custom metadata set on comments
     CommentMetadata: {};
 
+    // Custom metadata set on feeds
+    FeedMetadata: {};
+
+    // The shape of the data stored in each feed message
+    FeedMessageData: {};
+
     // Custom room info set with resolveRoomsInfo
     RoomInfo: {};
 
@@ -6695,6 +6701,22 @@ declare global {
       // Example, attaching a tag and a spam flag to a comment
       tag: string;
       spam: boolean;
+    };
+
+    // Custom metadata set on feeds
+    FeedMetadata: {
+      // Example, a title and a type for each feed
+      title: string;
+      type: "chat" | "thread";
+    };
+
+    // The shape of the data stored in each feed message
+    FeedMessageData: {
+      // Example, a message with an author, content, status, and reactions
+      userId: string;
+      content: string;
+      status: "streaming" | "complete";
+      reactions?: { emoji: string; userId: string; createdAt: number }[];
     };
 
     // Custom room info set with resolveRoomsInfo

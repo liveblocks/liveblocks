@@ -370,7 +370,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         reverse: [],
       };
     } else {
-      // Item associated to the set ack does not exist either deleted localy or via remote undo/redo
+      // Item associated to the set ack does not exist either deleted locally or via remote undo/redo
       const orphan = this._pool.getNode(op.id);
       if (orphan && this.#implicitlyDeletedItems.has(orphan)) {
         // Reattach orphan at the new position
@@ -691,7 +691,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     // If there is already an item at this position
     if (indexOfItemWithSameKey !== -1) {
-      // TODO: Should we add this item to implictly deleted item?
+      // TODO: Should we add this item to implicitly deleted item?
       const existingItem = this.#items.at(indexOfItemWithSameKey)!; // eslint-disable-line no-restricted-syntax
       existingItem._detach();
 
