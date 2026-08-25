@@ -5,11 +5,17 @@ meta:
     "Learn the differences between LiveText and Yjs, and when to use each"
 ---
 
-Liveblocks gives you two ways to sync text: `LiveText`, which stores text inside
-Liveblocks Storage, and Yjs, which stores it in a separate universe. Both merge
-concurrent edits, and with either one you can build an editor where several
-people type in the same paragraph at the same time and everyone ends up with the
-same result.
+Liveblocks gives you two ways to sync text:
+
+- Store the editor document in Liveblocks Storage, with text represented by
+  `LiveText` nodes.
+
+- Store the editor document in a separate `Y.Doc` synchronized through
+  `@liveblocks/yjs`.
+
+Both approaches merge concurrent edits, and with either one you can build an
+editor where several people type in the same paragraph at the same time and
+everyone ends up with the same result.
 
 So the choice between them isn’t about how well they resolve conflicts. It’s
 about where your text lives, and what you get around it. This guide explains
@@ -136,6 +142,10 @@ group, Yjs is the way to sync it.
 **Subdocuments.** A large document can be split into subdocuments that load
 individually, rather than all at once.
 
+**Offline persistence**. Liveblocks Yjs can experimentally persist documents in
+IndexedDB. After a document has been opened once, it can load immediately from
+the browser and continue accepting edits without a network connection.
+
 **XXX.** Anything else to mention here?
 
 ## Editor support
@@ -156,6 +166,8 @@ Three details worth knowing before you decide:
 - For **Tiptap and BlockNote**, this is a single option on a package you’re
   already using. Comments, mentions, cursors, and toolbars work the same in
   either mode.
+- Tiptap and BlockNote AI and experimental IndexedDB support currently require
+  Yjs mode.
 - XXX Any other honest drawbacks to LiveText we should call out here?
 
 ## Which to choose
