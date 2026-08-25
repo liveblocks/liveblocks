@@ -538,6 +538,7 @@
     "path": "/how-conflict-resolution-works-in-liveblocks-sync",
     "topics": ["storage", "state"],
     "technologies": ["storage"],
+    "featured": true,
     "date": "2026-08-21"
   },
   {
@@ -545,6 +546,7 @@
     "path": "/livetext-vs-yjs",
     "topics": ["text-editors"],
     "technologies": ["storage", "yjs"],
+    "featured": true,
     "date": "2026-08-21"
   }
 ]
