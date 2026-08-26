@@ -29,6 +29,7 @@ import type { Logger } from "~/lib/Logger";
 
 // How many updates to store before compacting
 const UPDATE_COUNT_THRESHOLD = 1_000;
+const MATERIALIZATION_EARLY_REPORT_BYTES = 16 * 1024 * 1024;
 
 // How much smaller the merged update can be than the sum of the updates before compacting
 const MERGE_SHRINK_THRESHOLD = 0.8;
@@ -39,9 +40,21 @@ type CompactionTrigger =
   | "load-merge-shrink"
   | "update-key-count";
 
+export type YjsMaterialization = {
+  operation: "encode" | "hydrate";
+  operationBytes: number;
+  measurementComplete: boolean;
+  itemCount: number;
+  yjsDocId: YDocId;
+};
+
 export class YjsStorage {
   private readonly driver: IStorageDriver;
   private readonly updateCountThreshold: number;
+  private readonly onMaterialization?: (
+    logger: Logger,
+    details: YjsMaterialization
+  ) => void;
 
   /**
    * The root Y.Doc instance, which may not have been hydrated from storage
@@ -56,10 +69,12 @@ export class YjsStorage {
 
   constructor(
     driver: IStorageDriver,
-    updateCountThreshold: number = UPDATE_COUNT_THRESHOLD
+    updateCountThreshold: number = UPDATE_COUNT_THRESHOLD,
+    onMaterialization?: (logger: Logger, details: YjsMaterialization) => void
   ) {
     this.driver = driver;
     this.updateCountThreshold = updateCountThreshold;
+    this.onMaterialization = onMaterialization;
     this.rawRootDoc.on("subdocs", ({ removed }) => {
       removed.forEach((subdoc: Y.Doc) => {
         subdoc.destroy(); // will remove listeners
@@ -140,10 +155,17 @@ export class YjsStorage {
         "Could not get update from passed vector, returning all updates"
       );
     }
-    if (isV2) {
-      return Y.encodeStateAsUpdateV2(doc, encodedTargetVector);
-    }
-    return Y.encodeStateAsUpdate(doc, encodedTargetVector);
+    const update = isV2
+      ? Y.encodeStateAsUpdateV2(doc, encodedTargetVector)
+      : Y.encodeStateAsUpdate(doc, encodedTargetVector);
+    this.reportMaterialization(logger, {
+      operation: "encode",
+      operationBytes: update.byteLength,
+      measurementComplete: true,
+      itemCount: 1,
+      yjsDocId: guid ?? ROOT_YDOC_ID,
+    });
+    return update;
   }
 
   public getYStateVector(logger: Logger, guid?: Guid): string | null {
@@ -284,11 +306,35 @@ export class YjsStorage {
     doc: Y.Doc,
     docId: YDocId
   ): Y.Doc => {
-    const docUpdates = Object.fromEntries(this.driver.iter_y_updates(docId));
-    const updates = Object.values(docUpdates);
-    const beforeSize = updates.reduce((acc, update) => acc + update.length, 0);
+    const updates: Uint8Array[] = [];
+    const storedKeys: string[] = [];
+    let beforeSize = 0;
+    let didReportEarly = false;
+    for (const [key, update] of this.driver.iter_y_updates(docId)) {
+      updates.push(update);
+      storedKeys.push(key);
+      beforeSize += update.length;
+      if (!didReportEarly && beforeSize >= MATERIALIZATION_EARLY_REPORT_BYTES) {
+        didReportEarly = true;
+        this.reportMaterialization(logger, {
+          operation: "hydrate",
+          operationBytes: beforeSize,
+          measurementComplete: false,
+          itemCount: updates.length,
+          yjsDocId: docId,
+        });
+      }
+    }
+    if (!didReportEarly) {
+      this.reportMaterialization(logger, {
+        operation: "hydrate",
+        operationBytes: beforeSize,
+        measurementComplete: true,
+        itemCount: updates.length,
+        yjsDocId: docId,
+      });
+    }
     const newupdate = Y.mergeUpdates(updates);
-    const storedKeys = Object.keys(docUpdates);
     Y.applyUpdate(doc, newupdate);
     // after compaction, there will only be one unique key.
     if (this.shouldCompactByKeyCount(storedKeys)) {
@@ -308,6 +354,17 @@ export class YjsStorage {
 
     return doc;
   };
+
+  private reportMaterialization(
+    logger: Logger,
+    details: YjsMaterialization
+  ): void {
+    try {
+      this.onMaterialization?.(logger, details);
+    } catch {
+      // Diagnostics must never break Yjs operations.
+    }
+  }
 
   private findYSubdocByGuid(guid: Guid): Y.Doc | null {
     for (const subdoc of this.rawRootDoc.getSubdocs()) {
