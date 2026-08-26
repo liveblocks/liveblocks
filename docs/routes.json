@@ -1093,14 +1093,6 @@
         "path": "/api-reference/liveblocks-react-flow"
       },
       {
-        "title": "@liveblocks/codemirror",
-        "path": "/api-reference/liveblocks-codemirror"
-      },
-      {
-        "title": "@liveblocks/prosemirror",
-        "path": "/api-reference/liveblocks-prosemirror"
-      },
-      {
         "title": "@liveblocks/react-tiptap",
         "path": "/api-reference/liveblocks-react-tiptap"
       },
@@ -1116,6 +1108,14 @@
         "title": "@liveblocks/lexical",
         "path": "/api-reference/liveblocks-lexical",
         "hidden": true
+      },
+      {
+        "title": "@liveblocks/codemirror",
+        "path": "/api-reference/liveblocks-codemirror"
+      },
+      {
+        "title": "@liveblocks/prosemirror",
+        "path": "/api-reference/liveblocks-prosemirror"
       },
       {
         "title": "@liveblocks/redux",
