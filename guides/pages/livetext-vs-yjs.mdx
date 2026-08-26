@@ -145,6 +145,18 @@ individually, rather than all at once.
 IndexedDB. After a document has been opened once, it can load immediately from
 the browser and continue accepting edits without a network connection.
 
+## Size limit
+
+A single `LiveText` node can currently hold up to around 2 MB of text and inline
+attributes. That is a lot of prose, but a body of text that can grow past it
+needs to be split across several `LiveText` nodes, for example one per section,
+page, or block. A Yjs document is not bound by this limit.
+
+For this reason, full-page editor experiences are still better served by Yjs.
+When the page itself is the document, and people keep adding to it over months
+or years, there is no natural upper bound on how large the text gets. Long-form
+documents, wikis, notes apps, and code editors all have this shape.
+
 ## Editor support
 
 | Editor                                        | With LiveText                                                                                                                                                                                          | With Yjs                                                                                                                         |
@@ -167,14 +179,15 @@ Three details worth knowing before you decide:
 ## Which to choose
 
 Use `LiveText` when your editor appears in the LiveText column and text is one
-field among many. Decks, canvases, boards, wikis, and record-based tools all
-have this shape: the words matter, but so do the positions, the ordering, the
-properties, and the links between things. Keeping all of it in one document
-means one set of APIs, one history, one snapshot to restore, and text you can
-read as ordinary data anywhere in your app.
+field among many. Decks, canvases, boards, and record-based tools all have this
+shape: the words matter, but so do the positions, the ordering, the properties,
+and the links between things. Keeping all of it in one document means one set of
+APIs, one history, one snapshot to restore, and text you can read as ordinary
+data anywhere in your app.
 
-Use Yjs when your editor only has a Yjs binding, or when you need something only
-Yjs provides.
+Use Yjs for full-page editor experiences, where the page is the document and its
+text can keep growing, and whenever your editor only has a Yjs binding or you
+need something else only Yjs provides.
 
 ## Learn more
 

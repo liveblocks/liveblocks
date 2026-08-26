@@ -5996,6 +5996,17 @@ const formatted: LiveTextData = [["Hello ", { bold: true }], ["world"]];
 Attributes are JSON objects. Set an attribute to `null` to remove it from a
 range (for example `{ bold: null }`).
 
+<Banner title="Size limit">
+
+A single `LiveText` node can currently hold up to around 2 MB of text and
+inline attributes. Documents that can grow past that should be split across
+multiple `LiveText` nodes, for example one per section or block. For full-page
+editor experiences, where the page is the document and its text can keep
+growing, we still recommend [Yjs](/docs/api-reference/liveblocks-yjs). See
+[LiveText vs Yjs](/docs/guides/livetext-vs-yjs) for the full comparison.
+
+</Banner>
+
 ### new LiveText [#LiveText.constructor]
 
 Create an empty `LiveText`.
