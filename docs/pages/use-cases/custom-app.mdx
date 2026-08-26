@@ -409,7 +409,7 @@ function AppHistoryVersions() {
       // +++
       {versions.map((version) => (
         <div key={version.id} onClick={() => restore(version.id)}>
-          Snapshot created at{version.createdAt}
+          Snapshot created at {version.createdAt}
         </div>
       ))}
       // +++

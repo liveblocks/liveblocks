@@ -135,7 +135,7 @@ selections are broadcast using [presence](/docs/products/sync/presence).
 
 Using
 [`createLiveblocksSyncPlugin`](/docs/api-reference/liveblocks-codemirror#createLiveblocksSyncPlugin),
-you can set up a CodeMirror editors that stores your code as a
+you can set up a CodeMirror editor that stores your code as a
 [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) using
 [Sync](/docs/products/sync). Local edits are written to Sync, remote
 edits are applied to the editor, and concurrent changes are merged
@@ -185,7 +185,7 @@ function CodeEditor({ text }: { text: LiveText }) {
 }
 ```
 
-Multiple code files can be stored in a single room by passign different
+Multiple code files can be stored in a single room by passing different
 `LiveText` values. Learn more under
 [Sync integrations](/docs/products/sync/integrations) and
 [Storage](/docs/products/sync/storage).

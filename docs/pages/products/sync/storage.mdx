@@ -58,7 +58,7 @@ shape.update({ x: 100, y: 200 });
 [`LiveList`](/docs/api-reference/liveblocks-client#LiveList) is similar to a
 JavaScript array that is synchronized across clients—users can delete, insert,
 and move items at the same time as others, and changes are merged together. Use
-it for storing ordered collection of items, for example a list of layers on a
+it for storing an ordered collection of items, for example a list of layers on a
 canvas.
 
 ```ts
@@ -393,7 +393,7 @@ function SelectPriority() {
 ### Undo and redo changes [#multiplayer-undo-redo]
 
 When using Storage, each user has an independent undo stack which is saved in
-memory until the users leaves the page. Using undo reverts the user’s Storage
+memory until the user leaves the page. Using undo reverts the user’s Storage
 changes without reversing work made by other collaborators.
 
 The [`useUndo`](/docs/api-reference/liveblocks-react#useUndo) and
@@ -478,7 +478,7 @@ function Shape({ index }: { index: number }) {
 ### Presence history
 
 Undo only affects Storage by default, but it can sometimes be helpful to revert
-presence changes too. For example, when a shape is dragged on a cavas, a user’s
+presence changes too. For example, when a shape is dragged on a canvas, a user’s
 presence may be visible around the shape. If the shape is moved back with undo,
 it makes sense to move the user’s selection back too. Pass
 `{ addToHistory: true }` when updating presence to add a value to the undo/redo

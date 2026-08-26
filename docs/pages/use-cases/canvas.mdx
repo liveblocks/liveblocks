@@ -223,7 +223,7 @@ function CanvasPresence() {
 To create live cursors, add
 [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) and
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
-get and set user cursor positions on the canvas. Make sure to use a coordinate
+to get and set user cursor positions on the canvas. Make sure to use a coordinate
 system that works with your canvas, for example screen coordinates.
 
 ```tsx
@@ -412,7 +412,7 @@ function CanvasHistoryVersions() {
       // +++
       {versions.map((version) => (
         <div key={version.id} onClick={() => restore(version.id)}>
-          Snapshot created at{version.createdAt}
+          Snapshot created at {version.createdAt}
         </div>
       ))}
       // +++
@@ -520,7 +520,7 @@ Learn more under [File uploads](/docs/products/sync/storage#LiveFile).
 ### Comments [#comments]
 
 Add commenting to your canvas with our [Comments](/docs/products/comments)
-product by attaching x/y coordiantes to thread metadata.
+product by attaching x/y coordinates to thread metadata.
 [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) allows you to
 loop through existing threads and render them, while the
 [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread) and
