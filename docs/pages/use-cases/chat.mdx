@@ -88,6 +88,13 @@ Choose a starting point for your chat.
 <ListGrid columns={2} defaultVisibleItems={2}>
   <DocsCard
     type="technology"
+    title="Get started with AI Elements"
+    href="/docs/get-started/nextjs-ai-elements"
+    description="Build a realtime AI chat with ready-made UI"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
     title="Get started with feeds"
     href="/docs/get-started/nextjs-feeds"
     description="Build a persistent realtime message feed"
@@ -113,9 +120,9 @@ Choose a starting point for your chat.
 
 This is an overview of how each feature can be implemented. Chat messages can be
 stored in [feeds](/docs/products/sync/feeds), part of
-[Sync](/docs/products/sync)—each conversation is a feed, and each
-message holds JSON data whose schema you define, meaning the same building
-blocks work for human chat, AI chat, and combinations of the two.
+[Sync](/docs/products/sync)—each conversation is a feed, and each message holds
+JSON data whose schema you define, meaning the same building blocks work for
+human chat, AI chat, and combinations of the two.
 
 ### Realtime messaging [#realtime-messaging]
 
@@ -362,9 +369,9 @@ will see the exact message stream in realtime.
 
 ### Agentic editing [#agentic-editing]
 
-Chat becomes more powerful when AI can take action in your app, not just
-reply. If you have a realtime app set up with [Sync](/docs/products/sync), you
-can generate results with AI and apply them to the room’s realtime document with
+Chat becomes more powerful when AI can take action in your app, not just reply.
+If you have a realtime app set up with [Sync](/docs/products/sync), you can
+generate results with AI and apply them to the room’s realtime document with
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
 Edits appear instantly and merge with changes users are making at the same time
 using conflict resolution.

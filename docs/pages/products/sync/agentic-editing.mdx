@@ -7,14 +7,13 @@ meta:
 
 AI agents can modify the same Sync document as the humans in your application
 using server-side APIs. Connected users receive changes in realtime, meaning
-agents can work visibly alongside humans, and take advantage of the same
-conflict resolution that enables human collaboration.
+agents can visibly [work alongside humans](/docs/use-cases/agentic-users), and
+take advantage of the same conflict resolution that enables human collaboration.
 
 ## Edit Sync documents
 
-Agents can read and modify your realtime [Sync](/docs/products/sync)
-documents concurrently with your users. Generate changes with AI, then apply
-them with
+Agents can read and modify your realtime [Sync](/docs/products/sync) documents
+concurrently with your users. Generate changes with AI, then apply them with
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)—edits
 appear instantly for connected users.
 
@@ -180,8 +179,8 @@ Note that
 [`HistoryVersionSummary`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummary)
 and
 [`HistoryVersionSummaryList`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummaryList)
-are optional ready-made components that display version history information
-with styled components.
+are optional ready-made components that display version history information with
+styled components.
 
 ## Show agent presence
 
@@ -378,8 +377,7 @@ function Comments() {
 You can also automatically trigger an agent when a user mentions it in a thread
 using the
 [`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent)
-webhook. Learn more under the [comments](/docs/use-cases/comments)
-use case.
+webhook. Learn more under the [comments](/docs/use-cases/comments) use case.
 
 ## Putting it all together
 
