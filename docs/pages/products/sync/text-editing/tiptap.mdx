@@ -30,28 +30,28 @@ Skip the information and get started now.
     type="technology"
     title="Get started with Tiptap"
     href="/docs/get-started/nextjs-tiptap"
-    description="Rich text editor built on LiveText with Next.js"
+    description="Yjs-backed text editor with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Tiptap and LiveText"
+    href="/docs/get-started/nextjs-tiptap-storage"
+    description="LiveText-backed text editor with Next.js"
     visual={<DocsNextjsIcon />}
   />
   <DocsCard
     type="technology"
     title="Get started with Tiptap"
     href="/docs/get-started/react-tiptap"
-    description="Rich text editor built on LiveText with React"
+    description="Yjs-backed text editor with React"
     visual={<DocsReactIcon />}
   />
   <DocsCard
     type="technology"
-    title="Get started with Tiptap and Yjs"
-    href="/docs/get-started/nextjs-tiptap-yjs"
-    description="Yjs-backed text editor with Next.js"
-    visual={<DocsNextjsIcon />}
-  />
-  <DocsCard
-    type="technology"
-    title="Get started with Tiptap and Yjs"
-    href="/docs/get-started/react-tiptap-yjs"
-    description="Yjs-backed text editor with React"
+    title="Get started with Tiptap and LiveText"
+    href="/docs/get-started/react-tiptap-storage"
+    description="LiveText-backed text editor with React"
     visual={<DocsReactIcon />}
   />
 </ListGrid>
@@ -356,7 +356,7 @@ function TextEditor() {
 ```
 
 In this mode, documents are stored in `root._tiptap_docs`, keyed by `field`.
-This makes it easy to render editors dynamically from storage.
+This makes it easy to render editors dynamically from Storage.
 
 ```tsx
 function Editors() {
@@ -373,9 +373,9 @@ and text mention emails with
 [`@liveblocks/emails`](/docs/api-reference/liveblocks-emails)—to edit
 Storage-backed documents from the server, use
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
-Follow the [React](/docs/get-started/react-tiptap) or
-[Next.js](/docs/get-started/nextjs-tiptap) Storage get started guides, or read
-the full
+Follow the [React](/docs/get-started/react-tiptap-storage) or
+[Next.js](/docs/get-started/nextjs-tiptap-storage) Storage get started guides,
+or read the full
 [Liveblocks collaboration mode](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode)
 API reference.
 
@@ -485,28 +485,28 @@ Choose a starting point for your Tiptap editor.
     type="technology"
     title="Get started with Tiptap"
     href="/docs/get-started/nextjs-tiptap"
-    description="Rich text editor built on LiveText with Next.js"
+    description="Yjs-backed text editor with Next.js"
     visual={<DocsNextjsIcon />}
   />
   <DocsCard
     type="technology"
     title="Get started with Tiptap"
     href="/docs/get-started/react-tiptap"
-    description="Rich text editor built on LiveText with React"
+    description="Yjs-backed text editor with React"
     visual={<DocsReactIcon />}
   />
   <DocsCard
     type="technology"
-    title="Get started with Tiptap and Yjs"
-    href="/docs/get-started/nextjs-tiptap-yjs"
-    description="Yjs-backed text editor with Next.js"
+    title="Get started with Tiptap and LiveText"
+    href="/docs/get-started/nextjs-tiptap-storage"
+    description="LiveText-backed text editor with Next.js"
     visual={<DocsNextjsIcon />}
   />
   <DocsCard
     type="technology"
-    title="Get started with Tiptap and Yjs"
-    href="/docs/get-started/react-tiptap-yjs"
-    description="Yjs-backed text editor with React"
+    title="Get started with Tiptap and LiveText"
+    href="/docs/get-started/react-tiptap-storage"
+    description="LiveText-backed text editor with React"
     visual={<DocsReactIcon />}
   />
 </ListGrid>

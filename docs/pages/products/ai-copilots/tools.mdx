@@ -23,7 +23,7 @@ chat, such as:
   invoices.
 - **Human-in-the-loop actions**: Show confirm/deny buttons before taking
   destructive actions.
-- **AI presence**: Tool results can be streamed in, allowing AI to show live
+- **AI Presence**: Tool results can be streamed in, allowing AI to show live
   updates in your app.
 
 ### How tools work
@@ -763,10 +763,10 @@ A tool’s stages never reset, which means that once an email has been sent, the
 tool will remain in the `executed` stage showing “You sent an email to…”, even
 after refreshing the page. This enables stateful interaction.
 
-## AI presence & streaming
+## AI Presence & streaming
 
 You can stream in tool results as they arrive, allowing you to show live updates
-and AI presence in your application. An example would be a tool that generates
+and AI Presence in your application. An example would be a tool that generates
 documents—you can display the partially generated document as each chunk
 arrives, for example:
 
@@ -839,16 +839,16 @@ and update the UI.
 you to stream in strings, objects, and arrays, and you can use them in `render`
 as they arrive.
 
-<Banner title="AI presence & streaming example">
+<Banner title="AI Presence & streaming example">
 
 The [AI App Builder](/examples/ai-app-builder/nextjs-ai-app-builder) example
-demonstrates AI presence and streaming in a code editor.
+demonstrates AI Presence and streaming in a code editor.
 
 </Banner>
 
-### Streaming into a document with AI presence
+### Streaming into a document with AI Presence
 
-To stream results outside of the chat window, and show AI presence, you can call
+To stream results outside of the chat window, and show AI Presence, you can call
 functions inside `render`. In this case, we’re updating a document outside of
 the chat window, and inside the chat, we’re showing a simple
 [`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool) message.

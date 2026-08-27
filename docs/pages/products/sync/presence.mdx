@@ -8,16 +8,16 @@ meta:
 ---
 
 Presence is temporary state associated with each connected user in a room,
-updating in realtime and disappearing when the connection ends. Use presence for
+updating in realtime and disappearing when the connection ends. Use Presence for
 creating live avatars, realtime cursors, multiplayer selections, typing
 indicators, and other temporary UI elements that do not belong in the persisted
-document. You can also set presence on the server, enabling AI agent presence in
+document. You can also set Presence on the server, enabling AI agent Presence in
 your app.
 
 ## Ready-made components
 
 If you’d like to get started quickly, Liveblocks provides basic ready-made
-components for presence,
+components for Presence,
 [`Cursors`](/docs/api-reference/liveblocks-react-ui#Cursors) and
 [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack), which
 correspondingly display realtime cursors and avatars.
@@ -37,15 +37,15 @@ function App() {
 }
 ```
 
-Follow the [presence quickstart guide](/docs/get-started/nextjs-presence) to set
+Follow the [Presence quickstart guide](/docs/get-started/nextjs-presence) to set
 them up.
 
-## Custom presence
+## Custom Presence
 
-Using Liveblocks React hooks, you can build any sort of realtime UI presence
+Using Liveblocks React hooks, you can build any sort of realtime UI Presence
 into your app. Presence is represented by a JSON object, and is updated in
 realtime for every connected user. Before you get started, decide on the shape
-of your presence object, and set it in your config file.
+of your Presence object, and set it in your config file.
 
 For example, live cursors will use `x` and `y` coordinates, whereas a typing
 indicator will use a boolean value. Set this in your config file.
@@ -62,7 +62,7 @@ declare global {
 }
 ```
 
-Next, set an initial value for your presence in
+Next, set an initial value for your Presence in
 [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider). In this
 snippet, `null` represents a cursor that is offscreen.
 
@@ -82,7 +82,7 @@ function App() {
 
 ### Set up user info
 
-When using presence, it's often useful to pass in user info from your
+When using Presence, it's often useful to pass in user info from your
 authentication system, such as a name, avatar, and color, to be displayed in the
 UI. This is helpful if you’re rendering UI such as a user avatar or name tag,
 static information that won’t update in realtime.
@@ -140,10 +140,10 @@ export async function POST(request: Request) {
 }
 ```
 
-### Setting user presence
+### Setting user Presence
 
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
-allows you to update the current user’s presence. Use this, for example, to set
+allows you to update the current user’s Presence. Use this, for example, to set
 a user’s cursor position on the page, or set a typing indicator.
 
 ```tsx
@@ -173,7 +173,7 @@ function CursorOverlay() {
 }
 ```
 
-### Using others presence
+### Using others' Presence
 
 [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) returns a list of
 every connected users in the room. For example, you can render each user’s
@@ -349,10 +349,10 @@ function Textareas() {
 }
 ```
 
-## Server-side presence
+## Server-side Presence
 
-As well as on the client, you can set presence on the server, especially helful
-for enabling AI agent presence in your app. The
+As well as on the client, you can set Presence on the server, especially helful
+for enabling AI agent Presence in your app. The
 [`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
 method is used for this, and after it’s called,
 [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) will return the
@@ -394,15 +394,15 @@ await liveblocks.setPresence("my-room-id", {
 ```
 
 Presence expires after the time-to-live (TTL) period, in seconds, and is removed
-from the list of connected users. To remove agent presence, call it with
+from the list of connected users. To remove agent Presence, call it with
 `ttl: 2`, the minimum value, and it will be removed shortly after.
 
 ### Example usage
 
-One way to use agent presence is to set it before running an AI workflow, then
+One way to use agent Presence is to set it before running an AI workflow, then
 remove it after the workflow is complete. Here’s an example that modifies a
 [Sync](/docs/products/sync) document, displaying an AI avatar as it does the
-work. Avatars don’t need any presence data, so we can set it to an empty object.
+work. Avatars don’t need any Presence data, so we can set it to an empty object.
 
 ```ts file="liveblocks.config.ts"
 declare global {
@@ -417,7 +417,7 @@ declare global {
 }
 ```
 
-Set presence before and after running the AI workflow, setting `ttl` to the
+Set Presence before and after running the AI workflow, setting `ttl` to the
 minimum value at the end.
 
 ```ts

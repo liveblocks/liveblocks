@@ -1,6 +1,7 @@
 ---
 meta:
-  title: "Get started with a CodeMirror code editor using Liveblocks and Next.js"
+  title:
+    "Get started with a CodeMirror code editor using Liveblocks and Next.js"
   parentTitle: "Quickstart"
   description:
     "Learn how to install a CodeMirror code editor using Liveblocks and Next.js"
@@ -10,6 +11,14 @@ Liveblocks is a realtime collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding
 collaboration to your Next.js application using the APIs from the
 [`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror) package.
+
+<Banner title="Beta">
+
+The CodeMirror LiveText integration is currently in beta, and LiveText documents
+are limited to 2 MB. Read the [LiveText vs Yjs](/docs/guides/livetext-vs-yjs)
+guide to compare both approaches.
+
+</Banner>
 
 ## Quickstart
 
@@ -39,7 +48,7 @@ collaboration to your Next.js application using the APIs from the
       npx create-liveblocks-app@latest --init --framework react
       ```
 
-      Add types for your CodeMirror document and presence:
+      Add types for your CodeMirror document and Presence:
 
       ```ts file="liveblocks.config.ts"
       import type { LiveblocksCodemirrorSelection } from "@liveblocks/codemirror";
@@ -79,7 +88,7 @@ collaboration to your Next.js application using the APIs from the
       we recommend creating your room in a `Room.tsx` file in the same directory
       as your current route.
 
-      Store your editor document in Storage as [`LiveText`](/docs/api-reference/liveblocks-client#LiveText), and set an initial presence shape for cursors.
+      Store your editor document in Storage as [`LiveText`](/docs/api-reference/liveblocks-client#LiveText), and set an initial Presence shape for cursors.
 
       Set up a Liveblocks client with
       [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
@@ -204,7 +213,7 @@ collaboration to your Next.js application using the APIs from the
   <StepTitle>Style remote carets and selections</StepTitle>
   <StepContent>
 
-    The presence plugin renders remote carets and selections using the
+    The Presence plugin renders remote carets and selections using the
     `.lb-remote-caret` and `.lb-remote-selection` class names. Add styles for
     them in your CSS. This package does not ship a stylesheet.
 

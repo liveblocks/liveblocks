@@ -136,7 +136,7 @@ This is an overview of how each feature can be implemented with
 [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap),
 though a number of other editor plugins are available with similar APIs.
 Documents are stored in [Sync](/docs/products/sync), live selections are
-broadcast using [presence](/docs/products/sync/presence), and comment threads
+broadcast using [Presence](/docs/products/sync/presence), and comment threads
 are created using [Comments](/docs/products/comments).
 
 ### Realtime collaboration [#realtime-collaboration]
@@ -207,7 +207,7 @@ function TextEditorPresence() {
 ```
 
 You can also create custom avatar stacks and presence UI, learn more under
-[presence](/docs/products/sync/presence).
+[Presence](/docs/products/sync/presence).
 
 ### Toolbars [#toolbars]
 
@@ -272,7 +272,7 @@ To allow AI agents to modify your document, generate your changes with AI then
 use [`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage) to
 apply them. To show that AI is working in your app use
 [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-to show it working—your agent will appear in [presence](#presence) alongside
+to show it working—your agent will appear in [Presence](#presence) alongside
 humans. Finally, remove the agent’s presence to indicate that the agent is no
 longer working.
 
@@ -329,7 +329,7 @@ await liveblocks.setPresence(roomId, {
 // +++
 ```
 
-Additionally, you can use [feeds](/docs/products/sync/feeds) to store AI
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
 workflow state, and to pass agent status updates to the UI. Learn more under
 [Agentic editing](/docs/products/sync/agentic-editing).
 

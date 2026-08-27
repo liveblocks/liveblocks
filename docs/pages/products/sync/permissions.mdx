@@ -96,7 +96,7 @@ control access to the Sync document specifically, use the more granular
 [Yjs](/docs/products/sync/text-editing/yjs) documents.
 
 For example, you can give everyone write access to the room, while lowering
-access to the data storage itself so that only specific editors can change it.
+access to Storage itself so that only specific editors can change it.
 
 ```ts
 const room = await liveblocks.updateRoom("my-room-id", {
@@ -149,7 +149,7 @@ Similar permissions exist for other room resources. Find the full list on the
 ## Read-only permissions
 
 Users with `*:read` or `storage:read` access connect to the room as normal,
-receiving realtime updates and seeing other users’ presence, but any attempt to
+receiving realtime updates and seeing other users’ Presence, but any attempt to
 modify the document is rejected by the server. This makes read-only viewers,
 previews, and published documents easy to build, as no separate code path is
 needed.

@@ -182,13 +182,13 @@
             "hidden": true
           },
           {
-            "title": "Tiptap Yjs",
-            "path": "/get-started/react-tiptap-yjs",
+            "title": "Tiptap Storage",
+            "path": "/get-started/react-tiptap-storage",
             "hidden": true
           },
           {
-            "title": "Tiptap Yjs",
-            "path": "/get-started/nextjs-tiptap-yjs",
+            "title": "Tiptap Storage",
+            "path": "/get-started/nextjs-tiptap-storage",
             "hidden": true
           },
           {
@@ -222,13 +222,13 @@
             "hidden": true
           },
           {
-            "title": "BlockNote Yjs",
-            "path": "/get-started/react-blocknote-yjs",
+            "title": "BlockNote Storage",
+            "path": "/get-started/react-blocknote-storage",
             "hidden": true
           },
           {
-            "title": "BlockNote Yjs",
-            "path": "/get-started/nextjs-blocknote-yjs",
+            "title": "BlockNote Storage",
+            "path": "/get-started/nextjs-blocknote-storage",
             "hidden": true
           },
           {

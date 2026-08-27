@@ -106,7 +106,7 @@ can be combined with the others.
 This is an overview of how each feature can be implemented. Store permanent
 rows, columns, and cell values in [Sync](/docs/products/sync). Keep
 temporary selections and active cells in
-[presence](/docs/products/sync/presence). The snippets below build a custom
+[Presence](/docs/products/sync/presence). The snippets below build a custom
 table, but the same data model works when rendering with a grid library such as
 AG Grid or Handsontable.
 
@@ -186,7 +186,7 @@ for each part of your table.
 
 ### Presence [#presence]
 
-Use [presence](/docs/products/sync/presence) for information that only matters
+Use [Presence](/docs/products/sync/presence) for information that only matters
 while someone is connected, such as their selected cell or the range they are
 highlighting. Add
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
@@ -220,7 +220,7 @@ function Cell({ rowId, columnId }: { rowId: string; columnId: string }) {
 }
 ```
 
-Learn more under [presence](/docs/products/sync/presence).
+Learn more under [Presence](/docs/products/sync/presence).
 
 ### Server-side editing [#server-side-editing]
 
@@ -258,7 +258,7 @@ To allow AI agents to modify your spreadsheet, generate your changes with AI
 then use [`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
 to apply them. To show that AI is working in your app use
 [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-to show it working—your agent will appear in [presence](#presence) alongside
+to show it working—your agent will appear in [Presence](#presence) alongside
 humans. Finally, remove the agent’s presence to indicate that the agent is no
 longer working.
 
@@ -319,7 +319,7 @@ await liveblocks.setPresence(roomId, {
 // +++
 ```
 
-Additionally, you can use [feeds](/docs/products/sync/feeds) to store AI
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
 workflow state, and to pass agent status updates to the UI. Learn more under
 [Agentic editing](/docs/products/sync/agentic-editing).
 

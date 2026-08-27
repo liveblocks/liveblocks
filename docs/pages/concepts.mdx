@@ -36,7 +36,7 @@ authentication, backend, or data model.
 | Projects      | Top-level container for your application                                                                   |
 | Organizations | Compartmentalize rooms and notifications per organization                                                  |
 | Rooms         | Spaces in your product where collaboration happens, such as documents                                      |
-| Primitives    | The building blocks that makes multiplayer possible at scale: presence, Broadcast, Storage, feeds, Threads |
+| Primitives    | The building blocks that makes multiplayer possible at scale: Presence, Broadcast, Storage, Feeds, Threads |
 | Users         | People and AI agents doing work together                                                                   |
 | Products      | Sync, Comments, and Notifications                                                                          |
 | Platform      | The realtime backend, admin dashboard, and SDKs that make collaboration possible at scale                  |
@@ -95,7 +95,7 @@ one is required.
 
 A room is a stateful WebSocket server on the edge. It represents the space where
 people and AI agents collaborate together. Inside a room, you can enable things
-like presence, shared state for multiplayer interactions, contextual comment
+like Presence, shared state for multiplayer interactions, contextual comment
 threads, @ mentions and actions that trigger notifications.
 
 <Figure>
@@ -115,7 +115,7 @@ forms, 3D files, video editors, design files, presentations, and more.
 ## Primitives
 
 Primitives are the building blocks available inside rooms that make multiplayer
-possible at scale: presence, Broadcast, Storage, feeds, Threads.
+possible at scale: Presence, Broadcast, Storage, Feeds, Threads.
 
 <ListGrid columns={2}>
   <DocsCardFeature
@@ -179,7 +179,7 @@ People are the authenticated user using your application. Liveblocks only needs
 a `userId` to identify them. Users can:
 
 - View and edit content.
-- See presence and activity.
+- See Presence and activity.
 - Leave contextual comments.
 - @ mention users, groups, and AI agents.
 - Receive notifications.
@@ -211,7 +211,7 @@ Backend AI agents are powered by your own infrastructure or tools like
 [Crew AI](https://crewai.com/), and more. Backend AI agents behave like true
 collaborators inside rooms.
 
-- They appear in rooms with presence.
+- They appear in rooms with Presence.
 - Users can @mention them in comments or text documents.
 - Room events (mentions, edits, messages) are sent to your webhook endpoint.
 - Your agent returns actions that update UI, create comments, or drive
@@ -220,7 +220,7 @@ collaborators inside rooms.
 ## Platform
 
 The Liveblocks Platform powers collaboration at runtime through a realtime back
-end, using WebSocket infrastructure to handle presence, connection management,
+end, using WebSocket infrastructure to handle Presence, connection management,
 low-latency messaging, and room orchestration. Async pipelines manage
 notification delivery, webhooks, and event batching and grouping. An admin
 dashboard provides usage and monitoring, project and API keys management,

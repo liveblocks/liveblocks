@@ -119,7 +119,7 @@ Choose a starting point for your chat.
 ## Implementation [#implementation]
 
 This is an overview of how each feature can be implemented. Chat messages can be
-stored in [feeds](/docs/products/sync/feeds), part of
+stored in [Feeds](/docs/products/sync/feeds), part of
 [Sync](/docs/products/sync)—each conversation is a feed, and each message holds
 JSON data whose schema you define, meaning the same building blocks work for
 human chat, AI chat, and combinations of the two.
@@ -166,7 +166,7 @@ function Chat({ feedId }: { feedId: string }) {
 ```
 
 Messages can also be updated and deleted, and each change syncs instantly. Learn
-more under the [feeds overview](/docs/products/sync/feeds).
+more under the [Feeds overview](/docs/products/sync/feeds).
 
 ### UI libraries [#ui-libraries]
 
@@ -545,7 +545,7 @@ function Composer() {
 
 Agents published with `setPresence` in [AI chat](#ai-chat) appear in `useOthers`
 too, so the same indicator shows when AI is typing. Learn more in our
-[presence overview](/docs/products/sync/presence).
+[Presence overview](/docs/products/sync/presence).
 
 ### Notifications [#notifications]
 

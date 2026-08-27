@@ -147,7 +147,7 @@ and
 
 Render [`Cursors`](/docs/api-reference/liveblocks-react-flow#Cursors) inside
 `ReactFlow` to show each collaborator’s pointer. It stores temporary positions
-in [presence](/docs/products/sync/presence) and converts them through the React
+in [Presence](/docs/products/sync/presence) and converts them through the React
 Flow viewport as users pan and zoom. Add
 [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) outside the
 flow to show everyone currently in the room.
@@ -214,7 +214,7 @@ To allow AI agents to modify your flowchart, generate your changes with AI then
 use [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow) to
 apply them. To show that AI is working in your app use
 [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-to show it working—your agent will appear in [presence](#presence) alongside
+to show it working—your agent will appear in [Presence](#presence) alongside
 humans. Finally, remove the agent’s presence to indicate that the agent is no
 longer working.
 
@@ -275,7 +275,7 @@ await liveblocks.setPresence(roomId, {
 // +++
 ```
 
-Additionally, you can use [feeds](/docs/products/sync/feeds) to store AI
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
 workflow state, and to pass agent status updates to the UI. Learn more under
 [Agentic editing](/docs/products/sync/agentic-editing).
 

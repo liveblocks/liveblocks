@@ -76,7 +76,7 @@ Choose a starting point for your form.
 
 This is an overview of how each feature can be implemented. Store permanent
 field values in [Sync](/docs/products/sync). Keep temporary focus and selection
-state in [presence](/docs/products/sync/presence). Use
+state in [Presence](/docs/products/sync/presence). Use
 [Comments](/docs/products/comments) for review discussions on individual fields.
 
 ### Realtime collaboration [#realtime-collaboration]
@@ -115,7 +115,7 @@ merge instead of replacing the whole value. Learn more under
 
 Show which field each collaborator is focusing, so people naturally avoid typing
 in the same input. Focus is temporary, so store it in
-[presence](/docs/products/sync/presence)—publish it with
+[Presence](/docs/products/sync/presence)—publish it with
 [`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
 and read collaborators with
 [`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
@@ -184,7 +184,7 @@ To let AI complete the form, generate validated values with AI, then use the
 same mutation shown under [Server-side editing](#server-side-editing) to apply
 them. Use
 [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-before and after generation so the agent appears in [presence](#presence)
+before and after generation so the agent appears in [Presence](#presence)
 alongside humans, focusing fields as it fills them in. Finally, remove the
 agent’s presence to indicate that it’s no longer working.
 
@@ -242,7 +242,7 @@ await liveblocks.setPresence(roomId, {
 // +++
 ```
 
-Additionally, you can use [feeds](/docs/products/sync/feeds) to store AI
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
 workflow state, and to pass agent status updates to the UI. Learn more under
 [Agentic editing](/docs/products/sync/agentic-editing).
 

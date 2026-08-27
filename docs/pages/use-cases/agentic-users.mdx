@@ -87,15 +87,14 @@ the others.
 
 This is an overview of how each feature can be implemented. Agents edit shared
 documents through [Sync](/docs/products/sync), appear in
-[presence](/docs/products/sync/presence) like human users, publish working
-status and chat through [feeds](/docs/products/sync/feeds), and reply to
+[Presence](/docs/products/sync/presence) like human users, publish working
+status and chat through [Feeds](/docs/products/sync/feeds), and reply to
 [comments](/docs/products/comments).
 
 ### Agentic editing [#agentic-editing]
 
-Agents can read and modify your realtime [Sync](/docs/products/sync)
-documents concurrently with your users. Generate changes with AI, then apply
-them with
+Agents can read and modify your realtime [Sync](/docs/products/sync) documents
+concurrently with your users. Generate changes with AI, then apply them with
 [`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)—edits
 appear instantly for connected users.
 
@@ -161,7 +160,7 @@ Learn more in our
 ### AI presence [#ai-presence]
 
 Show what agents are working on inside your app by giving them
-[live presence](/docs/products/sync/presence) updates, such as selections,
+[live Presence](/docs/products/sync/presence) updates, such as selections,
 typing indicators, and online avatars.
 [`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
 allows you to set your agent’s presence.
@@ -197,12 +196,12 @@ function AgentPresence() {
 }
 ```
 
-Learn more under the [presence](/docs/use-cases/presence) use case.
+Learn more under the [Presence](/docs/use-cases/presence) use case.
 
 ### AI status [#ai-status]
 
 Presence shows that an agent is in the room right now, but it disappears when
-the process ends. Use [feeds](/docs/products/sync/feeds) to publish the agent’s
+the process ends. Use [Feeds](/docs/products/sync/feeds) to publish the agent’s
 working state—thinking, searching, writing, complete—and save it permanently in
 a history. Create a status message with
 [`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages)
@@ -253,11 +252,11 @@ function AgentStatus() {
 ```
 
 Keep status in its own feed, separate from [chat](#ai-chat). Learn more under
-[feeds](/docs/products/sync/feeds).
+[Feeds](/docs/products/sync/feeds).
 
 ### AI chat [#ai-chat]
 
-Use [feeds](/docs/products/sync/feeds) for anything the agent says that should
+Use [Feeds](/docs/products/sync/feeds) for anything the agent says that should
 persist: chat replies and streamed output. Append messages with
 [`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages),
 and stream a reply token by token by updating one message repeatedly with
@@ -320,8 +319,7 @@ await liveblocks.createThread({
 You can also automatically trigger an agent when a user mentions it in a thread
 using the
 [`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent)
-webhook. Learn more under the [comments](/docs/use-cases/comments)
-use case.
+webhook. Learn more under the [comments](/docs/use-cases/comments) use case.
 
 ## Examples [#examples]
 

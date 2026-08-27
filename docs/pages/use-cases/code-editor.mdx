@@ -128,8 +128,8 @@ Choose a starting point for your code editor.
 
 This is an overview of how each feature can be implemented using the
 [`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror) package.
-Code files are stored in [Sync](/docs/products/sync) and live
-selections are broadcast using [presence](/docs/products/sync/presence).
+Code files are stored in [Sync](/docs/products/sync) and live selections are
+broadcast using [Presence](/docs/products/sync/presence).
 
 ### Realtime collaboration [#realtime-collaboration]
 
@@ -137,9 +137,8 @@ Using
 [`createLiveblocksSyncPlugin`](/docs/api-reference/liveblocks-codemirror#createLiveblocksSyncPlugin),
 you can set up a CodeMirror editor that stores your code as a
 [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) using
-[Sync](/docs/products/sync). Local edits are written to Sync, remote
-edits are applied to the editor, and concurrent changes are merged
-character-by-character.
+[Sync](/docs/products/sync). Local edits are written to Sync, remote edits are
+applied to the editor, and concurrent changes are merged character-by-character.
 
 ```tsx
 "use client";
@@ -244,7 +243,7 @@ To show who’s currently in the file, add the ready-made
 [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) component,
 or build custom presence UI with
 [`useOthers`](/docs/api-reference/liveblocks-react#useOthers). Learn more under
-[presence](/docs/products/sync/presence).
+[Presence](/docs/products/sync/presence).
 
 ### Server-side editing [#server-side-editing]
 
@@ -277,7 +276,7 @@ To allow AI agents to modify your code, generate your changes with AI then use
 [`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage) to apply
 them. To show that AI is working in your app use
 [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-to show it working—your agent will appear in [presence](#presence) alongside
+to show it working—your agent will appear in [Presence](#presence) alongside
 humans. Finally, remove the agent’s presence to indicate that the agent is no
 longer working.
 
@@ -333,7 +332,7 @@ await liveblocks.setPresence(roomId, {
 // +++
 ```
 
-Additionally, you can use [feeds](/docs/products/sync/feeds) to store AI
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
 workflow state, and to pass agent status updates to the UI. Learn more under
 [Agentic editing](/docs/products/sync/agentic-editing).
 

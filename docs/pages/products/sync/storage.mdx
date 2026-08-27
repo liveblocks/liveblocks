@@ -10,7 +10,7 @@ meta:
 Storage is the persistent document inside Sync. Multiple humans and agents can
 edit it at the same time, and conflict resolution merges simultaneous changes
 without losing unrelated edits. Documents remain after every user disconnects,
-unlike [presence](/docs/products/sync/presence), which is temporary.
+unlike [Presence](/docs/products/sync/presence), which is temporary.
 
 ## Conflict-free data types
 
@@ -478,10 +478,10 @@ function Shape({ index }: { index: number }) {
 ### Presence history
 
 Undo only affects Storage by default, but it can sometimes be helpful to revert
-presence changes too. For example, when a shape is dragged on a canvas, a user’s
-presence may be visible around the shape. If the shape is moved back with undo,
+Presence changes too. For example, when a shape is dragged on a canvas, a user’s
+Presence may be visible around the shape. If the shape is moved back with undo,
 it makes sense to move the user’s selection back too. Pass
-`{ addToHistory: true }` when updating presence to add a value to the undo/redo
+`{ addToHistory: true }` when updating Presence to add a value to the undo/redo
 stack.
 
 ```tsx

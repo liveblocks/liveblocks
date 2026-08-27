@@ -80,10 +80,10 @@ the others.
 ## Implementation [#implementation]
 
 This is an overview of how each feature can be implemented. Activity events are
-stored in [feeds](/docs/products/sync/feeds), part of
+stored in [Feeds](/docs/products/sync/feeds), part of
 [Sync](/docs/products/sync). Each agent or run publishes messages to a feed, and
 each message holds JSON data whose schema you define. Use
-[presence](/docs/products/sync/presence) for the agent’s live in-room status and
+[Presence](/docs/products/sync/presence) for the agent’s live in-room status and
 [Notifications](/docs/products/notifications) to reach users who are away.
 
 ### Realtime activity feed [#activity-feed]
@@ -118,7 +118,7 @@ function ActivityFeed({ feedId }: { feedId: string }) {
 
 Feeds is headless, meaning it stores and syncs your event data, but you handle
 the rendering and design. Learn more under the
-[feeds overview](/docs/products/sync/feeds).
+[Feeds overview](/docs/products/sync/feeds).
 
 ### Publishing activity [#publishing-activity]
 
@@ -189,7 +189,7 @@ in the [chat](/docs/use-cases/chat#streaming-ai-replies) use case.
 ### AI presence [#ai-presence]
 
 The feed records what an agent has done, while
-[presence](/docs/products/sync/presence) shows that it’s working right now.
+[Presence](/docs/products/sync/presence) shows that it’s working right now.
 Publish the agent’s live state with
 [`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
 when a run starts, and remove it when the run ends.

@@ -1,22 +1,24 @@
 ---
 meta:
-  title: "Get started with a BlockNote text editor using Liveblocks and React"
+  title:
+    "Get started with a BlockNote text editor using Liveblocks Yjs and React"
   parentTitle: "Quickstart"
   description:
-    "Learn how to sync a BlockNote text editor with Liveblocks Storage and React"
+    "Learn how to install a Yjs-backed BlockNote text editor using Liveblocks
+    and React"
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. Follow the following steps to start adding
-collaboration to your React application using
+collaborative experiences. Follow the following steps to start adding Yjs-backed
+collaboration to your React application using the APIs from the
 [`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote)
-with [`LiveText`](/docs/api-reference/liveblocks-client#LiveText) backed by
-Liveblocks Storage.
+package.
 
-<Banner>
+<Banner title="LiveText beta">
 
-The BlockNote LiveText integration is currently in beta. For a Yjs-backed setup,
-see the [BlockNote React Yjs quickstart](/docs/get-started/react-blocknote-yjs).
+The BlockNote LiveText integration is available in beta. Read the
+[LiveText vs Yjs](/docs/guides/livetext-vs-yjs) guide to compare both
+approaches.
 
 </Banner>
 
@@ -51,21 +53,16 @@ see the [BlockNote React Yjs quickstart](/docs/get-started/react-blocknote-yjs).
     </StepContent>
 
   </Step>
+
   <Step>
     <StepTitle>Set up the Liveblocks client</StepTitle>
     <StepContent>
 
       Liveblocks uses the concept of rooms, separate virtual spaces where people
       collaborate, and to create a realtime experience, multiple users must
-      be connected to the same room. Set up a Liveblocks client with
-      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
-      and join a room with
-      [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
+      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider), and join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
 
-      In Storage mode, documents are created under `root._tiptap_docs` when the
-      editor first connects, so you can leave `initialStorage` empty.
-
-      ```tsx file="App.tsx"
+      ```tsx file="App.tsx" highlight="11-15"
       "use client";
 
       import {
@@ -92,12 +89,10 @@ see the [BlockNote React Yjs quickstart](/docs/get-started/react-blocknote-yjs).
     <StepTitle>Join a Liveblocks room</StepTitle>
     <StepContent>
 
-      After setting up the room, you can add collaborative components inside it,
-      using
-      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
-      to add a loading spinner to your app.
+      After setting up the room, you can add collaborative components inside it, using
+      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
 
-      ```tsx file="App.tsx"
+      ```tsx file="App.tsx" highlight="14-16"
       "use client";
 
       import {
@@ -124,92 +119,75 @@ see the [BlockNote React Yjs quickstart](/docs/get-started/react-blocknote-yjs).
 
   </Step>
   <Step>
-    <StepTitle>Set up the collaborative BlockNote editor</StepTitle>
+    <StepTitle>Set up the collaborative BlockNote text editor</StepTitle>
     <StepContent>
 
-      Create a BlockNote editor in `Editor.tsx`. Pass
-      [`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-blocknote#Liveblocks-collaboration-mode)
-      to
-      [`useCreateBlockNoteWithLiveblocks`](/docs/api-reference/liveblocks-react-blocknote#useCreateBlockNoteWithLiveblocks)
-      so the document syncs through Storage. Set a `field` name and optional
-      [`initialContent`](/docs/api-reference/liveblocks-react-blocknote#Setting-initial-content)
-      for the first visit.
+      Now that we set up Liveblocks, we can start integrating BlockNote and Liveblocks in the `Editor.tsx` file.
+    To make the editor collaborative, we can add
+    [`useCreateBlockNoteWithLiveblocks`](/docs/api-reference/liveblocks-react-blocknote#useCreateBlockNoteWithLiveblocks)
+    from `@liveblocks/react-blocknote`.
 
-      ```tsx file="Editor.tsx"
-      "use client";
+    ```tsx file="Editor.tsx"
+    "use client";
 
-      import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
-      import { BlockNoteView } from "@blocknote/mantine";
-      import { Threads } from "./Threads";
+    import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+    import { BlockNoteView } from "@blocknote/mantine";
+    import { Threads } from "./Threads";
 
-      export function Editor() {
-        // +++
-        const editor = useCreateBlockNoteWithLiveblocks(
-          {},
-          {
-            collaborationMode: "liveblocks",
-            field: "document",
-            initialContent: "<p>Hello world</p>",
-          }
-        );
-        // +++
+    export function Editor() {
+      const editor = useCreateBlockNoteWithLiveblocks({});
 
-        return (
-          <div>
-            <BlockNoteView editor={editor} className="editor" />
-            <Threads editor={editor} />
-          </div>
-        );
-      }
-      ```
+      return (
+        <div>
+          <BlockNoteView editor={editor} className="editor" />
+          <Threads editor={editor} />
+        </div>
+      );
+    }
+    ```
 
     </StepContent>
 
   </Step>
   <Step>
-    <StepTitle>Render threads</StepTitle>
+    <StepTitle>Render threads and composer</StepTitle>
     <StepContent>
 
-      Comments work the same as in Yjs mode. Create a `Threads.tsx` file that
-      uses
-      [`FloatingComposer`](/docs/api-reference/liveblocks-react-blocknote#FloatingComposer)
-      for creating new threads, alongside
-      [`AnchoredThreads`](/docs/api-reference/liveblocks-react-blocknote#AnchoredThreads)
-      and
-      [`FloatingThreads`](/docs/api-reference/liveblocks-react-blocknote#FloatingThreads)
-      for displaying threads on desktop and mobile.
+     To add [Comments](/docs/products/comments) to your text editor, we need to import a thread composer
+    and list each thread on the page. Create a `Threads.tsx` file that uses [`FloatingComposer`](/docs/api-reference/liveblocks-react-blocknote#FloatingComposer)
+    for creating new threads, alongside [`AnchoredThreads`](/docs/api-reference/liveblocks-react-blocknote#AnchoredThreads) and [`FloatingThreads`](/docs/api-reference/liveblocks-react-blocknote#FloatingThreads) for displaying threads on desktop and mobile.
 
-      ```tsx file="Threads.tsx"
-      import { useThreads } from "@liveblocks/react/suspense";
-      import {
-        AnchoredThreads,
-        FloatingComposer,
-        FloatingThreads,
-      } from "@liveblocks/react-blocknote";
-      import { BlockNoteEditor } from "@blocknote/core";
+    ```tsx file="Threads.tsx"
+    import { useThreads } from "@liveblocks/react/suspense";
+    import {
+      AnchoredThreads,
+      FloatingComposer,
+      FloatingThreads,
+    } from "@liveblocks/react-blocknote";
+    import { BlockNoteEditor } from "@blocknote/core";
 
-      export function Threads({ editor }: { editor: BlockNoteEditor | null }) {
-        const { threads } = useThreads({ query: { resolved: false } });
+    export function Threads({ editor }: { editor: BlockNoteEditor | null }) {
+      const { threads } = useThreads({ query: { resolved: false } });
 
-        if (!editor) {
-          return null;
-        }
-
-        return (
-          <>
-            <div className="anchored-threads">
-              <AnchoredThreads editor={editor} threads={threads} />
-            </div>
-            <FloatingThreads
-              editor={editor}
-              threads={threads}
-              className="floating-threads"
-            />
-            <FloatingComposer editor={editor} className="floating-composer" />
-          </>
-        );
+      if (!editor) {
+        return null;
       }
-      ```
+
+      return (
+        <>
+          <div className="anchored-threads">
+            <AnchoredThreads editor={editor} threads={threads} />
+          </div>
+          <FloatingThreads
+            editor={editor}
+            threads={threads}
+            className="floating-threads"
+          />
+          <FloatingComposer editor={editor} className="floating-composer" />
+        </>
+      );
+    }
+    ```
 
     </StepContent>
 
@@ -218,78 +196,78 @@ see the [BlockNote React Yjs quickstart](/docs/get-started/react-blocknote-yjs).
     <StepTitle>Style your editor</StepTitle>
     <StepContent>
 
-      Import the default BlockNote and Liveblocks styles, and add basic editor
-      CSS:
+      We can create some custom styles to position the editor and threads—import `globals.css`, alongside the default Liveblocks styles. You can import them into the
+    root layout of your app or directly into a CSS file with `@import`.
 
-      ```tsx file="main.tsx"
-      import "@blocknote/core/fonts/inter.css";
-      import "@blocknote/mantine/style.css";
-      import "@liveblocks/react-ui/styles.css";
-      import "@liveblocks/react-ui/styles/dark/media-query.css";
-      import "@liveblocks/react-blocknote/styles.css";
-      import "./globals.css";
-      ```
+    ```css file="app/globals.css" isCollapsed isCollapsable
+    html {
+      font-family: Inter, sans-serif;
+      background: #f9f9f9;
+    }
 
-      ```css file="globals.css" isCollapsed isCollapsable
+    @media (prefers-color-scheme: dark) {
       html {
-        font-family: Inter, sans-serif;
-        background: #f9f9f9;
+        background: #0c0c0c;
       }
+    }
 
-      @media (prefers-color-scheme: dark) {
-        html {
-          background: #0c0c0c;
-        }
-      }
+    .editor {
+      position: absolute;
+      inset: 0;
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 48px 0;
+    }
 
-      .editor {
-        position: absolute;
-        inset: 0;
-        max-width: 1024px;
-        margin: 0 auto;
-        padding: 48px 0;
-      }
+    .bn-editor {
+      padding: 36px 52px;
+      min-height: 100%;
+    }
 
-      .bn-editor {
-        padding: 36px 52px;
-        min-height: 100%;
-      }
+    /* For mobile */
+    .floating-threads {
+      display: none;
+    }
 
-      /* For mobile */
+    /* For desktop */
+    .anchored-threads {
+      display: block;
+      max-width: 300px;
+      width: 100%;
+      position: absolute;
+      right: 12px;
+    }
+
+    @media (max-width: 640px) {
       .floating-threads {
+        display: block;
+      }
+
+      .anchored-threads {
         display: none;
       }
+    }
+    ```
 
-      /* For desktop */
-      .anchored-threads {
-        display: block;
-        max-width: 300px;
-        width: 100%;
-        position: absolute;
-        right: 12px;
-      }
-
-      @media (max-width: 640px) {
-        .floating-threads {
-          display: block;
-        }
-
-        .anchored-threads {
-          display: none;
-        }
-      }
-      ```
+    ```tsx file="app/layout.tsx"
+    import "@blocknote/core/fonts/inter.css";
+    import "@blocknote/mantine/style.css";
+    import "@liveblocks/react-ui/styles.css";
+    import "@liveblocks/react-ui/styles/dark/media-query.css";
+    import "@liveblocks/react-blocknote/styles.css";
+    import "./globals.css";
+    ```
 
     </StepContent>
 
   </Step>
-  <Step lastStep>
+  <Step>
     <StepTitle>Next: authenticate and add your users</StepTitle>
     <StepContent>
       Text Editor is set up and working now, but each user is anonymous—the next step is to
       authenticate each user as they connect, and attach their name, color, and avatar, to their cursors and mentions.
 
-      <Button asChild className="not-markdown">
+      <Button asChild  className="not-markdown">
         <a href="/docs/guides/how-to-add-users-to-liveblocks-text-editor">
           Add your users to Text Editor
         </a>
@@ -297,15 +275,45 @@ see the [BlockNote React Yjs quickstart](/docs/get-started/react-blocknote-yjs).
     </StepContent>
 
   </Step>
+   <Step lastStep>
+    <StepTitle>Optional: add more features</StepTitle>
+    <StepContent>
+    BlockNote is easy to extend, and a number of extensions are already available, making it possible to quickly create complex rich-text applications. Any additional features you add will be supported using Liveblocks.
+
+    <Button asChild  className="not-markdown">
+      <a href="https://www.blocknotejs.org/docs">
+        Read the BlockNote docs
+      </a>
+    </Button>
+
+  </StepContent>
+
+  </Step>
 
 </Steps>
 
 ## What to read next
 
-Congratulations! You now have set up a Storage-backed collaborative BlockNote
-editor inside your React application.
+Congratulations! You now have set up the foundation for your collaborative
+BlockNote text editor inside your React application.
 
-- [Liveblocks collaboration mode](/docs/api-reference/liveblocks-react-blocknote#Liveblocks-collaboration-mode)
 - [@liveblocks/react-blocknote API Reference](/docs/api-reference/liveblocks-react-blocknote)
-- [Yjs-backed BlockNote React quickstart](/docs/get-started/react-blocknote-yjs)
+- [Storage-backed BlockNote React quickstart](/docs/get-started/react-blocknote-storage)
+- [BlockNote guides](/docs/guides?technologies=blocknote)
 - [BlockNote website](https://www.blocknotejs.org/)
+
+---
+
+## Examples using BlockNote
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative Text Editor",
+      slug: "collaborative-text-editor/nextjs-blocknote",
+      image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

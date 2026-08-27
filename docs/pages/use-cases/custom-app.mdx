@@ -101,7 +101,7 @@ This is an overview of how each feature can be implemented, using an issue
 tracker as the example app. [Sync](/docs/products/sync) can be used to
 store any type of permanent realtime data, such as issues.
 [Presence](/docs/products/sync/presence) can hold temporary selections and
-interaction state, and [feeds](/docs/products/sync/feeds) can store durable
+interaction state, and [Feeds](/docs/products/sync/feeds) can store durable
 activity streams.
 
 ### Realtime collaboration [#realtime-collaboration]
@@ -183,11 +183,11 @@ function CustomAvatarStack() {
 }
 ```
 
-Learn more under [presence](/docs/products/sync/presence).
+Learn more under [Presence](/docs/products/sync/presence).
 
 ### Activity feed [#activity-feed]
 
-Using [feeds](/docs/products/sync/feeds), you can add a persistent, realtime
+Using [Feeds](/docs/products/sync/feeds), you can add a persistent, realtime
 activity feed to your app, for example a timeline of status changes,
 assignments, and activity on an issue. Render the timeline with
 [`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages) and
@@ -231,7 +231,7 @@ function ActivityFeed() {
 Your server and background workflows can append to the same feed with
 [`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages),
 and the same primitives also power chat interfaces and AI agent progress. Learn
-more under [feeds](/docs/products/sync/feeds).
+more under [Feeds](/docs/products/sync/feeds).
 
 ### Revalidating API data [#revalidating-api-data]
 
@@ -316,7 +316,7 @@ To allow AI agents to modify your app, generate your changes with AI then use
 [`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage) to apply
 them. To show that AI is working in your app use
 [`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
-to show it working—your agent will appear in [presence](#presence) alongside
+to show it working—your agent will appear in [Presence](#presence) alongside
 humans. Finally, remove the agent’s presence to indicate that the agent is no
 longer working.
 
@@ -376,7 +376,7 @@ await liveblocks.setPresence(roomId, {
 // +++
 ```
 
-Additionally, you can use [feeds](/docs/products/sync/feeds) to store AI
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
 workflow state, and to pass agent status updates to the UI. Learn more under
 [Agentic editing](/docs/products/sync/agentic-editing).
 
