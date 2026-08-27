@@ -110,10 +110,10 @@ const userLeftEvent = {
 
 ## StorageUpdatedEvent
 
-Storage is updated when a user writes to storage. This event is throttled at 60
+Storage is updated when a user writes to Storage. This event is throttled at 60
 seconds and, as such, may not be triggered for every write.
 
-For example, if a user writes to storage at 1:00 pm sharp, the
+For example, if a user writes to Storage at 1:00 pm sharp, the
 `StorageUpdatedEvent` event will be triggered shortly after. If the user writes
 to Storage again at 1:00 pm and 2 seconds, the `StorageUpdatedEvent` event will
 be triggered 60 seconds after the first event was sent, around 1:01 pm.
