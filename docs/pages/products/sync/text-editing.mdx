@@ -27,8 +27,12 @@ same document as the rest of your collaborative data, you read and write to it
 using the same APIs, plus edits share one undo history, and restoring a version
 restores everything together.
 
-We recommend `LiveText` as the default choice for new applications. It currently
-supports Tiptap, BlockNote, ProseMirror, and CodeMirror—Tiptap is
+Each `LiveText` currently has a 2 MB limit, which means [Yjs](#Yjs) is best
+suited for documents that will grow very long. We’re working on improving this.
+
+We recommend `LiveText` as the default choice for new applications that don’t
+require long documents. It currently supports Tiptap, BlockNote, ProseMirror,
+and CodeMirror—Tiptap is
 [our rich-text editor of choice](/blog/which-rich-text-editor-framework-should-you-choose-in-2025).
 
 ### Get started with LiveText
@@ -73,8 +77,8 @@ you get a large ecosystem of editor bindings—Slate, Quill, Monaco, SuperDoc, a
 anything else built on Yjs—along with subdocuments and experimental offline
 persistence.
 
-We recommend Yjs when your editor only has a Yjs binding, or when you need
-something only Yjs provides.
+We recommend Yjs when writing long documents, when your editor only has a Yjs
+binding.
 
 ### Get started with Yjs
 
@@ -148,13 +152,15 @@ their Yjs binding.
 
 </Table>
 
-Two details worth knowing before you decide:
+A few details worth knowing before you decide:
 
 - For **Tiptap and BlockNote**, this is a single option on a package you’re
   already using. Comments, mentions, cursors, and toolbars work the same in
   either mode.
 - Tiptap and BlockNote AI and experimental offline support currently require Yjs
   mode.
+- Each `LiveText` has a 2 MB limit, so Yjs is best suited for documents that
+  will grow very long. We’re working on improving this.
 
 ## Setting up LiveText
 
