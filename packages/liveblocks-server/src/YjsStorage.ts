@@ -29,12 +29,26 @@ import type { Logger } from "~/lib/Logger";
 // How many updates to store before compacting
 const UPDATE_COUNT_THRESHOLD = 1_000;
 
-// How much smaller the merged update can be than the sum of the updates before compacting
-const MERGE_SHRINK_THRESHOLD = 0.8;
+// How much update history to retain on top of the latest compacted snapshot.
+// This is deliberately much lower than the isolate memory limit because Yjs
+// updates can expand many times over while they are decoded and materialized.
+const UNCOMPACTED_UPDATE_BYTES_THRESHOLD = 2 * 1024 * 1024;
+
+// Compacted snapshots use a recognizable key so that a fresh isolate can
+// distinguish the baseline snapshot from the uncompacted updates that follow
+// it. The prefix only contains characters accepted by the Yjs repair routes
+// and cannot collide with the legacy 21-character nanoid keys.
+const COMPACTED_SNAPSHOT_KEY_PREFIX = "__liveblocks_compacted_snapshot__";
+
+type StoredYDocState = {
+  keys: string[];
+  uncompactedTailBytes: number;
+};
 
 export class YjsStorage {
   private readonly driver: IStorageDriver;
   private readonly updateCountThreshold: number;
+  private readonly uncompactedUpdateBytesThreshold: number;
 
   /**
    * The root Y.Doc instance, which may not have been hydrated from storage
@@ -45,14 +59,16 @@ export class YjsStorage {
   private readonly rawRootDoc: Y.Doc = new Y.Doc();
   private readonly lastSnapshotById = new Map<YDocId, Y.Snapshot>();
   private readonly docsById: Map<YDocId, Y.Doc> = new Map();
-  private readonly storedKeysById: Map<YDocId, string[]> = new Map();
+  private readonly storedStateById: Map<YDocId, StoredYDocState> = new Map();
 
   constructor(
     driver: IStorageDriver,
-    updateCountThreshold: number = UPDATE_COUNT_THRESHOLD
+    updateCountThreshold: number = UPDATE_COUNT_THRESHOLD,
+    uncompactedUpdateBytesThreshold: number = UNCOMPACTED_UPDATE_BYTES_THRESHOLD
   ) {
     this.driver = driver;
     this.updateCountThreshold = updateCountThreshold;
+    this.uncompactedUpdateBytesThreshold = uncompactedUpdateBytesThreshold;
     this.rawRootDoc.on("subdocs", ({ removed }) => {
       removed.forEach((subdoc: Y.Doc) => {
         subdoc.destroy(); // will remove listeners
@@ -241,31 +257,58 @@ export class YjsStorage {
   private _compactYJSUpdates = (
     doc: Y.Doc,
     docId: YDocId,
-    storedKeys: string[]
+    storedState: StoredYDocState
   ): void => {
     const compactedUpdate = Y.encodeStateAsUpdate(doc);
-    const newKey = nanoid();
+    const newKey = `${COMPACTED_SNAPSHOT_KEY_PREFIX}${nanoid()}`;
     this.driver.write_y_updates(docId, newKey, compactedUpdate);
     // Todo: after we kill the kv driver, we should have an overwrite method in the driverso we don't need to delete and write
-    this.driver.delete_y_updates(docId, storedKeys);
-    this.storedKeysById.set(docId, [newKey]);
+    if (storedState.keys.length > 0) {
+      this.driver.delete_y_updates(docId, storedState.keys);
+    }
+    this.storedStateById.set(docId, {
+      keys: [newKey],
+      uncompactedTailBytes: 0,
+    });
   };
 
   private _loadYDocFromDurableStorage = (doc: Y.Doc, docId: YDocId): Y.Doc => {
-    const docUpdates = Object.fromEntries(this.driver.iter_y_updates(docId));
-    const updates = Object.values(docUpdates);
-    const beforeSize = updates.reduce((acc, update) => acc + update.length, 0);
-    const newupdate = Y.mergeUpdates(updates);
-    const storedKeys = Object.keys(docUpdates);
-    Y.applyUpdate(doc, newupdate);
-    // after compaction, there will only be one unique key.
-    if (
-      this.shouldCompactByKeyCount(storedKeys) ||
-      this.shouldCompactBySize(beforeSize, newupdate.length)
-    ) {
-      this._compactYJSUpdates(doc, docId, storedKeys);
-    } else {
-      this.storedKeysById.set(docId, storedKeys);
+    const storedKeys: string[] = [];
+    const updates: Uint8Array[] = [];
+    let totalBytes = 0;
+    let uncompactedTailBytes = 0;
+    let compactedSnapshotCount = 0;
+    let compactedSnapshotIndex = -1;
+    for (const [key, update] of this.driver.iter_y_updates(docId)) {
+      storedKeys.push(key);
+      updates.push(update);
+      totalBytes += update.byteLength;
+      if (key.startsWith(COMPACTED_SNAPSHOT_KEY_PREFIX)) {
+        compactedSnapshotCount++;
+        compactedSnapshotIndex = updates.length - 1;
+      } else {
+        uncompactedTailBytes += update.byteLength;
+      }
+    }
+    this.storedStateById.set(docId, {
+      keys: storedKeys,
+      // Without exactly one marked snapshot there is no trusted baseline.
+      uncompactedTailBytes:
+        compactedSnapshotCount === 1 ? uncompactedTailBytes : totalBytes,
+    });
+
+    if (compactedSnapshotCount === 1) {
+      const compactedSnapshot = updates[compactedSnapshotIndex];
+      if (compactedSnapshot !== undefined) {
+        updates.splice(compactedSnapshotIndex, 1);
+        // Keep the potentially large baseline out of the tail merge. Applying
+        // the remaining updates afterwards is safe because Yjs updates are
+        // commutative and idempotent.
+        Y.applyUpdate(doc, compactedSnapshot);
+      }
+    }
+    if (updates.length > 0) {
+      Y.applyUpdate(doc, Y.mergeUpdates(updates));
     }
     doc.emit("load", [doc]); // sets the "isLoaded" to true on the doc
 
@@ -316,34 +359,28 @@ export class YjsStorage {
     const docId: YDocId =
       doc.guid === this.rawRootDoc.guid ? ROOT_YDOC_ID : (doc.guid as Guid);
 
-    const storedKeys = this.storedKeysById.get(docId);
-
-    // Every UPDATE_COUNT_THRESHOLD updates, we compact the updates
-    if (this.shouldCompactByKeyCount(storedKeys)) {
-      this._compactYJSUpdates(doc, docId, storedKeys || []);
-      return;
-    }
+    const storedState = this.storedStateById.get(docId) ?? {
+      keys: [],
+      uncompactedTailBytes: 0,
+    };
 
     // the whole concept of storing keys is not needed when we kill the kv driver, all of this stuff is trivial in sqlite
     const newKey = nanoid();
     this.driver.write_y_updates(docId, newKey, v1update);
 
-    // update the stored keys, which we'll need for compaction.
-    if (!storedKeys) {
-      this.storedKeysById.set(docId, [newKey]);
-    } else {
-      storedKeys.push(newKey);
-    }
-  }
+    // Raw updates always count toward the tail. Only a snapshot produced by
+    // successful compaction is a baseline, which prevents large canonical
+    // documents from being compacted again on every change.
+    storedState.keys.push(newKey);
+    storedState.uncompactedTailBytes += v1update.byteLength;
+    this.storedStateById.set(docId, storedState);
 
-  private shouldCompactBySize(beforeSize: number, afterSize: number): boolean {
-    return beforeSize * MERGE_SHRINK_THRESHOLD > afterSize;
-  }
-
-  private shouldCompactByKeyCount(storedKeys: string[] | undefined): boolean {
-    if (!storedKeys) {
-      return false;
+    const shouldCompact =
+      storedState.uncompactedTailBytes >=
+        this.uncompactedUpdateBytesThreshold ||
+      storedState.keys.length >= this.updateCountThreshold;
+    if (shouldCompact) {
+      this._compactYJSUpdates(doc, docId, storedState);
     }
-    return storedKeys.length >= this.updateCountThreshold;
   }
 }
