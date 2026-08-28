@@ -18,8 +18,12 @@ import type {
   Client,
   CommentAttachment,
   CommentBody,
+  CommentBodyBlockElement,
   CommentBodyLink,
+  CommentBodyList,
+  CommentBodyListItem,
   CommentBodyMention,
+  CommentBodyParagraph,
   CommentLocalAttachment,
   CommentMixedAttachment,
 } from "@liveblocks/core";
@@ -49,8 +53,12 @@ import {
 import type {
   ComposerBody,
   ComposerBodyAutoLink,
+  ComposerBodyBlockElement,
   ComposerBodyCustomLink,
+  ComposerBodyList,
+  ComposerBodyListItem,
   ComposerBodyMention,
+  ComposerBodyParagraph,
   ComposerBodyText,
   Direction,
 } from "../../types";
@@ -118,45 +126,181 @@ export function commentBodyLinkToComposerBodyLink(
   }
 }
 
+function mapComposerInlinesToComment(
+  inlines: ComposerBodyParagraph["children"]
+): CommentBodyParagraph["children"] {
+  return inlines
+    .map((inline) => {
+      if (isComposerBodyMention(inline)) {
+        return composerBodyMentionToCommentBodyMention(inline);
+      }
+
+      if (isComposerBodyAutoLink(inline)) {
+        return composerBodyAutoLinkToCommentBodyLink(inline);
+      }
+
+      if (isComposerBodyCustomLink(inline)) {
+        return composerBodyCustomLinkToCommentBodyLink(inline);
+      }
+
+      if (isText(inline)) {
+        return inline;
+      }
+
+      return null;
+    })
+    .filter(exists);
+}
+
+function mapComposerParagraphToComment(
+  block: ComposerBodyParagraph
+): CommentBodyParagraph {
+  return {
+    type: "paragraph",
+    children: mapComposerInlinesToComment(block.children),
+  };
+}
+
+function composerListItemToCommentBody(
+  item: ComposerBodyListItem
+): CommentBodyListItem | null {
+  const paragraph = item.children[0];
+
+  if (!paragraph || paragraph.type !== "paragraph") {
+    return null;
+  }
+
+  const nestedLists = (item.children.slice(1) as ComposerBodyList[])
+    .map(composerListToCommentBody)
+    .filter(exists);
+
+  return {
+    type: "list-item",
+    checked: item.checked,
+    children: [mapComposerParagraphToComment(paragraph), ...nestedLists],
+  };
+}
+
+function composerListToCommentBody(
+  list: ComposerBodyList
+): CommentBodyList | null {
+  const items = list.children
+    .map(composerListItemToCommentBody)
+    .filter(exists);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  if (list.type === "bulleted-list") {
+    return { type: "bulleted-list", children: items };
+  }
+
+  if (list.type === "numbered-list") {
+    return { type: "numbered-list", children: items };
+  }
+
+  return { type: "task-list", children: items };
+}
+
+function mapComposerBlockToComment(
+  block: ComposerBodyBlockElement
+): CommentBodyBlockElement | null {
+  if (block.type === "paragraph") {
+    return mapComposerParagraphToComment(block);
+  }
+
+  return composerListToCommentBody(block);
+}
+
 export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
   return {
     version: 1,
-    content: body
-      .map((block) => {
-        // All root blocks are paragraphs at the moment
-        if (block.type !== "paragraph") {
-          return null;
-        }
-
-        const children = block.children
-          .map((inline) => {
-            if (isComposerBodyMention(inline)) {
-              return composerBodyMentionToCommentBodyMention(inline);
-            }
-
-            if (isComposerBodyAutoLink(inline)) {
-              return composerBodyAutoLinkToCommentBodyLink(inline);
-            }
-
-            if (isComposerBodyCustomLink(inline)) {
-              return composerBodyCustomLinkToCommentBodyLink(inline);
-            }
-
-            if (isText(inline)) {
-              return inline;
-            }
-
-            return null;
-          })
-          .filter(exists);
-
-        return {
-          ...block,
-          children,
-        };
-      })
-      .filter(exists),
+    content: body.map(mapComposerBlockToComment).filter(exists),
   };
+}
+
+function mapCommentInlinesToComposer(
+  inlines: CommentBodyParagraph["children"]
+): ComposerBodyParagraph["children"] {
+  return inlines
+    .map((inline) => {
+      if (isCommentBodyMention(inline)) {
+        return commentBodyMentionToComposerBodyMention(inline);
+      }
+
+      if (isCommentBodyLink(inline)) {
+        return commentBodyLinkToComposerBodyLink(inline);
+      }
+
+      if (isCommentBodyText(inline)) {
+        return inline as ComposerBodyText;
+      }
+
+      return null;
+    })
+    .filter(exists);
+}
+
+function mapCommentParagraphToComposer(
+  block: CommentBodyParagraph
+): ComposerBodyParagraph {
+  return {
+    type: "paragraph",
+    children: mapCommentInlinesToComposer(block.children),
+  };
+}
+
+function commentListItemToComposerBody(
+  item: CommentBodyListItem
+): ComposerBodyListItem | null {
+  const paragraph = item.children[0];
+
+  if (!paragraph || paragraph.type !== "paragraph") {
+    return null;
+  }
+
+  const nestedLists = (item.children.slice(1) as CommentBodyList[])
+    .map(commentListToComposerBody)
+    .filter(exists);
+
+  return {
+    type: "list-item",
+    checked: item.checked,
+    children: [mapCommentParagraphToComposer(paragraph), ...nestedLists],
+  };
+}
+
+function commentListToComposerBody(
+  list: CommentBodyList
+): ComposerBodyList | null {
+  const items = list.children
+    .map(commentListItemToComposerBody)
+    .filter(exists);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  if (list.type === "bulleted-list") {
+    return { type: "bulleted-list", children: items };
+  }
+
+  if (list.type === "numbered-list") {
+    return { type: "numbered-list", children: items };
+  }
+
+  return { type: "task-list", children: items };
+}
+
+function mapCommentBlockToComposer(
+  block: CommentBodyBlockElement
+): ComposerBodyBlockElement | null {
+  if (block.type === "paragraph") {
+    return mapCommentParagraphToComposer(block);
+  }
+
+  return commentListToComposerBody(block);
 }
 
 const emptyComposerBody: ComposerBody = [];
@@ -166,37 +310,7 @@ export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
     return emptyComposerBody;
   }
 
-  return body.content
-    .map((block) => {
-      // All root blocks are paragraphs at the moment
-      if (block.type !== "paragraph") {
-        return null;
-      }
-
-      const children = block.children
-        .map((inline) => {
-          if (isCommentBodyMention(inline)) {
-            return commentBodyMentionToComposerBodyMention(inline);
-          }
-
-          if (isCommentBodyLink(inline)) {
-            return commentBodyLinkToComposerBodyLink(inline);
-          }
-
-          if (isCommentBodyText(inline)) {
-            return inline as ComposerBodyText;
-          }
-
-          return null;
-        })
-        .filter(exists);
-
-      return {
-        ...block,
-        children,
-      };
-    })
-    .filter(exists);
+  return body.content.map(mapCommentBlockToComposer).filter(exists);
 }
 
 export function getRtlFloatingAlignment(
