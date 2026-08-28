@@ -59,14 +59,27 @@ user, though this can be customized in the webhooks dashboard.
 
 `"notification"` webhooks can be enabled and disabled on certain channels in the
 notifications dashboard page. Channels are used to represent different places
-your users may receive notifications, such as on `email`, `slack`, `teams`, and
-`webPush`.
+your users may receive notifications, and there are four of them: `email`,
+`slack`, `teams`, and `webPush`.
 
 <Figure>
   <video width={1512} height={982} autoPlay loop muted playsInline>
     <source src="/assets/webhooks/notification-settings.mp4" type="video/mp4" />
   </video>
 </Figure>
+
+Every channel works the same way—Liveblocks sends a `"notification"` webhook
+event for each enabled channel, and your endpoint delivers the message to the
+matching destination. This means everything on this page applies to all
+channels, not just email. If you’re setting up another channel, follow one of
+our get started guides:
+
+- [Slack notifications](/docs/get-started/nextjs-notifications-slack)
+- [Microsoft Teams notifications](/docs/get-started/nextjs-notifications-microsoft-teams)
+- [Web push notifications](/docs/get-started/nextjs-notifications-web-push)
+
+Each channel has its own settings, so users can, for example, choose to receive
+thread notifications by email but not on Slack.
 
 ### Event object
 
@@ -223,8 +236,50 @@ this feature, please feel free to reach out to us.
 
 ## Notification settings
 
+Notification settings exist at two levels, and both are evaluated before a
+`"notification"` webhook event is sent. This means you can set company-wide
+defaults in the dashboard, while still letting each user fine-tune their own
+preferences in your app. Learn more about how the two levels are combined under
+[notification flow](/docs/ready-made-features/notifications/concepts#notification-flow).
+
+<dl>
+  <dt>Project-level settings</dt>
+  <dd>
+    Configured in the dashboard by you. Enable channels, choose which
+    notification kinds are sent on each channel, and set the default values that
+    apply to every user.
+  </dd>
+  <dt>User-level settings</dt>
+  <dd>
+    Configured in your app by each user. Users can override the project defaults
+    for themselves, for example disabling Slack notifications while keeping
+    email enabled.
+  </dd>
+</dl>
+
+### Project-level settings [#project-notification-settings]
+
+On the “Notifications” page in your project’s
+[dashboard](https://liveblocks.io/dashboard), you can enable each channel, and
+choose which notification kinds (e.g. `thread`, `textMention`, or custom kinds
+such as `$myCustomNotification`) should be sent on it. The values you set here
+act as the defaults for every user that hasn’t chosen their own settings yet.
+
+<Figure>
+  <video width={1512} height={982} autoPlay loop muted playsInline>
+    <source src="/assets/webhooks/notification-settings.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+A kind must be enabled on a channel in the dashboard before any webhook events
+for it are sent—user settings alone are not enough. Before enabling a new kind
+on an existing project, read
+[what to check before enabling a new notification kind](/docs/guides/what-to-check-before-enabling-a-new-notification-kind).
+
+### User-level settings [#user-notification-settings]
+
 It’s possible to allow users to choose their own notification settings for each
-channel in your application.
+channel in your application, overriding the project defaults.
 
 <Figure>
   <Image
@@ -263,6 +318,14 @@ function NotificationSettings() {
   );
 }
 ```
+
+For a full walkthrough of building a settings panel, including custom
+notification kinds, read
+[how to create a notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
+User settings can also be read and modified from the server with
+[`liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-notification-settings)
+and
+[`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).
 
 ## Retrieving and modifying Comments data
 

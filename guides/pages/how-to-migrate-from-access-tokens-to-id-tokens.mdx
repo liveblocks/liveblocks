@@ -1,0 +1,176 @@
+---
+meta:
+  title: "How to migrate from access tokens to ID tokens"
+  description:
+    "Learn how to move your authentication from access tokens to ID tokens,
+    making rooms the source of truth for permissions."
+---
+
+[ID token authentication](/docs/authentication#id-token) lets Liveblocks handle
+permissions for you—permissions are set on each room, and checked “at the door”
+every time a user connects. This avoids the
+[limitations of access tokens](/docs/authentication/access-token#limitations)
+around nested permissions, makes revoking access take effect on the next
+connection, and allows Liveblocks to filter
+[notifications](/docs/ready-made-features/notifications) by room access. This
+guide takes you through migrating an existing application from access tokens to
+ID tokens.
+
+The migration has two parts, and they can be done separately:
+
+1. Set permissions on your existing rooms.
+2. Switch your authentication endpoint from
+   [`liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+   to
+   [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
+
+Setting permissions on rooms has no effect while you’re still issuing access
+tokens, so you can safely complete step 1 first, verify it, and only then switch
+your endpoint. If anything goes wrong, rolling back is as simple as reverting
+your endpoint change.
+
+## Map your permission logic to rooms
+
+With access tokens, your endpoint decides which rooms a user can enter, often
+using
+[wildcard naming patterns](/docs/authentication/access-token#room-permissions):
+
+```ts
+// Access token authentication
+const session = liveblocks.prepareSession("olivier@example.com");
+
+// Every user in the "engineering" team can edit "engineering" rooms
+session.allow("engineering:*", session.FULL_ACCESS);
+
+const { body, status } = await session.authorize();
+```
+
+With ID tokens, the same logic is expressed as permissions on the room itself,
+at three levels: `defaultAccesses` for everyone, `groupsAccesses` for groups of
+users, and `usersAccesses` for individual users. The example above becomes a
+group permission on each `engineering` room:
+
+```ts
+// ID token authentication: permission lives on the room
+await liveblocks.updateRoom("engineering:xxYY12", {
+  groupsAccesses: {
+    engineering: ["*:write"],
+  },
+});
+```
+
+Go through each `session.allow` call in your endpoint and decide how it maps:
+
+| Access token pattern                            | ID token equivalent                           |
+| ----------------------------------------------- | --------------------------------------------- |
+| Every user can enter the room                   | `defaultAccesses: ["*:write"]`                |
+| A team or organization can enter matching rooms | `groupsAccesses: { "my-group": ["*:write"] }` |
+| A specific user was invited to a room           | `usersAccesses: { "user-id": ["*:write"] }`   |
+
+You can find every permission value, such as `*:read` and `comments:write`, on
+the [permissions page](/docs/authentication/permissions).
+
+## Update your existing rooms
+
+Next, write a one-off script that applies these permissions to every existing
+room, using
+[`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms) to
+paginate through them and
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
+to set the accesses.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+let cursor: string | undefined = undefined;
+
+do {
+  // Get a page of rooms
+  const { data: rooms, nextCursor } = await liveblocks.getRooms({
+    startingAfter: cursor,
+  });
+
+  for (const room of rooms) {
+    // Decide which accesses this room should have, e.g. from your database
+    // or from your room ID naming pattern
+    const groupId = room.id.split(":")[0];
+
+    await liveblocks.updateRoom(room.id, {
+      defaultAccesses: [],
+      groupsAccesses: {
+        [groupId]: ["*:write"],
+      },
+    });
+  }
+
+  cursor = nextCursor ?? undefined;
+} while (cursor);
+```
+
+Remember to also set permissions when _new_ rooms are created, by passing the
+same options to
+[`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+## Switch your authentication endpoint
+
+Once your rooms have permissions, replace `prepareSession` with `identifyUser`
+in your authentication endpoint. Instead of listing allowed rooms, you now pass
+the user’s ID and their group IDs.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  // Get the current user from your database
+  const user = __getUserFromDB__(request);
+
+  // ❌ Before: access token authentication
+  // const session = liveblocks.prepareSession(user.id, {
+  //   userInfo: user.metadata,
+  // });
+  // session.allow(`${user.organization}:*`, session.FULL_ACCESS);
+  // const { status, body } = await session.authorize();
+
+  // ✅ After: ID token authentication
+  const { status, body } = await liveblocks.identifyUser(
+    {
+      userId: user.id,
+
+      // The user's groups, matching the `groupsAccesses` set on your rooms
+      groupIds: [user.organization],
+    },
+    { userInfo: user.metadata }
+  );
+
+  return new Response(body, { status });
+}
+```
+
+The front end doesn’t need any changes—the client calls the same authentication
+endpoint, and accepts both token types.
+
+## Verify the migration
+
+After switching, check the following:
+
+- Users can still enter the rooms they could before. If a user is denied access,
+  the room is missing the matching `defaultAccesses`, `groupsAccesses`, or
+  `usersAccesses` entry.
+- Invite flows and share dialogs now update room permissions with
+  [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
+  instead of your own permissions table.
+- Users receive [notifications](/docs/ready-made-features/notifications) only
+  for rooms they can access. With ID tokens, Liveblocks reads room permissions
+  to filter notifications, which wasn’t possible with access tokens.
+
+Note that tokens are short-lived, so users may keep their previous access until
+their current token expires and the client automatically fetches a new one.
+Learn more about [token lifetime](/docs/authentication#token-lifetime).

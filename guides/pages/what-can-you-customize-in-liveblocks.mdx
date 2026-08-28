@@ -1,0 +1,187 @@
+---
+meta:
+  title: "What can you customize in Liveblocks?"
+  description:
+    "Learn which parts of Liveblocks you can customize, from styling the default
+    components to building fully custom UI with primitives and hooks."
+---
+
+Almost everything in Liveblocks is customizable, but different features expose
+different levels of customization, and it’s not always obvious which one you
+need. This guide explains each level, from small styling tweaks to fully custom
+UI, and which levels are available for each feature.
+
+## The customization ladder
+
+Liveblocks UI is customizable at five levels. Each level requires more work than
+the previous one, but gives you more control—start at the top, and only move
+down when you hit something you can’t change.
+
+1. [**Component props**](#component-props): toggle built-in behavior, such as
+   disabling attachments.
+2. [**CSS variables and class names**](#styling): restyle the default components
+   to match your brand.
+3. [**Overrides**](#overrides): replace any text in the components, and localize
+   them.
+4. [**Primitives**](#primitives): keep Liveblocks behavior, but build the UI
+   yourself.
+5. [**Hooks**](#hooks): raw data in, your components out—everything is custom.
+
+## Component props [#component-props]
+
+The default components in
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui) accept props
+that toggle built-in features, with no other changes needed. For example, you
+can disable attachments or emoji reactions in Comments:
+
+```tsx
+<Thread
+  thread={thread}
+  showAttachments={false}
+  showReactions={false}
+  showComposerFormattingControls={false}
+/>
+```
+
+Check each component’s props in the
+[API reference](/docs/api-reference/liveblocks-react-ui) before reaching for a
+deeper level of customization—the option you need may already exist.
+
+## CSS variables and class names [#styling]
+
+Every default component is styled through a shared set of CSS variables, and
+predictable `lb-` prefixed class names. This means you can change colors,
+spacing, and radii globally with a few lines of CSS, or target any specific
+element in the components.
+
+```css
+/* Restyle every Liveblocks component */
+.lb-root {
+  --lb-accent: purple;
+  --lb-spacing: 1em;
+  --lb-radius: 0;
+}
+
+/* Target a specific element */
+.lb-thread {
+  border: 1px solid gray;
+}
+```
+
+Dark mode is included, either via media queries or via HTML attributes if you
+have a theme switcher. Learn more under styling and customization for
+[Comments](/docs/ready-made-features/comments/styling-and-customization),
+[Notifications](/docs/ready-made-features/notifications/styling-and-customization),
+and
+[AI Copilots](/docs/collaboration-features/ai-copilots/styling-and-customization).
+
+## Overrides [#overrides]
+
+Every piece of text inside the default components can be replaced with
+[overrides](/docs/api-reference/liveblocks-react-ui#Overrides), either globally
+or per-component. This is also how you localize components into other languages.
+
+```tsx
+<LiveblocksUiConfig
+  overrides={{
+    locale: "fr",
+    COMPOSER_PLACEHOLDER: "Écrivez un commentaire…",
+  }}
+>
+  <App />
+</LiveblocksUiConfig>
+```
+
+## Primitives [#primitives]
+
+If the default components don’t fit your design, Comments provides
+[primitives](/docs/ready-made-features/comments/primitives)—headless, unstyled,
+composable components in the style of Radix UI or Headless UI. They handle
+behavior such as rich-text editing, mention suggestions, and file attachments,
+while you supply every element and style yourself, including with Tailwind or
+your existing design system components.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui/primitives";
+
+// A custom composer, styled entirely by you
+function MyComposer() {
+  return (
+    <Composer.Form onComposerSubmit={/* ... */}>
+      <Composer.Editor className="my-editor" />
+      <Composer.Submit asChild>
+        <MyDesignSystemButton>Send</MyDesignSystemButton>
+      </Composer.Submit>
+    </Composer.Form>
+  );
+}
+```
+
+Primitives and default components can be mixed freely—for example, a custom
+composer built with primitives can sit below default `Thread` components.
+
+## Hooks [#hooks]
+
+Every feature exposes its data through hooks, so you can always skip Liveblocks
+components entirely and render your own. For example,
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) returns raw
+thread data, and
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+returns raw inbox notifications, which you can render however you like, with
+mutations such as
+[`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment) and
+[`useMarkInboxNotificationAsRead`](/docs/api-reference/liveblocks-react#useMarkInboxNotificationAsRead)
+handling the writes.
+
+## What’s available for each feature
+
+| Feature       | Props | CSS variables & class names | Overrides | Primitives | Hooks |
+| ------------- | ----- | --------------------------- | --------- | ---------- | ----- |
+| Comments      | ✔     | ✔                           | ✔         | ✔          | ✔     |
+| Notifications | ✔     | ✔                           | ✔         | —          | ✔     |
+| Text editor   | ✔     | ✔                           | ✔         | —          | ✔     |
+| AI Copilots   | ✔     | ✔                           | ✔         | —          | ✔     |
+
+### Can I customize notifications? [#customizing-notifications]
+
+Yes—this is a common question because Notifications has no primitives, but it’s
+still deeply customizable:
+
+- The default
+  [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+  component is styled with the same CSS variables and class names as every other
+  component.
+- Its `kinds` prop lets you completely change how each notification kind is
+  rendered—including your own
+  [custom notification kinds](/docs/ready-made-features/notifications/concepts#Custom-notifications)—while
+  keeping read/unread handling for free.
+- For a fully custom notification tray, use
+  [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+  and render your own components.
+
+```tsx
+<InboxNotification
+  inboxNotification={inboxNotification}
+  kinds={{
+    // Render your custom `$alert` notifications differently
+    $alert: (props) => (
+      <InboxNotification.Custom
+        {...props}
+        title="Alert"
+        aside={<InboxNotification.Icon>⚠️</InboxNotification.Icon>}
+      >
+        Custom notification!
+      </InboxNotification.Custom>
+    ),
+  }}
+/>
+```
+
+### Text editor and AI Copilots
+
+[Text editor](/docs/ready-made-features/text-editor) components such as toolbars
+and floating composers follow the same styling system, and since the editor
+itself is Tiptap, BlockNote, or Lexical, you keep the full customization options
+of your editor. AI Copilots components can be restyled and extended too—learn
+more under
+[AI Copilots styling and customization](/docs/collaboration-features/ai-copilots/styling-and-customization).
