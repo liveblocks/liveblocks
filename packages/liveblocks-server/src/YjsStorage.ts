@@ -17,7 +17,6 @@
 
 import { createHash } from "node:crypto";
 
-import type { JsonObject } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { nanoid } from "nanoid";
 import * as Y from "yjs";
@@ -29,32 +28,13 @@ import type { Logger } from "~/lib/Logger";
 
 // How many updates to store before compacting
 const UPDATE_COUNT_THRESHOLD = 1_000;
-const MATERIALIZATION_EARLY_REPORT_BYTES = 16 * 1024 * 1024;
 
 // How much smaller the merged update can be than the sum of the updates before compacting
 const MERGE_SHRINK_THRESHOLD = 0.8;
 
-/** What made compaction run, so the probe lines can be told apart. */
-type CompactionTrigger =
-  | "load-key-count"
-  | "load-merge-shrink"
-  | "update-key-count";
-
-export type YjsMaterialization = {
-  operation: "encode" | "hydrate";
-  operationBytes: number;
-  measurementComplete: boolean;
-  itemCount: number;
-  yjsDocId: YDocId;
-};
-
 export class YjsStorage {
   private readonly driver: IStorageDriver;
   private readonly updateCountThreshold: number;
-  private readonly onMaterialization?: (
-    logger: Logger,
-    details: YjsMaterialization
-  ) => void;
 
   /**
    * The root Y.Doc instance, which may not have been hydrated from storage
@@ -69,12 +49,10 @@ export class YjsStorage {
 
   constructor(
     driver: IStorageDriver,
-    updateCountThreshold: number = UPDATE_COUNT_THRESHOLD,
-    onMaterialization?: (logger: Logger, details: YjsMaterialization) => void
+    updateCountThreshold: number = UPDATE_COUNT_THRESHOLD
   ) {
     this.driver = driver;
     this.updateCountThreshold = updateCountThreshold;
-    this.onMaterialization = onMaterialization;
     this.rawRootDoc.on("subdocs", ({ removed }) => {
       removed.forEach((subdoc: Y.Doc) => {
         subdoc.destroy(); // will remove listeners
@@ -101,7 +79,7 @@ export class YjsStorage {
       doc = new Y.Doc();
     }
     if (loaded === undefined) {
-      loaded = this._loadYDocFromDurableStorage(logger, doc, docId);
+      loaded = this._loadYDocFromDurableStorage(doc, docId);
       this.docsById.set(docId, loaded);
     }
     return loaded;
@@ -155,17 +133,10 @@ export class YjsStorage {
         "Could not get update from passed vector, returning all updates"
       );
     }
-    const update = isV2
-      ? Y.encodeStateAsUpdateV2(doc, encodedTargetVector)
-      : Y.encodeStateAsUpdate(doc, encodedTargetVector);
-    this.reportMaterialization(logger, {
-      operation: "encode",
-      operationBytes: update.byteLength,
-      measurementComplete: true,
-      itemCount: 1,
-      yjsDocId: guid ?? ROOT_YDOC_ID,
-    });
-    return update;
+    if (isV2) {
+      return Y.encodeStateAsUpdateV2(doc, encodedTargetVector);
+    }
+    return Y.encodeStateAsUpdate(doc, encodedTargetVector);
   }
 
   public getYStateVector(logger: Logger, guid?: Guid): string | null {
@@ -226,7 +197,7 @@ export class YjsStorage {
       // Check the snapshot before/after to see if the update had an effect
       const updated = !Y.equalSnapshots(beforeSnapshot, afterSnapshot);
       if (updated) {
-        this.handleYDocUpdate(logger, doc, updateAsU8, isV2);
+        this.handleYDocUpdate(doc, updateAsU8, isV2);
       }
 
       return {
@@ -268,32 +239,11 @@ export class YjsStorage {
 
   // compact the updates into a single update and write it to the durable storage
   private _compactYJSUpdates = (
-    logger: Logger,
     doc: Y.Doc,
     docId: YDocId,
-    storedKeys: string[],
-    probe: { trigger: CompactionTrigger; storedBytes: number | null }
+    storedKeys: string[]
   ): void => {
-    // Logged before the encode, so the numbers survive even if the encode is
-    // what pushes the isolate over its memory limit.
-    this.logCompactionProbe(logger, docId, "started", {
-      trigger: probe.trigger,
-      storedUpdateCount: storedKeys.length,
-      storedBytes: probe.storedBytes,
-      ...describeYDocSize(doc),
-    });
-
-    const startedAt = Date.now();
     const compactedUpdate = Y.encodeStateAsUpdate(doc);
-
-    this.logCompactionProbe(logger, docId, "completed", {
-      trigger: probe.trigger,
-      storedUpdateCount: storedKeys.length,
-      storedBytes: probe.storedBytes,
-      compactedBytes: compactedUpdate.byteLength,
-      durationMs: Date.now() - startedAt,
-    });
-
     const newKey = nanoid();
     this.driver.write_y_updates(docId, newKey, compactedUpdate);
     // Todo: after we kill the kv driver, we should have an overwrite method in the driverso we don't need to delete and write
@@ -301,52 +251,19 @@ export class YjsStorage {
     this.storedKeysById.set(docId, [newKey]);
   };
 
-  private _loadYDocFromDurableStorage = (
-    logger: Logger,
-    doc: Y.Doc,
-    docId: YDocId
-  ): Y.Doc => {
-    const updates: Uint8Array[] = [];
-    const storedKeys: string[] = [];
-    let beforeSize = 0;
-    let didReportEarly = false;
-    for (const [key, update] of this.driver.iter_y_updates(docId)) {
-      updates.push(update);
-      storedKeys.push(key);
-      beforeSize += update.length;
-      if (!didReportEarly && beforeSize >= MATERIALIZATION_EARLY_REPORT_BYTES) {
-        didReportEarly = true;
-        this.reportMaterialization(logger, {
-          operation: "hydrate",
-          operationBytes: beforeSize,
-          measurementComplete: false,
-          itemCount: updates.length,
-          yjsDocId: docId,
-        });
-      }
-    }
-    if (!didReportEarly) {
-      this.reportMaterialization(logger, {
-        operation: "hydrate",
-        operationBytes: beforeSize,
-        measurementComplete: true,
-        itemCount: updates.length,
-        yjsDocId: docId,
-      });
-    }
+  private _loadYDocFromDurableStorage = (doc: Y.Doc, docId: YDocId): Y.Doc => {
+    const docUpdates = Object.fromEntries(this.driver.iter_y_updates(docId));
+    const updates = Object.values(docUpdates);
+    const beforeSize = updates.reduce((acc, update) => acc + update.length, 0);
     const newupdate = Y.mergeUpdates(updates);
+    const storedKeys = Object.keys(docUpdates);
     Y.applyUpdate(doc, newupdate);
     // after compaction, there will only be one unique key.
-    if (this.shouldCompactByKeyCount(storedKeys)) {
-      this._compactYJSUpdates(logger, doc, docId, storedKeys, {
-        trigger: "load-key-count",
-        storedBytes: beforeSize,
-      });
-    } else if (this.shouldCompactBySize(beforeSize, newupdate.length)) {
-      this._compactYJSUpdates(logger, doc, docId, storedKeys, {
-        trigger: "load-merge-shrink",
-        storedBytes: beforeSize,
-      });
+    if (
+      this.shouldCompactByKeyCount(storedKeys) ||
+      this.shouldCompactBySize(beforeSize, newupdate.length)
+    ) {
+      this._compactYJSUpdates(doc, docId, storedKeys);
     } else {
       this.storedKeysById.set(docId, storedKeys);
     }
@@ -354,17 +271,6 @@ export class YjsStorage {
 
     return doc;
   };
-
-  private reportMaterialization(
-    logger: Logger,
-    details: YjsMaterialization
-  ): void {
-    try {
-      this.onMaterialization?.(logger, details);
-    } catch {
-      // Diagnostics must never break Yjs operations.
-    }
-  }
 
   private findYSubdocByGuid(guid: Guid): Y.Doc | null {
     for (const subdoc of this.rawRootDoc.getSubdocs()) {
@@ -400,7 +306,6 @@ export class YjsStorage {
 
   // When the YJS doc changes, update it in durable storage
   private handleYDocUpdate(
-    logger: Logger,
     doc: Y.Doc,
     update: Uint8Array,
     isV2: boolean | undefined
@@ -415,10 +320,7 @@ export class YjsStorage {
 
     // Every UPDATE_COUNT_THRESHOLD updates, we compact the updates
     if (this.shouldCompactByKeyCount(storedKeys)) {
-      this._compactYJSUpdates(logger, doc, docId, storedKeys || [], {
-        trigger: "update-key-count",
-        storedBytes: null,
-      });
+      this._compactYJSUpdates(doc, docId, storedKeys || []);
       return;
     }
 
@@ -444,60 +346,4 @@ export class YjsStorage {
     }
     return storedKeys.length >= this.updateCountThreshold;
   }
-
-  private logCompactionProbe(
-    logger: Logger,
-    docId: YDocId,
-    phase: "started" | "completed",
-    details: JsonObject
-  ): void {
-    try {
-      logger
-        .withContext({
-          yjsDocId: docId,
-          loadedYjsDocCount: this.docsById.size,
-          linkedYjsSubdocCount: this.rawRootDoc.getSubdocs().size,
-          cachedYjsSnapshotCount: this.lastSnapshotById.size,
-          ...details,
-        })
-        .warn(`[probe] Yjs compaction ${phase}`);
-    } catch {
-      // Diagnostics must never break compaction.
-    }
-  }
-}
-
-/**
- * Describes how much the hydrated document occupies in memory, which the
- * encoded size alone does not capture: every edit and formatting range is a
- * separate struct in the CRDT, and deleted structs are retained as tombstones.
- */
-function describeYDocSize(doc: Y.Doc): JsonObject {
-  let structCount = 0;
-  let deletedStructCount = 0;
-  let logicalLength = 0;
-  let deletedLogicalLength = 0;
-
-  for (const structs of doc.store.clients.values()) {
-    structCount += structs.length;
-    for (const struct of structs) {
-      logicalLength += struct.length;
-      if (struct.deleted) {
-        deletedStructCount++;
-        deletedLogicalLength += struct.length;
-      }
-    }
-  }
-
-  return {
-    yjsClientCount: doc.store.clients.size,
-    yjsStructCount: structCount,
-    yjsDeletedStructCount: deletedStructCount,
-    yjsLogicalLength: logicalLength,
-    yjsDeletedLogicalLength: deletedLogicalLength,
-    yjsSharedTypeCount: doc.share.size,
-    yjsSubdocCount: doc.getSubdocs().size,
-    yjsPendingStructBytes: doc.store.pendingStructs?.update.byteLength ?? null,
-    yjsPendingDeleteSetBytes: doc.store.pendingDs?.byteLength ?? null,
-  };
 }

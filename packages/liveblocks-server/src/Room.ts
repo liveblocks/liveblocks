@@ -67,7 +67,7 @@ import type {
   UpdateFeedMessageClientMsg,
 } from "~/protocol";
 import { Storage } from "~/Storage";
-import { type YjsMaterialization, YjsStorage } from "~/YjsStorage";
+import { YjsStorage } from "~/YjsStorage";
 
 import { tryCatch } from "./lib/tryCatch";
 import { UniqueMap } from "./lib/UniqueMap";
@@ -431,18 +431,6 @@ type RoomOptions<SM, CM extends JsonObject, C> = {
       ctx?: C
     ) => void | Promise<void>;
 
-    /** Called when Yjs has hydrated or encoded a document in memory. */
-    onYjsMaterialization?: (
-      logger: Logger,
-      details: YjsMaterialization
-    ) => void;
-
-    /** Called before a legacy client materializes the full Storage document. */
-    onStorageWillMaterialize?: (
-      logger: Logger,
-      operation: "fetch-storage-v7"
-    ) => void;
-
     /**
      * Called when Liveblocks Storage for the room was updated.
      *
@@ -529,15 +517,6 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       ctx: C | undefined
     ) => void | Promise<void>;
 
-    onYjsMaterialization?: (
-      logger: Logger,
-      details: YjsMaterialization
-    ) => void;
-    onStorageWillMaterialize?: (
-      logger: Logger,
-      operation: "fetch-storage-v7"
-    ) => void;
-
     // Don't like these callback names yet. Think about how to better abstract it later.
     postClientMsgStorageDidUpdate?: (
       ctx?: C,
@@ -556,11 +535,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     this.meta = meta;
     this.driver = driver;
     this._storage = new Storage(this.driver);
-    this._yjsStorage = new YjsStorage(
-      this.driver,
-      undefined,
-      options?.hooks?.onYjsMaterialization
-    );
+    this._yjsStorage = new YjsStorage(this.driver);
 
     this.#logger = options?.logger ?? BLACK_HOLE;
     this.hooks = {
@@ -576,8 +551,6 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
       onSessionDidStart: options?.hooks?.onSessionDidStart,
       onSessionDidEnd: options?.hooks?.onSessionDidEnd,
-      onYjsMaterialization: options?.hooks?.onYjsMaterialization,
-      onStorageWillMaterialize: options?.hooks?.onStorageWillMaterialize,
 
       postClientMsgStorageDidUpdate:
         options?.hooks?.postClientMsgStorageDidUpdate,
@@ -636,11 +609,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     // and force-releasing a held lock would allow concurrent writers.
     this.driver.reinitialize();
     this._storage = new Storage(this.driver);
-    this._yjsStorage = new YjsStorage(
-      this.driver,
-      undefined,
-      this.hooks.onYjsMaterialization
-    );
+    this._yjsStorage = new YjsStorage(this.driver);
   }
 
   /**
@@ -1634,10 +1603,6 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           }
           replyImmediately({ type: ServerMsgCode.STORAGE_STREAM_END });
         } else {
-          this.hooks.onStorageWillMaterialize?.(
-            this.#logger,
-            "fetch-storage-v7"
-          );
           replyImmediately({
             type: ServerMsgCode.STORAGE_STATE_V7,
             items: Array.from(this.storage.driver.iter_nodes()),
