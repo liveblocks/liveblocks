@@ -3,15 +3,14 @@ meta:
   title: "Cursor + Liveblocks"
   parentTitle: "Integrations"
   description:
-    "Use Cursor with Liveblocks agent skills and the MCP server to build
-    multiplayer apps with guided best practices."
+    "Use Cursor with the Liveblocks plugin to build multiplayer apps with guided
+    best practices."
 ---
 
 Use [Cursor](https://cursor.com/) with Liveblocks to add collaborative features
-to your app. Install [agent skills](/docs/tools/agent-skills) so your assistant
-follows Liveblocks and Yjs guidance, and use our
-[MCP server](/docs/tools/mcp-server) to allow AI to inspect and modify your
-data, such as rooms, Storage, Yjs, comments, and more.
+to your app. Install the [Liveblocks plugin](/docs/tools/liveblocks-plugin) so
+your assistant follows Liveblocks and Yjs guidance, and can use MCP tools to
+inspect and modify data such as rooms, Storage, Yjs, comments, and more.
 
 <PromptCta />
 
@@ -19,41 +18,33 @@ data, such as rooms, Storage, Yjs, comments, and more.
 
 <Steps>
   <Step>
-    <StepTitle>Install agent skills</StepTitle>
+    <StepTitle>Install the Liveblocks plugin</StepTitle>
     <StepContent>
-      To help AI follow best practices in your app, add [Liveblocks agent skills](/docs/tools/agent-skills)
-      to your system. Make sure to select Cursor in the CLI. Global installation is easiest.
+      To help AI follow best practices in your app, add the
+      [Liveblocks plugin](/docs/tools/liveblocks-plugin). It bundles Liveblocks agent
+      skills and MCP server configuration.
 
       ```bash
-      npx skills add liveblocks/skills
+      npx plugins add liveblocks/liveblocks-plugin
       ```
+
+      Start a new Cursor session after installation so the plugin is available.
 
     </StepContent>
 
   </Step>
 
   <Step>
-    <StepTitle>Install MCP server</StepTitle>
+    <StepTitle>Configure MCP server access</StepTitle>
     <StepContent>
-      To allow AI to inspect and modify data in your project, install the
-      [Liveblocks MCP server](/docs/tools/mcp-server).
+      To allow AI to inspect and modify data in your project, set a Liveblocks
+      secret key from [your dashboard](/dashboard) before starting Cursor. The
+      Liveblocks plugin uses this environment variable for its bundled
+      [MCP server](/docs/tools/mcp-server).
 
-      1. Go to File → Cursor Settings → MCP → Add new server.
-      2. Add the following JSON, inserting your secret key from
-         [your dashboard](/dashboard):
-
-      ```json
-      {
-        "mcpServers": {
-          "liveblocks": {
-            "command": "npx",
-            "args": ["-y", "github:liveblocks/liveblocks-mcp-server"],
-            "env": {
-              "LIVEBLOCKS_SECRET_KEY": "{{SECRET_KEY}}"
-            }
-          }
-        }
-      }
+      ```bash
+      export LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      cursor
       ```
 
       <Banner type="warning" title="Only for development">
@@ -100,7 +91,9 @@ various best practices for using Liveblocks and Yjs. We always recommend using
 these skills when building, debugging, or answering questions about Liveblocks
 and Yjs.
 
-<Button href="/docs/tools/agent-skills">Agent skills documentation</Button>
+<Button href="/docs/tools/liveblocks-plugin">
+  Liveblocks plugin documentation
+</Button>
 
 ### MCP server
 
@@ -121,21 +114,23 @@ allowing it to delete your production data.
 
 ### Skills do not load
 
-Re-run `npx skills add liveblocks/skills` from the repo root. Ensure Cursor can
-see the generated plugin files.
+Re-run `npx plugins add liveblocks/liveblocks-plugin`, then start a new Cursor
+session. If the plugin repository is not available, install the skills with
+`npx skills add liveblocks/skills` and configure the
+[MCP server](/docs/tools/mcp-server) separately.
 
 ### MCP returns auth errors
 
 Use a secret key from the same [Liveblocks project](/dashboard) as your app.
-Confirm `LIVEBLOCKS_SECRET_KEY` in the MCP config matches that project.
+Confirm `LIVEBLOCKS_SECRET_KEY` is exported in the shell before starting Cursor.
 
 ### MCP returns incorrect data
 
-Check that you’re using the correct secret key for your current project. Try
-uninstalling and reinstalling with the correct key.
+Check that you’re using the secret key for your current project. If you change
+the key, restart Cursor from the shell where `LIVEBLOCKS_SECRET_KEY` is set.
 
 ## Related docs
 
-- [Agent skills](/docs/tools/agent-skills).
+- [Liveblocks plugin](/docs/tools/liveblocks-plugin).
 - [MCP server](/docs/tools/mcp-server).
 - [REST API reference](/docs/api-reference/rest-api-endpoints).
