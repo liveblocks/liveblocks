@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
   try {
     // For the avatar example, we're generating random users
     // and set their info from the authentication endpoint
-    // See https://liveblocks.io/docs/rooms/authentication for more information
+    // See https://liveblocks.io/docs/authentication for more information
     const session = liveblocks.prepareSession(
       `user-${Math.floor(Math.random() * NAMES.length)}`,
       {

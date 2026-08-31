@@ -102,7 +102,7 @@ function SendNotificationButtons() {
         For batched notifications to work you must enable batching in the
         Notifications dashboard page for the custom kind. This example
         uses the `$issueUpdated` kind.
-        https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching
+        https://liveblocks.io/docs/collaboration-features/notifications/concepts#Notification-batching
 
         If you then post using the same `subjectId` the existing notification
         will be updated with new `activityData`. In this example we're storing

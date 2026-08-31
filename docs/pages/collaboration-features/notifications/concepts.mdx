@@ -45,15 +45,15 @@ an example of an inbox notification object for a custom notification.
 ```
 
 To build a notification tray, you can use a combination of
-[default components](/docs/ready-made-features/notifications/default-components)
-and [hooks](/docs/ready-made-features/notifications/hooks).
+[default components](/docs/collaboration-features/notifications/default-components)
+and [hooks](/docs/collaboration-features/notifications/hooks).
 
 ## Project-based
 
 Inbox notifications are
-[project-based](/docs/concepts/how-liveblocks-works#Projects), which means that
+[project-based](/docs/concepts#Projects), which means that
 a user can receive notifications that were sent from other
-[rooms](/docs/concepts/how-liveblocks-works#Rooms). This differs to other
+[rooms](/docs/concepts#Rooms). This differs to other
 Liveblocks products which are room-based, and rely on users inhabiting the same
 space.
 
@@ -104,10 +104,10 @@ notification when a new activity happens, you can
 
 ### Collaboration notifications
 
-[Comments](/docs/ready-made-features/comments) can send `thread` notifications
+[Comments](/docs/collaboration-features/comments) can send `thread` notifications
 for you automatically, notifying you of events such as a mention, or a new reply
 in a thread you’re participating in. Additionally,
-[text editors](/docs/ready-made-features/multiplayer-editing) can send
+[text editors](/docs/collaboration-features/multiplayer) can send
 `textMention` notifications when users are mentioned inside the editor.
 
 <Figure>
@@ -183,7 +183,7 @@ and hooks you can allow users to set their own notification settings.
 There are default channel types for email, Slack, Microsoft Teams, and Web Push.
 Each channel works the same, but you can enable different settings for each and
 use them differently. Learn more about notification channels in our
-[email notifications](/docs/ready-made-features/notifications/email-notifications)
+[email notifications](/docs/collaboration-features/notifications/email-notifications)
 page.
 
 ## Data flow
@@ -226,4 +226,4 @@ notifications that the user is authorized to view.
 It’s possible to send email notifications to your users, listing all their
 unread inbox notifications using a [webhook](/docs/platform/webhooks) event that
 Liveblocks provides. Learn more about
-[email notifications](/docs/ready-made-features/notifications/email-notifications).
+[email notifications](/docs/collaboration-features/notifications/email-notifications).

@@ -64,7 +64,7 @@ npx @liveblocks/codemod@latest rename-notification-settings
 
 Liveblocks 2.0 comes with a number of breaking changes and most are covered by
 the following codemods, see the
-[upgrade guide](https://liveblocks.io/docs/platform/upgrading/2.0) to learn more
+[upgrade guide](https://liveblocks.io/docs/upgrading/2.0) to learn more
 about the changes.
 
 #### `react-comments-to-react-ui`
@@ -103,7 +103,7 @@ npx @liveblocks/codemod@latest live-list-constructor
 
 ### 3.0 (breaking changes)
 
-See the [upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.0) to
+See the [upgrade guide](https://liveblocks.io/docs/upgrading/3.0) to
 learn more about the changes.
 
 #### `liveblocks-ui-config`

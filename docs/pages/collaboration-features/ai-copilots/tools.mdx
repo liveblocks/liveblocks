@@ -94,7 +94,7 @@ an example of a tool call interaction:
 </Steps>
 
 When writing your
-[system prompt](/docs/ready-made-features/ai-copilots/copilots#System-prompt)
+[system prompt](/docs/collaboration-features/ai-copilots/copilots#System-prompt)
 you can suggest when certain tools should be used, helping AI respond as you
 like. This is just an example of a simple tool, but below we’ll detail how to
 create more complex tools that have confirm/deny dialogs, render custom
@@ -133,7 +133,7 @@ function Chat() {
 
 For AI to use your tools intelligently, parameters must be defined, which AI
 will fill in for you. Tools use
-[JSON schema](/docs/ready-made-features/ai-copilots/tools#Advanced-JSON-schema)
+[JSON schema](/docs/collaboration-features/ai-copilots/tools#Advanced-JSON-schema)
 to define these. For example, you can define `location` parameter as a `string`.
 
 ```tsx
@@ -299,7 +299,7 @@ default chat. Returning `null` will display nothing.
 ### Combine actions with front-end knowledge
 
 You can combine actions with
-[front-end knowledge](/docs/ready-made-features/ai-copilots/knowledge) to create
+[front-end knowledge](/docs/collaboration-features/ai-copilots/knowledge) to create
 an AI assistant that can take actions. For example, say you have a document on
 the current page. You can use knowledge to pass the document’s text to the AI,
 then create a tool that allows AI to edit the document.
