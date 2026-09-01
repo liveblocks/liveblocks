@@ -1,0 +1,367 @@
+---
+meta:
+  title: "AI activity feed"
+  parentTitle: "Use cases"
+  description:
+    "Build a realtime AI activity feed with persistent agent events, streaming
+    status updates, live presence, history, and notifications."
+---
+
+Show your users what AI agents are doing in your app, as it happens. With
+Liveblocks you can build a multiplayer activity feed that streams each agent’s
+events in realtime, updates entries live as work progresses, keeps a permanent
+history, and notifies users when an agent finishes or needs input.
+
+<Figure
+  caption={
+    <>
+      AI activity feed in the{" "}
+      <a href="/examples/ai-slideshow/nextjs-ai-slideshow">AI Slideshow</a>{" "}
+      example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="ULiZy8luxoWFEwZb5oslOX7l5f31hg4XgRGKC1GgpcA"
+    alt="AI activity feed"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Realtime activity feed**](#activity-feed): Render a persistent stream of
+  agent events with hooks.
+- [**Publishing activity**](#publishing-activity): Append events from your back
+  end, workflows, or any language.
+- [**Streaming status updates**](#streaming-status): Update a live entry as an
+  agent moves through each stage.
+- [**AI presence**](#ai-presence): Show agents as online collaborators while
+  they work.
+- [**Multiple agents and runs**](#multiple-runs): Give each agent or run its own
+  feed and filter by metadata.
+- [**Activity history**](#activity-history): Keep every event and load older
+  activity in pages.
+- [**Notifications**](#notifications): Notify users when an agent completes a
+  task or needs a decision.
+- [**Permissions**](#permissions): Control who can read and publish activity.
+
+## Get started [#get-started]
+
+Choose the features you need. Each guide uses Next.js and can be combined with
+the others.
+
+<ListGrid columns={2} defaultVisibleItems={2}>
+  <DocsCard
+    type="technology"
+    title="Get started with feeds"
+    href="/docs/get-started/nextjs-feeds"
+    description="Build a persistent realtime message feed"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with AI presence"
+    href="/docs/get-started/nextjs-ai-presence"
+    description="Show an AI agent working in your app"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with AI notifications"
+    href="/docs/get-started/nextjs-ai-notifications"
+    description="Notify users when AI finishes work"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented. Activity events are
+stored in [Feeds](/docs/products/sync/feeds), part of
+[Sync](/docs/products/sync). Each agent or run publishes messages to a feed, and
+each message holds JSON data whose schema you define. Use
+[Presence](/docs/products/sync/presence) for the agent’s live in-room status and
+[Notifications](/docs/products/notifications) to reach users who are away.
+
+### Realtime activity feed [#activity-feed]
+
+Read a feed with
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages) and
+render each event with your own components. Events are persistent and delivered
+in realtime, so users watching the feed see new activity instantly, and the full
+history is still there when they reload.
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function ActivityFeed({ feedId }: { feedId: string }) {
+  // +++
+  const { messages } = useFeedMessages(feedId);
+  // +++
+
+  return (
+    <ol>
+      // +++
+      {messages.map((message) => (
+        <li key={message.id} data-kind={message.data.kind}>
+          {message.data.label}
+        </li>
+      ))}
+      // +++
+    </ol>
+  );
+}
+```
+
+Feeds is headless, meaning it stores and syncs your event data, but you handle
+the rendering and design. Learn more under the
+[Feeds overview](/docs/products/sync/feeds).
+
+### Publishing activity [#publishing-activity]
+
+Your agent’s back end appends events with
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
+Publish one event per meaningful step, such as a search performed, a file
+edited, or a tool called, and connected clients receive each one in realtime.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.createFeedMessage({
+  roomId: "project-room",
+  feedId: "agent-activity",
+  data: {
+    kind: "search",
+    label: "Searched 12 documents for “pricing”",
+  },
+});
+// +++
+```
+
+Events can also be published from workflow tools such as the
+[Liveblocks n8n integration](/docs/integrations/n8n-nodes), or from Python and
+any other language with the
+[REST API](/docs/api-reference/rest-api-endpoints#Feeds).
+
+### Streaming status updates [#streaming-status]
+
+Long-running steps shouldn’t sit frozen in the feed. Create an event when a step
+starts, then update the same message with
+[`Liveblocks.updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId)
+as the agent progresses. Every connected user sees the entry change live, from
+“thinking” through to “complete”.
+
+```ts
+// +++
+await liveblocks.createFeedMessage({
+  roomId: "project-room",
+  feedId: "agent-activity",
+  id: "step-4",
+  data: { kind: "write", status: "running", label: "Updating the report…" },
+});
+// +++
+
+// Run the step
+// ...
+
+// +++
+await liveblocks.updateFeedMessage({
+  roomId: "project-room",
+  feedId: "agent-activity",
+  messageId: "step-4",
+  data: { kind: "write", status: "complete", label: "Updated the report" },
+  updatedAt: Date.now(),
+});
+// +++
+```
+
+The same pattern streams generated text token by token into one entry, as shown
+in the [chat](/docs/use-cases/chat#streaming-ai-replies) use case.
+
+### AI presence [#ai-presence]
+
+The feed records what an agent has done, while
+[Presence](/docs/products/sync/presence) shows that it’s working right now.
+Publish the agent’s live state with
+[`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+when a run starts, and remove it when the run ends.
+
+```ts
+// +++
+await liveblocks.setPresence("project-room", {
+  userId: "ai-agent",
+  userInfo: { name: "AI agent", color: "#7c3aed" },
+  data: { status: "working" },
+  ttl: 60,
+});
+// +++
+```
+
+The agent then appears in
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) like any human, so
+existing [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack)
+components and online indicators show AI activity with no extra UI. Learn more
+under the [agentic users](/docs/use-cases/agentic-users) use case.
+
+### Multiple agents and runs [#multiple-runs]
+
+Each room can contain many feeds, so give each agent, task, or run its own.
+Attach metadata when creating a feed with
+[`Liveblocks.createFeed`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feed),
+then list and filter runs in your UI with
+[`useFeeds`](/docs/api-reference/liveblocks-react#useFeeds).
+
+```tsx
+import { useFeeds } from "@liveblocks/react/suspense";
+
+function RunList() {
+  // +++
+  const { feeds } = useFeeds({ metadata: { kind: "agent-run" } });
+  // +++
+
+  return (
+    <nav>
+      // +++
+      {feeds.map((feed) => (
+        <a key={feed.feedId} href={`/runs/${feed.feedId}`}>
+          {feed.metadata.title}
+        </a>
+      ))}
+      // +++
+    </nav>
+  );
+}
+```
+
+Learn more under
+[filtering feeds](/docs/api-reference/liveblocks-react#useFeeds-filtering).
+
+### Activity history [#activity-history]
+
+Every event is saved permanently, so users who reconnect can audit exactly what
+an agent did while they were away. Long histories load in pages, as
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages)
+returns up to 50 events by default, with pagination controls for loading earlier
+activity.
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function ActivityHistory({ feedId }: { feedId: string }) {
+  // +++
+  const { messages, fetchMore, hasFetchedAll, isFetchingMore } =
+    useFeedMessages(feedId, { limit: 20 });
+  // +++
+
+  return (
+    <>
+      {!hasFetchedAll && (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load earlier activity
+        </button>
+      )}
+      {messages.map((message) => (
+        <div key={message.id}>{message.data.label}</div>
+      ))}
+    </>
+  );
+}
+```
+
+Learn more under
+[paginating feed messages](/docs/api-reference/liveblocks-react#useFeedMessages-pagination).
+
+### Notifications [#notifications]
+
+Agents often finish work, or need a decision, while users are away. Trigger a
+custom notification with
+[`Liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
+when a run completes, and render it in an in-app inbox or deliver it by email.
+
+```ts
+// +++
+await liveblocks.triggerInboxNotification({
+  userId: "olivier@example.com",
+  kind: "$aiRunComplete",
+  subjectId: "run-42",
+  activityData: {
+    title: "Report generated",
+    summary: "The Q3 report is ready for review",
+  },
+});
+// +++
+```
+
+Learn more under the [inbox](/docs/use-cases/inbox) use case and our
+[Notifications overview](/docs/products/notifications).
+
+### Permissions [#permissions]
+
+Each activity feed is contained inside a room in your Liveblocks app, and Feeds
+has its own permission scopes. Users watching agent activity only need
+`feeds:read`, while only your back end publishes events. This can be set when
+modifying or creating a room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group can watch agent activity
+    viewers: ["feeds:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access to everything
+    olivier: ["*:write"],
+  },
+});
+```
+
+Server-side calls with a secret key are not limited by a user’s permissions, so
+agents can always publish. More complex controls can be set too, learn more
+under [Permissions](/docs/api-reference/authentication/permissions).
+
+## Examples [#examples]
+
+Explore complete examples that combine the features described above.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Reports Dashboard",
+      slug: "ai-dashboard-reports/nextjs-ai-dashboard-reports",
+      image: "/images/examples/thumbnails/ai-reports-dashboard.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Linear-like Issue Tracker",
+      slug: "linear-like-issue-tracker/nextjs-linear-like-issue-tracker",
+      image: "/images/examples/thumbnails/linear-like-issue-tracker.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Realtime AI Elements Chats",
+      slug: "ai-elements-realtime/nextjs-ai-elements-realtime",
+      image: "/images/examples/thumbnails/ai-chats.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

@@ -1,0 +1,316 @@
+---
+meta:
+  title: "Feeds"
+  parentTitle: "Sync"
+  description:
+    "Build persistent realtime message streams for chat, agents, activity, and
+    workflows."
+---
+
+Bring realtime multiplayer to your workflows and AI chats with Feeds. Connect
+any server and use Liveblocks APIs to update your application state with
+realtime UI updates, chat messages, comment responses, status updates, and more.
+
+## Creating a feed
+
+Feeds are realtime message lists that update live in your React app, inside
+[rooms](/docs/concepts#Rooms). Before sending a message, make sure to set the
+`FeedMessageData` type in your config file, which represents the custom data
+attached to each message. Any JSON data can be defined—in this example, each
+message has a `role` and `content`, ideal for chat.
+
+```tsx file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    FeedMessageData: {
+      role: "user" | "assistant";
+      content: string;
+    };
+    // +++
+  }
+}
+```
+
+It often makes sense to create feeds from your back end, and then render the
+results on the front end. Here’s how to
+[create a feed](/docs/api-reference/liveblocks-node#post-rooms-roomId-feed)
+and
+[send a message](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages)
+to it in Node.js.
+
+```ts title="Creating a feed and sending a message"
+import { liveblocks } from "@liveblocks/node";
+
+const liveblocks = new liveblocks.Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const feed = await liveblocks.createFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+});
+// +++
+
+// +++
+const message = await liveblocks.createFeedMessage({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+
+  // Custom message data
+  data: {
+    role: "user",
+    content: "Hello world",
+  },
+});
+// +++
+```
+
+## Rendering a feed’s messages
+
+In React, you can render the list of messages in a feed using
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages). This
+list updates in realtime for all connected users.
+
+```tsx title="Rendering a feed's messages"
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function Feed() {
+  // +++
+  const { messages, error, isLoading } = useFeedMessages("my-feed-id");
+  // +++
+
+  // +++
+  // [{ data: { role: "user", content: "Hello world" }, ... }]
+  console.log(messages);
+  // +++
+
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id}>{message.data.content}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Paginating feed messages
+
+By default, the last 20 messages are loaded. You can create a “Load more” button
+to load more feeds using properties returned from
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages).
+
+```ts
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function FeedMessages({ feedId }: { feedId: string }) {
+  const { messages, hasFetchedAll, fetchMore, isFetchingMore } =
+    useFeedMessages(feedId);
+
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id}>{message.data.content}</div>
+      ))}
+      {hasFetchedAll ? (
+        <div>🎉 You've loaded all messages!</div>
+      ) : (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load more
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
+## Sending messages from React
+
+You can also add new feed messages from the front end, for example in a chat
+application.
+
+```tsx
+import {
+  useCreateFeedMessage,
+  useFeedMessages,
+} from "@liveblocks/react/suspense";
+
+function Feed() {
+  const { messages, error, isLoading } = useFeedMessages("my-feed-id");
+  // +++
+  const createFeedMessage = useCreateFeedMessage();
+  // +++
+  const [input, setInput] = useState("");
+
+  return (
+    <div>
+      {messages.map((message) => (
+        <div key={message.id}>{message.data.content}</div>
+      ))}
+      <input value={input} onChange={(e) => setInput(e.target.value)} />
+      <button
+        // +++
+        onClick={() => createFeedMessage({ role: "user", content: input })}
+        // +++
+      >
+        Send
+      </button>
+    </div>
+  );
+}
+```
+
+Feeds can be read and edited from React, JavaScript, Node.js, Python, with n8n
+nodes, and via REST API. [API references](/docs/api-reference).
+
+## List all feeds
+
+With [`useFeeds`](/docs/api-reference/liveblocks-react#useFeeds) you can list
+all feeds inside the current room, and switch between them.
+
+```tsx
+import { useFeeds } from "@liveblocks/react/suspense";
+
+function Feeds() {
+  const [selectedFeed, setSelectedFeed] = useState<string | null>(null);
+  // +++
+  const { feeds } = useFeeds();
+  // +++
+
+  return (
+    <div>
+      {feeds.map((feed) => (
+        <button key={feed.id} onClick={() => setSelectedFeed(feed.id)}>
+          {feed.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+```
+
+### Filtering feeds
+
+You can set metadata on each feed itself, and filter them with
+[`useFeeds`](/docs/api-reference/liveblocks-react#useFeeds). To get started,
+first define the `FeedMetadata` type in your config file.
+
+```tsx file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    FeedMetadata: {
+      type: "chat" | "activity";
+    };
+    // +++
+  }
+}
+```
+
+Then, when creating a feed, you can set the metadata.
+
+```ts
+const feed = await liveblocks.createFeed({
+  roomId: "my-room-id",
+  feedId: "my-feed-id",
+  // +++
+  metadata: {
+    type: "chat",
+  },
+  // +++
+});
+```
+
+When listing feeds, you can filter them by metadata.
+
+```ts
+import { useFeeds } from "@liveblocks/react/suspense";
+
+function Feeds() {
+  // +++
+  const { feeds } = useFeeds({
+    metadata: {
+      type: "chat",
+    },
+  });
+  // +++
+
+  // ...
+}
+```
+
+### Paginating feeds
+
+By default, the last 20 messages are loaded. You can create a “Load more” button
+to load more feeds using properties returned from
+[`useFeeds`](/docs/api-reference/liveblocks-react#useFeeds).
+
+```ts
+import { useFeeds } from "@liveblocks/react/suspense";
+
+function Feeds() {
+  // +++
+  const { feeds, hasFetchedAll, fetchMore, isFetchingMore } = useFeeds();
+  // +++
+
+  return (
+    <div>
+    // +++
+      {feeds.map((feed) => (
+        <a key={feed.feedId} href={`/feeds/${feed.feedId}`}>
+          {feed.metadata.name}
+        </a>
+      ))}
+      {hasFetchedAll ? (
+        <div>🎉 You've loaded all feeds!</div>
+      ) : (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load more
+        </button>
+      )}
+      // +++
+    </div>
+  );
+}
+```
+
+## Chat
+
+One way to use Feeds is to create a multiplayer chat interface in your
+application, using each feed message as a chat message.
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+import {
+  Conversation,
+  ConversationContent,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+
+function Chat({ feedId }: { feedId: string }) {
+  const { messages } = useFeedMessages(feedId);
+
+  return (
+    <Conversation>
+      <ConversationContent>
+        {messages.map((message) => (
+          <Message key={message.id} from={message.data.role}>
+            <MessageContent>
+              <MessageResponse>{message.data.content}</MessageResponse>
+            </MessageContent>
+          </Message>
+        ))}
+      </ConversationContent>
+    </Conversation>
+  );
+}
+```
+
+Read the [chat use case](/docs/use-cases/chat) for details on implementing each
+part of the interface.

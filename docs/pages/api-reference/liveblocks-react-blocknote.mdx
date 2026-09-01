@@ -13,6 +13,13 @@ realtime cursors, document persistence on the cloud, comments, and mentions. Use
 [`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
 for server-side editing.
 
+<Banner title="LiveText vs Yjs">
+  Liveblocks BlockNote fully supports both [LiveText and Yjs-backed
+  collaboration](/docs/guides/livetext-vs-yjs). Yjs is used by default, but opt
+  into using `LiveText` instead by passing [`collaborationMode:
+  "liveblocks"`](#Liveblocks-collaboration-mode).
+</Banner>
+
 ## Setup
 
 To set up your collaborative BlockNote editor, create an editor with
@@ -977,8 +984,9 @@ function TextEditor({ field }: { field: string }) {
 
 #### Liveblocks collaboration mode
 
-By default, BlockNote uses Yjs-backed collaboration. To opt into Liveblocks
-storage directly, pass `collaborationMode: "liveblocks"`.
+By default, BlockNote uses Yjs-backed collaboration. To store text as
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) backed by
+Liveblocks Storage instead, pass `collaborationMode: "liveblocks"`.
 
 ```tsx
 import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
@@ -1012,7 +1020,13 @@ function TextEditors() {
 }
 ```
 
-`offlineSupport_experimental` and `ai` require the default Yjs mode.
+`offlineSupport_experimental` and `ai` require the default Yjs mode, as do
+server-side editing with
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
+and text mention emails with
+[`@liveblocks/emails`](/docs/api-reference/liveblocks-emails). To edit
+Storage-backed documents from the server, use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
 
 #### Offline support [@badge=experimental]
 

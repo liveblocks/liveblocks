@@ -7,8 +7,8 @@ meta:
 ---
 
 Liveblocks allows you to build a commenting experience with
-[Comments](/docs/ready-made-features/comments). Using our webhooks and REST API,
-it’s possible to send email notifications to users when they’re mentioned in
+[Comments](/docs/products/comments). Using our webhooks and REST API, it’s
+possible to send email notifications to users when they’re mentioned in
 comments.
 
 <Banner title="You’re probably looking for a different guide" type="warning">
@@ -26,18 +26,18 @@ In this guide we’ll be learning how to send comments notifications, and more
 specifically, we’ll be looking at how to:
 
 - Trigger events when comments are created using the
-  [CommentCreated](/docs/platform/webhooks#CommentCreatedEvent) webhook event.
+  [CommentCreated](/docs/api-reference/webhook-events#CommentCreatedEvent) webhook event.
 - Fetch a comment’s data using the
   [@liveblocks/node](/docs/api-reference/liveblocks-node) package.
 - Create notifications containing the comment’s
-  [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Formatting-a-comment's-body).
+  [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Formatting-a-comment’s-body).
 - Send an email notification with [Resend](https://resend.com/).
 
 <Banner title="Have a project ready">
 
 This guide assumes you already have a Liveblocks Comments project set up. If you
 haven’t already got one, you can
-[get started with Comments](/docs/get-started/comments), and come back after
+[get started with Comments](/docs/get-started/nextjs-comments), and come back after
 you’re set up. You could also use our
 [basic Comments example](/examples/comments/nextjs-comments).
 
@@ -283,7 +283,7 @@ export async function POST(request: Request) {
 
 We now have the `roomId`, `threadId`, and `commentId` of the created comment,
 along with some
-[other information](/docs/platform/webhooks#CommentCreatedEvent).
+[other information](/docs/api-reference/webhook-events#CommentCreatedEvent).
 
 ## Get comment and thread data
 
@@ -303,8 +303,8 @@ of these users.
 
 To do this we’ll need to add our project’s secret key to the Liveblocks client,
 before awaiting the following functions:
-[`getComment`](/docs/api-reference/liveblocks-node#get-comment) and
-[`getThreadParticipants`](/docs/api-reference/liveblocks-node#get-thread-participants).
+[`getComment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId) and
+[`getThreadParticipants`](/docs/api-reference/liveblocks-node).
 
 ```ts highlight="1,7-9,31-43"
 import { Liveblocks, WebhookHandler } from "@liveblocks/node";
@@ -670,10 +670,10 @@ Great, we’re successfully sending email notifications after new comments are
 created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
-  [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent).
+  [`CommentCreatedEvent`](/docs/api-reference/webhook-events#CommentCreatedEvent).
 - How to use the `@liveblocks/node` package to get
-  [comment data](/docs/api-reference/liveblocks-node#get-comment) and
-  [thread participants](/docs/api-reference/liveblocks-node#get-thread-participants).
+  [comment data](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId) and
+  [thread participants](/docs/api-reference/liveblocks-node).
 - How to shape a comment’s body into HTML with
   [`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body).
 - How to send email notifications with [Resend](https://resend.com).

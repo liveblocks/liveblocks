@@ -1,0 +1,405 @@
+---
+meta:
+  title: "Sync"
+  parentTitle: "Products"
+  description:
+    "Add realtime collaboration to any surface in your product—rich-text
+    editors, design tools, canvases, AI chats, flowcharts, spreadsheets, code
+    editors, and custom interfaces."
+---
+
+Add realtime collaboration to any application with Sync. Multiple users can edit
+the same document at the same time, and changes are automatically synchronized
+and persisted. Use cases include rich-text editors, design tools, canvases, AI
+chats, flowcharts, spreadsheets, and custom interfaces.
+
+<Figure caption={<></>}>
+  <MuxVideo
+    playbackId="mcCyXvq7UvF1r6EZDvNbSGgK4Z2tu9SkbThDUQDGtCg"
+    alt="Example of Sync in action"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features
+
+Liveblocks Sync, previously known as Storage, is a hosted sync engine for
+building collaborative apps.
+
+- **Multiplayer collaboration**: Update the same document from multiple clients.
+- **Conflict-free data types**: Preserve simultaneous edits without writing
+  merge logic.
+- **Realtime Presence**: Render cursors, avatar stacks, selections, and agent
+  activity.
+- **Feeds**: Persist streaming chats, agent state, activity streams, and
+  workflow messages.
+- **Optimistic updates**: Apply changes locally, then synchronize them in the
+  background.
+- **Server-side editing**: Read and update collaborative documents from a
+  trusted backend.
+- **Agentic editing**: Allow AI agents to modify realtime data at the same time
+  as humans.
+- **Multiplayer undo/redo**: Give each user a history that respects other
+  people’s edits.
+- **Version history**: Preview and restore meaningful document snapshots.
+- **Permissions**: Control which users, or groups of users, can read or edit
+  each room.
+- **TypeScript-first data**: Define data, Presence, events, user info, and
+  shapes in TypeScript.
+
+## What is a sync engine? [#what-is-a-sync-engine]
+
+Sync engines keep shared state consistent across connected clients, where those
+clients are humans or agents. Instead of creating an endpoint for each edit,
+wiring up WebSockets, and reconciling responses yourself, you update a shared
+document as if it were local state.
+
+Sync distributes changes, resolves concurrent edits, persists results, and
+catches clients up when they reconnect. This avoids stale documents, lost
+updates, and race conditions when several humans, agents, devices, or tabs can
+edit the same state.
+
+## How to use Sync
+
+Sync provides a number of React and JavaScript primitives for building
+collaborative applications.
+
+### Primitive examples
+
+[Storage](/docs/products/sync/storage) is a primitive that allows you to read
+and write to collaborative state, enabling you to build any kind of multiplayer
+document. For example, with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation) you can build
+a collaborative canvas.
+
+```tsx
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+import { LiveObject } from "@liveblocks/client";
+
+function Canvas() {
+  // Fetch realtime data, e.g. an array of shapes
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  // Update realtime data, e.g. add a new shape to the array
+  // +++
+  const addShape = useMutation(({ storage }) => {
+    const newShape = new LiveObject({
+      x: 50,
+      y: 100,
+      color: "red",
+    });
+    storage.get("shapes").push(newShape);
+  }, []);
+  // +++
+
+  // ...
+}
+```
+
+[Presence](/docs/products/sync/presence) is another primitive that allows you to
+render realtime user activity, such as realtime cursors or an avatar stack, with
+the [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook.
+
+```tsx
+import { useSelf, useOthers } from "@liveblocks/react/suspense";
+
+function AvatarStack() {
+  // Get an array of every other connected user
+  // +++
+  const others = useOthers();
+  // +++
+
+  // Render an avatar stack
+  return (
+    <div>
+      // +++
+      {others.map(({ connectionId, presence, info }) => (
+        <img key={connectionId} src={info.avatar} alt={info.name} />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+[Feeds](/docs/products/sync/feeds) allows you to create realtime paginated
+streams of data, useful for storing workflow state or AI chats. Stream messages
+from client or server and display them live with
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages).
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function Chat({ feedId }: { feedId: string }) {
+  // +++
+  const { messages } = useFeedMessages(feedId);
+  // +++
+
+  // Render a list of messages
+  return (
+    <div>
+      // +++
+      {messages.map((message) => (
+        <div key={message.id}>
+          {message.data.role}: {message.data.content}
+        </div>
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+This is just a short sample of Sync’s offering; many other primitives, hooks,
+components, and integrations are available for building your collaborative
+application.
+
+## Learn more
+
+Dive into the different aspects of Sync in the following sections.
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Storage"
+    href="/docs/products/sync/storage"
+    description="Persistent conflict-resolved documents"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Presence"
+    href="/docs/products/sync/presence"
+    description="Show users, cursors, selections, and activity"
+    visual={<DocsSyncPresenceIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Feeds"
+    href="/docs/products/sync/feeds"
+    description="Persist workflow state, streamed chats, more"
+    visual={<DocsFeedsIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Events"
+    href="/docs/products/sync/events"
+    description="Broadcast events to connected clients"
+    visual={<DocsBroadcastEventsIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Text editing"
+    href="/docs/products/sync/text-editing"
+    description="Collaborative text editing with LiveText & Yjs"
+    visual={<DocsTextEditorIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Server-side editing"
+    href="/docs/products/sync/server-side-editing"
+    description="Edit documents from the back end"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Agentic editing"
+    href="/docs/products/sync/agentic-editing"
+    description="Let AI agents edit shared data alongside users"
+    visual={<DocsAgenticEditingIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Version history"
+    href="/docs/products/sync/version-history"
+    description="Preview and restore earlier document versions"
+    visual={<DocsVersionHistoryIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Permissions"
+    href="/docs/products/sync/permissions"
+    description="Control who can read or edit each room"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Integrations"
+    href="/docs/products/sync/integrations"
+    description="Connect editors, diagrams, and state libraries"
+    visual={<DocsIntegrationsIcon className="h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/products/sync/text-editing/yjs"
+    description="Use the Yjs ecosystem with Liveblocks"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Sync guides
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Sync guides"
+    href="/docs/guides?technologies=storage"
+    description="All how-to guides for Sync"
+    visual={<DocsBooksIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Text editor guides"
+    href="/docs/guides?topics=text-editors"
+    description="All how-to guides for text editors"
+    visual={<DocsBooksIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="How conflict resolution works"
+    href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync"
+    description="How Liveblocks Sync resolves conflicts"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="LiveText vs Yjs"
+    href="/docs/guides/livetext-vs-yjs"
+    description="Compare LiveText and Yjs for text editing"
+    visual={<DocsBookIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Sync API Reference
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Client"
+    href="/docs/api-reference/liveblocks-client"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/assets/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux"
+    description="@liveblocks/redux"
+    visual={<DocsReduxIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Tiptap React"
+    href="/docs/api-reference/liveblocks-react-tiptap"
+    description="@liveblocks/react-tiptap"
+    visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="BlockNote React"
+    href="/docs/api-reference/liveblocks-react-blocknote"
+    description="@liveblocks/react-blocknote"
+    visual={
+      <DocsBlocknotejsIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical React"
+    href="/docs/api-reference/liveblocks-react-lexical"
+    description="@liveblocks/react-lexical"
+    visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="ProseMirror Node"
+    href="/docs/api-reference/liveblocks-node-prosemirror"
+    description="@liveblocks/node-prosemirror"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical Node"
+    href="/docs/api-reference/liveblocks-node-lexical"
+    description="@liveblocks/node-lexical"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Examples using Sync
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative text editor",
+      slug: "collaborative-text-editor/lexical",
+      image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Advanced collaborative text editor",
+      slug: "collaborative-text-editor-advanced/nextjs-tiptap-advanced",
+      image: "/images/examples/thumbnails/text-editor-advanced.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Linear-like issue tracker",
+      slug: "linear-like-issue-tracker",
+      image: "/images/examples/thumbnails/linear-like-issue-tracker.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notion-like AI editor",
+      slug: "notion-like-ai-editor",
+      image: "/images/examples/thumbnails/notion-like-ai-editor.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Tldraw whiteboard",
+      slug: "tldraw-whiteboard",
+      image: "/images/examples/thumbnails/tldraw-whiteboard.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

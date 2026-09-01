@@ -1,0 +1,465 @@
+---
+meta:
+  title: "Comments"
+  parentTitle: "Use cases"
+  description:
+    "Build a commenting experience with contextual threads, mentions,
+    notifications, and AI comments."
+---
+
+With Liveblocks you can embed a commenting experience into your product, for
+document reviews, design feedback, video annotations, or discussions on any
+content. Attach threads to any part of your app, mention users and groups,
+notify people in-app and by email, and let your backend and AI agents join the
+conversation.
+
+<Figure
+  caption={
+    <>
+      Commenting in <a href="/examples/browse/comments">various examples</a>
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="o56702PoczSi02oiSMFPkoRhMusxsvRzai7wA8ic1ZPUs"
+    alt="Comments demo blog"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Commenting**](#commenting): Render realtime threads with replies,
+  reactions, and editing built in.
+- [**Contextual comments**](#contextual-comments): Attach threads to any part of
+  your app with metadata.
+- [**Mentions and groups**](#mentions-and-groups): Tag users and teams by typing
+  the `@` character.
+- [**In-app notifications**](#in-app-notifications): Show an unread inbox for
+  mentions and replies.
+- [**Email notifications**](#email-notifications): Send unread comment emails
+  with webhooks.
+- [**Attachments**](#attachments): Let users add files and images to their
+  comments.
+- [**Resolving and filtering**](#resolving-and-filtering): Mark threads as
+  resolved and query them by metadata.
+- [**Server-side commenting**](#server-side-commenting): Post comments from
+  trusted backend processes.
+- [**Agentic commenting**](#agentic-commenting): Let AI agents review content
+  and leave feedback.
+- [**Permissions**](#permissions): Control who can view, write, and see private
+  threads.
+
+## Get started [#get-started]
+
+Choose the features you need. Each guide uses Next.js and can be combined with
+the others.
+
+<ListGrid columns={2} defaultVisibleItems={2}>
+  <DocsCard
+    type="technology"
+    title="Get started with Comments"
+    href="/docs/get-started/nextjs-comments"
+    description="Add threads and a composer to your app"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Add a notification tray"
+    href="/docs/get-started/nextjs-notifications-in-app"
+    description="Show an unread comment notification inbox"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Add comments to a canvas"
+    href="/docs/get-started/nextjs-comments-canvas"
+    description="Add draggable comment threads"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with AI comments"
+    href="/docs/get-started/nextjs-comments-ai"
+    description="Let AI reply to your users' threads"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Send unread comment emails"
+    href="/docs/get-started/nextjs-notifications-email"
+    description="Email users about unread comments"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented using our
+[Comments](/docs/products/comments) product. Threads live inside rooms, update
+in realtime for every connected user, and are stored permanently. Pair them with
+[Notifications](/docs/products/notifications) to reach users who aren’t
+currently viewing the page.
+
+### Commenting [#commenting]
+
+Use [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to retrieve
+each thread in the current room, and render them with the default
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component. Replies,
+emoji reactions, editing, and deleting are all built in, and every change
+appears in realtime for other users. Add a
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) to create new
+threads.
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { Composer, Thread } from "@liveblocks/react-ui";
+
+function Comments() {
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <>
+      // +++
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      <Composer />
+      // +++
+    </>
+  );
+}
+```
+
+The [default components](/docs/products/comments/default-components) are
+customizable with CSS, and for fully custom interfaces you can combine
+[hooks](/docs/products/comments/hooks) with
+[primitives](/docs/products/comments/primitives). Learn more under
+[Comments](/docs/products/comments).
+
+### Contextual comments [#contextual-comments]
+
+Threads become contextual when you store placement data in
+[thread metadata](/docs/products/comments/metadata), for example a cell ID in a
+table, a timestamp in a video, or coordinates on a canvas. Pass metadata when
+creating a thread, then read it back from each thread to position it in your
+interface.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+function CommentOnCell({ cellId }: { cellId: string }) {
+  // Creates a new thread attached to a table cell
+  return (
+    // +++
+    <Composer metadata={{ cellId, pinned: true }} />
+    // +++
+  );
+}
+```
+
+For canvas-style experiences, a
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer)
+and [`CommentPin`](/docs/api-reference/liveblocks-react-ui#CommentPin) can
+create and display threads at any point on the page. Learn more under
+[Metadata](/docs/products/comments/metadata).
+
+### Mentions and groups [#mentions-and-groups]
+
+Liveblocks only stores user IDs, so you provide each user’s name and avatar with
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers),
+and return matching IDs for the `@` mention popup with
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions).
+Mentioned users automatically receive an inbox notification.
+
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  // +++
+  resolveUsers={async ({ userIds }) => {
+    // Return each user's name and avatar from your database
+    return await __fetchUsers__(userIds);
+  }}
+  resolveMentionSuggestions={async ({ text }) => {
+    // Return user IDs matching the search text
+    return await __queryUserIds__(text);
+  }}
+  // +++
+>
+```
+
+You can also mention whole teams at once, such as `@everyone` or `@engineering`,
+by returning group mentions and creating managed groups with
+[`Liveblocks.createGroup`](/docs/api-reference/liveblocks-node#create-group).
+Learn more under
+[Users and mentions](/docs/products/comments/users-and-mentions).
+
+### In-app notifications [#in-app-notifications]
+
+Mentions and replies create inbox notifications, which are grouped per thread so
+users aren’t flooded by busy discussions. Render them with
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component—these work anywhere in your app, even outside the room.
+
+```tsx
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
+
+function Inbox() {
+  // +++
+  const { inboxNotifications } = useInboxNotifications();
+  // +++
+
+  return (
+    <InboxNotificationList>
+      // +++
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+      // +++
+    </InboxNotificationList>
+  );
+}
+```
+
+Show a badge on your inbox icon with
+[`useUnreadInboxNotificationsCount`](/docs/api-reference/liveblocks-react#useUnreadInboxNotificationsCount).
+Learn more under [Notifications](/docs/products/notifications), or explore the
+[Notifications use case](/docs/use-cases/inbox) for a complete inbox, unread
+badges, and user settings.
+
+### Email notifications [#email-notifications]
+
+To reach users who are away from your app, enable the `notification`
+[webhook event](/docs/api-reference/webhook-events) in your dashboard. It’s sent
+per user, batching unread activity together, up to every 30 minutes by default.
+In your endpoint,
+[`prepareThreadNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react)
+turns the event into ready-to-render email data.
+
+```tsx
+import { isThreadNotificationEvent } from "@liveblocks/node";
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+
+// In your webhook endpoint
+if (isThreadNotificationEvent(event)) {
+  // +++
+  const emailData = await prepareThreadNotificationEmailAsReact(
+    liveblocks,
+    event
+  );
+  // +++
+
+  // +++
+  if (emailData !== null) {
+    // Render the unread mention or replies, and send with your email provider
+  }
+  // +++
+}
+```
+
+The same webhook works for Slack, Microsoft Teams, and web push channels. Learn
+more under [Email notifications](/docs/products/comments/email-notifications).
+
+### Attachments [#attachments]
+
+The [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) lets users
+attach files and images to comments by default, uploading and storing them for
+you, and the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
+component displays them automatically. In custom interfaces, retrieve a
+presigned file URL with
+[`useAttachmentUrl`](/docs/api-reference/liveblocks-react#useAttachmentUrl).
+
+```tsx
+import { useAttachmentUrl } from "@liveblocks/react/suspense";
+
+function AttachmentPreview({ attachmentId }: { attachmentId: string }) {
+  // +++
+  const { url } = useAttachmentUrl(attachmentId);
+  // +++
+
+  return <img src={url} alt="Comment attachment" />;
+}
+```
+
+### Resolving and filtering [#resolving-and-filtering]
+
+Each thread can be marked as resolved, and the default
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component includes a
+resolve button, or you can call
+[`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
+yourself. Combine resolved status with metadata in a
+[`useThreads` query](/docs/api-reference/liveblocks-react#useThreads-query) to
+build filtered views, such as a list of open urgent discussions.
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { Thread } from "@liveblocks/react-ui";
+
+function OpenUrgentThreads() {
+  // +++
+  const { threads } = useThreads({
+    query: {
+      resolved: false,
+      metadata: { priority: "urgent" },
+    },
+  });
+  // +++
+
+  return threads.map((thread) => <Thread key={thread.id} thread={thread} />);
+}
+```
+
+### Server-side commenting [#server-side-commenting]
+
+Trusted backend processes can create and modify threads with
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node#Comments), for example
+posting status updates from a CI pipeline or importing discussions from another
+system. Write comment bodies from Markdown with
+[`markdownToCommentBody`](/docs/api-reference/liveblocks-node#markdown-to-comment-body).
+
+```ts
+import { Liveblocks, markdownToCommentBody } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.createComment({
+  roomId: "document-room",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "deploy-bot",
+    body: markdownToCommentBody("The document was **published** successfully."),
+  },
+});
+// +++
+```
+
+Every Comments feature is also available through the
+[REST API](/docs/api-reference/rest-api-endpoints#Comments).
+
+### Agentic commenting [#agentic-commenting]
+
+To let AI agents leave feedback, generate the comment text with AI, then use the
+same server-side APIs shown under
+[Server-side commenting](#server-side-commenting) to post it. Give the agent its
+own user ID, and return its name and avatar from
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+so it appears in threads like any other user.
+
+```ts
+import { Liveblocks, markdownToCommentBody } from "@liveblocks/node";
+import { generateText } from "ai";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+const { text } = await generateText({
+  model: "openai/gpt-5.6-sol",
+  prompt: `Review this paragraph and suggest one improvement: ${paragraph}`,
+});
+// +++
+
+// +++
+await liveblocks.createThread({
+  roomId: "document-room",
+  data: {
+    comment: {
+      userId: "ai-agent",
+      body: markdownToCommentBody(text),
+    },
+    metadata: { paragraphId: "paragraph-4" },
+  },
+});
+// +++
+```
+
+Because the thread stores metadata, the AI’s feedback appears contextually in
+your app, exactly like a human comment. Learn more under
+[agentic users](/docs/use-cases/agentic-users).
+
+### Permissions [#permissions]
+
+Comments has its own permission scopes, so you can allow read-only users to
+still join discussions. For example, viewers of a document can be given
+`comments:write` access while keeping the content itself read-only. This can be
+set when creating or modifying a room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom("document-room", {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewer" group is read-only, but can comment
+    viewer: ["*:read", "comments:write"],
+  },
+  usersAccesses: {
+    // "marc@example.com" has full write access
+    "marc@example.com": ["*:write"],
+  },
+});
+```
+
+Threads can also be created with `visibility: "private"`, enabling internal
+team-only discussions alongside public comments in the same room. Read
+[how to add private commenting](/docs/guides/how-to-add-private-commenting-to-your-app),
+or learn more under
+[Permissions](/docs/api-reference/authentication/permissions).
+
+## Examples [#examples]
+
+Explore complete examples that combine the features described above.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Comments",
+      slug: "comments/nextjs-comments",
+      image: "/images/examples/thumbnails/comments.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Overlay Comments",
+      slug: "overlay-comments/nextjs-comments-overlay",
+      image: "/images/examples/thumbnails/comments-overlay.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Video Comments",
+      slug: "video-comments/nextjs-comments-video",
+      image: "/images/examples/thumbnails/comments-video.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Comments notifications",
+      slug: "comments-notifications",
+      image: "/images/examples/thumbnails/comments-notifications.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

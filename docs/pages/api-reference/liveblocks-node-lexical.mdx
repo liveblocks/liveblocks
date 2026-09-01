@@ -9,6 +9,16 @@ alwaysShowAllNavigationLevels: false
 `@liveblocks/node-lexical` provides a Node.js package to export and modify
 [Lexical](https://lexical.dev/) documents on the server.
 
+<Banner>
+
+This package assumes the room’s document is Yjs-backed, which is the case when
+using
+[`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexical). To
+edit Storage-backed text from the server, use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
+
+</Banner>
+
 ## withLexicalDocument
 
 `withLexicalDocument` is the main entry point to modifying a document on the

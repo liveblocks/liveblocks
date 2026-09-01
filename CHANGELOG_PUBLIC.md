@@ -28,7 +28,8 @@ list and feel free to give them credit at the end of a line, e.g.:
   root. See
   [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useMutableStorage).
 - Fix thread resolved/unresolved status being reverted under some conditions.
-  Thank you for the contribution [@VihaanAgarwal](https://github.com/VihaanAgarwal)!
+  Thank you for the contribution
+  [@VihaanAgarwal](https://github.com/VihaanAgarwal)!
 
 ## v3.24.0
 
@@ -42,13 +43,13 @@ structure for plain text with optional inline formatting.
   (`{ origin: "local", via: "edit" | "undo" | "redo" }`) or by another one
   (`{ origin: "remote" }`), see
   [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#update-source).
-- Add `LiveText` for collaborative text editing with concurrent inserts, deletes,
-  and formatting changes.
+- Add `LiveText` for collaborative text editing with concurrent inserts,
+  deletes, and formatting changes.
 
 ### `@liveblocks/codemirror`, `@liveblocks/lexical`, and `@liveblocks/prosemirror`
 
-- Introduce packages for integrating CodeMirror, Lexical, and ProseMirror editors
-  with Liveblocks Storage and `LiveText`.
+- Introduce packages for integrating CodeMirror, Lexical, and ProseMirror
+  editors with Liveblocks Storage and `LiveText`.
 
 ### `@liveblocks/react-tiptap`
 
@@ -57,12 +58,13 @@ structure for plain text with optional inline formatting.
 
 ## Website
 
-- New solutions pages, accessible by the top menu dropdown, detailing how Liveblocks
-  can be used in various industries, by various different users.
+- New solutions pages, accessible by the top menu dropdown, detailing how
+  Liveblocks can be used in various industries, by various different users.
 
 ## Contributors
 
-jrowny, nvie, nimeshnayaju, marcbouchenoire, VihaanAgarwal, danilowoz, stacyschmitz, ctnicholas
+jrowny, nvie, nimeshnayaju, marcbouchenoire, VihaanAgarwal, danilowoz,
+stacyschmitz, ctnicholas
 
 # Week 33 (2026-08-14)
 
@@ -94,7 +96,8 @@ ctnicholas
 
 ## Website
 
-- New blog post: [What's new in Liveblocks: July 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-july-2026).
+- New blog post:
+  [What's new in Liveblocks: July 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-july-2026).
 
 ## Contributors
 
@@ -104,7 +107,8 @@ nvie, ctnicholas, marcbouchenoire
 
 ## Website
 
-- New blog post: [LiveFile: upload and share files in collaborative apps](https://liveblocks.io/blog/livefile-upload-and-share-files-on-collaborative-apps).
+- New blog post:
+  [LiveFile: upload and share files in collaborative apps](https://liveblocks.io/blog/livefile-upload-and-share-files-on-collaborative-apps).
 
 ## Examples
 
@@ -148,7 +152,10 @@ images and videos in a room's Storage tree.
 ## Examples
 
 - Updated the
-  [Collaborative Whiteboard](https://liveblocks.io/examples/collaborative-whiteboard-advanced/nextjs-whiteboard-advanced) and [tldraw Whiteboard](https://liveblocks.io/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage) examples to support images using `LiveFile` in Liveblocks Storage.
+  [Collaborative Whiteboard](https://liveblocks.io/examples/collaborative-whiteboard-advanced/nextjs-whiteboard-advanced)
+  and
+  [tldraw Whiteboard](https://liveblocks.io/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+  examples to support images using `LiveFile` in Liveblocks Storage.
 
 ## Contributors
 
@@ -845,7 +852,7 @@ nvie, ctnicholas, stevenfabre, marcbouchenoire
 
 - New page: [n8n nodes](https://liveblocks.io/docs/integrations/n8n-nodes).
 - New page:
-  [AI Collaboration](https://liveblocks.io/docs/collaboration-features/ai-collaboration).
+  [AI Collaboration](https://liveblocks.io/docs/use-cases/agentic-users).
 - New get started:
   [Next.js + Realtime feeds](https://liveblocks.io/docs/get-started/nextjs-feeds).
 - New get started:
@@ -1558,8 +1565,9 @@ ctnicholas, mmavko
 - Updated other information on the
   [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
   page.
-- Updated [Organizations](https://liveblocks.io/docs/authentication/organizations) page with
-  new information.
+- Updated
+  [Organizations](https://liveblocks.io/docs/api-reference/authentication/organizations)
+  page with new information.
 - Add information on
   [AI web search](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge#Web-search)
   in overview pages.
@@ -1824,7 +1832,9 @@ jrowny, ctnicholas
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
 [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
-and [tenants](https://liveblocks.io/docs/authentication/organizations) in the docs.
+and
+[tenants](https://liveblocks.io/docs/api-reference/authentication/organizations)
+in the docs.
 
 ### `@liveblocks/client`
 
@@ -3618,7 +3628,7 @@ ctnicholas, marcbouchenoire, flowflorent
 ## Documentation
 
 - Better info on
-  [default permissions with access tokens](https://liveblocks.io/docs/authentication/access-token#Default-permissions).
+  [default permissions with access tokens](https://liveblocks.io/docs/api-reference/authentication/access-token#Default-permissions).
 - Updated API reference for
   [`useLiveblocksExtension`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension).
 

@@ -1,0 +1,259 @@
+---
+meta:
+  title: "Server-side editing"
+  parentTitle: "Sync"
+  description: "Read and edit collaborative documents from your back end."
+---
+
+Sync data can be modified from your back end, using the same conflict resolution
+that enables multiplayer collaboration on the front end. This allows you to
+create initial room data, schedule jobs, run migrations,
+[enable agentic editing](/docs/products/sync/agentic-editing), and more.
+
+## Server-side Sync APIs
+
+There are two different ways to modify Sync data from your back end, using
+[methods in Node.js](#edit-sync-data-with-node-js-methods) or using
+[JSON Patch](#edit-sync-data-with-json-patch) from any language.
+
+### Example document shape
+
+In these snippets, we’ll use the following document
+[type declaration](/docs/api-reference/liveblocks-react#typing-storage) as an
+example, a simple canvas with a
+[`LiveList`](/docs/products/sync/storage#LiveList) of
+[`LiveObject`](/docs/products/sync/storage#LiveObject) shapes
+
+```ts file="liveblocks.config.ts"
+import { LiveList, LiveObject } from "@liveblocks/core";
+
+// +++
+type Shape = LiveObject<{
+  x: number;
+  y: number;
+  color: string;
+}>;
+// +++
+
+declare global {
+  interface Liveblocks {
+    // +++
+    type Storage = {
+      shapes: LiveList<Shape>;
+    }
+    // +++
+  }
+}
+```
+
+### Edit Sync data with Node.js methods [#edit-sync-data-with-node-js-methods]
+
+Use
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+to read and modify Sync data with the same
+[conflict-free data types](/docs/products/sync/storage) used by the front end.
+For example, to add a new shape from the server, get the `shapes` list with
+[`LiveObject.get`](/docs/api-reference/liveblocks-client#LiveObject.get), and
+push a new shape with
+[`LiveList.push`](/docs/api-reference/liveblocks-client#LiveList.push). It may
+be helpful to check that the list exists before creating it if your server
+process will run before
+[setting initial Storage values](/docs/api-reference/liveblocks-react#setting-initial-storage).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+await liveblocks.mutateStorage("my-room", ({ root }) => {
+  let shapes = root.get("shapes");
+
+  if (!shapes) {
+    shapes = new LiveList([]);
+    root.set("shapes", shapes);
+  }
+
+  const newShape = new LiveObject({
+    x: 50,
+    y: 100,
+    color: "red",
+  });
+
+  shapes.push(newShape);
+});
+// +++
+```
+
+The callback receives the latest document and flushes its changes back to the
+room. Clients update as those changes are persisted. The callback can be
+asynchronous, but changes made before an `await` may synchronize before later
+work completes, so do not treat it as a database transaction.
+
+#### Edit multiple rooms [#edit-multiple-rooms]
+
+It’s also possible to edit multiple rooms at once with
+[`Liveblocks.massMutateStorage`](/docs/api-reference/liveblocks-node#mass-mutate-storage).
+This is particularly helpful for running data migrations—in this snippet, if a
+room has no schema version, it’s given a value, and a new `layers`
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) is created. 5 rooms
+are processed concurrently.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+await liveblocks.massMutateStorage(
+  { query: { roomId: { startsWith: "project:" } } },
+  ({ root }) => {
+    if (!root.get("schemaVersion")) {
+      root.set("schemaVersion", "2.0.0");
+      root.set("layers", new LiveList([]));
+    }
+  },
+  { concurrency: 5 }
+);
+// +++
+```
+
+### Edit Sync data with JSON Patch [#edit-sync-data-with-json-patch]
+
+Use the
+[JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
+to modify Sync data from any language, and from services that are familiar with
+JSON Patch operations such as AI agents. For example, to add a new shape from
+the server, use an `add` operation with the `/shapes/-` path, which appends the
+value to the end of the `shapes` list.
+
+```http
+PATCH /v2/rooms/my-room/storage/json-patch
+Content-Type: application/json
+
+// +++
+[
+  {
+    "op": "add",
+    "path": "/shapes/-",
+    "value": {
+      "x": 50,
+      "y": 100,
+      "color": "red"
+    }
+  }
+]
+// +++
+```
+
+JSON Patch is also available in our Python SDK, named
+[`patch_storage_document`](/docs/api-reference/liveblocks-python#patch_storage_document).
+
+## Server-side integration APIs
+
+A number of Liveblocks integrations have server-side APIs that allow you to
+modify Sync data using the integration’s document model, instead of the Sync
+model.
+
+### React Flow
+
+You can
+[edit React Flow documents from the server](/docs/api-reference/liveblocks-react-flow#server-side)
+using [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow). In
+this example, a new node and a new edge are added to the flow.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { mutateFlow } from "@liveblocks/react-flow/node";
+
+const client = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+await mutateFlow({ client, roomId: "my-room-id" }, (flow) => {
+  flow.addNode({
+    id: "2",
+    position: { x: 50, y: 1000 },
+    data: { label: "Hello world" },
+  });
+  flow.addEdge({ id: "e1-2", source: "1", target: "2" });
+});
+// +++
+```
+
+### ProseMirror, Tiptap, and BlockNote
+
+When using Yjs-backed documents, you can edit ProseMirror, Tiptap, and BlockNote
+text documents from the server using
+[`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror#withProsemirrorDocument).
+In this example, new text is inserted into the document.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
+
+const client = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+await withProsemirrorDocument(
+  {
+    client,
+    roomId: "test-room",
+  },
+  async (api) => {
+    await api.update((doc, tr) => {
+      return tr.insertText("Hello world");
+    });
+  }
+);
+// +++
+```
+
+Edit Storage-backed documents using
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+instead.
+
+### Lexical
+
+When using Yjs-backed documents, you can edit Lexical text content from the
+server using
+[`withLexicalDocument`](/docs/api-reference/liveblocks-node-lexical#withLexicalDocument).
+In this example, the document is updated with a new paragraph containing a text
+node.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { withLexicalDocument } from "@liveblocks/node-lexical";
+import { $getRoot } from "lexical";
+import { $createParagraphNode, $createTextNode } from "lexical/nodes";
+
+const client = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (doc) => {
+    await doc.update(() => {
+      const root = $getRoot();
+      const paragraphNode = $createParagraphNode();
+      const textNode = $createTextNode("Hello world");
+      paragraphNode.append(textNode);
+      root.append(paragraphNode);
+    });
+  }
+);
+// +++
+```
+
+Edit Storage-backed documents using
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)
+instead.

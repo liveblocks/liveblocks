@@ -26,8 +26,8 @@ This guide assumes that you’re already familiar with
 [React](https://reactjs.org/) and [Redux](https://redux.js.org/). If you’re not
 using Redux, we recommend reading one of our dedicated whiteboard tutorials:
 
-- [React tutorial](/docs/tutorials/collaborative-online-whiteboard/react)
-- [React + Zustand tutorial](/docs/tutorials/collaborative-online-whiteboard/react-zustand)
+- [React tutorial](/docs/get-started/whiteboard)
+- [React + Zustand tutorial](/docs/guides/how-to-create-a-collaborative-online-whiteboard-with-react-zustand-and-liveblocks)
 
 A live demo and the source code for this guide are
 [in our examples](/examples/collaborative-whiteboard/redux-whiteboard).
@@ -59,13 +59,14 @@ with `pk_`.
 
 With a secret key, you can control who can access the room. it’s more secure but
 you need your own back-end endpoint. For this tutorial, we’ll go with a public
-key. For more info, see the [authentication guide](/docs/authentication).
+key. For more info, see the
+[authentication guide](/docs/api-reference/authentication).
 
 </Banner>
 
 Create a new file `src/store.js` and initialize the Liveblocks client with your
 public API key. Then add our
-[enhancer](/docs/api-reference/liveblocks-redux#enhancer) to your store
+[enhancer](/docs/api-reference/liveblocks-redux#Enhancer) to your store
 configuration.
 
 ```js file="src/store.js"
@@ -162,15 +163,15 @@ export default function App() {
 ## Create a canvas [#basic-canvas]
 
 Whiteboard shapes will be stored even after all users disconnect, so we will use
-Liveblocks storage to persist them.
+Storage to persist them.
 
 Add a `shapes` property to your store, and configure the enhancer to sync and
 persist them with Liveblocks.
 
 To achieve that, we are going to use the enhancer option
-[`storageMapping: { shapes: true }`](/docs/api-reference/liveblocks-redux#middleware-option-storage-mapping).
+[`storageMapping: { shapes: true }`](/docs/api-reference/liveblocks-redux#enhancer-option-storage-mapping).
 It means that the part of the state named `shapes` should be automatically
-synced with Liveblocks Storage.
+synced with Storage.
 
 ```js file="src/store.js" highlight="10,28"
 import { createClient } from "@liveblocks/client";
@@ -474,9 +475,9 @@ selected shape id. `selectedShape` will be set when the user select or insert a
 rectangle.
 
 The middleware option
-[`presenceMapping: { selectedShape: true }`](/docs/api-reference/liveblocks-redux#middleware-option-presence-mapping)
+[`presenceMapping: { selectedShape: true }`](/docs/api-reference/liveblocks-redux#enhancer-option-presence-mapping)
 means that we want to automatically sync the part of the state named
-`selectedShape` to Liveblocks Presence.
+`selectedShape` to Liveblocks presence.
 
 ```js file="src/store.js" highlight="5,15-17,21,31"
 /* ... */
@@ -1031,4 +1032,4 @@ You can see some stats about the room you created in your
 ## Next steps
 
 - [API reference](/docs/api-reference/liveblocks-redux)
-- [Authentication](/docs/authentication)
+- [Authentication](/docs/api-reference/authentication)

@@ -79,7 +79,11 @@ export async function POST(request: NextRequest) {
 
   // Make sure the feed exists (idempotent safety net).
   try {
-    await liveblocks.createFeed({ roomId, feedId, metadata: { title: "AI chat" } });
+    await liveblocks.createFeed({
+      roomId,
+      feedId,
+      metadata: { title: "AI chat" },
+    });
   } catch {
     // Feed already exists, ignore.
   }
@@ -266,8 +270,8 @@ async function streamMockReply(messages: ChatMessage[], update: UpdateFn) {
     usedTokens: Math.round(content.length / 4) + 320,
     sources: [
       {
-        title: "AI collaboration — Liveblocks Docs",
-        url: "https://liveblocks.io/docs/collaboration-features/ai-collaboration",
+        title: "Feeds — Liveblocks Docs",
+        url: "https://liveblocks.io/docs/products/sync/feeds",
       },
       { title: "Feeds API reference", url: "https://liveblocks.io/docs" },
     ],

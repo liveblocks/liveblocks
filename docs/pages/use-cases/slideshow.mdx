@@ -1,0 +1,537 @@
+---
+meta:
+  title: "Slideshow"
+  parentTitle: "Use cases"
+  description:
+    "Build collaborative presentations with synchronized slides, live cursors,
+    AI editing, version history, and comments."
+---
+
+Create a collaborative slideshow, presentation editor, or pitch deck with
+Liveblocks. Synchronize slides and their content, show live cursors and active
+selections, follow a presenter, upload media, and let AI edit the deck alongside
+your users.
+
+<Figure
+  caption={
+    <>
+      Multiplayer editing in the{" "}
+      <a href="/examples/ai-slideshow/nextjs-ai-slideshow">AI Slideshow</a>{" "}
+      example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="3AEF00X15TcU6Kdy6014FfaEo24G4LvoYsfgr6gAZx6T8"
+    alt="Example of a collaborative AI slideshow editor"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Realtime collaboration**](#realtime-collaboration): Synchronize slide
+  order, content, and layout between users.
+- [**Presence**](#presence): Show live cursors, avatar stacks, active slides,
+  and selected elements.
+- [**Presentation mode**](#presentation-mode): Let everyone follow a presenter
+  through the deck in realtime.
+- [**Server-side editing**](#server-side-editing): Let trusted backend processes
+  create, rewrite, and rearrange slides.
+- [**Agentic editing**](#agentic-editing): Let AI agents generate and apply
+  slide content.
+- [**Version history**](#version-history): Save, preview, and restore complete
+  versions of the deck.
+- [**Multiplayer undo/redo**](#multiplayer-undo-redo): Give each user an
+  independent history of their changes.
+- [**File uploads**](#file-uploads): Add images, videos, and other uploaded
+  assets to slides.
+- [**Comments**](#comments): Attach feedback to a slide or a specific point on
+  its surface.
+- [**Permissions**](#permissions): Control who can view, present, and edit the
+  slideshow.
+
+## Get started [#get-started]
+
+Choose a starting point for your slideshow.
+
+<ListGrid columns={2} defaultVisibleItems={2}>
+  <DocsCard
+    type="technology"
+    title="Get started with Sync"
+    href="/docs/get-started/nextjs"
+    description="Synchronize slide content and order"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with AI presence"
+    href="/docs/get-started/nextjs-ai-presence"
+    description="Show an AI agent working alongside users"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with comments"
+    href="/docs/get-started/nextjs-comments-canvas"
+    description="Attach comments to positions on a slide"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with AI comments"
+    href="/docs/get-started/nextjs-comments-ai"
+    description="Add contextual feedback from an AI agent"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented. Store permanent
+slide content, order, and layout in [Sync](/docs/products/sync). Keep
+temporary cursors, selections, and presentation state in
+[Presence](/docs/products/sync/presence). Use
+[Comments](/docs/products/comments) for review discussions and
+[Feeds](/docs/products/sync/feeds) for durable AI workflow state.
+
+### Realtime collaboration [#realtime-collaboration]
+
+Store slide order in a
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList), and store slides
+by stable ID in a [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap).
+Each slide can be a
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) containing
+layout data and [`LiveText`](/docs/products/sync/storage#LiveText) for
+collaborative text. This lets one user rearrange the deck while another edits a
+slide, without either change overwriting the other.
+
+Read the deck with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and update it
+with [`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+
+```tsx
+import { LiveObject, LiveText } from "@liveblocks/client";
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+
+function SlideDeck() {
+  // +++
+  const slideOrder = useStorage((root) => root.slideOrder);
+  // +++
+
+  // +++
+  const addSlide = useMutation(({ storage }) => {
+    const slideId = crypto.randomUUID();
+
+    storage.get("slides").set(
+      slideId,
+      new LiveObject({
+        title: new LiveText("Untitled"),
+        body: new LiveText(""),
+      })
+    );
+    storage.get("slideOrder").push(slideId);
+  }, []);
+  // +++
+
+  return <button onClick={addSlide}>Add slide ({slideOrder.length})</button>;
+}
+```
+
+Liveblocks applies changes optimistically and resolves simultaneous edits for
+you. Read [Storage](/docs/products/sync/storage) to choose the right structure
+for each part of the deck.
+
+### Presence [#presence]
+
+Use [Presence](/docs/products/sync/presence) for information that only matters
+while someone is connected, such as their cursor, active slide, selected
+element, and editing mode. Publish local state with
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+and render collaborators with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+import { Cursor } from "@liveblocks/react-ui";
+
+function SlidePresence({ slideId }: { slideId: string }) {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const collaborators = useOthers();
+  // +++
+
+  return (
+    <div
+      // +++
+      onPointerEnter={() => updateMyPresence({ activeSlideId: slideId })}
+      onPointerMove={(event) =>
+        updateMyPresence({ cursor: { x: event.clientX, y: event.clientY } })
+      }
+      // +++
+    >
+      {collaborators.map(({ connectionId, info, presence }) =>
+        presence.activeSlideId === slideId && presence.cursor ? (
+          <Cursor
+            key={connectionId}
+            label={info.name}
+            color={info.color}
+            style={{
+              position: "absolute",
+              transform: `translate(${presence.cursor.x}px, ${presence.cursor.y}px)`,
+            }}
+          />
+        ) : null
+      )}
+    </div>
+  );
+}
+```
+
+Add [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) to the
+editor toolbar to show everyone currently in the room.
+
+### Presentation mode [#presentation-mode]
+
+Presentation mode is temporary, so store the presenter’s status and active slide
+in presence instead of the saved deck. Viewers can find the presenter with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) and immediately
+follow the current slide, including when they join midway through a
+presentation.
+
+```tsx
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function PresentationControls() {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const presenter = useOthers((others) =>
+    others.find((other) => other.presence.isPresenting)
+  );
+  // +++
+
+  function presentSlide(activeSlideId: string) {
+    // +++
+    updateMyPresence({ isPresenting: true, activeSlideId });
+    // +++
+  }
+
+  return (
+    <button onClick={() => presentSlide("slide-2")}>
+      Present next: {presenter?.presence.activeSlideId}
+    </button>
+  );
+}
+```
+
+Only let users with presentation access set `isPresenting`, and decide what
+happens if the current presenter disconnects. For example, return viewers to
+independent navigation or transfer control to another editor.
+
+### Server-side editing [#server-side-editing]
+
+Trusted server processes can edit a slideshow from the back end with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage).
+The server reads and writes the same Sync data as connected users, so new
+slides, rewrites, and reordered sections appear in realtime.
+
+```ts
+import { LiveObject, LiveText } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.mutateStorage("slideshow-room", ({ root }) => {
+  const slideId = crypto.randomUUID();
+
+  root.get("slides").set(
+    slideId,
+    new LiveObject({
+      title: new LiveText("Quarterly results"),
+      body: new LiveText("Revenue increased by 18%."),
+    })
+  );
+  root.get("slideOrder").push(slideId);
+});
+// +++
+```
+
+Learn more under [Server-side editing](/docs/products/sync/server-side-editing).
+
+### Agentic editing [#agentic-editing]
+
+To allow AI agents to modify your slideshow, generate your changes with AI then
+use [`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage) to
+apply them. To show that AI is working in your app use
+[`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+to show it working—your agent will appear in [Presence](#presence) alongside
+humans. Finally, remove the agent’s presence to indicate that the agent is no
+longer working.
+
+```ts
+import { LiveObject, LiveText } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "slideshow-room";
+const agent: Liveblocks["UserMeta"] = {
+  id: "ai-agent",
+  info: { name: "AI agent", color: "#7c3aed" },
+};
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "thinking", activeSlideId: null },
+  ttl: 60,
+});
+// +++
+
+// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const slides = root.get("slides");
+
+  const { output: slide } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        title: z.string(),
+        body: z.string(),
+      }),
+    }),
+    prompt: `Create a slide about realtime apps. Here are the current slides: ${slides.toJSON()}`,
+  });
+
+  const slideId = crypto.randomUUID();
+
+  slides.set(
+    slideId,
+    new LiveObject({
+      title: new LiveText(slide.title),
+      body: new LiveText(slide.body),
+    })
+  );
+  root.get("slideOrder").push(slideId);
+});
+// +++
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "idle", activeSlideId: null },
+  ttl: 2,
+});
+// +++
+```
+
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
+workflow state, and to pass agent status updates to the UI. Learn more under
+[Agentic editing](/docs/products/sync/agentic-editing).
+
+### Version history [#version-history]
+
+Create versions before publishing a deck, importing slides, or allowing an agent
+to rewrite a large section. Use
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
+to list versions,
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData)
+to build a read-only preview, and
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion)
+to restore the complete deck as one synchronized change.
+
+```tsx
+import { useRestoreToStorageVersion } from "@liveblocks/react/suspense";
+
+function RestoreSlideshow({ versionId }: { versionId: string }) {
+  // +++
+  const restore = useRestoreToStorageVersion(versionId);
+  // +++
+
+  // +++
+  return <button onClick={() => restore()}>Restore this version</button>;
+  // +++
+}
+```
+
+Automatic versions can be enabled in the dashboard, and meaningful versions can
+be created from your backend with
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+Learn more under [Version history](/docs/products/sync/version-history).
+
+### Multiplayer undo/redo [#multiplayer-undo-redo]
+
+Use [`useHistory`](/docs/api-reference/liveblocks-react#useHistory) to connect
+undo and redo to the slideshow toolbar. Each user’s history is independent, so
+undoing a slide edit or reorder does not reverse another collaborator’s work.
+Pause and resume history while dragging or resizing an element so the complete
+gesture becomes a single undo step.
+
+```tsx
+import {
+  useCanRedo,
+  useCanUndo,
+  useRedo,
+  useUndo,
+} from "@liveblocks/react/suspense";
+
+function SlideshowToolbar() {
+  // +++
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+  // +++
+
+  return (
+    <>
+      // +++
+      <button onClick={undo} disabled={!canUndo}>
+        Undo
+      </button>
+      <button onClick={redo} disabled={!canRedo}>
+        Redo
+      </button>
+      // +++
+    </>
+  );
+}
+```
+
+Learn more under
+[Multiplayer undo/redo](/docs/products/sync/storage#multiplayer-undo-redo).
+
+### File uploads [#file-uploads]
+
+Upload images, videos, and other binary assets with
+[`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile), then save
+the returned [`LiveFile`](/docs/products/sync/storage#LiveFile) in the slide’s
+Sync data. Resolve the reference for display with
+[`useFileUrl`](/docs/api-reference/liveblocks-react#useFileUrl).
+
+```tsx
+import type { LiveFile } from "@liveblocks/client";
+import {
+  useFileUrl,
+  useMutation,
+  useUploadFile,
+} from "@liveblocks/react/suspense";
+
+function SlideImage({ image }: { image: LiveFile }) {
+  // +++
+  const uploadFile = useUploadFile();
+  const { url: imageUrl } = useFileUrl(image);
+  const setImage = useMutation(({ storage }, liveFile: LiveFile) => {
+    storage.get("slides").get("slide-1")?.set("image", liveFile);
+  }, []);
+  // +++
+
+  async function uploadImage(file: File) {
+    // +++
+    setImage(await uploadFile(file));
+    // +++
+  }
+
+  return (
+    <>
+      <input
+        type="file"
+        accept="image/*,video/*"
+        // +++
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          if (file) uploadImage(file);
+        }}
+        // +++
+      />
+      {imageUrl ? <img src={imageUrl} alt="" /> : null}
+    </>
+  );
+}
+```
+
+Store reusable uploaded assets once and reference them from each slide that uses
+them instead of uploading duplicate files.
+
+### Comments [#comments]
+
+Use [Comments](/docs/products/comments) for review discussions. Store a stable
+`slideId` and percentage-based `x` and `y` coordinates in thread metadata so a
+pin remains attached to the same point when the 16:9 slide surface is resized.
+Create threads with
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer)
+and render existing threads with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
+
+```tsx
+import { CommentPin, FloatingComposer } from "@liveblocks/react-ui";
+
+function CommentOnSlide({ slideId }: { slideId: string }) {
+  return (
+    // +++
+    <FloatingComposer metadata={{ slideId, x: 0.5, y: 0.3 }}>
+      <CommentPin />
+    </FloatingComposer>
+    // +++
+  );
+}
+```
+
+The [canvas Comments quickstart](/docs/get-started/nextjs-comments-canvas) shows
+the same coordinate-based placement pattern on a draggable surface.
+
+### Permissions [#permissions]
+
+Each presentation is contained inside a room in your Liveblocks app, and
+permission groups can set access to it. For example, your slideshow may have an
+editor group and a viewer group. This can be set when modifying or creating a
+room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access
+    olivier: ["*:write"],
+  },
+});
+```
+
+More complex controls can be set too, learn more under
+[Permissions](/docs/api-reference/authentication/permissions).
+
+## Examples [#examples]
+
+Explore a complete slideshow with multiplayer editing, AI-generated slides, live
+cursors, Comments, and feeds.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Slideshow Generator",
+      slug: "ai-slideshow/nextjs-ai-slideshow",
+      image: "/images/examples/thumbnails/ai-slideshow.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

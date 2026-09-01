@@ -29,7 +29,7 @@ public threads.
 This guide focuses on building a private commenting UI. For the complete
 visibility and permissions reference, see
 [How to use public and private threads](/docs/guides/how-to-use-public-and-private-threads)
-and [Permissions](/docs/authentication/permissions).
+and [Permissions](/docs/api-reference/authentication/permissions).
 
 </Banner>
 
@@ -43,8 +43,8 @@ read them.
 
 There are three pieces to building this:
 
-1. [Authenticate users](/docs/authentication), and give admins and regular users
-   different room permissions.
+1. [Authenticate users](/docs/api-reference/authentication), and give admins and
+   regular users different room permissions.
 2. Create private threads with
    [`Composer`](/docs/api-reference/liveblocks-react-ui#Creating-private-threads)
    or [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread).
@@ -53,9 +53,9 @@ There are three pieces to building this:
 ## Authenticate users
 
 Before we get started, we need to decide on
-[permissions](/docs/authentication/permissions) for each group. Admin users will
-have full access to all threads, whereas regular users will only be able to see
-public threads.
+[permissions](/docs/api-reference/authentication/permissions) for each group.
+Admin users will have full access to all threads, whereas regular users will
+only be able to see public threads.
 
 <Table columns={["14%", "42%", "auto"]}>
 
@@ -106,9 +106,11 @@ Permissions and authentication are now set up!
 
 <Banner title="Using ID tokens">
 
-Liveblocks recommends [ID token authentication](/docs/authentication) by
-default, which we’ve used in these code snippets. If you’re using
-[access tokens](/docs/authentication/access-token), you must set permissions in
+Liveblocks recommends
+[ID token authentication](/docs/api-reference/authentication) by default, which
+we’ve used in these code snippets. If you’re using
+[access tokens](/docs/api-reference/authentication/access-token), you must set
+permissions in
 [`prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) instead of
 on the room.
 
@@ -190,6 +192,6 @@ You now have public and private comments living side by side in the same room.
 Here’s where to learn more:
 
 - [How to use public and private threads](/docs/guides/how-to-use-public-and-private-threads)
-- [Permissions](/docs/authentication/permissions)
+- [Permissions](/docs/api-reference/authentication/permissions)
 - [Comments API reference](/docs/api-reference/liveblocks-react#Comments)
 - [Comments component reference](/docs/api-reference/liveblocks-react-ui#Comments)

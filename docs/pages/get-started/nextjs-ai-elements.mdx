@@ -1,0 +1,448 @@
+---
+meta:
+  title:
+    "Get started with a realtime AI chat using Liveblocks, AI Elements, and
+    Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to build a realtime AI chat using Liveblocks Feeds, AI Elements,
+    and Next.js"
+---
+
+Liveblocks [Feeds](/docs/products/sync/feeds) persist chat messages and stream
+updates to everyone connected to a room. Follow these steps to build a realtime
+AI chat in a Next.js `/app` directory application, using
+[AI Elements](https://elements.ai-sdk.dev/) for the interface and the
+[AI SDK](https://ai-sdk.dev/docs) to generate responses.
+
+<Banner title="Live example">
+
+See the finished result in the
+[Realtime AI Elements Chats](/examples/ai-elements-realtime/nextjs-ai-elements-realtime)
+example.
+
+</Banner>
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks and the AI SDK</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/node @liveblocks/react ai
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Install AI Elements</StepTitle>
+    <StepContent>
+
+      Install the AI Elements components used in this guide. The CLI adds the
+      component source and any required shadcn/ui dependencies to your app.
+      AI Elements requires React 19 and Tailwind CSS 4.
+
+      ```bash
+      npx ai-elements@latest add conversation
+      npx ai-elements@latest add message
+      npx ai-elements@latest add prompt-input
+      ```
+
+      `MessageResponse` uses Streamdown to render Markdown. Add its source files
+      to your Tailwind CSS configuration.
+
+      ```css file="app/globals.css"
+      @import "tailwindcss";
+
+      /* AI Elements message Markdown */
+      @source "../node_modules/streamdown/dist/*.js";
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add your API keys</StepTitle>
+    <StepContent>
+
+      Add your Liveblocks secret key from the
+      [dashboard](/dashboard/apikeys), then add an
+      [AI Gateway key](https://vercel.com/docs/ai-gateway) for model access.
+      Keep both keys on the server.
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      AI_GATEWAY_API_KEY="your-ai-gateway-key"
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      Create a config file that will hold the Liveblocks types for your app.
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Define the feed message shape</StepTitle>
+    <StepContent>
+
+      In `liveblocks.config.ts`, define the JSON data stored in each feed
+      message. The `streaming` property lets every connected client show when an
+      assistant response is still being generated.
+
+      ```tsx file="liveblocks.config.ts"
+      declare global {
+        interface Liveblocks {
+          FeedMessageData: {
+            role: "user" | "assistant";
+            content: string;
+            streaming?: boolean;
+          };
+
+          FeedMetadata: {};
+        }
+      }
+
+      export {};
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Stream AI responses into the feed</StepTitle>
+    <StepContent>
+
+      Create an API route that generates a response with the AI SDK. The route
+      creates one assistant message with
+      [`createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages),
+      then writes each batch of generated text into it with
+      [`updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId).
+      Because the response is stored in a feed, every connected user sees it
+      stream in through Liveblocks—no separate client-side AI stream is needed.
+
+      ```tsx file="app/api/ai-reply/route.ts"
+      import { Liveblocks } from "@liveblocks/node";
+      import { streamText } from "ai";
+      import type { NextRequest } from "next/server";
+
+      type ChatMessage = {
+        role: "user" | "assistant";
+        content: string;
+      };
+
+      export async function POST(request: NextRequest) {
+        const liveblocks = new Liveblocks({
+          secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+        });
+
+        const { roomId, feedId, messages }: {
+          roomId: string;
+          feedId: string;
+          messages: ChatMessage[];
+        } = await request.json();
+
+        // Create an empty assistant message
+        const assistantMessage = await liveblocks.createFeedMessage({
+          roomId,
+          feedId,
+          data: { role: "assistant", content: "", streaming: true },
+        });
+
+        let content = "";
+        const updateAssistantMessage = (streaming: boolean) =>
+          liveblocks.updateFeedMessage({
+            roomId,
+            feedId,
+            messageId: assistantMessage.id,
+            // updateFeedMessage replaces data, so always send every property
+            data: { role: "assistant", content, streaming },
+          });
+
+        try {
+          const result = streamText({
+            model: "openai/gpt-5.4-mini",
+            system: "You are a helpful assistant.",
+            messages,
+          });
+
+          let lastUpdate = 0;
+
+          // Persist the streamed response in the same feed message
+          for await (const text of result.textStream) {
+            content += text;
+
+            if (Date.now() - lastUpdate >= 100) {
+              await updateAssistantMessage(true);
+              lastUpdate = Date.now();
+            }
+          }
+
+          await updateAssistantMessage(false);
+        } catch (error) {
+          const reason =
+            error instanceof Error ? error.message : "Unknown error";
+          content ||= `Sorry, something went wrong.\n\n\`${reason}\``;
+          await updateAssistantMessage(false).catch(() => {});
+          return new Response(reason, { status: 500 });
+        }
+
+        return Response.json({ ok: true });
+      }
+      ```
+
+      In production, validate the user and their access to `roomId` before
+      writing messages with a secret key.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Build the chat with AI Elements</StepTitle>
+    <StepContent>
+
+      Use
+      [`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages)
+      to render the shared message history. When a user submits the AI Elements
+      `PromptInput`, create the feed if needed, append their message with
+      [`useCreateFeedMessage`](/docs/api-reference/liveblocks-react#useCreateFeedMessage),
+      and call the server route.
+
+      ```tsx file="app/Chat.tsx"
+      "use client";
+
+      import { useRef, useState } from "react";
+      import {
+        useCreateFeed,
+        useCreateFeedMessage,
+        useFeedMessages,
+        useRoom,
+      } from "@liveblocks/react/suspense";
+      import {
+        Conversation,
+        ConversationContent,
+        ConversationScrollButton,
+      } from "@/components/ai-elements/conversation";
+      import {
+        Message,
+        MessageContent,
+        MessageResponse,
+      } from "@/components/ai-elements/message";
+      import {
+        PromptInput,
+        PromptInputBody,
+        PromptInputFooter,
+        PromptInputSubmit,
+        PromptInputTextarea,
+        type PromptInputMessage,
+      } from "@/components/ai-elements/prompt-input";
+
+      const FEED_ID = "ai-chat";
+
+      export function Chat() {
+        const { messages } = useFeedMessages(FEED_ID);
+        const createFeed = useCreateFeed();
+        const createFeedMessage = useCreateFeedMessage();
+        const room = useRoom();
+        const ensuredFeed = useRef(messages.length > 0);
+        const [isGenerating, setIsGenerating] = useState(false);
+
+        async function send(text: string) {
+          const content = text.trim();
+          if (!content || isGenerating) {
+            return;
+          }
+
+          setIsGenerating(true);
+
+          try {
+            // A feed must exist before adding its first message
+            if (!ensuredFeed.current) {
+              ensuredFeed.current = true;
+              createFeed(FEED_ID, { metadata: {} }).catch(() => {
+                // Another user may have created the feed first
+              });
+            }
+
+            const userMessage = { role: "user" as const, content };
+            createFeedMessage(FEED_ID, userMessage);
+
+            await fetch("/api/ai-reply", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                roomId: room.id,
+                feedId: FEED_ID,
+                messages: [
+                  ...messages.map(({ data }) => ({
+                    role: data.role,
+                    content: data.content,
+                  })),
+                  userMessage,
+                ],
+              }),
+            });
+          } finally {
+            setIsGenerating(false);
+          }
+        }
+
+        return (
+          <div className="mx-auto flex h-[600px] max-w-3xl flex-col">
+            <Conversation className="flex-1">
+              <ConversationContent>
+                {messages.map(({ id, data }) => (
+                  <Message key={id} from={data.role}>
+                    <MessageContent>
+                      <MessageResponse>{data.content}</MessageResponse>
+                      {data.streaming && !data.content ? (
+                        <span>Thinking…</span>
+                      ) : null}
+                    </MessageContent>
+                  </Message>
+                ))}
+              </ConversationContent>
+              <ConversationScrollButton />
+            </Conversation>
+
+            <PromptInput
+              onSubmit={(message: PromptInputMessage) => send(message.text)}
+            >
+              <PromptInputBody>
+                <PromptInputTextarea placeholder="Ask anything…" />
+              </PromptInputBody>
+              <PromptInputFooter className="justify-end">
+                <PromptInputSubmit
+                  disabled={isGenerating}
+                  status={isGenerating ? "submitted" : "ready"}
+                />
+              </PromptInputFooter>
+            </PromptInput>
+          </div>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks rooms are separate collaborative spaces. Users connected to
+      the same room share the same feeds and messages. Set up a
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with
+      [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider), and
+      use
+      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
+      while the feed loads.
+
+      ```tsx file="app/Room.tsx"
+      "use client";
+
+      import { ReactNode } from "react";
+      import {
+        ClientSideSuspense,
+        LiveblocksProvider,
+        RoomProvider,
+      } from "@liveblocks/react/suspense";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          <LiveblocksProvider publicApiKey="{{PUBLIC_KEY}}">
+            <RoomProvider id="my-ai-chat">
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the room and chat to your page</StepTitle>
+    <StepContent>
+
+      Render the chat inside the room so it can use the Feeds hooks.
+
+      ```tsx file="app/page.tsx"
+      import { Chat } from "./Chat";
+      import { Room } from "./Room";
+
+      export default function Page() {
+        return (
+          <Room>
+            <Chat />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: authenticate your users</StepTitle>
+    <StepContent>
+
+      Your realtime AI chat is now working. Before going to production,
+      [authenticate your users](/docs/api-reference/authentication) and give
+      them explicit access to the rooms and feeds they can use.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/api-reference/authentication">Set up authentication</a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+You’ve built a realtime AI chat where Liveblocks persists and synchronizes the
+conversation, the AI SDK generates responses, and AI Elements renders the
+interface.
+
+- [Chat use case](/docs/use-cases/chat)
+- [Feeds overview](/docs/products/sync/feeds)
+- [Feeds React API reference](/docs/api-reference/liveblocks-react#Feeds)
+- [AI Elements components](https://elements.ai-sdk.dev/components)
+
+---
+
+## Example using AI Elements
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Realtime AI Elements Chats",
+      slug: "ai-elements-realtime/nextjs-ai-elements-realtime",
+      image: "/images/examples/thumbnails/ai-chats.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

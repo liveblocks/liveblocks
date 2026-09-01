@@ -1,6 +1,8 @@
 # Liveblocks Python SDK
 
-The Python SDK for Liveblocks provides you with a client for accessing [Liveblocks](https://liveblocks.io) APIs. This library is complementary to the front end libraries provided by Liveblocks.
+The Python SDK for Liveblocks provides you with a client for accessing
+[Liveblocks](https://liveblocks.io) APIs. This library is complementary to the
+front end libraries provided by Liveblocks.
 
 ## Installation
 
@@ -12,7 +14,8 @@ pip install liveblocks
 
 ## Quickstart
 
-All API calls require a Liveblocks client set up with your secret key. Find your key in the [Liveblocks Dashboard](https://liveblocks.io/dashboard/apikeys).
+All API calls require a Liveblocks client set up with your secret key. Find your
+key in the [Liveblocks Dashboard](https://liveblocks.io/dashboard/apikeys).
 
 ### Synchronous
 
@@ -46,18 +49,26 @@ async with client:
 
 #### `get_rooms`
 
-This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
+This endpoint returns a list of your rooms. The rooms are returned sorted by
+creation date, from newest to oldest. You can filter rooms by room ID prefixes,
+metadata, users accesses, and groups accesses. Corresponds to
+[`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
-There is a pagination system where the cursor to the next page is returned in the response as `nextCursor`, which can be combined with `startingAfter`.
-You can also limit the number of rooms by query.
+There is a pagination system where the cursor to the next page is returned in
+the response as `nextCursor`, which can be combined with `startingAfter`. You
+can also limit the number of rooms by query.
 
-Filtering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.
+Filtering by metadata works by giving key values like `metadata.color=red`. Of
+course you can combine multiple metadata clauses to refine the response like
+`metadata.color=red&metadata.type=text`. Notice here the operator AND is applied
+between each clauses.
 
-Filtering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.
-Notice here the operator OR is applied between each `groupIds` and the `userId`.
-
+Filtering by groups or userId works by giving a list of groups like
+`groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`. Notice
+here the operator OR is applied between each `groupIds` and the `userId`.
 
 **Example**
+
 ```python
 result = client.get_rooms(
     # limit=20,
@@ -69,30 +80,42 @@ result = client.get_rooms(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `limit` | `int \| Unset` | No | A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
-| `starting_after` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-| `organization_id` | `str \| Unset` | No | A filter on organization ID. |
-| `query` | `str \| Unset` | No | Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language). |
-| `user_id` | `str \| Unset` | No | A filter on users accesses. |
-| `group_ids` | `str \| Unset` | No | A filter on groups accesses. Multiple groups can be used. |
-
+| Name              | Type           | Required | Description                                                                                                                                                                                                                                                                                 |
+| ----------------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `limit`           | `int \| Unset` | No       | A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_                                                                                                                                                                 |
+| `starting_after`  | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                                                                                                                                                                                            |
+| `organization_id` | `str \| Unset` | No       | A filter on organization ID.                                                                                                                                                                                                                                                                |
+| `query`           | `str \| Unset` | No       | Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language). |
+| `user_id`         | `str \| Unset` | No       | A filter on users accesses.                                                                                                                                                                                                                                                                 |
+| `group_ids`       | `str \| Unset` | No       | A filter on groups accesses. Multiple groups can be used.                                                                                                                                                                                                                                   |
 
 ---
 
 #### `create_room`
 
-This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. 
-- `defaultAccesses` is the default room permission list, for example `[]`, `["*:read"]`, `["*:write"]`, or a more granular permission list. 
-- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+This endpoint creates a new room. `id` and `defaultAccesses` are required. When
+provided with a `?idempotent` query argument, will not return a 409 when the
+room already exists, but instead return the existing room as-is. Corresponds to
+[`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms),
+or to
+[`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId)
+when `?idempotent` is provided.
+
+- `defaultAccesses` is the default room permission list, for example `[]`,
+  `["*:read"]`, `["*:write"]`, or a more granular permission list.
+- `metadata` could be key/value as `string` or `string[]`. `metadata` supports
+  maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+  length has a limit of 256 characters maximum. `metadata` is optional field.
+- `usersAccesses` contains user-specific permission lists. It can contain 1000
+  ids maximum. Id length has a limit of 256 characters. `usersAccesses` is
+  optional field.
 - `groupsAccesses` contains group-specific permission lists and is optional.
 
-
 **Example**
+
 ```python
 from liveblocks.models import CreateRoomRequestBody
 
@@ -108,55 +131,61 @@ result = client.create_room(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `idempotent` | `bool \| Unset` | No | When provided, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId). |
-| `body` | `CreateRoomRequestBody` | Yes | Request body (application/json) |
-
+| Name         | Type                    | Required | Description                                                                                                                                                                                                                                        |
+| ------------ | ----------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `idempotent` | `bool \| Unset`         | No       | When provided, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId). |
+| `body`       | `CreateRoomRequestBody` | Yes      | Request body (application/json)                                                                                                                                                                                                                    |
 
 ---
 
 #### `get_room`
 
-This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid).
+This endpoint returns a room by its ID. Corresponds to
+[`liveblocks.getRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid).
 
 **Example**
+
 ```python
 result = client.get_room(
     room_id="my-room-id",
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
 
 ---
 
 #### `update_room`
 
-This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid). 
+This endpoint updates specific properties of a room. Corresponds to
+[`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid).
 
-It’s not necessary to provide the entire room’s information. 
-Setting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: 
-``{
-    "usersAccesses": {
-        "john": null
-    }
-}``
-`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+It’s not necessary to provide the entire room’s information. Setting a property
+to `null` means to delete this property. For example, if you want to remove
+access to a specific user without losing other users:
+`{     "usersAccesses": {         "john": null     } }` `defaultAccesses`,
+`metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-- `defaultAccesses` is the default room permission list, for example `[]`, `["*:read"]`, `["*:write"]`, or a more granular permission list.
-- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `defaultAccesses` is the default room permission list, for example `[]`,
+  `["*:read"]`, `["*:write"]`, or a more granular permission list.
+- `metadata` could be key/value as `string` or `string[]`. `metadata` supports
+  maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+  length has a limit of 256 characters maximum. `metadata` is optional field.
+- `usersAccesses` contains user-specific permission lists. It can contain 1000
+  ids maximum. Id length has a limit of 256 characters. `usersAccesses` is
+  optional field.
 - `groupsAccesses` contains group-specific permission lists and is optional.
 
 **Example**
+
 ```python
 from liveblocks.models import UpdateRoomRequestBody
 
@@ -170,73 +199,87 @@ result = client.update_room(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `body` | `UpdateRoomRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                    | Required | Description                     |
+| --------- | ----------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                   | Yes      | ID of the room                  |
+| `body`    | `UpdateRoomRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `delete_room`
 
-This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomid).
+This endpoint deletes a room. A deleted room is no longer accessible from the
+API or the dashboard and it cannot be restored. Corresponds to
+[`liveblocks.deleteRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomid).
 
 **Example**
+
 ```python
 client.delete_room(
     room_id="my-room-id",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
 
 ---
 
 #### `prewarm_room`
 
-Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be connecting to a room with [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider) or [`enterRoom`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the room will load quicker. Corresponds to [`liveblocks.prewarmRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-prewarm).
+Speeds up connecting to a room for the next 10 seconds. Use this when you know a
+user will be connecting to a room with
+[`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider)
+or
+[`enterRoom`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.enterRoom)
+within 10 seconds, and the room will load quicker. Corresponds to
+[`liveblocks.prewarmRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-prewarm).
 
 **Example**
+
 ```python
 client.prewarm_room(
     room_id="my-room-id",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
 
 ---
 
 #### `upsert_room`
 
-This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId). 
+This endpoint updates specific properties of a room. Corresponds to
+[`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
 
-It’s not necessary to provide the entire room’s information. 
-Setting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: 
-``{
-    "usersAccesses": {
-        "john": null
-    }
-}``
-`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+It’s not necessary to provide the entire room’s information. Setting a property
+to `null` means to delete this property. For example, if you want to remove
+access to a specific user without losing other users:
+`{     "usersAccesses": {         "john": null     } }` `defaultAccesses`,
+`metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-- `defaultAccesses` is the default room permission list, for example `[]`, `["*:read"]`, `["*:write"]`, or a more granular permission list.
-- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` contains user-specific permission lists. It can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `defaultAccesses` is the default room permission list, for example `[]`,
+  `["*:read"]`, `["*:write"]`, or a more granular permission list.
+- `metadata` could be key/value as `string` or `string[]`. `metadata` supports
+  maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+  length has a limit of 256 characters maximum. `metadata` is optional field.
+- `usersAccesses` contains user-specific permission lists. It can contain 1000
+  ids maximum. Id length has a limit of 256 characters. `usersAccesses` is
+  optional field.
 - `groupsAccesses` contains group-specific permission lists and is optional.
 
 **Example**
+
 ```python
 from liveblocks.models import UpsertRoomRequestBody
 
@@ -249,21 +292,24 @@ result = client.upsert_room(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `body` | `UpsertRoomRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                    | Required | Description                     |
+| --------- | ----------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                   | Yes      | ID of the room                  |
+| `body`    | `UpsertRoomRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `update_room_id`
 
-This endpoint permanently updates the room’s ID. All existing references to the old room ID will need to be updated. Returns the updated room. Corresponds to [`liveblocks.updateRoomId`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid-update-room-id).
+This endpoint permanently updates the room’s ID. All existing references to the
+old room ID will need to be updated. Returns the updated room. Corresponds to
+[`liveblocks.updateRoomId`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid-update-room-id).
 
 **Example**
+
 ```python
 from liveblocks.models import UpdateRoomIdRequestBody
 
@@ -275,21 +321,23 @@ result = client.update_room_id(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | The new ID for the room |
-| `body` | `UpdateRoomIdRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                      | Required | Description                     |
+| --------- | ------------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                     | Yes      | The new ID for the room         |
+| `body`    | `UpdateRoomIdRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `update_room_organization_id`
 
-This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's current organization ID. Returns the updated room.
+This endpoint updates the room's organization ID. The `fromOrganizationId` must
+match the room's current organization ID. Returns the updated room.
 
 **Example**
+
 ```python
 from liveblocks.models import UpdateRoomOrganizationIdRequestBody
 
@@ -302,44 +350,54 @@ result = client.update_room_organization_id(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | The ID of the room |
-| `body` | `UpdateRoomOrganizationIdRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                                  | Required | Description                     |
+| --------- | ------------------------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                                 | Yes      | The ID of the room              |
+| `body`    | `UpdateRoomOrganizationIdRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_active_users`
 
-This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). 
+This endpoint returns a list of users currently present in the requested room.
+Corresponds to
+[`liveblocks.getActiveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users).
 
-For optimal performance, we recommend calling this endpoint no more than once every 10 seconds. 
-Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
+For optimal performance, we recommend calling this endpoint no more than once
+every 10 seconds. Duplicates can occur if a user is in the requested room with
+multiple browser tabs opened.
 
 **Example**
+
 ```python
 result = client.get_active_users(
     room_id="my-room-id",
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
 
 ---
 
 #### `set_presence`
 
-This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection. The presence data will automatically expire after the specified TTL (time-to-live). This is useful for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all connected users in the room. Corresponds to [`liveblocks.setPresence`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
+This endpoint sets ephemeral presence for a user in a room without requiring a
+WebSocket connection. The presence data will automatically expire after the
+specified TTL (time-to-live). This is useful for scenarios like showing an AI
+agent's presence in a room. The presence will be broadcast to all connected
+users in the room. Corresponds to
+[`liveblocks.setPresence`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
 
 **Example**
+
 ```python
 from liveblocks.models import SetPresenceRequestBody
 
@@ -353,34 +411,39 @@ client.set_presence(
     ),
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `body` | `SetPresenceRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                     | Required | Description                     |
+| --------- | ------------------------ | -------- | ------------------------------- |
+| `room_id` | `str`                    | Yes      | ID of the room                  |
+| `body`    | `SetPresenceRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `broadcast_event`
 
-This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-broadcast-event).
+This endpoint enables the broadcast of an event to a room without having to
+connect to it via the `client` from `@liveblocks/client`. It takes any valid
+JSON as a request body. The `connectionId` passed to event listeners is `-1`
+when using this API. Corresponds to
+[`liveblocks.broadcastEvent`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-broadcast-event).
 
 **Example**
+
 ```python
 client.broadcast_event(
     room_id="my-room-id",
     body=...,
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `body` | `Any` | Yes | Request body (application/json) |
-
+| Name      | Type  | Required | Description                     |
+| --------- | ----- | -------- | ------------------------------- |
+| `room_id` | `str` | Yes      | ID of the room                  |
+| `body`    | `Any` | Yes      | Request body (application/json) |
 
 ---
 
@@ -388,9 +451,12 @@ client.broadcast_event(
 
 #### `get_storage_document`
 
-Returns the contents of the room’s Storage tree. Corresponds to [`liveblocks.getStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-storage). 
+Returns the contents of the room’s Storage tree. Corresponds to
+[`liveblocks.getStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-storage).
 
-The default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree. These nodes show up in the output as objects with two properties, for example:
+The default outputted format is called “plain LSON”, which includes information
+on the Live data structures in the tree. These nodes show up in the output as
+objects with two properties, for example:
 
 ```json
 {
@@ -399,9 +465,11 @@ The default outputted format is called “plain LSON”, which includes informat
 }
 ```
 
-If you’re not interested in this information, you can use the simpler `?format=json` query param, see below.
+If you’re not interested in this information, you can use the simpler
+`?format=json` query param, see below.
 
 **Example**
+
 ```python
 result = client.get_storage_document(
     room_id="my-room-id",
@@ -409,31 +477,40 @@ result = client.get_storage_document(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `format_` | `GetStorageDocumentFormat \| Unset` | No | Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap becomes a simple JSON object, each LiveList becomes a simple JSON array, and each LiveFile becomes its metadata object. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with. |
-
+| Name      | Type                                | Required | Description                                                                                                                                                                                                                                                                                                                                                                                 |
+| --------- | ----------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `room_id` | `str`                               | Yes      | ID of the room                                                                                                                                                                                                                                                                                                                                                                              |
+| `format_` | `GetStorageDocumentFormat \| Unset` | No       | Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap becomes a simple JSON object, each LiveList becomes a simple JSON array, and each LiveFile becomes its metadata object. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with. |
 
 ---
 
 #### `initialize_storage_document`
 
-This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).
+This endpoint initializes or reinitializes a room’s Storage. The room must
+already exist. Calling this endpoint will disconnect all users from the room if
+there are any, triggering a reconnect. Corresponds to
+[`liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).
 
-The format of the request body is the same as what’s returned by the get Storage endpoint.
+The format of the request body is the same as what’s returned by the get Storage
+endpoint.
 
-For each Liveblocks data structure that you want to create, you need a JSON element having two properties:
+For each Liveblocks data structure that you want to create, you need a JSON
+element having two properties:
+
 - `"liveblocksType"` => `"LiveObject" | "LiveList" | "LiveMap" | "LiveFile"`
 - `"data"` => contains the nested data structures (children) and data.
 
 The root’s type can only be LiveObject.
 
-A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, `LiveMap`, and `LiveFile` to the structure expected by the endpoint.
+A utility function, `toPlainLson` is included in `@liveblocks/client` from
+`1.0.9` to help convert `LiveObject`, `LiveList`, `LiveMap`, and `LiveFile` to
+the structure expected by the endpoint.
 
 **Example**
+
 ```python
 from liveblocks.models import InitializeStorageDocumentBody
 
@@ -446,68 +523,87 @@ result = client.initialize_storage_document(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `body` | `InitializeStorageDocumentBody` | Yes | Request body (application/json) |
-
+| Name      | Type                            | Required | Description                     |
+| --------- | ------------------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                           | Yes      | ID of the room                  |
+| `body`    | `InitializeStorageDocumentBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `delete_storage_document`
 
-This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).
-
+This endpoint deletes all of the room’s Storage data. Calling this endpoint will
+disconnect all users from the room if there are any. Corresponds to
+[`liveblocks.deleteStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).
 
 **Example**
+
 ```python
 client.delete_storage_document(
     room_id="my-room-id",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
 
 ---
 
 #### `patch_storage_document`
 
-Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the room's Storage document, useful for modifying Storage. Operations are applied in order; if any operation fails, the document is not changed and a 422 response with a helpful message is returned.
+Applies a sequence of
+[JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the
+room's Storage document, useful for modifying Storage. Operations are applied in
+order; if any operation fails, the document is not changed and a 422 response
+with a helpful message is returned.
 
-**Paths and data types:** Be as specific as possible with your target path. Every parent in the chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in `add` or `replace` operations are automatically converted to LiveObjects and LiveLists. LiveText is a leaf node: only the LiveText node itself is addressable, not fields under its serialized `data`. Use `replace` with a string or a LiveTextData array to replace the whole node, for example `/text` with `[["Hello"]]`; use `remove` on `/text` to remove the node. LiveText versioning is internal and is not part of this API.
+**Paths and data types:** Be as specific as possible with your target path.
+Every parent in the chain of path segments must be a LiveObject, LiveList, or
+LiveMap. Complex nested objects passed in `add` or `replace` operations are
+automatically converted to LiveObjects and LiveLists. LiveText is a leaf node:
+only the LiveText node itself is addressable, not fields under its serialized
+`data`. Use `replace` with a string or a LiveTextData array to replace the whole
+node, for example `/text` with `[["Hello"]]`; use `remove` on `/text` to remove
+the node. LiveText versioning is internal and is not part of this API.
 
-**Performance:** For large Storage documents, applying a patch can be expensive because the full state is reconstructed on the server to apply the operations. Very large documents may not be suitable for this endpoint.
+**Performance:** For large Storage documents, applying a patch can be expensive
+because the full state is reconstructed on the server to apply the operations.
+Very large documents may not be suitable for this endpoint.
 
-For a **full guide with examples**, see [Modifying storage via REST API with JSON Patch](https://liveblocks.io/docs/guides/modifying-storage-via-rest-api-with-json-patch).
+For a **full guide with examples**, see
+[Modifying storage via REST API with JSON Patch](https://liveblocks.io/docs/guides/modifying-storage-via-rest-api-with-json-patch).
 
 **Example**
+
 ```python
 client.patch_storage_document(
     room_id="my-room-id",
     body=...,
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `body` | `list[AddJsonPatchOperation \| CopyJsonPatchOperation \| MoveJsonPatchOperation \| RemoveJsonPatchOperation \| ReplaceJsonPatchOperation \| TestJsonPatchOperation]` | Yes | Request body (application/json) |
-
+| Name      | Type                                                                                                                                                                 | Required | Description                     |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                                                                                                                                                                | Yes      | ID of the room                  |
+| `body`    | `list[AddJsonPatchOperation \| CopyJsonPatchOperation \| MoveJsonPatchOperation \| RemoveJsonPatchOperation \| ReplaceJsonPatchOperation \| TestJsonPatchOperation]` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_storage_file`
 
-Returns an uploaded Storage file's metadata and a presigned download URL. The URL expires after one hour.
+Returns an uploaded Storage file's metadata and a presigned download URL. The
+URL expires after one hour.
 
 **Example**
+
 ```python
 result = client.get_storage_file(
     room_id="my-room-id",
@@ -515,21 +611,25 @@ result = client.get_storage_file(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `file_id` | `str` | Yes | ID of the Storage file |
-
+| Name      | Type  | Required | Description            |
+| --------- | ----- | -------- | ---------------------- |
+| `room_id` | `str` | Yes      | ID of the room         |
+| `file_id` | `str` | Yes      | ID of the Storage file |
 
 ---
 
 #### `upload_storage_file`
 
-Uploads a file's bytes to a room and returns the metadata needed to create a LiveFile. For large files, use the multipart upload operations instead. Repeating the request with the same file ID, name, and file size returns the existing upload.
+Uploads a file's bytes to a room and returns the metadata needed to create a
+LiveFile. For large files, use the multipart upload operations instead.
+Repeating the request with the same file ID, name, and file size returns the
+existing upload.
 
 **Example**
+
 ```python
 result = client.upload_storage_file(
     room_id="my-room-id",
@@ -540,16 +640,16 @@ result = client.upload_storage_file(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `file_id` | `str` | Yes | ID for the Storage file |
-| `name` | `str` | Yes | Name of the file |
-| `file_size` | `int \| Unset` | No | Expected file size in bytes. |
-| `body` | `File` | Yes | Request body (application/octet-stream) |
-
+| Name        | Type           | Required | Description                             |
+| ----------- | -------------- | -------- | --------------------------------------- |
+| `room_id`   | `str`          | Yes      | ID of the room                          |
+| `file_id`   | `str`          | Yes      | ID for the Storage file                 |
+| `name`      | `str`          | Yes      | Name of the file                        |
+| `file_size` | `int \| Unset` | No       | Expected file size in bytes.            |
+| `body`      | `File`         | Yes      | Request body (application/octet-stream) |
 
 ---
 
@@ -558,6 +658,7 @@ print(result)
 Starts a multipart upload for a Storage file.
 
 **Example**
+
 ```python
 result = client.create_storage_file_multipart_upload(
     room_id="my-room-id",
@@ -567,15 +668,15 @@ result = client.create_storage_file_multipart_upload(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `file_id` | `str` | Yes | ID for the Storage file |
-| `name` | `str` | Yes | Name of the file |
-| `file_size` | `int \| Unset` | No | Expected file size in bytes |
-
+| Name        | Type           | Required | Description                 |
+| ----------- | -------------- | -------- | --------------------------- |
+| `room_id`   | `str`          | Yes      | ID of the room              |
+| `file_id`   | `str`          | Yes      | ID for the Storage file     |
+| `name`      | `str`          | Yes      | Name of the file            |
+| `file_size` | `int \| Unset` | No       | Expected file size in bytes |
 
 ---
 
@@ -584,6 +685,7 @@ print(result)
 Uploads one part of a Storage file multipart upload.
 
 **Example**
+
 ```python
 result = client.upload_storage_file_multipart_part(
     room_id="my-room-id",
@@ -594,24 +696,26 @@ result = client.upload_storage_file_multipart_part(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `file_id` | `str` | Yes | ID of the Storage file |
-| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
-| `part_number` | `int` | Yes | One-based part number |
-| `body` | `File` | Yes | Request body (application/octet-stream) |
-
+| Name          | Type   | Required | Description                                       |
+| ------------- | ------ | -------- | ------------------------------------------------- |
+| `room_id`     | `str`  | Yes      | ID of the room                                    |
+| `file_id`     | `str`  | Yes      | ID of the Storage file                            |
+| `upload_id`   | `str`  | Yes      | ID returned when the multipart upload was created |
+| `part_number` | `int`  | Yes      | One-based part number                             |
+| `body`        | `File` | Yes      | Request body (application/octet-stream)           |
 
 ---
 
 #### `complete_storage_file_multipart_upload`
 
-Completes a multipart upload and returns the metadata needed to create a LiveFile.
+Completes a multipart upload and returns the metadata needed to create a
+LiveFile.
 
 **Example**
+
 ```python
 from liveblocks.models import CompleteStorageFileMultipartUploadRequestBody
 
@@ -625,15 +729,15 @@ result = client.complete_storage_file_multipart_upload(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `file_id` | `str` | Yes | ID of the Storage file |
-| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
-| `body` | `CompleteStorageFileMultipartUploadRequestBody` | Yes | Request body (application/json) |
-
+| Name        | Type                                            | Required | Description                                       |
+| ----------- | ----------------------------------------------- | -------- | ------------------------------------------------- |
+| `room_id`   | `str`                                           | Yes      | ID of the room                                    |
+| `file_id`   | `str`                                           | Yes      | ID of the Storage file                            |
+| `upload_id` | `str`                                           | Yes      | ID returned when the multipart upload was created |
+| `body`      | `CompleteStorageFileMultipartUploadRequestBody` | Yes      | Request body (application/json)                   |
 
 ---
 
@@ -642,6 +746,7 @@ print(result)
 Aborts a multipart upload and discards its uploaded parts.
 
 **Example**
+
 ```python
 client.abort_storage_file_multipart_upload(
     room_id="my-room-id",
@@ -649,14 +754,14 @@ client.abort_storage_file_multipart_upload(
     upload_id="...",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `file_id` | `str` | Yes | ID of the Storage file |
-| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
-
+| Name        | Type  | Required | Description                                       |
+| ----------- | ----- | -------- | ------------------------------------------------- |
+| `room_id`   | `str` | Yes      | ID of the room                                    |
+| `file_id`   | `str` | Yes      | ID of the Storage file                            |
+| `upload_id` | `str` | Yes      | ID returned when the multipart upload was created |
 
 ---
 
@@ -664,9 +769,12 @@ client.abort_storage_file_multipart_upload(
 
 #### `get_yjs_document`
 
-This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to [`liveblocks.getYjsDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
+This endpoint returns a JSON representation of the room’s Yjs document.
+Corresponds to
+[`liveblocks.getYjsDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
 
 **Example**
+
 ```python
 result = client.get_yjs_document(
     room_id="my-room-id",
@@ -676,25 +784,35 @@ result = client.get_yjs_document(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `formatting` | `bool \| Unset` | No | If present, YText will return formatting. |
-| `key` | `str \| Unset` | No | Returns only a single key’s value, e.g. `doc.get(key).toJSON()`. |
-| `type_` | `GetYjsDocumentType \| Unset` | No | Used with key to override the inferred type, i.e. `"ymap"` will return `doc.get(key, Y.Map)`. |
-
+| Name         | Type                          | Required | Description                                                                                   |
+| ------------ | ----------------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| `room_id`    | `str`                         | Yes      | ID of the room                                                                                |
+| `formatting` | `bool \| Unset`               | No       | If present, YText will return formatting.                                                     |
+| `key`        | `str \| Unset`                | No       | Returns only a single key’s value, e.g. `doc.get(key).toJSON()`.                              |
+| `type_`      | `GetYjsDocumentType \| Unset` | No       | Used with key to override the inferred type, i.e. `"ymap"` will return `doc.get(key, Y.Map)`. |
 
 ---
 
 #### `send_yjs_binary_update`
 
-This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update to a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.sendYjsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
+This endpoint is used to send a Yjs binary update to the room’s Yjs document.
+You can use this endpoint to initialize Yjs data for the room or to update the
+room’s Yjs document. To send an update to a subdocument instead of the main
+document, pass its `guid`. Corresponds to
+[`liveblocks.sendYjsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
 
-The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON, unlike most other endpoints.
+The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See
+the [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more
+details. When manually making this HTTP call, set the HTTP header `Content-Type`
+to `application/octet-stream`, and send the binary update (a `Uint8Array`) in
+the body of the HTTP request. This endpoint does not accept JSON, unlike most
+other endpoints.
 
 **Example**
+
 ```python
 client.send_yjs_binary_update(
     room_id="my-room-id",
@@ -702,22 +820,29 @@ client.send_yjs_binary_update(
     # guid="subdoc-guid-123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `guid` | `str \| Unset` | No | ID of the subdocument |
-| `body` | `File` | Yes | Request body (application/octet-stream) |
-
+| Name      | Type           | Required | Description                             |
+| --------- | -------------- | -------- | --------------------------------------- |
+| `room_id` | `str`          | Yes      | ID of the room                          |
+| `guid`    | `str \| Unset` | No       | ID of the subdocument                   |
+| `body`    | `File`         | Yes      | Request body (application/octet-stream) |
 
 ---
 
 #### `get_yjs_document_as_binary_update`
 
-This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).
+This endpoint returns the room's Yjs document encoded as a single binary update.
+This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document
+in your back end. See
+[Yjs documentation](https://docs.yjs.dev/api/document-updates) for more
+information on working with updates. To return a subdocument instead of the main
+document, pass its `guid`. Corresponds to
+[`liveblocks.getYjsDocumentAsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).
 
 **Example**
+
 ```python
 result = client.get_yjs_document_as_binary_update(
     room_id="my-room-id",
@@ -725,13 +850,13 @@ result = client.get_yjs_document_as_binary_update(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `guid` | `str \| Unset` | No | ID of the subdocument |
-
+| Name      | Type           | Required | Description           |
+| --------- | -------------- | -------- | --------------------- |
+| `room_id` | `str`          | Yes      | ID of the room        |
+| `guid`    | `str \| Unset` | No       | ID of the subdocument |
 
 ---
 
@@ -739,9 +864,13 @@ print(result)
 
 #### `get_version_history`
 
-This endpoint returns a list of version history snapshots for the room. The versions are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getVersionHistory`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-version-history).
+This endpoint returns a list of version history snapshots for the room. The
+versions are returned sorted by creation date, from newest to oldest.
+Corresponds to
+[`liveblocks.getVersionHistory`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-version-history).
 
 **Example**
+
 ```python
 result = client.get_version_history(
     room_id="my-room-id",
@@ -750,42 +879,48 @@ result = client.get_version_history(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `limit` | `int \| Unset` | No | A limit on the number of versions to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
-| `cursor` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-
+| Name      | Type           | Required | Description                                                                                                                    |
+| --------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `room_id` | `str`          | Yes      | ID of the room                                                                                                                 |
+| `limit`   | `int \| Unset` | No       | A limit on the number of versions to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_ |
+| `cursor`  | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                               |
 
 ---
 
 #### `create_version_history_snapshot`
 
-This endpoint creates a new version history snapshot of the room, capturing both its Storage and Yjs documents. Corresponds to [`liveblocks.createVersionHistorySnapshot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+This endpoint creates a new version history snapshot of the room, capturing both
+its Storage and Yjs documents. Corresponds to
+[`liveblocks.createVersionHistorySnapshot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-version-history-snapshot).
 
 **Example**
+
 ```python
 result = client.create_version_history_snapshot(
     room_id="my-room-id",
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
 
 ---
 
 #### `get_yjs_version`
 
-This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update. Corresponds to [`liveblocks.getYjsVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-yjs-version).
+This endpoint returns a specific version of the room's Yjs document encoded as a
+binary Yjs update. Corresponds to
+[`liveblocks.getYjsVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-yjs-version).
 
 **Example**
+
 ```python
 result = client.get_yjs_version(
     room_id="my-room-id",
@@ -793,34 +928,37 @@ result = client.get_yjs_version(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `version_id` | `str` | Yes | ID of the version |
-
+| Name         | Type  | Required | Description       |
+| ------------ | ----- | -------- | ----------------- |
+| `room_id`    | `str` | Yes      | ID of the room    |
+| `version_id` | `str` | Yes      | ID of the version |
 
 ---
 
 #### `delete_version`
 
-This endpoint permanently deletes a version from the room's history. Corresponds to [`liveblocks.deleteVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-version).
+This endpoint permanently deletes a version from the room's history. Corresponds
+to
+[`liveblocks.deleteVersion`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-version).
 
 **Example**
+
 ```python
 client.delete_version(
     room_id="my-room-id",
     version_id="vh_abc123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `version_id` | `str` | Yes | ID of the version |
-
+| Name         | Type  | Required | Description       |
+| ------------ | ----- | -------- | ----------------- |
+| `room_id`    | `str` | Yes      | ID of the room    |
+| `version_id` | `str` | Yes      | ID of the version |
 
 ---
 
@@ -828,9 +966,11 @@ client.delete_version(
 
 #### `get_threads`
 
-This endpoint returns the threads in the requested room. Corresponds to [`liveblocks.getThreads`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
+This endpoint returns the threads in the requested room. Corresponds to
+[`liveblocks.getThreads`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
 
 **Example**
+
 ```python
 result = client.get_threads(
     room_id="my-room-id",
@@ -838,21 +978,25 @@ result = client.get_threads(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `query` | `str \| Unset` | No | Query to filter threads. You can filter by `metadata`, `resolved`, and `visibility`, for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true AND visibility:"private"`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language). |
-
+| Name      | Type           | Required | Description                                                                                                                                                                                                                                                                                                                                   |
+| --------- | -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `room_id` | `str`          | Yes      | ID of the room                                                                                                                                                                                                                                                                                                                                |
+| `query`   | `str \| Unset` | No       | Query to filter threads. You can filter by `metadata`, `resolved`, and `visibility`, for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true AND visibility:"private"`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language). |
 
 ---
 
 #### `create_thread`
 
-This endpoint creates a new thread and the first comment in the thread. Corresponds to [`liveblocks.createThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).
+This endpoint creates a new thread and the first comment in the thread.
+Corresponds to
+[`liveblocks.createThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).
 
-A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `comment.body`.
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct a comment’s body, which can be submitted under
+`comment.body`.
 
 ```json
 {
@@ -866,9 +1010,11 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 }
 ```
 
-`metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+`metadata` supports maximum 50 entries. Key length has a limit of 40 characters
+maximum. Value length has a limit of 4000 characters maximum for strings.
 
 **Example**
+
 ```python
 from liveblocks.models import CreateThreadRequestBody
 
@@ -882,21 +1028,23 @@ result = client.create_thread(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `body` | `CreateThreadRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                      | Required | Description                     |
+| --------- | ------------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                     | Yes      | ID of the room                  |
+| `body`    | `CreateThreadRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_thread`
 
-This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).
+This endpoint returns a thread by its ID. Corresponds to
+[`liveblocks.getThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).
 
 **Example**
+
 ```python
 result = client.get_thread(
     room_id="my-room-id",
@@ -904,44 +1052,52 @@ result = client.get_thread(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-
+| Name        | Type  | Required | Description      |
+| ----------- | ----- | -------- | ---------------- |
+| `room_id`   | `str` | Yes      | ID of the room   |
+| `thread_id` | `str` | Yes      | ID of the thread |
 
 ---
 
 #### `delete_thread`
 
-This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).
+This endpoint deletes a thread by its ID. Corresponds to
+[`liveblocks.deleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).
 
 **Example**
+
 ```python
 client.delete_thread(
     room_id="my-room-id",
     thread_id="th_abc123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-
+| Name        | Type  | Required | Description      |
+| ----------- | ----- | -------- | ---------------- |
+| `room_id`   | `str` | Yes      | ID of the room   |
+| `thread_id` | `str` | Yes      | ID of the thread |
 
 ---
 
 #### `edit_thread_metadata`
 
-This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
+This endpoint edits the metadata of a thread. The metadata is a JSON object that
+can be used to store any information you want about the thread, in `string`,
+`number`, or `boolean` form. Set a property to `null` to remove it. Corresponds
+to
+[`liveblocks.editThreadMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
 
-`metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+`metadata` supports maximum 50 entries. Key length has a limit of 40 characters
+maximum. Value length has a limit of 4000 characters maximum for strings.
 
 **Example**
+
 ```python
 from liveblocks.models import EditThreadMetadataRequestBody
 
@@ -956,22 +1112,26 @@ result = client.edit_thread_metadata(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `body` | `EditThreadMetadataRequestBody` | Yes | Request body (application/json) |
-
+| Name        | Type                            | Required | Description                     |
+| ----------- | ------------------------------- | -------- | ------------------------------- |
+| `room_id`   | `str`                           | Yes      | ID of the room                  |
+| `thread_id` | `str`                           | Yes      | ID of the thread                |
+| `body`      | `EditThreadMetadataRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `mark_thread_as_resolved`
 
-This endpoint marks a thread as resolved. The request body must include a `userId` to identify who resolved the thread. Returns the updated thread. Corresponds to [`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-resolved).
+This endpoint marks a thread as resolved. The request body must include a
+`userId` to identify who resolved the thread. Returns the updated thread.
+Corresponds to
+[`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-resolved).
 
 **Example**
+
 ```python
 from liveblocks.models import MarkThreadAsResolvedRequestBody
 
@@ -984,22 +1144,26 @@ result = client.mark_thread_as_resolved(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `body` | `MarkThreadAsResolvedRequestBody` | Yes | Request body (application/json) |
-
+| Name        | Type                              | Required | Description                     |
+| ----------- | --------------------------------- | -------- | ------------------------------- |
+| `room_id`   | `str`                             | Yes      | ID of the room                  |
+| `thread_id` | `str`                             | Yes      | ID of the thread                |
+| `body`      | `MarkThreadAsResolvedRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `mark_thread_as_unresolved`
 
-This endpoint marks a thread as unresolved. The request body must include a `userId` to identify who unresolved the thread. Returns the updated thread. Corresponds to [`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-unresolved).
+This endpoint marks a thread as unresolved. The request body must include a
+`userId` to identify who unresolved the thread. Returns the updated thread.
+Corresponds to
+[`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-unresolved).
 
 **Example**
+
 ```python
 from liveblocks.models import MarkThreadAsUnresolvedRequestBody
 
@@ -1012,22 +1176,24 @@ result = client.mark_thread_as_unresolved(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `body` | `MarkThreadAsUnresolvedRequestBody` | Yes | Request body (application/json) |
-
+| Name        | Type                                | Required | Description                     |
+| ----------- | ----------------------------------- | -------- | ------------------------------- |
+| `room_id`   | `str`                               | Yes      | ID of the room                  |
+| `thread_id` | `str`                               | Yes      | ID of the thread                |
+| `body`      | `MarkThreadAsUnresolvedRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `subscribe_to_thread`
 
-This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).
+This endpoint subscribes to a thread. Corresponds to
+[`liveblocks.subscribeToThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).
 
 **Example**
+
 ```python
 from liveblocks.models import SubscribeToThreadRequestBody
 
@@ -1040,22 +1206,24 @@ result = client.subscribe_to_thread(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `body` | `SubscribeToThreadRequestBody` | Yes | Request body (application/json) |
-
+| Name        | Type                           | Required | Description                     |
+| ----------- | ------------------------------ | -------- | ------------------------------- |
+| `room_id`   | `str`                          | Yes      | ID of the room                  |
+| `thread_id` | `str`                          | Yes      | ID of the thread                |
+| `body`      | `SubscribeToThreadRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `unsubscribe_from_thread`
 
-This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscribeFromThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).
+This endpoint unsubscribes from a thread. Corresponds to
+[`liveblocks.unsubscribeFromThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).
 
 **Example**
+
 ```python
 from liveblocks.models import UnsubscribeFromThreadRequestBody
 
@@ -1067,22 +1235,24 @@ client.unsubscribe_from_thread(
     ),
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `body` | `UnsubscribeFromThreadRequestBody` | Yes | Request body (application/json) |
-
+| Name        | Type                               | Required | Description                     |
+| ----------- | ---------------------------------- | -------- | ------------------------------- |
+| `room_id`   | `str`                              | Yes      | ID of the room                  |
+| `thread_id` | `str`                              | Yes      | ID of the thread                |
+| `body`      | `UnsubscribeFromThreadRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_thread_subscriptions`
 
-This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveblocks.getThreadSubscriptions`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).
+This endpoint gets the list of subscriptions to a thread. Corresponds to
+[`liveblocks.getThreadSubscriptions`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).
 
 **Example**
+
 ```python
 result = client.get_thread_subscriptions(
     room_id="my-room-id",
@@ -1090,21 +1260,25 @@ result = client.get_thread_subscriptions(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-
+| Name        | Type  | Required | Description      |
+| ----------- | ----- | -------- | ---------------- |
+| `room_id`   | `str` | Yes      | ID of the room   |
+| `thread_id` | `str` | Yes      | ID of the thread |
 
 ---
 
 #### `create_comment`
 
-This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to [`liveblocks.createComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).
+This endpoint creates a new comment, adding it as a reply to a thread.
+Corresponds to
+[`liveblocks.createComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).
 
-A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct a comment’s body, which can be submitted under
+`body`.
 
 ```json
 {
@@ -1118,9 +1292,11 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 }
 ```
 
-`metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+`metadata` supports maximum 50 entries. Key length has a limit of 40 characters
+maximum. Value length has a limit of 4000 characters maximum for strings.
 
 **Example**
+
 ```python
 from liveblocks.models import CreateCommentRequestBody
 
@@ -1137,22 +1313,24 @@ result = client.create_comment(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `body` | `CreateCommentRequestBody` | Yes | Request body (application/json) |
-
+| Name        | Type                       | Required | Description                     |
+| ----------- | -------------------------- | -------- | ------------------------------- |
+| `room_id`   | `str`                      | Yes      | ID of the room                  |
+| `thread_id` | `str`                      | Yes      | ID of the thread                |
+| `body`      | `CreateCommentRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_comment`
 
-This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
+This endpoint returns a comment by its ID. Corresponds to
+[`liveblocks.getComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
 
 **Example**
+
 ```python
 result = client.get_comment(
     room_id="my-room-id",
@@ -1161,22 +1339,25 @@ result = client.get_comment(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `comment_id` | `str` | Yes | ID of the comment |
-
+| Name         | Type  | Required | Description       |
+| ------------ | ----- | -------- | ----------------- |
+| `room_id`    | `str` | Yes      | ID of the room    |
+| `thread_id`  | `str` | Yes      | ID of the thread  |
+| `comment_id` | `str` | Yes      | ID of the comment |
 
 ---
 
 #### `edit_comment`
 
-This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+This endpoint edits the specified comment. Corresponds to
+[`liveblocks.editComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
 
-A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct a comment’s body, which can be submitted under
+`body`.
 
 ```json
 {
@@ -1191,6 +1372,7 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 ```
 
 **Example**
+
 ```python
 from liveblocks.models import EditCommentRequestBody
 
@@ -1207,23 +1389,26 @@ result = client.edit_comment(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `comment_id` | `str` | Yes | ID of the comment |
-| `body` | `EditCommentRequestBody` | Yes | Request body (application/json) |
-
+| Name         | Type                     | Required | Description                     |
+| ------------ | ------------------------ | -------- | ------------------------------- |
+| `room_id`    | `str`                    | Yes      | ID of the room                  |
+| `thread_id`  | `str`                    | Yes      | ID of the thread                |
+| `comment_id` | `str`                    | Yes      | ID of the comment               |
+| `body`       | `EditCommentRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `delete_comment`
 
-This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+This endpoint deletes a comment. A deleted comment is no longer accessible from
+the API or the dashboard and it cannot be restored. Corresponds to
+[`liveblocks.deleteComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
 
 **Example**
+
 ```python
 client.delete_comment(
     room_id="my-room-id",
@@ -1231,22 +1416,24 @@ client.delete_comment(
     comment_id="cm_abc123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `comment_id` | `str` | Yes | ID of the comment |
-
+| Name         | Type  | Required | Description       |
+| ------------ | ----- | -------- | ----------------- |
+| `room_id`    | `str` | Yes      | ID of the room    |
+| `thread_id`  | `str` | Yes      | ID of the thread  |
+| `comment_id` | `str` | Yes      | ID of the comment |
 
 ---
 
 #### `add_comment_reaction`
 
-This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
+This endpoint adds a reaction to a comment. Corresponds to
+[`liveblocks.addCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
 **Example**
+
 ```python
 from liveblocks.models import AddCommentReactionRequestBody
 
@@ -1262,23 +1449,27 @@ result = client.add_comment_reaction(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `comment_id` | `str` | Yes | ID of the comment |
-| `body` | `AddCommentReactionRequestBody` | Yes | Request body (application/json) |
-
+| Name         | Type                            | Required | Description                     |
+| ------------ | ------------------------------- | -------- | ------------------------------- |
+| `room_id`    | `str`                           | Yes      | ID of the room                  |
+| `thread_id`  | `str`                           | Yes      | ID of the thread                |
+| `comment_id` | `str`                           | Yes      | ID of the comment               |
+| `body`       | `AddCommentReactionRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `remove_comment_reaction`
 
-This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
+This endpoint removes a comment reaction. A deleted comment reaction is no
+longer accessible from the API or the dashboard and it cannot be restored.
+Corresponds to
+[`liveblocks.removeCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
 **Example**
+
 ```python
 from liveblocks.models import RemoveCommentReactionRequestBody
 
@@ -1293,23 +1484,25 @@ client.remove_comment_reaction(
     ),
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `comment_id` | `str` | Yes | ID of the comment |
-| `body` | `RemoveCommentReactionRequestBody` | Yes | Request body (application/json) |
-
+| Name         | Type                               | Required | Description                     |
+| ------------ | ---------------------------------- | -------- | ------------------------------- |
+| `room_id`    | `str`                              | Yes      | ID of the room                  |
+| `thread_id`  | `str`                              | Yes      | ID of the thread                |
+| `comment_id` | `str`                              | Yes      | ID of the comment               |
+| `body`       | `RemoveCommentReactionRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_attachment`
 
-Gets an attachment's metadata and a presigned download URL. The URL expires after 1 hour.
+Gets an attachment's metadata and a presigned download URL. The URL expires
+after 1 hour.
 
 **Example**
+
 ```python
 result = client.get_attachment(
     room_id="my-room-id",
@@ -1317,21 +1510,24 @@ result = client.get_attachment(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `attachment_id` | `str` | Yes | ID of the attachment |
-
+| Name            | Type  | Required | Description          |
+| --------------- | ----- | -------- | -------------------- |
+| `room_id`       | `str` | Yes      | ID of the room       |
+| `attachment_id` | `str` | Yes      | ID of the attachment |
 
 ---
 
 #### `upload_attachment`
 
-Uploads a file's bytes and returns a draft comment attachment. Pass the returned attachment ID in the comment's attachment IDs when creating or editing a comment. For large files, use the multipart upload operations instead.
+Uploads a file's bytes and returns a draft comment attachment. Pass the returned
+attachment ID in the comment's attachment IDs when creating or editing a
+comment. For large files, use the multipart upload operations instead.
 
 **Example**
+
 ```python
 result = client.upload_attachment(
     room_id="my-room-id",
@@ -1343,17 +1539,17 @@ result = client.upload_attachment(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `attachment_id` | `str` | Yes | ID for the attachment |
-| `name` | `str` | Yes | Name of the file |
-| `user_id` | `str` | Yes | ID of the user uploading the attachment |
-| `file_size` | `int \| Unset` | No | Expected file size in bytes |
-| `body` | `File` | Yes | Request body (application/octet-stream) |
-
+| Name            | Type           | Required | Description                             |
+| --------------- | -------------- | -------- | --------------------------------------- |
+| `room_id`       | `str`          | Yes      | ID of the room                          |
+| `attachment_id` | `str`          | Yes      | ID for the attachment                   |
+| `name`          | `str`          | Yes      | Name of the file                        |
+| `user_id`       | `str`          | Yes      | ID of the user uploading the attachment |
+| `file_size`     | `int \| Unset` | No       | Expected file size in bytes             |
+| `body`          | `File`         | Yes      | Request body (application/octet-stream) |
 
 ---
 
@@ -1362,6 +1558,7 @@ print(result)
 Starts a multipart upload for a draft comment attachment.
 
 **Example**
+
 ```python
 result = client.create_attachment_multipart_upload(
     room_id="my-room-id",
@@ -1371,15 +1568,15 @@ result = client.create_attachment_multipart_upload(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `attachment_id` | `str` | Yes | ID for the attachment |
-| `name` | `str` | Yes | Name of the file |
-| `file_size` | `int \| Unset` | No | Expected file size in bytes |
-
+| Name            | Type           | Required | Description                 |
+| --------------- | -------------- | -------- | --------------------------- |
+| `room_id`       | `str`          | Yes      | ID of the room              |
+| `attachment_id` | `str`          | Yes      | ID for the attachment       |
+| `name`          | `str`          | Yes      | Name of the file            |
+| `file_size`     | `int \| Unset` | No       | Expected file size in bytes |
 
 ---
 
@@ -1388,6 +1585,7 @@ print(result)
 Uploads one part of an attachment multipart upload.
 
 **Example**
+
 ```python
 result = client.upload_attachment_multipart_part(
     room_id="my-room-id",
@@ -1398,24 +1596,27 @@ result = client.upload_attachment_multipart_part(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `attachment_id` | `str` | Yes | ID of the attachment |
-| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
-| `part_number` | `int` | Yes | One-based part number |
-| `body` | `File` | Yes | Request body (application/octet-stream) |
-
+| Name            | Type   | Required | Description                                       |
+| --------------- | ------ | -------- | ------------------------------------------------- |
+| `room_id`       | `str`  | Yes      | ID of the room                                    |
+| `attachment_id` | `str`  | Yes      | ID of the attachment                              |
+| `upload_id`     | `str`  | Yes      | ID returned when the multipart upload was created |
+| `part_number`   | `int`  | Yes      | One-based part number                             |
+| `body`          | `File` | Yes      | Request body (application/octet-stream)           |
 
 ---
 
 #### `complete_attachment_multipart_upload`
 
-Completes a multipart upload and returns a draft comment attachment. Pass the returned attachment ID in the comment's attachment IDs when creating or editing a comment.
+Completes a multipart upload and returns a draft comment attachment. Pass the
+returned attachment ID in the comment's attachment IDs when creating or editing
+a comment.
 
 **Example**
+
 ```python
 from liveblocks.models import CompleteAttachmentMultipartUploadRequestBody
 
@@ -1430,16 +1631,16 @@ result = client.complete_attachment_multipart_upload(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `attachment_id` | `str` | Yes | ID of the attachment |
-| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
-| `user_id` | `str` | Yes | ID of the user uploading the attachment |
-| `body` | `CompleteAttachmentMultipartUploadRequestBody` | Yes | Request body (application/json) |
-
+| Name            | Type                                           | Required | Description                                       |
+| --------------- | ---------------------------------------------- | -------- | ------------------------------------------------- |
+| `room_id`       | `str`                                          | Yes      | ID of the room                                    |
+| `attachment_id` | `str`                                          | Yes      | ID of the attachment                              |
+| `upload_id`     | `str`                                          | Yes      | ID returned when the multipart upload was created |
+| `user_id`       | `str`                                          | Yes      | ID of the user uploading the attachment           |
+| `body`          | `CompleteAttachmentMultipartUploadRequestBody` | Yes      | Request body (application/json)                   |
 
 ---
 
@@ -1448,6 +1649,7 @@ print(result)
 Aborts a multipart upload and discards its uploaded parts.
 
 **Example**
+
 ```python
 client.abort_attachment_multipart_upload(
     room_id="my-room-id",
@@ -1455,24 +1657,30 @@ client.abort_attachment_multipart_upload(
     upload_id="...",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `attachment_id` | `str` | Yes | ID of the attachment |
-| `upload_id` | `str` | Yes | ID returned when the multipart upload was created |
-
+| Name            | Type  | Required | Description                                       |
+| --------------- | ----- | -------- | ------------------------------------------------- |
+| `room_id`       | `str` | Yes      | ID of the room                                    |
+| `attachment_id` | `str` | Yes      | ID of the attachment                              |
+| `upload_id`     | `str` | Yes      | ID returned when the multipart upload was created |
 
 ---
 
 #### `edit_comment_metadata`
 
-This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
+This endpoint edits the metadata of a comment. The metadata is a JSON object
+that can be used to store any information you want about the comment, in
+`string`, `number`, or `boolean` form. Set a property to `null` to remove it.
+Corresponds to
+[`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
 
-`metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+`metadata` supports maximum 50 entries. Key length has a limit of 40 characters
+maximum. Value length has a limit of 4000 characters maximum for strings.
 
 **Example**
+
 ```python
 from liveblocks.models import EditCommentMetadataRequestBody
 
@@ -1488,23 +1696,27 @@ result = client.edit_comment_metadata(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-| `comment_id` | `str` | Yes | ID of the comment |
-| `body` | `EditCommentMetadataRequestBody` | Yes | Request body (application/json) |
-
+| Name         | Type                             | Required | Description                     |
+| ------------ | -------------------------------- | -------- | ------------------------------- |
+| `room_id`    | `str`                            | Yes      | ID of the room                  |
+| `thread_id`  | `str`                            | Yes      | ID of the thread                |
+| `comment_id` | `str`                            | Yes      | ID of the comment               |
+| `body`       | `EditCommentMetadataRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_thread_inbox_notifications`
 
-This endpoint returns the inbox notifications associated with a specific thread. Because this endpoint is not user-scoped, each notification includes a `userId` field identifying which user the notification belongs to. Only thread-kind notifications are returned.
+This endpoint returns the inbox notifications associated with a specific thread.
+Because this endpoint is not user-scoped, each notification includes a `userId`
+field identifying which user the notification belongs to. Only thread-kind
+notifications are returned.
 
 **Example**
+
 ```python
 result = client.get_thread_inbox_notifications(
     room_id="my-room-id",
@@ -1512,13 +1724,13 @@ result = client.get_thread_inbox_notifications(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `thread_id` | `str` | Yes | ID of the thread |
-
+| Name        | Type  | Required | Description      |
+| ----------- | ----- | -------- | ---------------- |
+| `room_id`   | `str` | Yes      | ID of the room   |
+| `thread_id` | `str` | Yes      | ID of the thread |
 
 ---
 
@@ -1526,9 +1738,11 @@ print(result)
 
 #### `get_feeds`
 
-This endpoint returns the feeds in the requested room. Corresponds to [`liveblocks.getFeeds`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds).
+This endpoint returns the feeds in the requested room. Corresponds to
+[`liveblocks.getFeeds`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds).
 
 **Example**
+
 ```python
 result = client.get_feeds(
     room_id="my-room-id",
@@ -1538,23 +1752,25 @@ result = client.get_feeds(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `cursor` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-| `since` | `int \| Unset` | No | Only return feeds with `createdAt` greater than this Unix timestamp in milliseconds. |
-| `limit` | `int \| Unset` | No | A limit on the number of feeds to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
-
+| Name      | Type           | Required | Description                                                                                                                 |
+| --------- | -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `room_id` | `str`          | Yes      | ID of the room                                                                                                              |
+| `cursor`  | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                            |
+| `since`   | `int \| Unset` | No       | Only return feeds with `createdAt` greater than this Unix timestamp in milliseconds.                                        |
+| `limit`   | `int \| Unset` | No       | A limit on the number of feeds to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_ |
 
 ---
 
 #### `create_feed`
 
-This endpoint creates a new feed in a room. Corresponds to [`liveblocks.createFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds).
+This endpoint creates a new feed in a room. Corresponds to
+[`liveblocks.createFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds).
 
 **Example**
+
 ```python
 from liveblocks.models import CreateFeedRequestBody
 
@@ -1568,21 +1784,23 @@ result = client.create_feed(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `body` | `CreateFeedRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                    | Required | Description                     |
+| --------- | ----------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                   | Yes      | ID of the room                  |
+| `body`    | `CreateFeedRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_feed`
 
-This endpoint returns a feed by its ID. Corresponds to [`liveblocks.getFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId).
+This endpoint returns a feed by its ID. Corresponds to
+[`liveblocks.getFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId).
 
 **Example**
+
 ```python
 result = client.get_feed(
     room_id="my-room-id",
@@ -1590,42 +1808,46 @@ result = client.get_feed(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `feed_id` | `str` | Yes | ID of the feed |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
+| `feed_id` | `str` | Yes      | ID of the feed |
 
 ---
 
 #### `delete_feed`
 
-This endpoint deletes a feed. Corresponds to [`liveblocks.deleteFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId).
+This endpoint deletes a feed. Corresponds to
+[`liveblocks.deleteFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId).
 
 **Example**
+
 ```python
 client.delete_feed(
     room_id="my-room-id",
     feed_id="fd_abc123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `feed_id` | `str` | Yes | ID of the feed |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
+| `feed_id` | `str` | Yes      | ID of the feed |
 
 ---
 
 #### `update_feed`
 
-This endpoint updates the metadata of a feed. Corresponds to [`liveblocks.updateFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId).
+This endpoint updates the metadata of a feed. Corresponds to
+[`liveblocks.updateFeed`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId).
 
 **Example**
+
 ```python
 from liveblocks.models import UpdateFeedRequestBody
 
@@ -1638,22 +1860,24 @@ result = client.update_feed(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `feed_id` | `str` | Yes | ID of the feed |
-| `body` | `UpdateFeedRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                    | Required | Description                     |
+| --------- | ----------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                   | Yes      | ID of the room                  |
+| `feed_id` | `str`                   | Yes      | ID of the feed                  |
+| `body`    | `UpdateFeedRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_feed_messages`
 
-This endpoint returns the messages in a feed. Corresponds to [`liveblocks.getFeedMessages`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId-messages).
+This endpoint returns the messages in a feed. Corresponds to
+[`liveblocks.getFeedMessages`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId-messages).
 
 **Example**
+
 ```python
 result = client.get_feed_messages(
     room_id="my-room-id",
@@ -1664,24 +1888,26 @@ result = client.get_feed_messages(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `feed_id` | `str` | Yes | ID of the feed |
-| `cursor` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-| `since` | `int \| Unset` | No | Only return messages with `createdAt` greater than this Unix timestamp in milliseconds. |
-| `limit` | `int \| Unset` | No | A limit on the number of messages to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
-
+| Name      | Type           | Required | Description                                                                                                                    |
+| --------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `room_id` | `str`          | Yes      | ID of the room                                                                                                                 |
+| `feed_id` | `str`          | Yes      | ID of the feed                                                                                                                 |
+| `cursor`  | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                               |
+| `since`   | `int \| Unset` | No       | Only return messages with `createdAt` greater than this Unix timestamp in milliseconds.                                        |
+| `limit`   | `int \| Unset` | No       | A limit on the number of messages to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_ |
 
 ---
 
 #### `create_feed_message`
 
-This endpoint creates a new message in a feed. Corresponds to [`liveblocks.createFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
+This endpoint creates a new message in a feed. Corresponds to
+[`liveblocks.createFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).
 
 **Example**
+
 ```python
 from liveblocks.models import CreateFeedMessageRequestBody
 
@@ -1696,22 +1922,24 @@ result = client.create_feed_message(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `feed_id` | `str` | Yes | ID of the feed |
-| `body` | `CreateFeedMessageRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                           | Required | Description                     |
+| --------- | ------------------------------ | -------- | ------------------------------- |
+| `room_id` | `str`                          | Yes      | ID of the room                  |
+| `feed_id` | `str`                          | Yes      | ID of the feed                  |
+| `body`    | `CreateFeedMessageRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `delete_feed_message`
 
-This endpoint deletes a feed message. Corresponds to [`liveblocks.deleteFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId-messages-messageId).
+This endpoint deletes a feed message. Corresponds to
+[`liveblocks.deleteFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId-messages-messageId).
 
 **Example**
+
 ```python
 client.delete_feed_message(
     room_id="my-room-id",
@@ -1719,22 +1947,24 @@ client.delete_feed_message(
     message_id="msg_xyz789",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `feed_id` | `str` | Yes | ID of the feed |
-| `message_id` | `str` | Yes | ID of the message |
-
+| Name         | Type  | Required | Description       |
+| ------------ | ----- | -------- | ----------------- |
+| `room_id`    | `str` | Yes      | ID of the room    |
+| `feed_id`    | `str` | Yes      | ID of the feed    |
+| `message_id` | `str` | Yes      | ID of the message |
 
 ---
 
 #### `update_feed_message`
 
-This endpoint updates a feed message. Corresponds to [`liveblocks.updateFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId).
+This endpoint updates a feed message. Corresponds to
+[`liveblocks.updateFeedMessage`](https://liveblocks.io/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId).
 
 **Example**
+
 ```python
 from liveblocks.models import UpdateFeedMessageRequestBody
 
@@ -1749,15 +1979,15 @@ result = client.update_feed_message(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `feed_id` | `str` | Yes | ID of the feed |
-| `message_id` | `str` | Yes | ID of the message |
-| `body` | `UpdateFeedMessageRequestBody` | Yes | Request body (application/json) |
-
+| Name         | Type                           | Required | Description                     |
+| ------------ | ------------------------------ | -------- | ------------------------------- |
+| `room_id`    | `str`                          | Yes      | ID of the room                  |
+| `feed_id`    | `str`                          | Yes      | ID of the feed                  |
+| `message_id` | `str`                          | Yes      | ID of the message               |
+| `body`       | `UpdateFeedMessageRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
@@ -1765,19 +1995,38 @@ print(result)
 
 #### `authorize_user`
 
-This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.
+This endpoint lets your application server (your back end) obtain a token that
+one of its clients (your frontend) can use to enter a Liveblocks room. You use
+this endpoint to implement your own application’s custom authentication
+endpoint. When making this request, you’ll have to use your secret key.
 
-**Important:** The difference with an [ID token](#post-identify-user) is that an access token holds all the permissions, and is the source of truth. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and "checked at the door" every time they are used to enter a room.
+**Important:** The difference with an [ID token](#post-identify-user) is that an
+access token holds all the permissions, and is the source of truth. With ID
+tokens, permissions are set in the Liveblocks back end (through REST API calls)
+and "checked at the door" every time they are used to enter a room.
 
-**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.prepareSession`](https://liveblocks.io/docs/api-reference/liveblocks-node#access-tokens) in your back end to build this request.
+**Note:** When using the `@liveblocks/node` package, you can use
+[`Liveblocks.prepareSession`](https://liveblocks.io/docs/api-reference/liveblocks-node#access-tokens)
+in your back end to build this request.
 
-You can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.
+You can pass the property `userId` in the request’s body. This can be whatever
+internal identifier you use for your user accounts as long as it uniquely
+identifies an account. The property `userId` is used by Liveblocks to calculate
+your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.
 
-Additionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.
+Additionally, you can set custom metadata to the token, which will be publicly
+accessible by other clients through the `user.info` property. This is useful for
+storing static data like avatar images or the user’s display name.
 
-Lastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix). For tips, see [Manage permissions with access tokens](https://liveblocks.io/docs/authentication/access-token).
+Lastly, you’ll specify the exact permissions to give to the user using the
+`permissions` field. This is done in an object where the keys are room names, or
+room name patterns (ending in a `*`), and a list of permissions to assign the
+user for any room that matches that name exactly (or starts with the pattern’s
+prefix). For tips, see
+[Manage permissions with access tokens](https://liveblocks.io/docs/api-reference/authentication/access-token).
 
 **Example**
+
 ```python
 from liveblocks.models import AuthorizeUserRequestBody
 
@@ -1791,30 +2040,53 @@ result = client.authorize_user(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `body` | `AuthorizeUserRequestBody` | Yes | Request body (application/json) |
-
+| Name   | Type                       | Required | Description                     |
+| ------ | -------------------------- | -------- | ------------------------------- |
+| `body` | `AuthorizeUserRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `identify_user`
 
-This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication#id-token-room-permissions) section.
+This endpoint lets your application server (your back end) obtain a token that
+one of its clients (your frontend) can use to enter a Liveblocks room. You use
+this endpoint to implement your own application’s custom authentication
+endpoint. When using this endpoint to obtain ID tokens, you should manage your
+permissions by assigning user and/or group permissions to rooms explicitly, see
+our
+[Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-permissions)
+section.
 
-**Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and "checked at the door" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your back end entirely.
+**Important:** The difference with an [access token](#post-authorize-user) is
+that an ID token doesn’t hold any permissions itself. With ID tokens,
+permissions are set in the Liveblocks back end (through REST API calls) and
+"checked at the door" every time they are used to enter a room. With access
+tokens, all permissions are set in the token itself, and thus controlled from
+your back end entirely.
 
-**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.identifyUser`](https://liveblocks.io/docs/api-reference/liveblocks-node) in your back end to build this request.
+**Note:** When using the `@liveblocks/node` package, you can use
+[`Liveblocks.identifyUser`](https://liveblocks.io/docs/api-reference/liveblocks-node)
+in your back end to build this request.
 
-You can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.
+You can pass the property `userId` in the request’s body. This can be whatever
+internal identifier you use for your user accounts as long as it uniquely
+identifies an account. The property `userId` is used by Liveblocks to calculate
+your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.
 
-If you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication#id-token-room-permissions)).
+If you want to use group permissions, you can also declare which `groupIds` this
+user belongs to. The group ID values are yours, but they will have to match the
+group IDs you assign permissions to when assigning permissions to rooms, see
+[Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-permissions)).
 
-Additionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.
+Additionally, you can set custom metadata to the token, which will be publicly
+accessible by other clients through the `user.info` property. This is useful for
+storing static data like avatar images or the user’s display name.
 
 **Example**
+
 ```python
 from liveblocks.models import IdentifyUserRequestBody
 
@@ -1828,12 +2100,12 @@ result = client.identify_user(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `body` | `IdentifyUserRequestBody` | Yes | Request body (application/json) |
-
+| Name   | Type                      | Required | Description                     |
+| ------ | ------------------------- | -------- | ------------------------------- |
+| `body` | `IdentifyUserRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
@@ -1841,9 +2113,11 @@ print(result)
 
 #### `get_inbox_notification`
 
-This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).
+This endpoint returns a user’s inbox notification by its ID. Corresponds to
+[`liveblocks.getInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).
 
 **Example**
+
 ```python
 result = client.get_inbox_notification(
     user_id="user-123",
@@ -1851,42 +2125,46 @@ result = client.get_inbox_notification(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `user_id` | `str` | Yes | ID of the user |
-| `inbox_notification_id` | `str` | Yes | ID of the inbox notification |
-
+| Name                    | Type  | Required | Description                  |
+| ----------------------- | ----- | -------- | ---------------------------- |
+| `user_id`               | `str` | Yes      | ID of the user               |
+| `inbox_notification_id` | `str` | Yes      | ID of the inbox notification |
 
 ---
 
 #### `delete_inbox_notification`
 
-This endpoint deletes a user’s inbox notification by its ID. Corresponds to [`liveblocks.deleteInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications-inboxNotificationId).
+This endpoint deletes a user’s inbox notification by its ID. Corresponds to
+[`liveblocks.deleteInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications-inboxNotificationId).
 
 **Example**
+
 ```python
 client.delete_inbox_notification(
     user_id="user-123",
     inbox_notification_id="in_abc123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `user_id` | `str` | Yes | ID of the user |
-| `inbox_notification_id` | `str` | Yes | ID of the inbox notification |
-
+| Name                    | Type  | Required | Description                  |
+| ----------------------- | ----- | -------- | ---------------------------- |
+| `user_id`               | `str` | Yes      | ID of the user               |
+| `inbox_notification_id` | `str` | Yes      | ID of the inbox notification |
 
 ---
 
 #### `get_inbox_notifications`
 
-This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
+This endpoint returns all the user’s inbox notifications. Corresponds to
+[`liveblocks.getInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
 
 **Example**
+
 ```python
 result = client.get_inbox_notifications(
     user_id="user-123",
@@ -1897,63 +2175,71 @@ result = client.get_inbox_notifications(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `user_id` | `str` | Yes | ID of the user |
-| `organization_id` | `str \| Unset` | No | The organization ID to filter notifications for. |
-| `query` | `str \| Unset` | No | Query to filter notifications. You can filter by `unread`, for example, `unread:true`. |
-| `limit` | `int \| Unset` | No | A limit on the number of inbox notifications to be returned. The limit can range between 1 and 50, and defaults to 50. *(default: `50`)* |
-| `starting_after` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-
+| Name              | Type           | Required | Description                                                                                                                              |
+| ----------------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_id`         | `str`          | Yes      | ID of the user                                                                                                                           |
+| `organization_id` | `str \| Unset` | No       | The organization ID to filter notifications for.                                                                                         |
+| `query`           | `str \| Unset` | No       | Query to filter notifications. You can filter by `unread`, for example, `unread:true`.                                                   |
+| `limit`           | `int \| Unset` | No       | A limit on the number of inbox notifications to be returned. The limit can range between 1 and 50, and defaults to 50. _(default: `50`)_ |
+| `starting_after`  | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                                         |
 
 ---
 
 #### `delete_all_inbox_notifications`
 
-This endpoint deletes all the user’s inbox notifications. Corresponds to [`liveblocks.deleteAllInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications).
+This endpoint deletes all the user’s inbox notifications. Corresponds to
+[`liveblocks.deleteAllInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications).
 
 **Example**
+
 ```python
 client.delete_all_inbox_notifications(
     user_id="user-123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `user_id` | `str` | Yes | ID of the user |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `user_id` | `str` | Yes      | ID of the user |
 
 ---
 
 #### `get_notification_settings`
 
-This endpoint returns a user's notification settings for the project. Corresponds to [`liveblocks.getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings).
+This endpoint returns a user's notification settings for the project.
+Corresponds to
+[`liveblocks.getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings).
 
 **Example**
+
 ```python
 result = client.get_notification_settings(
     user_id="user-123",
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `user_id` | `str` | Yes | ID of the user |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `user_id` | `str` | Yes      | ID of the user |
 
 ---
 
 #### `update_notification_settings`
 
-This endpoint updates a user's notification settings for the project. Corresponds to [`liveblocks.updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).
+This endpoint updates a user's notification settings for the project.
+Corresponds to
+[`liveblocks.updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).
 
 **Example**
+
 ```python
 from liveblocks.models import UpdateNotificationSettingsRequestBody
 
@@ -1967,40 +2253,46 @@ result = client.update_notification_settings(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `user_id` | `str` | Yes | ID of the user |
-| `body` | `UpdateNotificationSettingsRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                                    | Required | Description                     |
+| --------- | --------------------------------------- | -------- | ------------------------------- |
+| `user_id` | `str`                                   | Yes      | ID of the user                  |
+| `body`    | `UpdateNotificationSettingsRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `delete_notification_settings`
 
-This endpoint deletes a user's notification settings for the project. Corresponds to [`liveblocks.deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).
+This endpoint deletes a user's notification settings for the project.
+Corresponds to
+[`liveblocks.deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).
 
 **Example**
+
 ```python
 client.delete_notification_settings(
     user_id="user-123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `user_id` | `str` | Yes | ID of the user |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `user_id` | `str` | Yes      | ID of the user |
 
 ---
 
 #### `get_room_subscription_settings`
 
-This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).
+This endpoint returns a user’s subscription settings for a specific room.
+Corresponds to
+[`liveblocks.getRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).
 
 **Example**
+
 ```python
 result = client.get_room_subscription_settings(
     room_id="my-room-id",
@@ -2008,21 +2300,24 @@ result = client.get_room_subscription_settings(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `user_id` | `str` | Yes | ID of the user |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
+| `user_id` | `str` | Yes      | ID of the user |
 
 ---
 
 #### `update_room_subscription_settings`
 
-This endpoint updates a user’s subscription settings for a specific room. Corresponds to [`liveblocks.updateRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).
+This endpoint updates a user’s subscription settings for a specific room.
+Corresponds to
+[`liveblocks.updateRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).
 
 **Example**
+
 ```python
 from liveblocks.models import UpdateRoomSubscriptionSettingsRequestBody
 
@@ -2036,43 +2331,49 @@ result = client.update_room_subscription_settings(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `user_id` | `str` | Yes | ID of the user |
-| `body` | `UpdateRoomSubscriptionSettingsRequestBody` | Yes | Request body (application/json) |
-
+| Name      | Type                                        | Required | Description                     |
+| --------- | ------------------------------------------- | -------- | ------------------------------- |
+| `room_id` | `str`                                       | Yes      | ID of the room                  |
+| `user_id` | `str`                                       | Yes      | ID of the user                  |
+| `body`    | `UpdateRoomSubscriptionSettingsRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `delete_room_subscription_settings`
 
-This endpoint deletes a user’s subscription settings for a specific room. Corresponds to [`liveblocks.deleteRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).
+This endpoint deletes a user’s subscription settings for a specific room.
+Corresponds to
+[`liveblocks.deleteRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).
 
 **Example**
+
 ```python
 client.delete_room_subscription_settings(
     room_id="my-room-id",
     user_id="user-123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `room_id` | `str` | Yes | ID of the room |
-| `user_id` | `str` | Yes | ID of the user |
-
+| Name      | Type  | Required | Description    |
+| --------- | ----- | -------- | -------------- |
+| `room_id` | `str` | Yes      | ID of the room |
+| `user_id` | `str` | Yes      | ID of the user |
 
 ---
 
 #### `get_user_room_subscription_settings`
 
-This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).
+This endpoint returns the list of a user's room subscription settings.
+Corresponds to
+[`liveblocks.getUserRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).
 
 **Example**
+
 ```python
 result = client.get_user_room_subscription_settings(
     user_id="user-123",
@@ -2082,23 +2383,25 @@ result = client.get_user_room_subscription_settings(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `user_id` | `str` | Yes | ID of the user |
-| `starting_after` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-| `limit` | `int \| Unset` | No | A limit on the number of elements to be returned. The limit can range between 1 and 50, and defaults to 50. *(default: `50`)* |
-| `organization_id` | `str \| Unset` | No | The organization ID to filter room subscription settings for. |
-
+| Name              | Type           | Required | Description                                                                                                                   |
+| ----------------- | -------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `user_id`         | `str`          | Yes      | ID of the user                                                                                                                |
+| `starting_after`  | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                              |
+| `limit`           | `int \| Unset` | No       | A limit on the number of elements to be returned. The limit can range between 1 and 50, and defaults to 50. _(default: `50`)_ |
+| `organization_id` | `str \| Unset` | No       | The organization ID to filter room subscription settings for.                                                                 |
 
 ---
 
 #### `trigger_inbox_notification`
 
-This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
+This endpoint triggers an inbox notification. Corresponds to
+[`liveblocks.triggerInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
 
 **Example**
+
 ```python
 from liveblocks.models import TriggerInboxNotificationRequestBody
 
@@ -2113,12 +2416,12 @@ client.trigger_inbox_notification(
     ),
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `body` | `TriggerInboxNotificationRequestBody` | Yes | Request body (application/json) |
-
+| Name   | Type                                  | Required | Description                     |
+| ------ | ------------------------------------- | -------- | ------------------------------- |
+| `body` | `TriggerInboxNotificationRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
@@ -2127,17 +2430,18 @@ client.trigger_inbox_notification(
 This endpoint marks a specific inbox notification as read.
 
 **Example**
+
 ```python
 client.mark_inbox_notification_as_read(
     inbox_notification_id="in_abc123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `inbox_notification_id` | `str` | Yes | ID of the inbox notification |
-
+| Name                    | Type  | Required | Description                  |
+| ----------------------- | ----- | -------- | ---------------------------- |
+| `inbox_notification_id` | `str` | Yes      | ID of the inbox notification |
 
 ---
 
@@ -2145,9 +2449,11 @@ client.mark_inbox_notification_as_read(
 
 #### `get_groups`
 
-This endpoint returns a list of all groups in your project. Corresponds to [`liveblocks.getGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-groups).
+This endpoint returns a list of all groups in your project. Corresponds to
+[`liveblocks.getGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-groups).
 
 **Example**
+
 ```python
 result = client.get_groups(
     # limit=20,
@@ -2155,21 +2461,23 @@ result = client.get_groups(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `limit` | `int \| Unset` | No | A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
-| `starting_after` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-
+| Name             | Type           | Required | Description                                                                                                                  |
+| ---------------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `limit`          | `int \| Unset` | No       | A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_ |
+| `starting_after` | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                             |
 
 ---
 
 #### `create_group`
 
-This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
+This endpoint creates a new group. Corresponds to
+[`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
 **Example**
+
 ```python
 from liveblocks.models import CreateGroupRequestBody
 
@@ -2183,59 +2491,65 @@ result = client.create_group(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `body` | `CreateGroupRequestBody` | Yes | Request body (application/json) |
-
+| Name   | Type                     | Required | Description                     |
+| ------ | ------------------------ | -------- | ------------------------------- |
+| `body` | `CreateGroupRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_group`
 
-This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-group).
+This endpoint returns a specific group by ID. Corresponds to
+[`liveblocks.getGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-group).
 
 **Example**
+
 ```python
 result = client.get_group(
     group_id="engineering",
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `group_id` | `str` | Yes | The ID of the group to retrieve. |
-
+| Name       | Type  | Required | Description                      |
+| ---------- | ----- | -------- | -------------------------------- |
+| `group_id` | `str` | Yes      | The ID of the group to retrieve. |
 
 ---
 
 #### `delete_group`
 
-This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-group).
+This endpoint deletes a group. Corresponds to
+[`liveblocks.deleteGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-group).
 
 **Example**
+
 ```python
 client.delete_group(
     group_id="engineering",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `group_id` | `str` | Yes | The ID of the group to delete. |
-
+| Name       | Type  | Required | Description                    |
+| ---------- | ----- | -------- | ------------------------------ |
+| `group_id` | `str` | Yes      | The ID of the group to delete. |
 
 ---
 
 #### `add_group_members`
 
-This endpoint adds new members to an existing group. Corresponds to [`liveblocks.addGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#add-group-members).
+This endpoint adds new members to an existing group. Corresponds to
+[`liveblocks.addGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#add-group-members).
 
 **Example**
+
 ```python
 from liveblocks.models import AddGroupMembersRequestBody
 
@@ -2247,21 +2561,23 @@ result = client.add_group_members(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `group_id` | `str` | Yes | The ID of the group to add members to. |
-| `body` | `AddGroupMembersRequestBody` | Yes | Request body (application/json) |
-
+| Name       | Type                         | Required | Description                            |
+| ---------- | ---------------------------- | -------- | -------------------------------------- |
+| `group_id` | `str`                        | Yes      | The ID of the group to add members to. |
+| `body`     | `AddGroupMembersRequestBody` | Yes      | Request body (application/json)        |
 
 ---
 
 #### `remove_group_members`
 
-This endpoint removes members from an existing group. Corresponds to [`liveblocks.removeGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#remove-group-members).
+This endpoint removes members from an existing group. Corresponds to
+[`liveblocks.removeGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#remove-group-members).
 
 **Example**
+
 ```python
 from liveblocks.models import RemoveGroupMembersRequestBody
 
@@ -2273,21 +2589,24 @@ result = client.remove_group_members(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `group_id` | `str` | Yes | The ID of the group to remove members from. |
-| `body` | `RemoveGroupMembersRequestBody` | Yes | Request body (application/json) |
-
+| Name       | Type                            | Required | Description                                 |
+| ---------- | ------------------------------- | -------- | ------------------------------------------- |
+| `group_id` | `str`                           | Yes      | The ID of the group to remove members from. |
+| `body`     | `RemoveGroupMembersRequestBody` | Yes      | Request body (application/json)             |
 
 ---
 
 #### `get_user_groups`
 
-This endpoint returns all groups that a specific user is a member of. Corresponds to [`liveblocks.getUserGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-user-groups).
+This endpoint returns all groups that a specific user is a member of.
+Corresponds to
+[`liveblocks.getUserGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-user-groups).
 
 **Example**
+
 ```python
 result = client.get_user_groups(
     user_id="user-123",
@@ -2296,14 +2615,14 @@ result = client.get_user_groups(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `user_id` | `str` | Yes | The ID of the user to get groups for. |
-| `limit` | `int \| Unset` | No | A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
-| `starting_after` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-
+| Name             | Type           | Required | Description                                                                                                                  |
+| ---------------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `user_id`        | `str`          | Yes      | The ID of the user to get groups for.                                                                                        |
+| `limit`          | `int \| Unset` | No       | A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_ |
+| `starting_after` | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                             |
 
 ---
 
@@ -2311,9 +2630,12 @@ print(result)
 
 #### `get_ai_copilots`
 
-This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilots).
+This endpoint returns a paginated list of AI copilots. The copilots are returned
+sorted by creation date, from newest to oldest. Corresponds to
+[`liveblocks.getAiCopilots`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilots).
 
 **Example**
+
 ```python
 result = client.get_ai_copilots(
     # limit=20,
@@ -2321,63 +2643,74 @@ result = client.get_ai_copilots(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `limit` | `int \| Unset` | No | A limit on the number of copilots to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
-| `starting_after` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-
+| Name             | Type           | Required | Description                                                                                                                    |
+| ---------------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `limit`          | `int \| Unset` | No       | A limit on the number of copilots to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_ |
+| `starting_after` | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                               |
 
 ---
 
 #### `create_ai_copilot`
 
-This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-ai-copilot).
+This endpoint creates a new AI copilot with the given configuration. Corresponds
+to
+[`liveblocks.createAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-ai-copilot).
 
 **Example**
+
 ```python
 result = client.create_ai_copilot(
     body=...,
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `body` | `CreateAiCopilotOptionsAnthropic \| CreateAiCopilotOptionsGoogle \| CreateAiCopilotOptionsOpenAi \| CreateAiCopilotOptionsOpenAiCompatible` | Yes | Request body (application/json) |
-
+| Name   | Type                                                                                                                                        | Required | Description                     |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------- |
+| `body` | `CreateAiCopilotOptionsAnthropic \| CreateAiCopilotOptionsGoogle \| CreateAiCopilotOptionsOpenAi \| CreateAiCopilotOptionsOpenAiCompatible` | Yes      | Request body (application/json) |
 
 ---
 
 #### `get_ai_copilot`
 
-This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilot).
+This endpoint returns an AI copilot by its ID. Corresponds to
+[`liveblocks.getAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilot).
 
 **Example**
+
 ```python
 result = client.get_ai_copilot(
     copilot_id="cp_abc123",
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-
+| Name         | Type  | Required | Description          |
+| ------------ | ----- | -------- | -------------------- |
+| `copilot_id` | `str` | Yes      | ID of the AI copilot |
 
 ---
 
 #### `update_ai_copilot`
 
-This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#update-ai-copilot).
+This endpoint updates an existing AI copilot's configuration. Corresponds to
+[`liveblocks.updateAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#update-ai-copilot).
 
-This endpoint returns a 422 response if the update doesn't apply due to validation failures. For example, if the existing copilot uses the "openai" provider and you attempt to update the provider model to an incompatible value for the provider, like "gemini-2.5-pro", you'll receive a 422 response with an error message explaining where the validation failed.
+This endpoint returns a 422 response if the update doesn't apply due to
+validation failures. For example, if the existing copilot uses the "openai"
+provider and you attempt to update the provider model to an incompatible value
+for the provider, like "gemini-2.5-pro", you'll receive a 422 response with an
+error message explaining where the validation failed.
 
 **Example**
+
 ```python
 from liveblocks.models import UpdateAiCopilotRequestBody
 
@@ -2391,40 +2724,46 @@ result = client.update_ai_copilot(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-| `body` | `UpdateAiCopilotRequestBody` | Yes | Request body (application/json) |
-
+| Name         | Type                         | Required | Description                     |
+| ------------ | ---------------------------- | -------- | ------------------------------- |
+| `copilot_id` | `str`                        | Yes      | ID of the AI copilot            |
+| `body`       | `UpdateAiCopilotRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `delete_ai_copilot`
 
-This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot be restored. Corresponds to [`liveblocks.deleteAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-ai-copilot).
+This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer
+accessible and cannot be restored. Corresponds to
+[`liveblocks.deleteAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-ai-copilot).
 
 **Example**
+
 ```python
 client.delete_ai_copilot(
     copilot_id="cp_abc123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-
+| Name         | Type  | Required | Description          |
+| ------------ | ----- | -------- | -------------------- |
+| `copilot_id` | `str` | Yes      | ID of the AI copilot |
 
 ---
 
 #### `get_knowledge_sources`
 
-This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds to [`liveblocks.getKnowledgeSources`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-sources).
+This endpoint returns a paginated list of knowledge sources for a specific AI
+copilot. Corresponds to
+[`liveblocks.getKnowledgeSources`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-sources).
 
 **Example**
+
 ```python
 result = client.get_knowledge_sources(
     copilot_id="cp_abc123",
@@ -2433,22 +2772,24 @@ result = client.get_knowledge_sources(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-| `limit` | `int \| Unset` | No | A limit on the number of knowledge sources to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
-| `starting_after` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-
+| Name             | Type           | Required | Description                                                                                                                             |
+| ---------------- | -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `copilot_id`     | `str`          | Yes      | ID of the AI copilot                                                                                                                    |
+| `limit`          | `int \| Unset` | No       | A limit on the number of knowledge sources to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_ |
+| `starting_after` | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                                        |
 
 ---
 
 #### `get_knowledge_source`
 
-This endpoint returns a specific knowledge source by its ID. Corresponds to [`liveblocks.getKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-source).
+This endpoint returns a specific knowledge source by its ID. Corresponds to
+[`liveblocks.getKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-source).
 
 **Example**
+
 ```python
 result = client.get_knowledge_source(
     copilot_id="cp_abc123",
@@ -2456,21 +2797,24 @@ result = client.get_knowledge_source(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-| `knowledge_source_id` | `str` | Yes | ID of the knowledge source |
-
+| Name                  | Type  | Required | Description                |
+| --------------------- | ----- | -------- | -------------------------- |
+| `copilot_id`          | `str` | Yes      | ID of the AI copilot       |
+| `knowledge_source_id` | `str` | Yes      | ID of the knowledge source |
 
 ---
 
 #### `create_web_knowledge_source`
 
-This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-web-knowledge-source).
+This endpoint creates a web knowledge source for an AI copilot. This allows the
+copilot to access and learn from web content. Corresponds to
+[`liveblocks.createWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-web-knowledge-source).
 
 **Example**
+
 ```python
 from liveblocks.models import CreateWebKnowledgeSourceRequestBody
 
@@ -2484,21 +2828,25 @@ result = client.create_web_knowledge_source(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-| `body` | `CreateWebKnowledgeSourceRequestBody` | Yes | Request body (application/json) |
-
+| Name         | Type                                  | Required | Description                     |
+| ------------ | ------------------------------------- | -------- | ------------------------------- |
+| `copilot_id` | `str`                                 | Yes      | ID of the AI copilot            |
+| `body`       | `CreateWebKnowledgeSourceRequestBody` | Yes      | Request body (application/json) |
 
 ---
 
 #### `create_file_knowledge_source`
 
-This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can then reference the content of the file when responding. Corresponds to [`liveblocks.createFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-file-knowledge-source).
+This endpoint creates a file knowledge source for an AI copilot by uploading a
+file. The copilot can then reference the content of the file when responding.
+Corresponds to
+[`liveblocks.createFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-file-knowledge-source).
 
 **Example**
+
 ```python
 result = client.create_file_knowledge_source(
     copilot_id="cp_abc123",
@@ -2507,22 +2855,26 @@ result = client.create_file_knowledge_source(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-| `name` | `str` | Yes | Name of the file |
-| `body` | `File` | Yes | Request body (application/octet-stream) |
-
+| Name         | Type   | Required | Description                             |
+| ------------ | ------ | -------- | --------------------------------------- |
+| `copilot_id` | `str`  | Yes      | ID of the AI copilot                    |
+| `name`       | `str`  | Yes      | Name of the file                        |
+| `body`       | `File` | Yes      | Request body (application/octet-stream) |
 
 ---
 
 #### `get_file_knowledge_source_markdown`
 
-This endpoint returns the content of a file knowledge source as markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).
+This endpoint returns the content of a file knowledge source as markdown. This
+allows you to see what content the AI copilot has access to from uploaded files.
+Corresponds to
+[`liveblocks.getFileKnowledgeSourceMarkdown`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).
 
 **Example**
+
 ```python
 result = client.get_file_knowledge_source_markdown(
     copilot_id="cp_abc123",
@@ -2530,63 +2882,73 @@ result = client.get_file_knowledge_source_markdown(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-| `knowledge_source_id` | `str` | Yes | ID of the knowledge source |
-
+| Name                  | Type  | Required | Description                |
+| --------------------- | ----- | -------- | -------------------------- |
+| `copilot_id`          | `str` | Yes      | ID of the AI copilot       |
+| `knowledge_source_id` | `str` | Yes      | ID of the knowledge source |
 
 ---
 
 #### `delete_file_knowledge_source`
 
-This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have access to the content from this file. Corresponds to [`liveblocks.deleteFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-file-knowledge-source).
+This endpoint deletes a file knowledge source from an AI copilot. The copilot
+will no longer have access to the content from this file. Corresponds to
+[`liveblocks.deleteFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-file-knowledge-source).
 
 **Example**
+
 ```python
 client.delete_file_knowledge_source(
     copilot_id="cp_abc123",
     knowledge_source_id="ks_abc123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-| `knowledge_source_id` | `str` | Yes | ID of the knowledge source |
-
+| Name                  | Type  | Required | Description                |
+| --------------------- | ----- | -------- | -------------------------- |
+| `copilot_id`          | `str` | Yes      | ID of the AI copilot       |
+| `knowledge_source_id` | `str` | Yes      | ID of the knowledge source |
 
 ---
 
 #### `delete_web_knowledge_source`
 
-This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have access to the content from this source. Corresponds to [`liveblocks.deleteWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-web-knowledge-source).
+This endpoint deletes a web knowledge source from an AI copilot. The copilot
+will no longer have access to the content from this source. Corresponds to
+[`liveblocks.deleteWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-web-knowledge-source).
 
 **Example**
+
 ```python
 client.delete_web_knowledge_source(
     copilot_id="cp_abc123",
     knowledge_source_id="ks_abc123",
 )
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-| `knowledge_source_id` | `str` | Yes | ID of the knowledge source |
-
+| Name                  | Type  | Required | Description                |
+| --------------------- | ----- | -------- | -------------------------- |
+| `copilot_id`          | `str` | Yes      | ID of the AI copilot       |
+| `knowledge_source_id` | `str` | Yes      | ID of the knowledge source |
 
 ---
 
 #### `get_web_knowledge_source_links`
 
-This endpoint returns a paginated list of links that were indexed from a web knowledge source. This is useful for understanding what content the AI copilot has access to from web sources. Corresponds to [`liveblocks.getWebKnowledgeSourceLinks`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-web-knowledge-source-links).
+This endpoint returns a paginated list of links that were indexed from a web
+knowledge source. This is useful for understanding what content the AI copilot
+has access to from web sources. Corresponds to
+[`liveblocks.getWebKnowledgeSourceLinks`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-web-knowledge-source-links).
 
 **Example**
+
 ```python
 result = client.get_web_knowledge_source_links(
     copilot_id="cp_abc123",
@@ -2596,22 +2958,22 @@ result = client.get_web_knowledge_source_links(
 )
 print(result)
 ```
+
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `copilot_id` | `str` | Yes | ID of the AI copilot |
-| `knowledge_source_id` | `str` | Yes | ID of the knowledge source |
-| `limit` | `int \| Unset` | No | A limit on the number of links to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
-| `starting_after` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
-
+| Name                  | Type           | Required | Description                                                                                                                 |
+| --------------------- | -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `copilot_id`          | `str`          | Yes      | ID of the AI copilot                                                                                                        |
+| `knowledge_source_id` | `str`          | Yes      | ID of the knowledge source                                                                                                  |
+| `limit`               | `int \| Unset` | No       | A limit on the number of links to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_ |
+| `starting_after`      | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                            |
 
 ---
 
-
 ## Error Handling
 
-All API methods raise `errors.LiveblocksError` when the server returns a non-2xx status code. You can catch and inspect these errors:
+All API methods raise `errors.LiveblocksError` when the server returns a non-2xx
+status code. You can catch and inspect these errors:
 
 ```python
 from liveblocks import errors, Liveblocks

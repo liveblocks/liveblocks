@@ -133,7 +133,7 @@ You now have a URL that can be used in the webhooks dashboard.
 
 To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
 inside your Liveblocks project, and tell the webhook to trigger on any specific
-[webhook events](/docs/platform/webhooks#Liveblocks-events).
+[webhook events](/docs/api-reference/webhook-events#Liveblocks-events).
 
 <Steps>
   <Step>
@@ -189,7 +189,7 @@ inside your Liveblocks project, and tell the webhook to trigger on any specific
     Enter the URL of the endpoint. In a production app this will be the real
     endpoint, but for now enter your `localtunnel` or `ngrok` URL from earlier.
 
-    You can filter for any specific [webhook events](/docs/platform/webhooks#Liveblocks-events) here, in case you’d only like to listen to certain types.
+    You can filter for any specific [webhook events](/docs/api-reference/webhook-events#Liveblocks-events) here, in case you’d only like to listen to certain types.
     <Figure>
       <Image
         src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
@@ -275,8 +275,8 @@ The webhook has now been verified!
 ## Use your webhook event
 
 From this point on, you can use the webhook event as you like. Here’s a
-[Comments](/docs/ready-made-features/comments) example, showing you how to fetch
-a new thread after it’s just been created.
+[Comments](/docs/products/comments) example, showing you how to fetch a new
+thread after it’s just been created.
 
 ```ts highlight="2,8-10,28-37"
 import { WebhookHandler } from "@liveblocks/node";
@@ -321,5 +321,5 @@ export async function POST(request: Request) {
 }
 ```
 
-Visit the [webhook events](/docs/platform/webhooks#Liveblocks-events) section of
+Visit the [webhook events](/docs/api-reference/webhook-events#Liveblocks-events) section of
 our webhooks guide to learn more.

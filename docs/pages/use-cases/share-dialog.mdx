@@ -1,0 +1,307 @@
+---
+meta:
+  title: "Share dialog"
+  parentTitle: "Use cases"
+  description:
+    "Build a share dialog with user invites, viewer and editor roles, team
+    sharing, public link access, and invite notifications."
+---
+
+Build a share dialog like the ones in Notion or Figma with Liveblocks. Invite
+people to a document by email, give them viewer, commenter, or editor roles,
+share with whole teams at once, toggle public link access, list everyone with
+access, and notify people when a document is shared with them.
+
+<Figure
+  caption={
+    <>
+      Share dialog in the <a href="/nextjs-starter-kit">Next.js Starter Kit</a>
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="KTjac02KUiXejABu01PnrLofgakO2dWgnAVUNZABSWlmE"
+    alt="Share dialog"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Room permissions**](#room-permissions): Model each document as a room with
+  default, group, and user access.
+- [**Inviting users**](#inviting-users): Grant a person access from your share
+  endpoint.
+- [**Roles**](#roles): Map viewer, commenter, and editor roles to permission
+  scopes.
+- [**Team sharing**](#team-sharing): Share a document with a whole group at
+  once.
+- [**Public link access**](#public-access): Toggle a document between private
+  and anyone-with-the-link.
+- [**Listing who has access**](#listing-access): Show the member list with names
+  and avatars.
+- [**Permission-aware UI**](#permission-aware-ui): Adapt the interface to each
+  user’s access level.
+- [**Invite notifications**](#invite-notifications): Notify people in-app and by
+  email when a document is shared.
+
+## Get started [#get-started]
+
+A share dialog is built on ID token authentication, where permissions are stored
+on each room.
+
+<ListGrid columns={2} defaultVisibleItems={2}>
+  <DocsCard
+    type="technology"
+    title="Set up ID token authentication"
+    href="/docs/api-reference/authentication/id-token/nextjs"
+    description="Store permissions on each room"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with an in-app inbox"
+    href="/docs/get-started/nextjs-notifications-in-app"
+    description="Notify users about shared documents"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented. Each document is a
+room in your Liveblocks app, and with
+[ID token authentication](/docs/api-reference/authentication#id-token-room-permissions)
+the room itself stores who can access it. A share dialog is a UI over these room
+accesses. When a user invites someone or changes a role, the dialog calls your
+server, which updates the room with
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node).
+
+### Room permissions [#room-permissions]
+
+Each room holds [permissions](/docs/api-reference/authentication/permissions) at
+three levels: `defaultAccesses` for everyone, `groupsAccesses` for teams, and
+`usersAccesses` for individuals. Create documents as private by default, with
+only the creator having access, using
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.createRoom("document-a", {
+  // Private, no access by default
+  defaultAccesses: [],
+
+  // The creator has full access
+  usersAccesses: {
+    "olivier@example.com": ["*:write"],
+  },
+});
+// +++
+```
+
+Users are matched by the `userId` and `groupIds` set when
+[authenticating](/docs/api-reference/authentication#id-token-room-permissions)
+them, so no Liveblocks-specific accounts are needed.
+
+### Inviting users [#inviting-users]
+
+When a user submits an email in the share dialog, your server grants access with
+[`Liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId).
+Only the accesses you pass are changed, and existing members keep theirs. Set a
+user’s access to `null` to remove them.
+
+```ts
+// +++
+await liveblocks.updateRoom("document-a", {
+  usersAccesses: {
+    // Invite Stacy as an editor
+    "stacy@example.com": ["*:write"],
+
+    // Remove Marc’s access
+    "marc@example.com": null,
+  },
+});
+// +++
+```
+
+Connected users are affected immediately, and someone whose access is removed is
+disconnected from the room.
+
+### Roles [#roles]
+
+Map your dialog’s roles to permission scopes. A viewer gets read access, a
+commenter can also join discussions, and an editor can change everything.
+
+```ts
+const ROLES = {
+  // +++
+  viewer: ["*:read"],
+  commenter: ["*:read", "comments:write"],
+  editor: ["*:write"],
+  // +++
+};
+
+await liveblocks.updateRoom("document-a", {
+  usersAccesses: {
+    "stacy@example.com": ROLES.commenter,
+  },
+});
+```
+
+More granular scopes exist too, such as `storage:read` and `feeds:write`. Learn
+more under [Permissions](/docs/api-reference/authentication/permissions).
+
+### Team sharing [#team-sharing]
+
+Share a document with a whole team at once using `groupsAccesses`. Groups are
+custom strings that you attach to users with `groupIds` during
+[authentication](/docs/api-reference/authentication#id-token-room-permissions),
+for example each user’s departments or workspaces.
+
+```ts
+// +++
+await liveblocks.updateRoom("document-a", {
+  groupsAccesses: {
+    // Everyone in "engineering" can edit
+    engineering: ["*:write"],
+  },
+});
+// +++
+```
+
+Anyone authenticated with the `engineering` group ID can now open the document,
+including people who join the team later. In multi-tenant apps, use
+[organizations](/docs/api-reference/authentication/organizations) to keep each
+workspace’s rooms and users separate.
+
+### Public link access [#public-access]
+
+An “anyone with the link” toggle maps to the room’s `defaultAccesses`. Keep the
+array empty for private documents, and add read or write access to open them up.
+
+```ts
+// Anyone with the link can view
+await liveblocks.updateRoom("document-a", {
+  // +++
+  defaultAccesses: ["*:read"],
+  // +++
+});
+
+// Back to private, invited members keep their access
+await liveblocks.updateRoom("document-a", {
+  // +++
+  defaultAccesses: [],
+  // +++
+});
+```
+
+User and group accesses always override the default, so making a document
+private never locks out invited members.
+
+### Listing who has access [#listing-access]
+
+Render the dialog’s member list by reading the room’s accesses with
+[`Liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId).
+
+```ts
+// +++
+const room = await liveblocks.getRoom("document-a");
+
+// { "olivier@example.com": ["*:write"], "stacy@example.com": ["*:read"] }
+console.log(room.usersAccesses);
+// +++
+```
+
+On the client, resolve each user ID into a name and avatar with
+[`useUser`](/docs/api-reference/liveblocks-react#useUser), backed by the
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+function you configure on
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+
+```tsx
+import { useUser } from "@liveblocks/react/suspense";
+
+function Member({ userId }: { userId: string }) {
+  // +++
+  const { user } = useUser(userId);
+  // +++
+
+  return (
+    <div>
+      <img src={user.avatar} alt="" />
+      {user.name}
+    </div>
+  );
+}
+```
+
+### Permission-aware UI [#permission-aware-ui]
+
+Inside the document, adapt the interface to the current user’s access with the
+`canWrite` and `canComment` properties on
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf), for example hiding
+the toolbar from viewers, or only showing the share button to editors.
+
+```tsx
+import { useSelf } from "@liveblocks/react/suspense";
+
+function Toolbar() {
+  // +++
+  const canWrite = useSelf((me) => me.canWrite);
+  // +++
+
+  return canWrite ? <EditorToolbar /> : <ViewerBadge />;
+}
+```
+
+Permissions are enforced on Liveblocks servers, so hiding UI is purely cosmetic,
+as read-only users can’t modify the document even with a modified client.
+
+### Invite notifications [#invite-notifications]
+
+Tell people when a document is shared with them by triggering a custom
+notification with
+[`Liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
+from the same endpoint that grants access. Render it in an in-app inbox, or
+deliver it by email.
+
+```ts
+// +++
+await liveblocks.triggerInboxNotification({
+  userId: "stacy@example.com",
+  kind: "$documentShared",
+  subjectId: "document-a",
+  activityData: {
+    title: "Launch plan",
+    sharedBy: "Olivier",
+  },
+});
+// +++
+```
+
+Learn more under the [inbox](/docs/use-cases/inbox) use case and our
+[Notifications overview](/docs/products/notifications).
+
+## Examples [#examples]
+
+The [Next.js Starter Kit](/docs/tools/nextjs-starter-kit) contains a complete
+share dialog implementation, with user invites, roles, group sharing, and a
+private/public toggle.
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Next.js Starter Kit"
+    href="/docs/tools/nextjs-starter-kit"
+    description="A complete collaborative app with a share dialog"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>

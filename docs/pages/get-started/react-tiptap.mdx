@@ -1,16 +1,25 @@
 ---
 meta:
-  title: "Get started with a Tiptap text editor using Liveblocks and React"
+  title: "Get started with a Tiptap text editor using Liveblocks Yjs and React"
   parentTitle: "Quickstart"
   description:
-    "Learn how to install a Tiptap text editor using Liveblocks and React"
+    "Learn how to install a Yjs-backed Tiptap text editor using Liveblocks and
+    React"
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. Follow the following steps to start adding
+collaborative experiences. Follow the following steps to start adding Yjs-backed
 collaboration to your React application using the APIs from the
 [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap)
 package.
+
+<Banner title="LiveText beta">
+
+Our new LiveText integration is available in beta, enabling a quicker, more
+efficient method of text editing. Learn more in the
+[Tiptap get started guide](/docs/get-started/react-tiptap-storage).
+
+</Banner>
 
 ## Quickstart
 
@@ -164,7 +173,7 @@ package.
     <StepTitle>Render threads and composer</StepTitle>
     <StepContent>
 
-     To add [Comments](/docs/ready-made-features/comments) to your text editor, we need to import a thread composer
+     To add [Comments](/docs/products/comments) to your text editor, we need to import a thread composer
     and list each thread on the page. Create a `Threads.tsx` file that uses [`FloatingComposer`](/docs/api-reference/liveblocks-react-tiptap#FloatingComposer)
     for creating new threads, alongside [`AnchoredThreads`](/docs/api-reference/liveblocks-react-tiptap#AnchoredThreads) and [`FloatingThreads`](/docs/api-reference/liveblocks-react-tiptap#FloatingThreads) for displaying threads on desktop and mobile.
 

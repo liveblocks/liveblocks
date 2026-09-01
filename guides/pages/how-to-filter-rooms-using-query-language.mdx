@@ -7,8 +7,8 @@ meta:
 ---
 
 When retrieving rooms with our REST API, it’s possible to filter for specific
-threads using [custom metadata](/docs/ready-made-features/comments/metadata) and
-room ID prefixes using our custom query language. This enables the
+threads using [custom metadata](/docs/products/comments/metadata) and room ID
+prefixes using our custom query language. This enables the
 [Get Rooms REST API](/docs/api-reference/rest-api-endpoints#get-rooms) to have
 filtering that works the same as with
 [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).
@@ -17,8 +17,8 @@ filtering that works the same as with
 
 You can filter rooms by their metadata and room ID prefixes, which is helpful
 when you’re using a
-[naming pattern](/docs/authentication/access-token#Naming-pattern) for your
-rooms. Filters can be combined using `AND` logic.
+[naming pattern](/docs/api-reference/authentication/access-token#Naming-pattern)
+for your rooms. Filters can be combined using `AND` logic.
 
 ```js
 // Rooms with IDs that begin with "liveblocks:"
@@ -63,4 +63,4 @@ https://api.liveblocks.io/v2/rooms?query=roomId%5E'liveblocks%3A'%20AND%20metada
 ```
 
 To learn more on _setting_ custom metadata on rooms, make sure to
-[read our guide](/docs/rooms/metadata).
+[read our guide](/docs/api-reference/liveblocks-node#post-rooms).

@@ -37,8 +37,8 @@ Displays an interactive AI chat. AI can
 </Figure>
 
 Each chat is stored permanently, and is identified by its unique `chatId`. Chats
-are only visible to the [authenticated user](/docs/authentication) who created
-the chat.
+are only visible to the [authenticated user](/docs/api-reference/authentication)
+who created the chat.
 
 ```tsx
 import { AiChat } from "@liveblocks/react-ui";
@@ -589,8 +589,8 @@ Override specific parts of `AiChat` with custom components.
 
 #### AiTool
 
-Displays [AI tool calls](/docs/ready-made-features/ai-copilots/features#tools)
-and their progress. Can be customized for many different UIs.
+Displays [AI tool calls](/docs/products/ai-copilots/features#tools) and their
+progress. Can be customized for many different UIs.
 
 {/* TODO AI tool image */}
 
@@ -941,7 +941,7 @@ button displayed by default.
 
 You can additionally use `thread.resolved` to filter the displayed threads for
 example. Or if you want to create your own `Thread` component using
-[the primitives](/docs/ready-made-features/comments/primitives), you can use
+[the primitives](/docs/products/comments/primitives), you can use
 [`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
 and
 [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
@@ -1055,9 +1055,9 @@ more.
 
 Picture a thread that features a graph visualization instead of a comment. To
 render it in the thread, you can create a comment and use its
-[comment metadata](/docs/ready-made-features/comments/metadata) to define its
-data. First, set up your metadata typing in your config file. We’ll define two
-types of comments, a normal comment and a graph comment, and pass both to
+[comment metadata](/docs/products/comments/metadata) to define its data. First,
+set up your metadata typing in your config file. We’ll define two types of
+comments, a normal comment and a graph comment, and pass both to
 `CommentMetadata`. Any data can go in here, but in this example, graphs are
 defined with `type: "graph"` and a `graphId`.
 
@@ -4341,7 +4341,7 @@ Find a full list of available icons in
 #### LiveblocksUiConfig
 
 Set configuration options for all `@liveblocks/react-ui` components, such as
-[overrides](#overrides).
+[overrides](#Overrides).
 
 ```tsx
 <LiveblocksUiConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />

@@ -1,0 +1,374 @@
+---
+meta:
+  title: "Forms"
+  parentTitle: "Use cases"
+  description:
+    "Build multiplayer forms with synchronized field values, live focus
+    indicators, server prefills, AI autofill, undo/redo, and comments."
+---
+
+Create a multiplayer form with Liveblocks, for onboarding flows, RFP responses,
+intake questionnaires, or any document your users fill in together. Synchronize
+every field value, show who’s editing which field, prefill answers from your
+back end, and let AI complete fields alongside your users.
+
+<Figure
+  caption={
+    <>
+      Collaboration in the{" "}
+      <a href="/examples/multiplayer-form">Multiplayer form</a> example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="qbKrjAaTkY6vcbUoxjxZ1yguXA8vDvRm8svxZCKU75M"
+    alt="Forms"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Realtime collaboration**](#realtime-collaboration): Synchronize every field
+  value between users.
+- [**Live field presence**](#presence): Show who’s focusing and editing each
+  field.
+- [**Server-side editing**](#server-side-editing): Prefill and update fields
+  from trusted backend processes.
+- [**Agentic editing**](#agentic-editing): Let AI agents complete fields with
+  validated values.
+- [**Multiplayer undo/redo**](#multiplayer-undo-redo): Give each user an
+  independent history of their changes.
+- [**Comments**](#comments): Attach review discussions to individual fields.
+- [**Permissions**](#permissions): Control who can view and fill in the form.
+
+## Get started [#get-started]
+
+Choose a starting point for your form.
+
+<ListGrid columns={2} defaultVisibleItems={2}>
+  <DocsCard
+    type="technology"
+    title="Get started with Sync"
+    href="/docs/get-started/nextjs"
+    description="Synchronize field values between users"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with presence"
+    href="/docs/get-started/nextjs-presence"
+    description="Show who’s editing each field"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with comments"
+    href="/docs/get-started/nextjs-comments"
+    description="Discuss answers with contextual threads"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented. Store permanent
+field values in [Sync](/docs/products/sync). Keep temporary focus and selection
+state in [Presence](/docs/products/sync/presence). Use
+[Comments](/docs/products/comments) for review discussions on individual fields.
+
+### Realtime collaboration [#realtime-collaboration]
+
+Store the form’s answers in a
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject), one property
+per field. Changes to different fields merge automatically, so two people can
+fill in different parts of the form at the same time without overwriting each
+other. Read values with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and update them
+with [`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+
+```tsx
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+
+function CompanyField() {
+  // +++
+  const company = useStorage((root) => root.fields.company);
+  const updateField = useMutation(({ storage }, value: string) => {
+    storage.get("fields").set("company", value);
+  }, []);
+  // +++
+
+  return (
+    <input value={company} onChange={(e) => updateField(e.target.value)} />
+  );
+}
+```
+
+For long answers where several people may type in the same field simultaneously,
+use [`LiveText`](/docs/products/sync/storage#LiveText) so concurrent keystrokes
+merge instead of replacing the whole value. Learn more under
+[Storage](/docs/products/sync/storage).
+
+### Live field presence [#presence]
+
+Show which field each collaborator is focusing, so people naturally avoid typing
+in the same input. Focus is temporary, so store it in
+[Presence](/docs/products/sync/presence)—publish it with
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+and read collaborators with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+
+function FormField({ fieldId }: { fieldId: string }) {
+  // +++
+  const updateMyPresence = useUpdateMyPresence();
+  const others = useOthers();
+  const editor = others.find(
+    (other) => other.presence.focusedFieldId === fieldId
+  );
+  // +++
+
+  return (
+    <div style={{ outline: editor ? `2px solid ${editor.info.color}` : "" }}>
+      <input
+        // +++
+        onFocus={() => updateMyPresence({ focusedFieldId: fieldId })}
+        onBlur={() => updateMyPresence({ focusedFieldId: null })}
+        // +++
+      />
+      {editor ? <span>{editor.info.name} is editing</span> : null}
+    </div>
+  );
+}
+```
+
+Add [`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) at the
+top of the form to show everyone currently filling it in, and configure
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+to provide their names and colors.
+
+### Server-side editing [#server-side-editing]
+
+Trusted server processes can prefill or update the form with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage),
+for example filling in known answers from your CRM when the form is created. The
+server writes the same Sync data as connected users, so prefilled values appear
+in realtime.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.mutateStorage("form-room", ({ root }) => {
+  const fields = root.get("fields");
+
+  fields.set("company", "Acme Inc.");
+  fields.set("contactEmail", "olivier@acme.inc");
+});
+// +++
+```
+
+Learn more under [Server-side editing](/docs/products/sync/server-side-editing).
+
+### Agentic editing [#agentic-editing]
+
+To let AI complete the form, generate validated values with AI, then use the
+same mutation shown under [Server-side editing](#server-side-editing) to apply
+them. Use
+[`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+before and after generation so the agent appears in [Presence](#presence)
+alongside humans, focusing fields as it fills them in. Finally, remove the
+agent’s presence to indicate that it’s no longer working.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "form-room";
+const agent: Liveblocks["UserMeta"] = {
+  id: "ai-agent",
+  info: { name: "AI agent", color: "#7c3aed" },
+};
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "thinking", focusedFieldId: "summary" },
+  ttl: 60,
+});
+// +++
+
+// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const fields = root.get("fields");
+
+  const { output } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        summary: z.string(),
+        industry: z.string(),
+      }),
+    }),
+    prompt: `Complete the remaining fields of this intake form. Here are the current answers: ${fields.toJSON()}`,
+  });
+
+  fields.set("summary", output.summary);
+  fields.set("industry", output.industry);
+});
+// +++
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "idle", focusedFieldId: null },
+  ttl: 2,
+});
+// +++
+```
+
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
+workflow state, and to pass agent status updates to the UI. Learn more under
+[Agentic editing](/docs/products/sync/agentic-editing).
+
+### Multiplayer undo/redo [#multiplayer-undo-redo]
+
+Connect undo and redo to your form with
+[`useUndo`](/docs/api-reference/liveblocks-react#useUndo) and
+[`useRedo`](/docs/api-reference/liveblocks-react#useRedo). Each user’s history
+is independent, so undoing your own answer never reverses a change made by
+someone else.
+
+```tsx
+import {
+  useCanRedo,
+  useCanUndo,
+  useRedo,
+  useUndo,
+} from "@liveblocks/react/suspense";
+
+function FormToolbar() {
+  // +++
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+  // +++
+
+  return (
+    <>
+      // +++
+      <button onClick={undo} disabled={!canUndo}>
+        Undo
+      </button>
+      <button onClick={redo} disabled={!canRedo}>
+        Redo
+      </button>
+      // +++
+    </>
+  );
+}
+```
+
+Learn more under
+[Multiplayer undo/redo](/docs/products/sync/storage#multiplayer-undo-redo).
+
+### Comments [#comments]
+
+Reviewers often need to discuss an answer before it’s final. Attach
+[Comments](/docs/products/comments) to a field by storing its ID in thread
+metadata, create threads with
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer), and render each
+field’s discussion next to it with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { Composer, Thread } from "@liveblocks/react-ui";
+
+function FieldComments({ fieldId }: { fieldId: string }) {
+  // +++
+  const { threads } = useThreads({ query: { metadata: { fieldId } } });
+  // +++
+
+  return (
+    <aside>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      // +++
+      <Composer metadata={{ fieldId }} />
+      // +++
+    </aside>
+  );
+}
+```
+
+Learn more under the [comments](/docs/use-cases/comments) use case.
+
+### Permissions [#permissions]
+
+Each form is contained inside a room in your Liveblocks app, and permission
+groups can set access to it. For example, your form may have an editor group
+that fills it in and a viewer group that can only review and comment. This can
+be set when modifying or creating a room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "reviewers" group can read the form and leave comments
+    reviewers: ["*:read", "comments:write"],
+  },
+  usersAccesses: {
+    // "olivier" can fill in the form
+    olivier: ["*:write"],
+  },
+});
+```
+
+More complex controls can be set too, learn more under
+[Permissions](/docs/api-reference/authentication/permissions).
+
+## Examples [#examples]
+
+Explore complete examples that combine the features described above.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Multiplayer Form",
+      slug: "multiplayer-form/nextjs-form",
+      image: "/images/examples/thumbnails/multiplayer-form.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Form Selection",
+      slug: "live-form-selection/nextjs-live-form-selection",
+      image: "/images/examples/thumbnails/live-form-selection.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

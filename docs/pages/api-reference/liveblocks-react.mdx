@@ -330,11 +330,12 @@ function App() {
     name="authEndpoint"
     detailedType="string | async ((room?: string) => CustomAuthenticationResult)"
   >
-    The URL of your back end’s [authentication endpoint](/docs/authentication)
-    as a string, or an async callback function that returns a Liveblocks token
-    result. The result is cached by the Liveblocks client, and called fresh only
-    when necessary, so never cache it yourself. Either `authEndpoint` or
-    `publicApiKey` are required. Learn more about [using a URL
+    The URL of your back end’s [authentication
+    endpoint](/docs/api-reference/authentication) as a string, or an async
+    callback function that returns a Liveblocks token result. The result is
+    cached by the Liveblocks client, and called fresh only when necessary, so
+    never cache it yourself. Either `authEndpoint` or `publicApiKey` are
+    required. Learn more about [using a URL
     string](#LiveblocksProviderAuthEndpoint) and [using a
     callback](#LiveblocksProviderCallback).
   </PropertiesListItem>
@@ -377,9 +378,9 @@ function App() {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/ready-made-features/comments), [Text
-    Editor](/docs/ready-made-features/text-editor), and
-    [Notifications](/docs/ready-made-features/notifications). Return an array of
+    [Comments](/docs/products/comments), [Text
+    Editor](/docs/use-cases/text-editor), and
+    [Notifications](/docs/products/notifications). Return an array of
     `UserMeta["info"]` objects in the same order they arrived. [Learn
     more](#LiveblocksProviderResolveUsers).
   </PropertiesListItem>
@@ -388,8 +389,8 @@ function App() {
     detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
   >
     A function that resolves room information in
-    [Notifications](/docs/ready-made-features/notifications). Return an array of
-    `RoomInfo` objects in the same order they arrived. [Learn
+    [Notifications](/docs/products/notifications). Return an array of `RoomInfo`
+    objects in the same order they arrived. [Learn
     more](#LiveblocksProviderResolveRoomsInfo).
   </PropertiesListItem>
   <PropertiesListItem
@@ -397,9 +398,9 @@ function App() {
     detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
   >
     A function that resolves group information in
-    [Comments](/docs/ready-made-features/comments) and [Text
-    Editor](/docs/ready-made-features/text-editor). Return an array of
-    `GroupInfo` objects in the same order they arrived. [Learn
+    [Comments](/docs/products/comments) and [Text
+    Editor](/docs/use-cases/text-editor). Return an array of `GroupInfo` objects
+    in the same order they arrived. [Learn
     more](#LiveblocksProviderResolveGroupsInfo).
   </PropertiesListItem>
   <PropertiesListItem
@@ -407,10 +408,9 @@ function App() {
     detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[] | MentionData[]"
   >
     A function that resolves mention suggestions in
-    [Comments](/docs/ready-made-features/comments) and [Text
-    Editor](/docs/ready-made-features/text-editor). Return an array of user IDs
-    or mention objects. [Learn
-    more](#LiveblocksProviderResolveMentionSuggestions).
+    [Comments](/docs/products/comments) and [Text
+    Editor](/docs/use-cases/text-editor). Return an array of user IDs or mention
+    objects. [Learn more](#LiveblocksProviderResolveMentionSuggestions).
   </PropertiesListItem>
   <PropertiesListItem name="polyfills">
     Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
@@ -452,7 +452,7 @@ function App() {
 #### LiveblocksProvider with auth endpoint [#LiveblocksProviderAuthEndpoint]
 
 If you are not using a public key, you need to set up your own `authEndpoint`.
-Please refer to our [Authentication guide](/docs/authentication).
+Please refer to our [Authentication guide](/docs/api-reference/authentication).
 
 ```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
@@ -481,7 +481,7 @@ endpoint, `authEndpoint` can be provided as a custom callback. You should return
 the token created with
 [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
 or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
-learn more in [authentication guide](/docs/rooms/authentication).
+learn more in [authentication guide](/docs/api-reference/authentication).
 
 ```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
@@ -503,9 +503,9 @@ function App() {
 ```
 
 `room` is the room ID that the user is connecting to. When using
-[Notifications](/docs/ready-made-features/comments/email-notifications), `room`
-can be `undefined`, as the client is requesting a token that grants access to
-multiple rooms, rather than a specific room.
+[Notifications](/docs/products/comments/email-notifications), `room` can be
+`undefined`, as the client is requesting a token that grants access to multiple
+rooms, rather than a specific room.
 
 ##### Fetch your endpoint
 
@@ -616,8 +616,7 @@ More specifically, this option triggers when:
 
 - There are unsaved changes after calling any hooks or methods, in all of our
   products.
-- There are unsaved changes in a
-  [Text Editor](/docs/ready-made-features/text-editor).
+- There are unsaved changes in a [Text Editor](/docs/use-cases/text-editor).
 - There’s an unsubmitted comment in the
   [Composer](/docs/api-reference/liveblocks-react-ui#Composer).
 - The user has made changes and is currently offline.
@@ -695,13 +694,13 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 
 #### resolveUsers [#LiveblocksProviderResolveUsers]
 
-[Comments](/docs/ready-made-features/comments) and
-[Text Editor](/docs/ready-made-features/text-editor) store user IDs in its
-system, but no other user information. To display user information in Comments,
-Text Editor, and Notifications components, such as a user’s name or avatar, you
-need to resolve these IDs into user objects. This function receives a list of
-user IDs and you should return a list of user objects of the same size, in the
-same order.
+[Comments](/docs/products/comments) and
+[Text Editor](/docs/use-cases/text-editor) store user IDs in its system, but no
+other user information. To display user information in Comments, Text Editor,
+and Notifications components, such as a user’s name or avatar, you need to
+resolve these IDs into user objects. This function receives a list of user IDs
+and you should return a list of user objects of the same size, in the same
+order.
 
 User IDs are automatically resolved in batches with a maximum of 50 users per
 batch to optimize performance and prevent overwhelming your user resolution
@@ -818,10 +817,9 @@ function Component() {
 
 #### resolveRoomsInfo [#LiveblocksProviderResolveRoomsInfo]
 
-When using
-[Notifications](/docs/ready-made-features/comments/email-notifications) with
-[Comments](/docs/ready-made-features/comments), room IDs will be used to
-contextualize notifications (e.g. “Chris mentioned you in _room-id_”) in the
+When using [Notifications](/docs/products/comments/email-notifications) with
+[Comments](/docs/products/comments), room IDs will be used to contextualize
+notifications (e.g. “Chris mentioned you in _room-id_”) in the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component. To replace room IDs with more fitting names (e.g. document names,
 “Chris mentioned you in _Document A_”), you can provide a resolver function to
@@ -867,11 +865,10 @@ you might need to call your backend for example. In that case, providing it via
 
 #### resolveGroupsInfo [#LiveblocksProviderResolveGroupsInfo]
 
-When using group mentions with [Comments](/docs/ready-made-features/comments)
-and [Text Editor](/docs/ready-made-features/text-editor), group IDs will be used
-instead of user IDs. Similarly to
-[`resolveUsers`](#LiveblocksProviderResolveUsers), you can provide a resolver
-function to the `resolveGroupsInfo` option in
+When using group mentions with [Comments](/docs/products/comments) and
+[Text Editor](/docs/use-cases/text-editor), group IDs will be used instead of
+user IDs. Similarly to [`resolveUsers`](#LiveblocksProviderResolveUsers), you
+can provide a resolver function to the `resolveGroupsInfo` option in
 [`LiveblocksProvider`](#LiveblocksProvider) to assign information like names and
 avatars to group IDs.
 
@@ -918,9 +915,9 @@ function Component() {
 
 #### resolveMentionSuggestions [#LiveblocksProviderResolveMentionSuggestions]
 
-To enable creating mentions in [Comments](/docs/ready-made-features/comments)
-and [Text Editor](/docs/ready-made-features/text-editor), you can provide a
-resolver function to the `resolveMentionSuggestions` option in
+To enable creating mentions in [Comments](/docs/products/comments) and
+[Text Editor](/docs/use-cases/text-editor), you can provide a resolver function
+to the `resolveMentionSuggestions` option in
 [`LiveblocksProvider`](#LiveblocksProvider). These mentions will be displayed in
 the [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component and
 in text editors.
@@ -959,9 +956,9 @@ function App() {
 
 ##### Group mentions
 
-To support group mentions in [Comments](/docs/ready-made-features/comments) and
-[Text Editor](/docs/ready-made-features/text-editor), you can return a list of
-mention objects instead of user IDs to suggest a mix of user and group mentions.
+To support group mentions in [Comments](/docs/products/comments) and
+[Text Editor](/docs/use-cases/text-editor), you can return a list of mention
+objects instead of user IDs to suggest a mix of user and group mentions.
 
 ```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
@@ -2084,7 +2081,7 @@ function Comments() {
 
 #### Pass in storage data [#RegisterAiKnowledge-storage]
 
-You can also pass in knowledge from your custom Liveblocks storage app with
+You can also pass in knowledge from your app’s Storage state with
 [`useStorage`](/docs/api-reference/liveblocks-react#useStorage). This way, your
 AI chat will understand the context in the current room.
 
@@ -2319,9 +2316,8 @@ function Chat() {
 
 Makes a [`Room`][] available in the component hierarchy below. Joins the room
 when the component is mounted, and automatically leaves the room when the
-component is unmounted. When using
-[Sync Datastore](/docs/platform/sync-datastore), initial Presence values for
-each user, and Storage values for the room can be set.
+component is unmounted. When using [Sync](/docs/products/sync), initial Presence
+values for each user, and Storage values for the room can be set.
 
 ```tsx
 import { RoomProvider } from "@liveblocks/react/suspense";
@@ -2336,8 +2332,8 @@ function App() {
     The unique ID for the current room. `RoomProvider` will join this room when
     it loads. If the room doesn’t exist already it will automatically create the
     room first then join. After setting up
-    [authentication](/docs/authentication) for your app, it can helpful to
-    decide on a naming pattern for your room IDs.
+    [authentication](/docs/api-reference/authentication) for your app, it can
+    helpful to decide on a naming pattern for your room IDs.
   </PropertiesListItem>
   <PropertiesListItem name="initialPresence" type="JsonObject">
     The initial Presence of the user entering the room. Each user has their own
@@ -2869,8 +2865,7 @@ More specifically, this option triggers when:
 
 - There are unsaved changes after calling any hooks or methods, in all of our
   products.
-- There are unsaved changes in a
-  [Text Editor](/docs/ready-made-features/text-editor).
+- There are unsaved changes in a [Text Editor](/docs/use-cases/text-editor).
 - There’s an unsubmitted comment in the
   [Composer](/docs/api-reference/liveblocks-react-ui#Composer).
 - The user has made changes and is currently offline.
@@ -3117,7 +3112,8 @@ that particular selection changes. For full details, see [how selectors work][].
 
 It’s possible to check if a user has a specific permission by using the
 `canWrite` and `canComment` properties of the `User` object. This is set via
-your [room permissions](/docs/authentication#id-token-room-permissions).
+your
+[room permissions](/docs/api-reference/authentication#id-token-room-permissions).
 
 ```ts
 import { useSelf } from "@liveblocks/react/suspense";
@@ -3529,8 +3525,7 @@ whiteboard, or cells in a spreadsheet.
 
 Storage provides five different data structures, which you can use to build your
 application. All structures are permanent and persist when all users have left
-the room, unlike [Presence](/docs/ready-made-features/presence) which is
-temporary.
+the room, unlike [Presence](/docs/products/sync/presence) which is temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same
@@ -3594,7 +3589,7 @@ function App() {
 ```
 
 The type received in your Storage will match the type passed. Learn more under
-[typing your data](#typing-your-data).
+[typing your data](#Typing-your-data).
 
 ```tsx
 import { useMutation } from "@liveblocks/react/suspense";
@@ -3875,9 +3870,6 @@ building a custom sync layer. See
 and
 [`createLiveblocksPresencePlugin`](/docs/api-reference/liveblocks-codemirror#createLiveblocksPresencePlugin).
 
-For Lexical with Storage, use
-[`@liveblocks/lexical`](/docs/api-reference/liveblocks-lexical).
-
 For ProseMirror with Storage, use
 [`@liveblocks/prosemirror`](/docs/api-reference/liveblocks-prosemirror). For
 Tiptap, use
@@ -3896,8 +3888,8 @@ application as you build it.
 
 ### useStorage [@badge=RoomProvider]
 
-Extracts data from Liveblocks Storage state and automatically subscribes to
-updates to that selected data. For full details, see [how selectors work][].
+Extracts data from Storage state and automatically subscribes to updates to that
+selected data. For full details, see [how selectors work][].
 
 ```tsx
 // ✅ Rerenders if todos (or their children) change
@@ -3917,10 +3909,10 @@ const uncheckedItems = useStorage(
 ```
 
 The `root` argument to the `useStorage` selector function is an _immutable_ copy
-of your entire Liveblocks Storage tree. Think of it as the value you provided in
-the `initialStorage` prop at the [`RoomProvider`][] level, but then
-(recursively) converted to their “normal” JavaScript equivalents (objects,
-arrays, maps) that are read-only.
+of your entire Storage tree. Think of it as the value you provided in the
+`initialStorage` prop at the [`RoomProvider`][] level, but then (recursively)
+converted to their “normal” JavaScript equivalents (objects, arrays, maps) that
+are read-only.
 
 From that immutable `root`, you can select or compute any value you like. Your
 component will automatically get rerendered if the value you return differs from
@@ -3956,7 +3948,7 @@ const myTodos = useStorage(
 <PropertiesList title="Arguments">
   <PropertiesListItem name="selector" type="(root: ToJson<TStorage>) => T">
     A selector function to extract specific data from the storage root. The root
-    is an immutable copy of your entire Liveblocks Storage tree.
+    is an immutable copy of your entire Storage tree.
   </PropertiesListItem>
   <PropertiesListItem name="isEqual" type="(prev: T, curr: T) => boolean">
     Optional equality function to determine if the selected data has changed.
@@ -4389,7 +4381,7 @@ to use `useBatch`, or call `room.batch()` manually.
 
 Because mutations are batched with
 [`room.batch`](/docs/api-reference/liveblocks-client#Room.batch), which
-[cannot take an `async` function](/docs/api-reference/liveblocks-client#Doesn't-work-with-async-functions),
+[cannot take an `async` function](/docs/api-reference/liveblocks-client#Doesn’t-work-with-async-functions),
 the mutation function passed to `useMutation` cannot be `async` either.
 
 ```tsx
@@ -5658,7 +5650,6 @@ implement a “Load More” button, which fetches additional feeds when clicked.
 button is disabled while fetching is in progress.
 
 ```tsx
-import { Feed } from "@liveblocks/react-ui";
 import { useFeeds } from "@liveblocks/react/suspense";
 
 function Feeds() {
@@ -5971,8 +5962,8 @@ declare global {
 
 Returns a paginated list of inbox notifications for the current user. Initially
 fetches the latest 50 items. Inbox notifications are
-[project-based](/docs/ready-made-features/notifications/concepts#Project-based),
-meaning notifications from outside the current room are received.
+[project-based](/docs/products/notifications/concepts#Project-based), meaning
+notifications from outside the current room are received.
 
 ```tsx
 import { useInboxNotifications } from "@liveblocks/react";
@@ -6619,7 +6610,8 @@ Notification settings is currently in beta.
 </Banner>
 
 Returns the user’s notification settings in the current project, in other words
-which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+which
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
 will be sent for the current user. Notification settings are project-based,
 which means that `settings` and `updateSettings` are for the current user’s
 settings in every room. Useful for creating a
@@ -6762,7 +6754,8 @@ Notification settings is currently in beta.
 </Banner>
 
 Returns a function that updates user’s notification settings, which affects
-which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+which
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
 will be sent for the current user. Notification settings are project-based,
 which means that `updateSettings` modifies the current user’s settings in every
 room. Each notification `kind` must first be enabled on your project’s
@@ -7325,7 +7318,7 @@ export const {
 ```
 
 To upgrade to Liveblocks 2.0 and the new typing system, follow the
-[2.0 migration guide](/docs/platform/upgrading/2.0).
+[2.0 migration guide](/docs/api-reference/upgrading/2.0).
 
 ### User [#user-type]
 
@@ -7399,12 +7392,12 @@ const user = room.getSelf();
   <PropertiesListItem name="canWrite" type="boolean">
     `true` if the user can mutate the Room’s Storage and/or YDoc, `false` if
     they can only read but not mutate it. Set via your [room
-    permissions](/docs/authentication#id-token-room-permissions).
+    permissions](/docs/api-reference/authentication#id-token-room-permissions).
   </PropertiesListItem>
   <PropertiesListItem name="canComment" type="boolean">
     `true` if the user can leave a comment in the room, `false` if they can only
     read comments but not leave them. Set via your [room
-    permissions](/docs/authentication#id-token-room-permissions).
+    permissions](/docs/api-reference/authentication#id-token-room-permissions).
   </PropertiesListItem>
 </PropertiesList>
 

@@ -130,10 +130,11 @@ const client = createClient({
     name="authEndpoint"
     detailedType="string | async ((room?: string) => CustomAuthenticationResult)"
   >
-    The URL of your back end’s [authentication endpoint](/docs/authentication)
-    as a string, or an async callback function that returns a Liveblocks token
-    result. Either `authEndpoint` or `publicApiKey` are required. Learn more
-    about [using a URL string](#createClientAuthEndpoint) and [using a
+    The URL of your back end’s [authentication
+    endpoint](/docs/api-reference/authentication) as a string, or an async
+    callback function that returns a Liveblocks token result. Either
+    `authEndpoint` or `publicApiKey` are required. Learn more about [using a URL
+    string](#createClientAuthEndpoint) and [using a
     callback](#createClientCallback).
   </PropertiesListItem>
   <PropertiesListItem name="publicApiKey" type="string">
@@ -175,9 +176,9 @@ const client = createClient({
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/ready-made-features/comments), [Text
-    Editor](/docs/ready-made-features/text-editor), and
-    [Notifications](/docs/ready-made-features/notifications). Return an array of
+    [Comments](/docs/products/comments), [Text
+    Editor](/docs/use-cases/text-editor), and
+    [Notifications](/docs/products/notifications). Return an array of
     `UserMeta["info"]` objects in the same order they arrived. [Learn
     more](#createClientResolveUsers).
   </PropertiesListItem>
@@ -186,8 +187,8 @@ const client = createClient({
     detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
   >
     A function that resolves room information in
-    [Notifications](/docs/ready-made-features/notifications). Return an array of
-    `RoomInfo` objects in the same order they arrived. [Learn
+    [Notifications](/docs/products/notifications). Return an array of `RoomInfo`
+    objects in the same order they arrived. [Learn
     more](#createClientResolveRoomsInfo).
   </PropertiesListItem>
   <PropertiesListItem
@@ -195,9 +196,9 @@ const client = createClient({
     detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
   >
     A function that resolves group information in
-    [Comments](/docs/ready-made-features/comments) and [Text
-    Editor](/docs/ready-made-features/text-editor). Return an array of
-    `GroupInfo` objects in the same order they arrived. [Learn
+    [Comments](/docs/products/comments) and [Text
+    Editor](/docs/use-cases/text-editor). Return an array of `GroupInfo` objects
+    in the same order they arrived. [Learn
     more](#createClientResolveGroupsInfo).
   </PropertiesListItem>
   <PropertiesListItem
@@ -205,9 +206,9 @@ const client = createClient({
     detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[] | MentionData[]"
   >
     A function that resolves mention suggestions in
-    [Comments](/docs/ready-made-features/comments) and [Text
-    Editor](/docs/ready-made-features/text-editor). Return an array of user IDs
-    or mention objects. [Learn more](#createClientResolveMentionSuggestions).
+    [Comments](/docs/products/comments) and [Text
+    Editor](/docs/use-cases/text-editor). Return an array of user IDs or mention
+    objects. [Learn more](#createClientResolveMentionSuggestions).
   </PropertiesListItem>
   <PropertiesListItem name="polyfills">
     Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
@@ -244,7 +245,7 @@ const client = createClient({
 ### createClient with auth endpoint [#createClientAuthEndpoint]
 
 If you are not using a public key, you need to set up your own `authEndpoint`.
-Please refer to our [Authentication guide](/docs/authentication).
+Please refer to our [Authentication guide](/docs/api-reference/authentication).
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -259,7 +260,7 @@ endpoint, `authEndpoint` can be provided as a custom callback. You should return
 the token created with
 [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
 or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
-learn more in [authentication guide](/docs/rooms/authentication).
+learn more in [authentication guide](/docs/api-reference/authentication).
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -275,9 +276,9 @@ const client = createClient({
 ```
 
 `room` is the room ID that the user is connecting to. When using
-[Notifications](/docs/ready-made-features/comments/email-notifications), `room`
-can be `undefined`, as the client is requesting a token that grants access to
-multiple rooms, rather than a specific room.
+[Notifications](/docs/products/comments/email-notifications), `room` can be
+`undefined`, as the client is requesting a token that grants access to multiple
+rooms, rather than a specific room.
 
 #### Fetch your endpoint
 
@@ -371,8 +372,7 @@ More specifically, this option triggers when:
 
 - There are unsaved changes after calling any hooks or methods, in all of our
   products.
-- There are unsaved changes in a
-  [Text Editor](/docs/ready-made-features/text-editor).
+- There are unsaved changes in a [Text Editor](/docs/use-cases/text-editor).
 - There’s an unsubmitted comment in the
   [Composer](/docs/api-reference/liveblocks-react-ui#Composer).
 - The user has made changes and is currently offline.
@@ -438,13 +438,13 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 
 ### resolveUsers [#createClientResolveUsers]
 
-[Comments](/docs/ready-made-features/comments) and
-[Text Editor](/docs/ready-made-features/text-editor) store user IDs in their
-system, but no other user information. To display user information in Comments,
-Text Editor, and Notifications components, such as a user’s name or avatar, you
-need to resolve these IDs into user objects. This function receives a list of
-user IDs and you should return a list of user objects of the same size, in the
-same order.
+[Comments](/docs/products/comments) and
+[Text Editor](/docs/use-cases/text-editor) store user IDs in their system, but
+no other user information. To display user information in Comments, Text Editor,
+and Notifications components, such as a user’s name or avatar, you need to
+resolve these IDs into user objects. This function receives a list of user IDs
+and you should return a list of user objects of the same size, in the same
+order.
 
 User IDs are automatically resolved in batches with a maximum of 50 users per
 batch to optimize performance and prevent overwhelming your user resolution
@@ -529,10 +529,9 @@ function Component() {
 
 ### resolveRoomsInfo [#createClientResolveRoomsInfo]
 
-When using
-[Notifications](/docs/ready-made-features/comments/email-notifications) with
-[Comments](/docs/ready-made-features/comments), room IDs will be used to
-contextualize notifications (e.g. “Chris mentioned you in _room-id_”) in the
+When using [Notifications](/docs/products/comments/email-notifications) with
+[Comments](/docs/products/comments), room IDs will be used to contextualize
+notifications (e.g. “Chris mentioned you in _room-id_”) in the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component. To replace room IDs with more fitting names (e.g. document names,
 “Chris mentioned you in _Document A_”), you can provide a resolver function to
@@ -572,10 +571,10 @@ you might need to call your backend for example. In that case, providing it via
 
 ### resolveGroupsInfo [#createClientResolveGroupsInfo]
 
-When using group mentions with [Comments](/docs/ready-made-features/comments)
-and [Text Editor](/docs/ready-made-features/text-editor), group IDs will be used
-instead of user IDs. Similarly to [`resolveUsers`](#createClientResolveUsers),
-you can provide a resolver function to the `resolveGroupsInfo` option in
+When using group mentions with [Comments](/docs/products/comments) and
+[Text Editor](/docs/use-cases/text-editor), group IDs will be used instead of
+user IDs. Similarly to [`resolveUsers`](#createClientResolveUsers), you can
+provide a resolver function to the `resolveGroupsInfo` option in
 [`createClient`](#createClient) to assign information like names and avatars to
 group IDs.
 
@@ -615,10 +614,10 @@ function Component() {
 
 ### resolveMentionSuggestions [#createClientResolveMentionSuggestions]
 
-To enable creating mentions in [Comments](/docs/ready-made-features/comments)
-and [Text Editor](/docs/ready-made-features/text-editor), you can provide a
-resolver function to the `resolveMentionSuggestions` option in
-[`createClient`](#createClient). These mentions will be displayed in the
+To enable creating mentions in [Comments](/docs/products/comments) and
+[Text Editor](/docs/use-cases/text-editor), you can provide a resolver function
+to the `resolveMentionSuggestions` option in [`createClient`](#createClient).
+These mentions will be displayed in the
 [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component and in
 text editors.
 
@@ -650,9 +649,9 @@ const client = createClient({
 
 #### Group mentions
 
-To support group mentions in [Comments](/docs/ready-made-features/comments) and
-[Text Editor](/docs/ready-made-features/text-editor), you can return a list of
-mention objects instead of user IDs to suggest a mix of user and group mentions.
+To support group mentions in [Comments](/docs/products/comments) and
+[Text Editor](/docs/use-cases/text-editor), you can return a list of mention
+objects instead of user IDs to suggest a mix of user and group mentions.
 
 ```tsx
 import { createClient } from "@liveblocks/client";
@@ -816,7 +815,7 @@ const { room, leave } = client.enterRoom("my-room-id", {
 });
 ```
 
-Note that it’s possible to [add types to your room](#typing-your-data).
+Note that it’s possible to [add types to your room](#Typing-your-data).
 
 <PropertiesList title="Returns">
   <PropertiesListItem
@@ -824,7 +823,7 @@ Note that it’s possible to [add types to your room](#typing-your-data).
     type="Room<Presence, Storage, UserMeta, RoomEvent>"
   >
     A [Room](#Room), used for building your Liveblocks application. Learn more
-    about [typing your room](#typing-your-data).
+    about [typing your room](#Typing-your-data).
   </PropertiesListItem>
   <PropertiesListItem name="leave" type="() => void">
     A function that’s used to leave the room and disconnect.
@@ -942,7 +941,7 @@ const room = client.getRoom("my-room");
 
 It’s unlikely you’ll need this API if you’re using the newer
 [`client.enterRoom`][] API. Note that it’s possible to
-[add types to your room](#typing-your-data).
+[add types to your room](#Typing-your-data).
 
 <PropertiesList title="Returns">
   <PropertiesListItem
@@ -951,7 +950,7 @@ It’s unlikely you’ll need this API if you’re using the newer
   >
     A [Room](#Room), used for building your Liveblocks application. Returns
     `null` if the room has not yet been joined by the current client. Learn more
-    about [typing your room](#typing-your-data).
+    about [typing your room](#Typing-your-data).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1331,10 +1330,9 @@ Room returned by [`client.enterRoom`][] (or [`client.getRoom`][]).
 
 ### Room.getPresence
 
-Return the current user’s Presence.
-[Presence](/docs/ready-made-features/presence) is used to store custom
-properties on each user that exist until the user disconnects. An example use
-would be storing a user’s cursor coordinates.
+Return the current user’s Presence. [Presence](/docs/products/sync/presence) is
+used to store custom properties on each user that exist until the user
+disconnects. An example use would be storing a user’s cursor coordinates.
 
 ```ts
 const presence = room.getPresence();
@@ -1344,7 +1342,7 @@ console.log(presence);
 ```
 
 Presence is set with [`updatePresence`](#Room.updatePresence) and can be typed
-when you [enter a room](#enter-room-typing-a-room). The example above is using
+when you [enter a room](#Typing-with-client.enter). The example above is using
 the following type:
 
 ```ts file="liveblocks.config.ts"
@@ -1362,7 +1360,7 @@ declare global {
     An object holding the Presence value for the currently connected user.
     Presence is set with [`updatePresence`](#Room.updatePresence). Will always
     be JSON-serializable. `TPresence` is the `Presence` type you set yourself,
-    [learn more](#Typing-presence).
+    [learn more](#Typing-Presence).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1370,9 +1368,9 @@ declare global {
 
 ### Room.updatePresence
 
-Updates the current user’s [Presence](/docs/ready-made-features/presence). Only
-pass the properties you wish to update—any changes will be merged into the
-current presence. The entire presence object will not be replaced.
+Updates the current user’s [Presence](/docs/products/sync/presence). Only pass
+the properties you wish to update—any changes will be merged into the current
+presence. The entire presence object will not be replaced.
 
 ```ts
 room.updatePresence({ typing: true });
@@ -1497,7 +1495,7 @@ between different events on the receiving end.
 
 #### Typing multiple events [#typing-multiple-events]
 
-When [defining your types](#typing-your-data), you can pass a `RoomEvent` type
+When [defining your types](#Typing-your-data), you can pass a `RoomEvent` type
 in your config file to receive type hints in your app. To define multiple
 different custom events, use a union.
 
@@ -1708,7 +1706,7 @@ declare global {
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your room](#typing-your-data).
+[typing your room](#Typing-your-data).
 
 ```ts
 const { root } = await room.getStorage();
@@ -1936,7 +1934,7 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
 
 #### Typing events
 
-When [defining your types](#typing-your-data), you can pass a `RoomEvent` type
+When [defining your types](#Typing-your-data), you can pass a `RoomEvent` type
 to your config file to receive type hints in your app. To define multiple
 different custom events, use a union.
 
@@ -2037,7 +2035,7 @@ declare global {
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your data](#typing-your-data).
+[typing your data](#Typing-your-data).
 
 ```ts
 const unsubscribe = room.subscribe("my-presence", (presence) => {
@@ -2097,7 +2095,7 @@ declare global {
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your data](#typing-your-data).
+[typing your data](#Typing-your-data).
 
 ```ts
 const unsubscribe = room.subscribe("others", (others, event) => {
@@ -4454,7 +4452,8 @@ await room.updateSubscriptionSettings({
 ### Client.getNotificationSettings [@badge=Beta]
 
 Returns the user’s notification settings in the current project, in other words
-which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+which
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
 will be sent for the current user. Notification settings are project-based,
 which means that this returns the current user’s settings for every room.
 
@@ -4487,11 +4486,11 @@ console.log(settings);
 ### Client.updateNotificationSettings [@badge=Beta]
 
 Updates the current user’s notification settings, which affects which
-[notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the current user. Notification settings are project-based, which means
-that this modifies the current user’s settings in every room. Each notification
-`kind` must first be enabled on your project’s notification dashboard page
-before settings can be used.
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
+will be sent for the current user. Notification settings are project-based,
+which means that this modifies the current user’s settings in every room. Each
+notification `kind` must first be enabled on your project’s notification
+dashboard page before settings can be used.
 
 ```ts
 const settings = await client.updateNotificationSettings({
@@ -4571,8 +4570,7 @@ whiteboard, or cells in a spreadsheet.
 
 Storage provides five different data structures, which you can use to build your
 application. All structures are permanent and persist when all users have left
-the room, unlike [Presence](/docs/ready-made-features/presence) which is
-temporary.
+the room, unlike [Presence](/docs/products/sync/presence) which is temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same
@@ -4615,7 +4613,7 @@ declare global {
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your data](#typing-your-data).
+[typing your data](#Typing-your-data).
 
 ```ts
 const { root } = await room.getStorage();
@@ -6301,8 +6299,6 @@ To build a collaborative [CodeMirror](https://codemirror.net) editor, use
 [Tiptap](https://tiptap.dev/), use
 [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap) with
 [`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode).
-To build a collaborative [Lexical](https://lexical.dev) editor with Storage, use
-[`@liveblocks/lexical`](/docs/api-reference/liveblocks-lexical).
 
 ## LiveFile
 
@@ -6970,12 +6966,12 @@ const user = room.getSelf();
   <PropertiesListItem name="canWrite" type="boolean">
     `true` if the user can mutate the Room’s Storage and/or YDoc, `false` if
     they can only read but not mutate it. Set via your [room
-    permissions](/docs/authentication#id-token-room-permissions).
+    permissions](/docs/api-reference/authentication#id-token-room-permissions).
   </PropertiesListItem>
   <PropertiesListItem name="canComment" type="boolean">
     `true` if the user can leave a comment in the room, `false` if they can only
     read comments but not leave them. Set via your [room
-    permissions](/docs/authentication#id-token-room-permissions).
+    permissions](/docs/api-reference/authentication#id-token-room-permissions).
   </PropertiesListItem>
 </PropertiesList>
 

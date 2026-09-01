@@ -7,10 +7,10 @@ meta:
     Microsoft Teams, and more."
 ---
 
-Liveblocks [Notifications](/docs/ready-made-features/notifications) allows you
-to build a notification inbox, and send custom notifications to your users. With
-our webhooks and REST API, it’s possible to fetch unread
-[custom notifications](/docs/ready-made-features/notifications/concepts#Custom-notifications)
+Liveblocks [Notifications](/docs/products/notifications) allows you to build a
+notification inbox, and send custom notifications to your users. With our
+webhooks and REST API, it’s possible to fetch unread
+[custom notifications](/docs/products/notifications/concepts#Custom-notifications)
 and send external notifications via email, in Slack, in Microsoft Teams, or in
 any other service with an API, using webhooks. Notifications can also be
 displayed in your app using
@@ -26,7 +26,7 @@ notifications outside of your app, and more specifically, we’ll be looking at
 how to:
 
 - Trigger events based on unread custom notifications using the
-  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook
+  [`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent) webhook
   event.
 - Fetch unread notifications using the
   [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package.
@@ -35,7 +35,7 @@ how to:
 
 This guide assumes you already have a Liveblocks Notifications project set up.
 If you don’t have one yet, you can
-[get started with Notifications](/docs/get-started/notifications), and come back
+[get started with Notifications](/docs/get-started/nextjs-notifications-in-app), and come back
 after you’re set up.
 
 </Banner>
@@ -56,13 +56,13 @@ them if your users has not read the notification on the front-end, which we
 automatically keep track of.
 
 Learn more about Notifications in the
-[concepts page](/docs/ready-made-features/notifications/concepts).
+[concepts page](/docs/products/notifications/concepts).
 
 ## Using webhooks
 
 Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
 send requests to your API endpoint when certain events occurs. One webhook we
-provide is the [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent)
+provide is the [`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent)
 webhook, which is triggered for each participating user in a thread, and can be
 used to send external notifications to your users.
 
@@ -74,9 +74,9 @@ custom notification. Let’s take a look at how to set this up.
 You can send notifications via different channels, such as email, Slack,
 Microsoft Teams, and Web Push. In our dashboard, you can enable notifications on
 certain channels, and in this guide, we’ll be enabling a custom `$fileUploaded`
-[notification kind](/docs/ready-made-features/notifications/concepts#Notification-kinds)
-on the Slack channel. You must always enable the correct channel to ensure your
-[`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook events
+[notification kind](/docs/products/notifications/concepts#Notification-kinds) on
+the Slack channel. You must always enable the correct channel to ensure your
+[`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent) webhook events
 are triggered, and this guide will take you through setting it up.
 
 <Banner title="Which notification channel?">
@@ -393,7 +393,7 @@ export async function POST(request: Request) {
 After verifying the request, we can then check we’re receiving the correct type
 of event, on the correct channel. There are different `notification` events, and
 in this case we’d like to check for a
-[custom notification](/docs/platform/webhooks#Custom-notification) with the
+[custom notification](/docs/api-reference/webhook-events#Custom-notification) with the
 `$fileUploaded` kind, as we’re specifically listening for this. We can do this
 with `event.data.kind`, also making sure to check for the `slack` channel.
 
@@ -615,7 +615,7 @@ Great, we’re successfully sending external notifications to users when comment
 are left unread! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
-  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent).
+  [`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent).
 - How to use the [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
   package to fetch the custom notification data.
 - How to hook it up to an external service, such as Slack.

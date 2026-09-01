@@ -27,8 +27,8 @@ This guide assumes that you’re already familiar with
 If you’re not using Zustand, we recommend reading one of our dedicated to-do
 list tutorials:
 
-- [React tutorial](/docs/tutorials/collaborative-to-do-list/react)
-- [React + Redux tutorial](/docs/tutorials/collaborative-to-do-list/react-redux)
+- [React tutorial](/docs/guides/how-to-create-a-collaborative-to-do-list-with-react-and-liveblocks)
+- [React + Redux tutorial](/docs/guides/how-to-create-a-collaborative-to-do-list-with-react-redux-and-liveblocks)
 
 The source code for this guide is
 [available on github](https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-todo-list).
@@ -69,13 +69,14 @@ In order to use Liveblocks, we’ll need to sign up and get an API key.
 
 With a secret key, you can control who can access the room. it’s more secure but
 you need your own back-end endpoint. For this tutorial, we’ll go with a public
-key. For more info, see the [authentication guide](/docs/authentication).
+key. For more info, see the
+[authentication guide](/docs/api-reference/authentication).
 
 </Banner>
 
 Create a new file `src/store.ts` and initialize the Liveblocks client with your
 public API key. Then add our
-[liveblocks](/docs/api-reference/liveblocks-zustand#liveblocks) to your store
+[liveblocks](/docs/api-reference/liveblocks-zustand#Middleware) to your store
 configuration.
 
 ```ts file="src/store.ts"
@@ -312,7 +313,7 @@ the input. `isTyping` will be set when the user is writing a draft.
 The middleware option
 [`presenceMapping: { isTyping: true }`](/docs/api-reference/liveblocks-zustand#middleware-option-presence-mapping)
 means that we want to automatically sync the part of the state named `isTyping`
-to Liveblocks Presence.
+to Liveblocks presence.
 
 ```ts highlight="7-9,19-21,25" file="src/store.ts"
 import create from "zustand";
@@ -426,7 +427,7 @@ persist them with Liveblocks.
 To achieve that, we are going to use the middleware option
 [`storageMapping: { todos: true }`](/docs/api-reference/liveblocks-zustand#middleware-option-storage-mapping).
 It means that the part of the state named `todos` should be automatically synced
-with Liveblocks Storage.
+with Storage.
 
 ```ts highlight="6,8-9,19,21-29,34" file="src/store.ts"
 /* ... */
@@ -562,4 +563,4 @@ You can see some stats about the room you created in your
 ## Next steps
 
 - [API reference](/docs/api-reference/liveblocks-zustand)
-- [Authentication](/docs/authentication)
+- [Authentication](/docs/api-reference/authentication)

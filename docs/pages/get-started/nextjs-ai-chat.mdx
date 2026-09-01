@@ -15,7 +15,8 @@ components from
 
 <Banner title="Live example">
 
-See the finished result in the [AI Chats](/examples/ai-chats/nextjs-ai-chats) example.
+See the finished result in the [AI Chats](/examples/ai-chats/nextjs-ai-chats)
+example.
 
 </Banner>
 
@@ -54,7 +55,7 @@ See the finished result in the [AI Chats](/examples/ai-chats/nextjs-ai-chats) ex
     <StepTitle>Set up authentication</StepTitle>
     <StepContent>
 
-      Create an [authentication](/docs/authentication) API route with [`prepareSession`](/docs/api-reference/liveblocks-node#prepareSession),
+      Create an [authentication](/docs/api-reference/authentication) API route with [`prepareSession`](/docs/api-reference/liveblocks-node#access-tokens),
       passing a unique user ID.
       Each user has their own set of private chats, and this allows Liveblocks to identify who is connecting.
 
@@ -169,8 +170,8 @@ See the finished result in the [AI Chats](/examples/ai-chats/nextjs-ai-chats) ex
       Now you can add the [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat)
       component to your application. This component renders a fully-featured AI
       chat interface with message history and a composer. You can add
-      [tools](/docs/ready-made-features/ai-copilots/tools), [knowledge](/docs/ready-made-features/ai-copilots/knowledge),
-      and use [hooks](/docs/ready-made-features/ai-copilots/hooks).
+      [tools](/docs/products/ai-copilots/tools), [knowledge](/docs/products/ai-copilots/knowledge),
+      and use [hooks](/docs/products/ai-copilots/hooks).
 
       ```tsx file="app/page.tsx"
       "use client";
@@ -219,7 +220,7 @@ See the finished result in the [AI Chats](/examples/ai-chats/nextjs-ai-chats) ex
       using your preferred AI provider and configuration.
 
       <Button asChild  className="not-markdown">
-        <a href="/docs/ready-made-features/ai-copilots/copilots">
+        <a href="/docs/products/ai-copilots/copilots">
           Create a copilot
         </a>
       </Button>
@@ -234,7 +235,7 @@ See the finished result in the [AI Chats](/examples/ai-chats/nextjs-ai-chats) ex
 Congratulations! You’ve set up the foundation to start building an AI copilot
 experience for your Next.js application.
 
-- [Overview of all features and where to start](/docs/ready-made-features/ai-copilots)
+- [Overview of all features and where to start](/docs/products/ai-copilots)
 - [@liveblocks/react API reference](/docs/api-reference/liveblocks-react#AI-Copilots)
 - [@liveblocks/react-ui API reference](/docs/api-reference/liveblocks-react-ui#AI-Copilots)
 - [How to use a fallback AI model](/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots)

@@ -32,7 +32,7 @@ different APIs.
   for most applications.
 - [`Liveblocks.prepareSession`](#access-tokens) Access token authentication is
   best if you prefer handle permissions on your end, though it has
-  [limitations](/docs/authentication/access-token#limitations).
+  [limitations](/docs/api-reference/authentication/access-token#limitations).
 
 #### Liveblocks.identifyUser [#id-tokens]
 
@@ -49,7 +49,8 @@ const { body, status } = await liveblocks.identifyUser({
 ```
 
 <Banner>
-  Learn how to [get started with ID tokens](/docs/authentication#id-token).
+  Learn how to [get started with ID
+  tokens](/docs/api-reference/authentication#id-token).
 </Banner>
 
 A number of options are also available, enabling you to set up permissions and
@@ -91,10 +92,11 @@ expired.
 
 You can pass additional options to `identifyUser`, enabling you to create
 complex
-[workspace permissions](/docs/authentication#id-token-workspace-permissions) and
-[room permissions](/docs/authentication#id-token-room-permissions). For example,
-this user can only see resources in the `acme-corp` workspace, and they’re part
-of a `marketing` rooms group within it.
+[workspace permissions](/docs/api-reference/authentication#id-token-workspace-permissions)
+and
+[room permissions](/docs/api-reference/authentication#id-token-room-permissions).
+For example, this user can only see resources in the `acme-corp` workspace, and
+they’re part of a `marketing` rooms group within it.
 
 ```ts
 const { body, status } = await liveblocks.identifyUser({
@@ -115,13 +117,13 @@ const { body, status } = await liveblocks.identifyUser({
 
 <Banner>
   Learn more about [ID token
-  permissions](/docs/authentication#id-token-room-permissions).
+  permissions](/docs/api-reference/authentication#id-token-room-permissions).
 </Banner>
 
 ##### Text editor user data
 
 When using
-[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
+[text editor integrations](/docs/products/sync/integrations#official-packages),
 user data is inserted into their live cursor within the editor, showing their
 name and color. This data originates from the `userInfo` property.
 
@@ -185,11 +187,11 @@ console.log(currentUser.info.avatar);
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
 `liveblocks.identifyUser()` API if you’d like to issue
-[ID tokens](/docs/authentication#id-token-authenticating) from your back end. An
-ID token does not grant any permissions in the token directly. Instead, it only
-securely identifies your user, and then uses any permissions set via the
-[Permissions REST API][] to decide whether to allow the user on a room-by-room
-basis.
+[ID tokens](/docs/api-reference/authentication#id-token-authenticating) from
+your back end. An ID token does not grant any permissions in the token directly.
+Instead, it only securely identifies your user, and then uses any permissions
+set via the [Permissions REST API][] to decide whether to allow the user on a
+room-by-room basis.
 
 Use this approach if you’d like Liveblocks to be the source of truth for your
 user’s permissions.
@@ -254,7 +256,7 @@ their avatar URL.
 
 Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
 You can find examples for other frameworks in our
-[authentication section](/docs/authentication#select-your-framework).
+[authentication section](/docs/api-reference/authentication#select-your-framework).
 
 ```ts file="Next.js"
 import { Liveblocks } from "@liveblocks/node";
@@ -308,7 +310,7 @@ const session = liveblocks.prepareSession(
 
 <Banner>
   Learn how to [get started with access
-  tokens](/docs/authentication/access-token).
+  tokens](/docs/api-reference/authentication/access-token).
 </Banner>
 
 A number of options are also available, enabling you to set up permissions and
@@ -349,7 +351,7 @@ expired.
 Using `session.allow()`, you can grant full or read-only permissions to the user
 to select rooms. Wildcards can be used to enable granting permissions to
 multiple rooms at once using
-[naming patterns](/docs/authentication/access-token#Naming-pattern).
+[naming patterns](/docs/api-reference/authentication/access-token#Naming-pattern).
 
 ```ts
 const session = liveblocks.prepareSession(
@@ -370,13 +372,13 @@ session.allow("design-room:*", ["*:write"]);
 
 <Banner>
   Learn more about [access token
-  permissions](/docs/authentication/access-token#permissions).
+  permissions](/docs/api-reference/authentication/access-token#permissions).
 </Banner>
 
 Additionally, you can pass additional options to `prepareSession`, enabling you
 to create complex permissions using
-[organizations](/docs/authentication/organizations) and
-[accesses](/docs/authentication/access-tokens/permissions). For example, this
+[organizations](/docs/api-reference/authentication/organizations) and
+[accesses](/docs/api-reference/authentication/permissions). For example, this
 user can only see resources in the `acme-corp` organization, and they're part of
 a `marketing` group within it.
 
@@ -401,7 +403,7 @@ const session = liveblocks.prepareSession(
 ##### Text editor user data
 
 When using
-[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
+[text editor integrations](/docs/products/sync/integrations#official-packages),
 user data is inserted into their live cursor within the editor, showing their
 name and color. This data originates from the `userInfo` property of the
 session.
@@ -462,7 +464,8 @@ console.log(currentUser.info.avatar);
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
 `liveblocks.prepareSession()` API if you’d like to issue
-[access tokens](/docs/authentication/access-token) from your back end.
+[access tokens](/docs/api-reference/authentication/access-token) from your back
+end.
 
 <Banner title="What are access tokens?">
   Issuing access tokens is like issuing _hotel key cards_ from a hotel’s front
@@ -558,7 +561,7 @@ To implement your back end, follow these steps:
 
 Here’s a real-world example of access tokens in a Next.js route
 handler/endpoint. You can find examples for other frameworks in our
-[authentication section](/docs/authentication/access-token).
+[authentication section](/docs/api-reference/authentication/access-token).
 
 ```ts file="route.ts"
 import { Liveblocks } from "@liveblocks/node";
@@ -771,7 +774,7 @@ rooms to delete.
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
 is required. Setting `defaultAccesses` to `["*:write"]` creates a public room,
 whereas setting it to `[]` will create a private room that needs
-[ID token permission to enter](/docs/authentication#id-token-room-permissions).
+[ID token permission to enter](/docs/api-reference/authentication#id-token-room-permissions).
 This is a wrapper around the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms) and returns
 the same response.
@@ -817,7 +820,7 @@ const room = await liveblocks.createRoom("my-room-id", {
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
 more about
-[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
+[managing permission with ID tokens](/docs/api-reference/authentication#id-token-room-permissions).
 
 #### Liveblocks.getRoom [#get-rooms-roomId]
 
@@ -839,7 +842,7 @@ Get a room by its ID. If the room doesn’t exist, create it instead. The
 `defaultAccesses` option is required. Setting `defaultAccesses` to `["*:write"]`
 creates a public room, whereas setting it to `[]` will create a private room
 that needs
-[ID token permission to enter](/docs/authentication#id-token-room-permissions).
+[ID token permission to enter](/docs/api-reference/authentication#id-token-room-permissions).
 Returns the same response as the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
 
@@ -884,7 +887,7 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
 more about
-[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
+[managing permission with ID tokens](/docs/api-reference/authentication#id-token-room-permissions).
 
 #### Liveblocks.updateRoom [#post-rooms-roomId]
 
@@ -933,7 +936,7 @@ const room = await liveblocks.updateRoom("my-room-id", {
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
 more about
-[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
+[managing permission with ID tokens](/docs/api-reference/authentication#id-token-room-permissions).
 
 #### Liveblocks.upsertRoom [#upsert-rooms-roomId]
 
@@ -941,7 +944,7 @@ Update a room’s properties by its ID. If the room doesn’t exist, create it
 instead. The `defaultAccesses` option is required. Setting `defaultAccesses` to
 `["*:write"]` creates a public room, whereas setting it to `[]` will create a
 private room that needs
-[ID token permission to enter](/docs/authentication#id-token-room-permissions).
+[ID token permission to enter](/docs/api-reference/authentication#id-token-room-permissions).
 Returns the same response as the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
 
@@ -992,7 +995,7 @@ const room = await liveblocks.upsertRoom("my-room-id", {
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
 more about
-[managing permission with ID tokens](/docs/authentication#id-token-room-permissions).
+[managing permission with ID tokens](/docs/api-reference/authentication#id-token-room-permissions).
 
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
@@ -3247,7 +3250,7 @@ enabled, triggering an inbox notification activity for a specific `subjectId`,
 will update the existing inbox notification instead of creating a new one.
 
 To use this, you must first
-[enable batching in the dashboard](/docs/ready-made-features/notifications/concepts#Notification-batching).
+[enable batching in the dashboard](/docs/products/notifications/concepts#Notification-batching).
 Next, trigger a notification with the same `subjectId` as an existing
 notification, and the result will be added to the `activityData` array.
 
@@ -3327,7 +3330,8 @@ await liveblocks.deleteAllInboxNotifications({
 #### Liveblocks.getNotificationSettings [#get-users-userId-notification-settings] [@badge=Beta]
 
 Returns a user’s notification settings in the current project, in other words
-which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+which
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
 will be sent for the user. Notification settings are project-based, which means
 that this returns the user’s settings for every room. This a wrapper around the
 [Get Notification Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-notification-settings).
@@ -3357,11 +3361,11 @@ console.log(settings);
 #### Liveblocks.updateNotificationSettings [#post-users-userId-notification-settings] [@badge=Beta]
 
 Updates a user’s notification settings, which affects which
-[notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the user. Notification settings are project-based, which means that
-this modifies the user’s settings in every room. Each notification `kind` must
-first be enabled on your project’s notification dashboard page before settings
-can be used. This a wrapper around the
+[notification webhook events](/docs/api-reference/webhook-events#NotificationEvent)
+will be sent for the user. Notification settings are project-based, which means
+that this modifies the user’s settings in every room. Each notification `kind`
+must first be enabled on your project’s notification dashboard page before
+settings can be used. This a wrapper around the
 [Update Notification Settings API](/docs/api-reference/rest-api-endpoints#post-users-userId-notification-settings).
 
 ```ts
@@ -3965,7 +3969,7 @@ getMentionsFromCommentBody(commentBody, (mention) => (
 
 This is most commonly used in combination with the
 [Comments API functions](/docs/api-reference/liveblocks-node#Comments), for
-example [`getComment`](/docs/api-reference/liveblocks-node#get-comment).
+example [`getComment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
 
 ```ts
 import { Liveblocks, getMentionsFromCommentBody } from "@liveblocks/node";
@@ -4035,7 +4039,7 @@ const stringComment = await stringifyCommentBody(comment.body);
 
 This is most commonly used in combination with the
 [Comments API functions](/docs/api-reference/liveblocks-node#Comments), for
-example [`getComment`](/docs/api-reference/liveblocks-node#get-comment).
+example [`getComment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
 
 ```ts
 import { Liveblocks, stringifyCommentBody } from "@liveblocks/node";
@@ -4275,8 +4279,8 @@ export function POST(request) {
 ### isThreadNotificationEvent [#isThreadNotificationEvent]
 
 Type guard to check if a received webhook event is a
-[`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification) send
-from Comments. Particularly helpful when creating
+[`ThreadNotificationEvent`](/docs/api-reference/webhook-events#Thread-notification)
+send from Comments. Particularly helpful when creating
 [thread notification emails](/docs/api-reference/liveblocks-emails#thread-notification-emails)
 with webhooks.
 
@@ -4300,7 +4304,7 @@ The check is made against the event type and event data kind.
 ### isTextMentionNotificationEvent [#isTextMentionNotificationEvent]
 
 Type guard to check if a received webhook event is a
-[`TextMentionNotificationEvent`](/docs/platform/webhooks#TextMention-notification)
+[`TextMentionNotificationEvent`](/docs/api-reference/webhook-events#TextMention-notification)
 sent from Text Editor. Particularly helpful for identifying text mentions when
 sending email notifications.
 
@@ -4322,8 +4326,8 @@ if (isTextMentionNotificationEvent(event)) {
 ### isCustomNotificationEvent [#isCustomNotificationEvent]
 
 Type guard to check if a received webhook event is a
-[`CustomNotificationEvent`](/docs/platform/webhooks#Custom-notification) sent
-from
+[`CustomNotificationEvent`](/docs/api-reference/webhook-events#Custom-notification)
+sent from
 [`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
 Particularly helpful for identifying custom notifications when sending email
 notifications.
@@ -4346,4 +4350,5 @@ if (isCustomNotificationEvent(event)) {
 The check is made against the event type and event data kind.
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
-[Permissions REST API]: /docs/authentication#id-token-room-permissions
+[Permissions REST API]:
+  /docs/api-reference/authentication#id-token-room-permissions

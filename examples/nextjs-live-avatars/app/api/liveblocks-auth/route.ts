@@ -5,7 +5,7 @@ import { getRandomUser, getUser } from "../../../database";
 
 /**
  * Authenticating your Liveblocks application
- * https://liveblocks.io/docs/authentication
+ * https://liveblocks.io/docs/api-reference/authentication
  */
 
 const liveblocks = new Liveblocks({

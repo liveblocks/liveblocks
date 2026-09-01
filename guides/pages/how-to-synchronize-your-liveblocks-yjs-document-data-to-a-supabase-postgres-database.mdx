@@ -20,7 +20,7 @@ In this guide we’ll be linking a Yjs application up to a
 [Supabase Postgres](https://supabase.com/database) database so that Yjs document
 data is automatically synchronized. This is enabled through the following:
 
-- [YDocUpdated](/docs/platform/webhooks#YDocUpdatedEvent) webhook event
+- [YDocUpdated](/docs/api-reference/webhook-events#YDocUpdatedEvent) webhook event
 - [`getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc)
   from [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
 
@@ -36,7 +36,7 @@ back after you’re set up.
 
 ### This specific webhook is throttled
 
-Note that the [YDocUpdated](/docs/platform/webhooks#YDocUpdatedEvent) webhook
+Note that the [YDocUpdated](/docs/api-reference/webhook-events#YDocUpdatedEvent) webhook
 event is throttled at a rate of _once every 60 seconds_. This is because Yjs can
 update up to _60 times per second_, and it would be impractical to run the
 webhook this frequently.

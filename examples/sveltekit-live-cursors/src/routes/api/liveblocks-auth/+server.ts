@@ -3,7 +3,7 @@ import { Liveblocks } from "@liveblocks/node";
 
 /**
  * Authenticating your Liveblocks application
- * https://liveblocks.io/docs/authentication
+ * https://liveblocks.io/docs/api-reference/authentication
  */
 
 const API_KEY = import.meta.env.VITE_LIVEBLOCKS_SECRET_KEY as string;

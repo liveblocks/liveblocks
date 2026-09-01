@@ -817,8 +817,9 @@ metadata to individual comments in the same way as thread metadata.
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
 [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
-and [tenants](https://liveblocks.io/docs/authentication/organizations) in the
-docs.
+and
+[tenants](https://liveblocks.io/docs/api-reference/authentication/organizations)
+in the docs.
 
 ### `@liveblocks/client`
 

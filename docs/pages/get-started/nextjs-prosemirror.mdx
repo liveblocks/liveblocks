@@ -1,0 +1,292 @@
+---
+meta:
+  title:
+    "Get started with a ProseMirror text editor using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to sync a ProseMirror text editor with Liveblocks and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your Next.js application using the APIs from the
+[`@liveblocks/prosemirror`](/docs/api-reference/liveblocks-prosemirror) package.
+Text is stored as [`LiveText`](/docs/api-reference/liveblocks-client#LiveText)
+backed by Liveblocks Storage.
+
+<Banner title="Beta">
+
+The ProseMirror LiveText integration is currently in beta, and LiveText
+documents are limited to 2 MB. Read the
+[LiveText vs Yjs](/docs/guides/livetext-vs-yjs) guide to compare both
+approaches.
+
+</Banner>
+
+<Banner>
+
+If you are using Tiptap or BlockNote, use
+[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap) or
+[`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote)
+instead. They build on this package and add comments, mentions, and React
+components.
+
+</Banner>
+
+## Quickstart
+
+<PromptCta />
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks and ProseMirror</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/prosemirror prosemirror-model prosemirror-state prosemirror-view prosemirror-schema-basic prosemirror-commands prosemirror-keymap
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. When using Next.js’ `/app` router,
+      we recommend creating your room in a `Room.tsx` file in the same directory
+      as your current route.
+
+      The collaboration plugin creates its Storage document when it first
+      loads, so you can leave `initialStorage` empty.
+
+      Set up a Liveblocks client with
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+      and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
+      to add a loading spinner to your app.
+
+      ```tsx file="app/Room.tsx"
+      "use client";
+
+      import { ReactNode } from "react";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          // +++
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room">
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+          // +++
+        );
+      }
+      ```
+
+  </StepContent>
+
+</Step>
+<Step>
+  <StepTitle>Add the Liveblocks room to your page</StepTitle>
+  <StepContent>
+
+    After creating your room file, import it into your `page.tsx` file and place
+    your editor inside it.
+
+    ```tsx file="app/page.tsx"
+    import { Room } from "./Room";
+    import { Editor } from "./Editor";
+
+    export default function Page() {
+      return (
+        // +++
+        <Room>
+          <Editor />
+        </Room>
+        // +++
+      );
+    }
+    ```
+
+  </StepContent>
+
+</Step>
+<Step>
+  <StepTitle>Set up the collaborative ProseMirror editor</StepTitle>
+  <StepContent>
+
+    Now that Liveblocks is set up, create a ProseMirror editor in `Editor.tsx`.
+    Use [`createLiveblocksCollaborationPlugin`](/docs/api-reference/liveblocks-prosemirror#createLiveblocksCollaborationPlugin)
+    to sync the document with Storage, and
+    [`createLiveblocksCollaborationCaretPlugin`](/docs/api-reference/liveblocks-prosemirror#createLiveblocksCollaborationCaretPlugin)
+    to show remote carets and selections. The collaboration plugin groups local
+    edits into the room’s history, so connect your undo and redo shortcuts to
+    `room.history.undo()` and `room.history.redo()`.
+
+    ```tsx file="app/Editor.tsx"
+    "use client";
+
+    import { useEffect, useRef } from "react";
+    import {
+      createLiveblocksCollaborationCaretPlugin,
+      createLiveblocksCollaborationPlugin,
+    } from "@liveblocks/prosemirror";
+    import { useRoom } from "@liveblocks/react/suspense";
+    import { baseKeymap } from "prosemirror-commands";
+    import { keymap } from "prosemirror-keymap";
+    import { schema } from "prosemirror-schema-basic";
+    import { EditorState } from "prosemirror-state";
+    import { EditorView } from "prosemirror-view";
+
+    const INITIAL_CONTENT = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Hello world" }],
+        },
+      ],
+    };
+
+    export function Editor() {
+      const room = useRoom();
+      const containerRef = useRef<HTMLDivElement>(null);
+
+      useEffect(() => {
+        if (containerRef.current === null) return;
+
+        const info = room.getSelf()?.info;
+        const user = {
+          name: typeof info?.name === "string" ? info.name : undefined,
+          color: typeof info?.color === "string" ? info.color : undefined,
+        };
+        const caretStorage = { users: [] };
+
+        const state = EditorState.create({
+          schema,
+          plugins: [
+            // +++
+            createLiveblocksCollaborationPlugin({
+              room,
+              field: "document",
+              initialContent: INITIAL_CONTENT,
+              fallbackDocument: () => INITIAL_CONTENT,
+            }),
+            createLiveblocksCollaborationCaretPlugin(
+              { room, field: "document", user },
+              caretStorage
+            ),
+            // +++
+            keymap({
+              "Mod-z": () => {
+                room.history.undo();
+                return true;
+              },
+              "Mod-y": () => {
+                room.history.redo();
+                return true;
+              },
+              "Mod-Shift-z": () => {
+                room.history.redo();
+                return true;
+              },
+            }),
+            keymap(baseKeymap),
+          ],
+        });
+
+        const view = new EditorView(containerRef.current, { state });
+        return () => view.destroy();
+      }, [room]);
+
+      return <div ref={containerRef} className="editor" />;
+    }
+    ```
+
+</StepContent>
+
+</Step>
+<Step>
+  <StepTitle>Style your editor</StepTitle>
+  <StepContent>
+
+    Import the package stylesheet in your layout to display remote carets and
+    selections, and add basic editor CSS:
+
+    ```tsx file="app/layout.tsx"
+    import "@liveblocks/prosemirror/styles.css";
+    import "./globals.css";
+    ```
+
+    ```css file="app/globals.css"
+    .editor {
+      width: 100%;
+      height: 100%;
+    }
+
+    .ProseMirror {
+      padding: 2px 12px;
+      outline: none;
+      width: 100%;
+      height: 100%;
+    }
+    ```
+
+</StepContent>
+
+</Step>
+<Step lastStep>
+  <StepTitle>Next: authenticate and add your users</StepTitle>
+  <StepContent>
+    Your editor is set up and working now, but each user is anonymous—the next step is to
+    authenticate each user as they connect, and attach their name and color to remote carets.
+
+    <Button asChild className="not-markdown">
+      <a href="/docs/guides/how-to-add-users-to-liveblocks-presence-components">
+        Set up authentication and add user information
+      </a>
+    </Button>
+
+  </StepContent>
+
+</Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation for your collaborative
+ProseMirror editor inside your Next.js application.
+
+- [@liveblocks/prosemirror API Reference](/docs/api-reference/liveblocks-prosemirror)
+- [@liveblocks/node-prosemirror API Reference](/docs/api-reference/liveblocks-node-prosemirror)
+- [Next.js and React guides](/docs/guides?technologies=nextjs%2Creact)
+- [ProseMirror website](https://prosemirror.net)
+
+If you are using Tiptap or BlockNote, which build on ProseMirror, see the
+[Tiptap](/docs/get-started/nextjs-tiptap) and
+[BlockNote](/docs/get-started/nextjs-blocknote) quickstarts instead.
