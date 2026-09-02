@@ -73,7 +73,7 @@
     "@blocknote/core": "^0.43.0",
     "@blocknote/react": "^0.43.0",
     "@floating-ui/dom": "^1.7.6",
-    "@tiptap/core": "^3.22.3",
+    "@tiptap/core": "^3.30.4",
     "@liveblocks/eslint-config": "workspace:*",
     "@liveblocks/rollup-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",

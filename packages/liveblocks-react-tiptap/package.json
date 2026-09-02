@@ -78,7 +78,7 @@
     "@liveblocks/eslint-config": "workspace:*",
     "@liveblocks/rollup-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
-    "@tiptap/core": "^3.22.3",
+    "@tiptap/core": "^3.30.4",
     "@tiptap/extension-document": "^3.22.3",
     "@tiptap/extension-paragraph": "^3.22.3",
     "@tiptap/extension-text": "^3.22.3",
