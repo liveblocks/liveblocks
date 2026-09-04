@@ -65,12 +65,9 @@ export default function CollaborativeStudio() {
     };
   });
 
-  const writeLocalChange = useMutation(
-    ({ storage }, state: AgReportState) => {
-      reconcileStorage(storage, state);
-    },
-    []
-  );
+  const writeLocalChange = useMutation(({ storage }, state: AgReportState) => {
+    reconcileStorage(storage, state);
+  }, []);
 
   const onStateUpdated = useCallback(
     ({ state }: AgStudioStateUpdatedEvent) => {

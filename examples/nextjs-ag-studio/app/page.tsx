@@ -23,24 +23,21 @@ export default function Page() {
       initialStorage={() => reportToInitialStorage(INITIAL_REPORT_STATE)}
     >
       <div className="flex h-dvh flex-col gap-2.5 bg-neutral-50 p-2.5">
-        <header className="flex shrink-0 items-center justify-between rounded-lg bg-white py-2 pl-3 pr-2 shadow ring-1 ring-neutral-950/5">
-          <h1 className="text-sm font-medium text-neutral-900">
-            AG Studio Dashboard
-          </h1>
+        <header className="flex shrink-0 items-center justify-end py-0.5 pr-1">
           <div className="flex items-center gap-2">
             <ClientSideSuspense fallback={null}>
               <AvatarStack size={28} />
             </ClientSideSuspense>
-            <HelpButton />
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
+        <main className="min-h-0 flex-1 overflow-hidden">
           <ClientSideSuspense fallback={<Loading />}>
             <CollaborativeStudio />
           </ClientSideSuspense>
         </main>
       </div>
+      <HelpButton />
     </RoomProvider>
   );
 }

@@ -2,7 +2,6 @@
 
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "./ui/button";
 
 const EXAMPLE_NAME = "AG Studio Dashboard";
 const EXAMPLE_URL =
@@ -19,7 +18,7 @@ const FEATURES: Feature[] = [
     icon: <ZapIcon />,
     title: "Build dashboards together",
     description:
-      "Add widgets, drag them around, resize them, and configure charts and filters — every change syncs to everyone in the room.",
+      "Add widgets, drag them around, resize them, and configure charts and filters—every change syncs for everyone in the room.",
   },
   {
     icon: <UsersIcon />,
@@ -43,14 +42,19 @@ const FEATURES: Feature[] = [
 
 const styles: Record<string, CSSProperties> = {
   button: {
+    position: "fixed",
+    bottom: 16,
+    left: 16,
+    zIndex: 2147483000,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 28,
-    height: 28,
-    background: "transparent",
-    border: "none",
-    borderRadius: 6,
+    width: 36,
+    height: 36,
+    background: "#ffffff",
+    border: "1px solid #e5e5e5",
+    borderRadius: 9999,
+    boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
     color: "#737373",
     cursor: "pointer",
   },
@@ -132,9 +136,12 @@ const HOVER_CSS = `
 .lb-help-button:hover { background:#fafafa !important; color:#171717 !important; }
 .lb-help-title-link:hover { text-decoration: underline !important; }
 .lb-help-close:hover { background:#f5f5f5 !important; color:#171717 !important; }
-.lb-help-link { color:#404040 !important; text-decoration: underline !important; }
-.lb-help-link:hover { color:#171717 !important; }
 .lb-help, .lb-help * { box-sizing: border-box; }
+.lb-help h2 { font-size: 14px !important; font-weight: 600 !important; line-height: 1.4 !important; margin: 0 !important; }
+.lb-help h2 a { font-size: inherit !important; font-weight: inherit !important; }
+.lb-help h3 { font-size: 14px !important; font-weight: 500 !important; line-height: 1.4 !important; margin: 0 !important; }
+.lb-help p { font-size: 14px !important; line-height: 1.45 !important; }
+.lb-help ul { list-style: none !important; }
 `;
 
 export function HelpButton() {
@@ -158,14 +165,15 @@ export function HelpButton() {
   return (
     <>
       <style>{HOVER_CSS}</style>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={() => setIsOpen(true)}
+      <button
+        type="button"
+        className="lb-help-button"
+        style={styles.button}
         aria-label="How to use this example"
+        onClick={() => setIsOpen(true)}
       >
         <HelpIcon />
-      </Button>
+      </button>
 
       {isOpen && typeof document !== "undefined"
         ? createPortal(
@@ -230,8 +238,8 @@ export function HelpButton() {
 function HelpIcon() {
   return (
     <svg
-      width={16}
-      height={16}
+      width={20}
+      height={20}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
