@@ -35,6 +35,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Website
 
 - New homepage for [Liveblocks Sync](https://liveblocks.io/sync).
+- Updated homepage copy.
 - New use case links in navigation.
 
 ## Contributors
