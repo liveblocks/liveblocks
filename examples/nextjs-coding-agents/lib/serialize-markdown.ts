@@ -34,7 +34,8 @@ function serializeInline(node: JSONContent): string {
     case "skill":
       return `<skill:${String(node.attrs?.id ?? "")}>`;
     case "hardBreak":
-      return "\n";
+      // Two trailing spaces make it a Markdown hard line break
+      return "  \n";
     default:
       return (node.content ?? []).map(serializeInline).join("");
   }
