@@ -14,9 +14,11 @@ const PREAMBLE = [
 ].join(" ");
 
 const FOLLOW_UP_PREAMBLE = [
-  "New messages arrived while you were working.",
-  "Review the work you just completed against them and make any modifications needed.",
-  "Then write ONE final summary covering every request handled so far, addressing each person by name.",
+  "New messages arrived while you were working, so your reply was NOT shown to the team yet.",
+  "Your draft reply is included below for reference only.",
+  "Review the work you just completed against the new messages and make any modifications needed.",
+  "Then write ONE final summary covering every request handled so far, including the earlier ones, addressing each person by name.",
+  "The team will only see this final summary, so it must stand on its own.",
 ].join(" ");
 
 /** Replaces `<@userId>` tokens with `@Name` so the model sees readable names. */
@@ -31,8 +33,13 @@ export function resolveMentions(content: string) {
  * Builds the prompt for one run from the human messages that haven't been
  * handled yet. Skills referenced in those messages are expanded into their
  * instructions ahead of the messages themselves.
+ *
+ * For follow-up runs, `previousReply` is the draft the agent produced before
+ * the new messages arrived. It was never shown to the team, so it's handed
+ * back to the agent to revise into a single final reply.
  */
-export function buildPrompt(messages: ChatMessage[], isFollowUp: boolean) {
+export function buildPrompt(messages: ChatMessage[], previousReply?: string) {
+  const isFollowUp = previousReply !== undefined;
   const skillIds = new Set<string>();
   for (const message of messages) {
     for (const id of getSkillIdsFromContent(message.data.content)) {
@@ -54,7 +61,13 @@ export function buildPrompt(messages: ChatMessage[], isFollowUp: boolean) {
   return [
     isFollowUp ? FOLLOW_UP_PREAMBLE : PREAMBLE,
     ...skillSections,
-    "## Messages",
+    ...(isFollowUp
+      ? [
+          "## Your draft reply (not shown to the team)",
+          previousReply.trim() || "_(no summary was written)_",
+          "## New messages",
+        ]
+      : ["## Messages"]),
     ...messageSections,
   ].join("\n\n");
 }

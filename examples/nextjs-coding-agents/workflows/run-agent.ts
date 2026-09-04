@@ -84,12 +84,17 @@ export async function runAgentForChat(location: ChatLocation) {
     await markHandled(location, pending);
     repliesTo.push(...pending.map((message) => message.id));
 
+    // Messages arrived mid-run: the reply written so far is only a draft,
+    // since it may be wrong given the new messages. Take it out of the
+    // visible message (tool calls stay as a record of the work) and hand it
+    // to the follow-up run to revise. Only the last run's reply is shown.
+    const previousReply = runIndex > 0 ? text : undefined;
     if (runIndex > 0) {
       parts = [
-        ...parts,
+        ...parts.filter((part) => part.type !== "text"),
         {
           type: "divider",
-          text: `Also handling ${formatAuthors(pending)}`,
+          text: `Follow-up from ${formatAuthors(pending)} — revising before replying`,
         },
       ];
     }
@@ -97,7 +102,7 @@ export async function runAgentForChat(location: ChatLocation) {
     const outcome = await runCursor({
       ...location,
       agentMessageId,
-      prompt: buildPrompt(pending, runIndex > 0),
+      prompt: buildPrompt(pending, previousReply),
       parts,
       cursorAgentId,
       model: claim.model,
@@ -567,9 +572,9 @@ function formatAuthors(messages: ChatMessage[]) {
     ),
   ];
   if (names.length <= 1) {
-    return `${names[0] ?? "someone"}'s request`;
+    return names[0] ?? "someone";
   }
-  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}'s requests`;
+  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 }
 
 function summarize(text: string) {
