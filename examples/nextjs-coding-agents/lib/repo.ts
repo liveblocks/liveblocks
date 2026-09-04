@@ -7,7 +7,7 @@ export type Repo = {
 // feed metadata, so you can let people pick any GitHub repository by
 // setting `REPO_LOCKED` to false. It's locked for the hosted demo.
 export const DEFAULT_REPO: Repo = {
-  url: "https://github.com/CTNicholas/demo-repo",
+  url: "https://github.com/liveblocks/demo-comments-hover-boostr",
   ref: "main",
 };
 
