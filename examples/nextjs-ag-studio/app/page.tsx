@@ -19,7 +19,6 @@ export default function Page() {
     <RoomProvider
       id={roomId}
       initialPresence={{}}
-      // The pre-built dashboard the first visitor seeds the room with
       initialStorage={() => reportToInitialStorage(INITIAL_REPORT_STATE)}
     >
       <div className="flex h-dvh flex-col gap-2.5 bg-neutral-50 p-2.5">
