@@ -18,6 +18,30 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 36 (2026-09-04)
+
+## Documentation
+
+- New [Sync overview](https://liveblocks.io/docs/products/sync) page.
+- Sync overview features 14 new subpages detailed each part of Sync.
+- 16 new use cases pages, including [Agentic users](https://liveblocks.io/docs/use-cases/agentic-users), [Chat](https://liveblocks.io/docs/use-cases/chat), [Text editor](https://liveblocks.io/docs/use-cases/text-editor), and more.
+- New [API reference](https://liveblocks.io/docs/api-reference) homepage.
+- API reference is now in a separate section.
+- New guide: [Get started with a multiplayer AI Elements chat](https://liveblocks.io/docs/get-started/nextjs-ai-elements).
+- New guide: [Get started with a custom canvas](https://liveblocks.io/docs/get-started/nextjs-canvas-custom).
+- More get started guides for new `LiveText` text editor integrations.
+- Broken link checker added to GitHub.
+
+## Website
+
+- New homepage for [Liveblocks Sync](https://liveblocks.io/sync).
+- Updated homepage copy.
+- New use case links in navigation.
+
+## Contributors
+
+ctnicholas, stevenfabre, pierrelevaillant
+
 # Week 34 (2026-08-21)
 
 ## v3.24.1
