@@ -3,9 +3,9 @@
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-const EXAMPLE_NAME = "AG Studio Dashboard";
+const EXAMPLE_NAME = "Multiplayer AG Studio";
 const EXAMPLE_URL =
-  "https://liveblocks.io/examples/ag-studio-dashboard/nextjs-ag-studio";
+  "https://liveblocks.io/examples/multiplayer-ag-studio/nextjs-ag-studio";
 
 type Feature = {
   icon: ReactNode;

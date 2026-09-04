@@ -5,7 +5,7 @@ import { ReactNode, Suspense } from "react";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "AG Studio Dashboard - Liveblocks",
+  title: "Multiplayer AG Studio - Liveblocks",
 };
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-inter" });
