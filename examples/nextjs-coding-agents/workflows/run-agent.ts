@@ -1,6 +1,7 @@
 import {
   Agent,
   AgentBusyError,
+  AgentNotFoundError,
   CursorSdkError,
   type RunResult,
   type SDKAgent,
@@ -361,21 +362,35 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
   };
 
   try {
-    let agent: SDKAgent;
+    let agent: SDKAgent | null = null;
 
     if (cursorAgentId) {
-      agent = await Agent.resume(cursorAgentId, { apiKey });
-    } else {
-      cursorAgentId = getCursorAgentIdForFeed(roomId, feedId);
+      try {
+        agent = await Agent.resume(cursorAgentId, { apiKey });
+      } catch (err) {
+        // The stored agent is gone (expired, deleted, or never created);
+        // start a fresh one below instead of failing every future run.
+        if (!(err instanceof AgentNotFoundError)) {
+          throw err;
+        }
+        cursorAgentId = undefined;
+      }
+    }
+
+    if (!agent) {
+      const newAgentId = getCursorAgentIdForFeed(roomId, feedId);
       agent = await Agent.create({
         apiKey,
-        agentId: cursorAgentId,
+        agentId: newAgentId,
         model: { id: model },
         cloud: {
           repos: [{ url: repoUrl, startingRef: repoRef }],
           autoCreatePR: true,
         },
       });
+      // Only remember the id once the agent actually exists, otherwise a
+      // failed create would make every later run resume a missing agent.
+      cursorAgentId = newAgentId;
     }
 
     setStatus("Sending request to the cloud agent…");
@@ -493,7 +508,8 @@ async function finalizeAgentMessage({
       agentStatus: "idle",
       runningSince: null,
       participantIds,
-      ...(cursorAgentId ? { cursorAgentId } : {}),
+      // `null` drops a stale id when the agent could not be resumed
+      cursorAgentId: cursorAgentId ?? null,
       ...(git?.branch ? { branch: git.branch } : {}),
       ...(git?.prUrl ? { prUrl: git.prUrl } : {}),
     },
@@ -567,6 +583,10 @@ function summarize(text: string) {
 
 function describeError(err: unknown) {
   if (err instanceof CursorSdkError) {
+    // Cursor reports missing repository access as a branch lookup failure.
+    if (err.message.includes("Failed to verify existence of branch")) {
+      return `${err.message} This usually means the Cursor GitHub App has not been granted access to the repository. Connect it in the Cursor dashboard under Integrations → GitHub, then try again.`;
+    }
     const helpUrl =
       "helpUrl" in err && typeof err.helpUrl === "string" ? err.helpUrl : null;
     return helpUrl ? `${err.message} (${helpUrl})` : err.message;

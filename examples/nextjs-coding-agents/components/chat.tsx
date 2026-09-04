@@ -57,6 +57,8 @@ function ChatView({ feed }: { feed: ChatFeed }) {
         await sendMessage(feedId, content);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
+        // Rethrow so the composer restores the draft.
+        throw err;
       }
     },
     [feedId, sendMessage]

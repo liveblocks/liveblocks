@@ -274,13 +274,25 @@ export function Composer({
     setIsSending(true);
     clearTyping();
 
+    // Clear right away: `onSend` may navigate to a new chat and unmount
+    // this composer (and destroy the editor) before it resolves.
+    editor.commands.clearContent(true);
+    setIsEmpty(true);
+
     try {
       await onSend(content);
-      editor.commands.clearContent(true);
-      setIsEmpty(true);
+    } catch {
+      // The caller reports the error; put the message back so it can be
+      // retried.
+      if (!editor.isDestroyed) {
+        editor.commands.setContent(doc, { emitUpdate: true });
+        setIsEmpty(false);
+      }
     } finally {
       inFlightRef.current = false;
-      setIsSending(false);
+      if (!editor.isDestroyed) {
+        setIsSending(false);
+      }
     }
   }, [clearTyping, disabled, editor, onSend]);
 

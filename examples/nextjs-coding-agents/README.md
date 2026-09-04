@@ -71,9 +71,11 @@ Alternatively, you can set up your project manually:
   `LIVEBLOCKS_SECRET_KEY` environment variable
 - Create a Cursor API key in the
   [Cursor dashboard](https://cursor.com/dashboard) under **API Keys** and add it
-  as `CURSOR_API_KEY`. The account owning the key must have GitHub connected
-  with push access to the repository the agent works on. Cloud agent runs are
-  billed to this key at API pricing.
+  as `CURSOR_API_KEY`. Cloud agent runs are billed to this key at API pricing.
+- In the Cursor dashboard, connect GitHub under **Integrations** and grant the
+  Cursor GitHub App access to the repository the agent works on. Without it,
+  runs fail with `Failed to verify existence of branch …`, even when the branch
+  exists.
 - Optionally, set `CURSOR_MODEL` to change the default model for new chats
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 

@@ -83,10 +83,14 @@ export function NewChat() {
           },
         });
 
-        router.push(`/chat/${feedId}`);
+        // Post before navigating so failures show up here, not on an
+        // unmounted component.
         await sendMessage(feedId, content);
+        router.push(`/chat/${feedId}`);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
+        // Rethrow so the composer restores the draft.
+        throw err;
       } finally {
         creatingRef.current = false;
       }
@@ -154,7 +158,8 @@ export function NewChat() {
               <button
                 key={suggestion.label}
                 type="button"
-                onClick={() => void handleSend(suggestion.content)}
+                // Errors are already surfaced via `setError`.
+                onClick={() => handleSend(suggestion.content).catch(() => {})}
                 className="rounded-full border border-border px-3 py-1 text-xs text-muted transition hover:bg-panel-hover hover:text-foreground"
               >
                 {suggestion.label}
