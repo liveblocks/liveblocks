@@ -11,7 +11,6 @@ import clsx from "clsx";
 import {
   CircleAlertIcon,
   GitBranchIcon,
-  GitPullRequestIcon,
   Loader2Icon,
   XIcon,
 } from "lucide-react";
@@ -21,6 +20,7 @@ import { Composer } from "@/components/composer";
 import { HelpButton } from "@/components/help-button";
 import { MessageList } from "@/components/message-list";
 import { PresenceAvatars } from "@/components/presence-avatars";
+import { PullRequestPanel } from "@/components/pull-request-panel";
 import { getRepoName } from "@/lib/repo";
 import type { ChatFeed } from "@/lib/types";
 import { useSendMessage } from "@/lib/use-send-message";
@@ -72,87 +72,86 @@ function ChatView({ feed }: { feed: ChatFeed }) {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-4">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <h1 className="truncate text-[13px] font-semibold">
-            {metadata.title || "New chat"}
-          </h1>
-          <span className="hidden items-center gap-1.5 truncate text-xs text-muted md:flex">
-            <GitBranchIcon className="size-3.5 shrink-0" />
-            <span className="truncate">
-              {getRepoName(metadata.repoUrl)}
-              <span className="text-subtle">
-                {" "}
-                · {metadata.branch ?? metadata.repoRef}
+    <div className="flex h-full min-h-0">
+      <div className="flex h-full min-w-0 flex-1 flex-col">
+        <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <h1 className="truncate text-[13px] font-semibold">
+              {metadata.title || "New chat"}
+            </h1>
+            <span className="hidden items-center gap-1.5 truncate text-xs text-muted md:flex">
+              <GitBranchIcon className="size-3.5 shrink-0" />
+              <span className="truncate">
+                {getRepoName(metadata.repoUrl)}
+                <span className="text-subtle">
+                  {" "}
+                  · {metadata.branch ?? metadata.repoRef}
+                </span>
               </span>
             </span>
-          </span>
-          <StatusPill running={running} />
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          {metadata.prUrl ? (
-            <a
-              href={metadata.prUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="flex h-7 items-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium transition hover:bg-panel-hover"
-            >
-              <GitPullRequestIcon className="size-3.5 text-success" />
-              View PR
-            </a>
-          ) : null}
-          <ClientSideSuspense fallback={null}>
-            <PresenceAvatars />
-          </ClientSideSuspense>
-          <HelpButton />
-        </div>
-      </header>
-
-      <ClientSideSuspense
-        fallback={
-          <div className="flex flex-1 items-center justify-center text-muted">
-            <Loader2Icon className="size-4 animate-spin" />
+            <StatusPill running={running} />
           </div>
-        }
-      >
-        <MessageList feedId={feedId} repoUrl={metadata.repoUrl} />
-        <AutoReadNotifications feedId={feedId} />
-      </ClientSideSuspense>
 
-      <div className="shrink-0 px-6 pb-3">
-        <div className="mx-auto w-full max-w-3xl">
-          {error ? (
-            <div className="mb-2 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
-              <CircleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
-              <span className="flex-1">{error}</span>
-              <button
-                type="button"
-                onClick={() => setError(null)}
-                aria-label="Dismiss"
-                className="rounded p-0.5 hover:bg-danger/10"
-              >
-                <XIcon className="size-3" />
-              </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <ClientSideSuspense fallback={null}>
+              <PresenceAvatars />
+            </ClientSideSuspense>
+            <HelpButton />
+          </div>
+        </header>
+
+        <ClientSideSuspense
+          fallback={
+            <div className="flex flex-1 items-center justify-center text-muted">
+              <Loader2Icon className="size-4 animate-spin" />
             </div>
-          ) : null}
-          <ClientSideSuspense fallback={null}>
-            <Composer
-              typingKey={feedId}
-              placeholder={
-                running
-                  ? "Ask a follow-up — the agent will get to it after the current task"
-                  : "Ask the agent to make a change…"
-              }
-              repo={{ url: metadata.repoUrl, ref: metadata.repoRef }}
-              model={metadata.model}
-              onModelChange={handleModelChange}
-              onSend={handleSend}
-            />
-          </ClientSideSuspense>
+          }
+        >
+          <MessageList feedId={feedId} repoUrl={metadata.repoUrl} />
+          <AutoReadNotifications feedId={feedId} />
+        </ClientSideSuspense>
+
+        <div className="shrink-0 px-6 pb-3">
+          <div className="mx-auto w-full max-w-3xl">
+            {error ? (
+              <div className="mb-2 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
+                <CircleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
+                <span className="flex-1">{error}</span>
+                <button
+                  type="button"
+                  onClick={() => setError(null)}
+                  aria-label="Dismiss"
+                  className="rounded p-0.5 hover:bg-danger/10"
+                >
+                  <XIcon className="size-3" />
+                </button>
+              </div>
+            ) : null}
+            <ClientSideSuspense fallback={null}>
+              <Composer
+                typingKey={feedId}
+                placeholder={
+                  running
+                    ? "Ask a follow-up — the agent will get to it after the current task"
+                    : "Ask the agent to make a change…"
+                }
+                repo={{ url: metadata.repoUrl, ref: metadata.repoRef }}
+                model={metadata.model}
+                onModelChange={handleModelChange}
+                onSend={handleSend}
+              />
+            </ClientSideSuspense>
+          </div>
         </div>
       </div>
+
+      {metadata.prUrl ? (
+        <PullRequestPanel
+          prUrl={metadata.prUrl}
+          // Refetch once a run finishes, since it may have pushed more commits
+          refreshKey={`${feed.updatedAt}-${metadata.agentStatus}`}
+        />
+      ) : null}
     </div>
   );
 }

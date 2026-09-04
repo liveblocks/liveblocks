@@ -36,3 +36,17 @@ export type ChatFeed = {
   updatedAt: number;
   metadata: ChatFeedMetadata;
 };
+
+/** What `/api/pr` returns for the pull request opened by the agent. */
+export type PullRequestInfo = {
+  url: string;
+  number: number;
+  title: string;
+  state: "open" | "closed" | "merged";
+  branch: string;
+  additions: number;
+  deletions: number;
+  changedFiles: number;
+  /** Unified diff of the whole pull request */
+  diff: string;
+};

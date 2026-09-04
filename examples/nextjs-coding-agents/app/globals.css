@@ -188,6 +188,17 @@
   border-radius: 0.5rem;
 }
 
+/* Pull request diff panel (@pierre/diffs picks up font settings from here). */
+.pr-diff {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.pr-diff [data-diffs-header] {
+  font-size: 12px;
+}
+
 .prose-chat code {
   border-radius: 0.25rem;
   background: var(--code-bg);

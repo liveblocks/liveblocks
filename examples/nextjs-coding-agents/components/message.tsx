@@ -138,7 +138,7 @@ function AgentMessage({
           running && "ring-2 ring-accent/40"
         )}
       />
-      <div className="min-w-0 max-w-[92%] flex-1">
+      <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-baseline gap-2 text-[11px] text-subtle">
           <span className="text-[13px] font-medium text-foreground">
             {AI_USER.info.name}

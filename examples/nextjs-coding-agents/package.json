@@ -13,6 +13,7 @@
     "@liveblocks/client": "^3.24.1",
     "@liveblocks/node": "^3.24.1",
     "@liveblocks/react": "^3.24.1",
+    "@pierre/diffs": "^1.4.0",
     "@tiptap/core": "^3.13.0",
     "@tiptap/extension-mention": "^3.13.0",
     "@tiptap/pm": "^3.13.0",
