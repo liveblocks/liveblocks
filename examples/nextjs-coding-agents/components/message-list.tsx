@@ -24,23 +24,26 @@ export function MessageList({
   );
 
   // A human message is "queued" while an agent reply that started before it
-  // is still running: it will be handled in a follow-up run.
-  const queuedIds = useMemo(() => {
-    const ids = new Set<string>();
-    let runningSince: number | null = null;
+  // is still running: it will be handled in a follow-up run. That agent
+  // reply, in turn, is "holding" — whatever it has written so far is only a
+  // draft, so the UI hides it rather than flashing a reply that gets revised.
+  const { queuedIds, holdingIds } = useMemo(() => {
+    const queued = new Set<string>();
+    const holding = new Set<string>();
+    let runningAgent: ChatMessage | null = null;
     for (const message of sorted) {
       if (message.data.role === "agent") {
-        runningSince =
-          message.data.status === "running" ? message.createdAt : null;
+        runningAgent = message.data.status === "running" ? message : null;
       } else if (
-        runningSince !== null &&
+        runningAgent !== null &&
         !message.data.handled &&
-        message.createdAt > runningSince
+        message.createdAt > runningAgent.createdAt
       ) {
-        ids.add(message.id);
+        queued.add(message.id);
+        holding.add(runningAgent.id);
       }
     }
-    return ids;
+    return { queuedIds: queued, holdingIds: holding };
   }, [sorted]);
 
   useEffect(() => {
@@ -90,6 +93,7 @@ export function MessageList({
             feedId={feedId}
             repoUrl={repoUrl}
             queued={queuedIds.has(message.id)}
+            holding={holdingIds.has(message.id)}
           />
         ))}
       </div>

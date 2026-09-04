@@ -21,15 +21,21 @@ export function Message({
   feedId,
   repoUrl,
   queued,
+  holding,
 }: {
   message: ChatMessage;
   feedId: string;
   repoUrl: string;
   // Human message posted while the agent was busy and not yet handled
   queued: boolean;
+  // Running agent message with queued human messages behind it: its text so
+  // far is a draft that will be revised, so it isn't shown
+  holding: boolean;
 }) {
   if (message.data.role === "agent") {
-    return <AgentMessage message={message} repoUrl={repoUrl} />;
+    return (
+      <AgentMessage message={message} repoUrl={repoUrl} holding={holding} />
+    );
   }
   return <HumanMessage message={message} feedId={feedId} queued={queued} />;
 }
@@ -120,9 +126,11 @@ function HumanMessage({
 function AgentMessage({
   message,
   repoUrl,
+  holding,
 }: {
   message: ChatMessage;
   repoUrl: string;
+  holding: boolean;
 }) {
   const { status, parts = [], prUrl, branch, repliesTo } = message.data;
   const running = status === "running";
@@ -158,7 +166,7 @@ function AgentMessage({
           ) : null}
         </div>
 
-        <AgentParts parts={parts} running={running} />
+        <AgentParts parts={parts} running={running} holding={holding} />
 
         {!running ? (
           <PullRequestCard

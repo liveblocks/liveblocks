@@ -81,13 +81,13 @@ export async function runAgentForChat(location: ChatLocation) {
   let runIndex = 0;
 
   while (pending.length > 0) {
-    await markHandled(location, pending);
-    repliesTo.push(...pending.map((message) => message.id));
-
     // Messages arrived mid-run: the reply written so far is only a draft,
     // since it may be wrong given the new messages. Take it out of the
     // visible message (tool calls stay as a record of the work) and hand it
     // to the follow-up run to revise. Only the last run's reply is shown.
+    //
+    // This is written before the messages are marked handled: clients hide
+    // the draft while a follow-up is queued, so the order avoids a flash.
     const previousReply = runIndex > 0 ? text : undefined;
     if (runIndex > 0) {
       parts = [
@@ -97,7 +97,11 @@ export async function runAgentForChat(location: ChatLocation) {
           text: `Follow-up from ${formatAuthors(pending)} — revising before replying`,
         },
       ];
+      await showParts({ ...location, agentMessageId, parts });
     }
+
+    await markHandled(location, pending);
+    repliesTo.push(...pending.map((message) => message.id));
 
     const outcome = await runCursor({
       ...location,
@@ -274,6 +278,23 @@ async function abandonAgentMessage({
   await getLiveblocks()
     .deleteFeedMessage({ roomId, feedId, messageId: agentMessageId })
     .catch(() => {});
+}
+
+/** Overwrites the running agent message's parts between runs. */
+async function showParts({
+  roomId,
+  feedId,
+  agentMessageId,
+  parts,
+}: ChatLocation & { agentMessageId: string; parts: AgentPart[] }) {
+  "use step";
+
+  await getLiveblocks().updateFeedMessage({
+    roomId,
+    feedId,
+    messageId: agentMessageId,
+    data: agentMessageData({ status: "running", parts }),
+  });
 }
 
 /**

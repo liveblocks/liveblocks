@@ -72,14 +72,23 @@ function segment(parts: AgentPart[]): Segment[] {
 export function AgentParts({
   parts,
   running,
+  holding = false,
 }: {
   parts: AgentPart[];
   running: boolean;
+  // Someone posted a follow-up while this reply was being written. The text
+  // so far is a draft the agent will revise, so keep it out of view. The
+  // workflow later drops it server-side too, so nothing changes visibly.
+  holding?: boolean;
 }) {
-  const segments = segment(parts);
-  const last = parts[parts.length - 1];
+  const visibleParts =
+    running && holding ? parts.filter((part) => part.type !== "text") : parts;
+  const segments = segment(visibleParts);
+  const last = visibleParts[visibleParts.length - 1];
   const showWorking =
-    running && (!last || last.type === "tool" || last.type === "divider");
+    running &&
+    !holding &&
+    (!last || last.type === "tool" || last.type === "divider");
 
   return (
     <div className="flex flex-col gap-2">
@@ -133,6 +142,14 @@ export function AgentParts({
         <div className="flex items-center gap-2 text-xs text-muted">
           <Loader2Icon className="size-3 animate-spin" />
           Working…
+        </div>
+      ) : null}
+
+      {running && holding ? (
+        <div className="flex items-center gap-2 text-xs text-muted">
+          <Loader2Icon className="size-3 animate-spin" />
+          Follow-up received — finishing the current task, then revising the
+          reply before posting
         </div>
       ) : null}
     </div>
