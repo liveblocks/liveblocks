@@ -84,7 +84,7 @@ export function NewChat() {
         });
 
         router.push(`/chat/${feedId}`);
-        await sendMessage(feedId, content, { setTitle: true });
+        await sendMessage(feedId, content);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
       } finally {

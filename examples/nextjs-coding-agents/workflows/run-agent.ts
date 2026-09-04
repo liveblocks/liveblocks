@@ -9,7 +9,7 @@ import {
 import { AI_USER_ID, getUser } from "@/app/database";
 import { buildPrompt, deriveTitle } from "@/lib/prompt";
 import { getCursorAgentIdForFeed, getCursorApiKey } from "@/lib/server/cursor";
-import { getLiveblocks } from "@/lib/server/liveblocks";
+import { getLiveblocks, patchFeedMetadata } from "@/lib/server/liveblocks";
 import { normalizeToolName, summarizeToolCall } from "@/lib/tool-calls";
 import type { AgentPart, ChatMessage, ChatMessageData } from "@/lib/types";
 
@@ -174,15 +174,16 @@ async function claimChat({
     title = first ? deriveTitle(first.data.content) : "New chat";
   }
 
-  await liveblocks.updateFeed({
-    roomId,
-    feedId,
-    metadata: {
+  await patchFeedMetadata(
+    liveblocks,
+    { roomId, feedId },
+    {
       agentStatus: "running",
       runningSince: new Date().toISOString(),
       title,
     },
-  });
+    metadata
+  );
 
   return {
     cursorAgentId: metadata.cursorAgentId,
@@ -196,11 +197,11 @@ async function claimChat({
 async function releaseChat({ roomId, feedId }: ChatLocation) {
   "use step";
 
-  await getLiveblocks().updateFeed({
-    roomId,
-    feedId,
-    metadata: { agentStatus: "idle", runningSince: null },
-  });
+  await patchFeedMetadata(
+    getLiveblocks(),
+    { roomId, feedId },
+    { agentStatus: "idle", runningSince: null }
+  );
 }
 
 /** Human messages that haven't been included in an agent run yet. */
@@ -478,17 +479,17 @@ async function finalizeAgentMessage({
   });
   const participantIds = [
     ...new Set([
-      ...feed.metadata.participantIds,
+      ...(feed.metadata.participantIds ?? []),
       ...messages
         .filter((message) => message.data.role === "user")
         .map((message) => message.data.userId),
     ]),
   ];
 
-  await liveblocks.updateFeed({
-    roomId,
-    feedId,
-    metadata: {
+  await patchFeedMetadata(
+    liveblocks,
+    { roomId, feedId },
+    {
       agentStatus: "idle",
       runningSince: null,
       participantIds,
@@ -496,7 +497,8 @@ async function finalizeAgentMessage({
       ...(git?.branch ? { branch: git.branch } : {}),
       ...(git?.prUrl ? { prUrl: git.prUrl } : {}),
     },
-  });
+    feed.metadata
+  );
 
   const summary = error
     ? `The agent ran into a problem: ${error}`

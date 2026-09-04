@@ -54,17 +54,19 @@ function ChatView({ feed }: { feed: ChatFeed }) {
     async (content: string) => {
       setError(null);
       try {
-        await sendMessage(feedId, content, { setTitle: !metadata.title });
+        await sendMessage(feedId, content);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
       }
     },
-    [feedId, metadata.title, sendMessage]
+    [feedId, sendMessage]
   );
 
+  // Feed metadata updates replace the whole object, so send everything back
+  // with the changed model rather than just the changed key.
   const handleModelChange = useCallback(
-    (model: string) => updateFeedMetadata(feedId, { model }),
-    [feedId, updateFeedMetadata]
+    (model: string) => updateFeedMetadata(feedId, { ...metadata, model }),
+    [feedId, metadata, updateFeedMetadata]
   );
 
   return (
