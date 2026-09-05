@@ -50,7 +50,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "workspace:*",
     "@liveblocks/vitest-config": "workspace:*",
-    "@tiptap/core": "^3.22.3",
+    "@tiptap/core": "^3.30.4",
     "@tiptap/pm": "^3.22.3",
     "@tiptap/react": "^3.22.3",
     "@tiptap/starter-kit": "^3.22.3",
