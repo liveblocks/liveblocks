@@ -1551,6 +1551,13 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
 
   badgeLocation?: BadgeLocation;
 
+  /**
+   * Headless rooms have no presence to announce, and the server will not fan
+   * out presence on their behalf. Used by server-side sessions, which are
+   * invisible to the other users in the room.
+   */
+  headless?: boolean;
+
   // We would not have to pass this complicated factory/callback functions to
   // the createRoom() function if we would simply pass the Client instance to
   // the Room instance, so it can directly call this back on the Client.
@@ -1820,15 +1827,17 @@ export function createRoom<
   }
 
   function onDidConnect() {
-    // Re-broadcast the full user presence as soon as we (re)connect
-    context.buffer.presenceUpdates = {
-      type: "full",
-      data:
-        // Because context.me.current is a readonly object, we'll have to
-        // make a copy here. Otherwise, type errors happen later when
-        // "patching" my presence.
-        { ...context.myPresence.get() },
-    };
+    if (!config.headless) {
+      // Re-broadcast the full user presence as soon as we (re)connect
+      context.buffer.presenceUpdates = {
+        type: "full",
+        data:
+          // Because context.me.current is a readonly object, we'll have to
+          // make a copy here. Otherwise, type errors happen later when
+          // "patching" my presence.
+          { ...context.myPresence.get() },
+      };
+    }
 
     // NOTE: There was a flush here before, but I don't think it's really
     // needed anymore. We're now combining this flush with the one below, to
