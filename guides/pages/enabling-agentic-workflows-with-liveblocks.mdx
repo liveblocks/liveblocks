@@ -40,7 +40,7 @@ would. The presence expires automatically once the TTL elapses, so the agent
 never lingers after it’s done.
 
 ```shell title="Endpoint"
-POST https://api.liveblocks.io/v2/rooms/{roomId}/presence
+POST https://api.liveblocks.io/v2/rooms/{roomId}/realtime-infrastructure?primitive=presence
 ```
 
 Authenticate with your project’s **secret key** in the `Authorization` header.
@@ -220,7 +220,7 @@ HEADERS  = {"Authorization": "Bearer sk_prod_...", "Content-Type": "application/
 
 def set_presence(focused_field: str, status: str, ttl: int = 30):
     requests.post(
-        f"{BASE}/rooms/{ROOM}/presence",
+        f"{BASE}/rooms/{ROOM}/realtime-infrastructure?primitive=presence",
         json={
             "userId": AGENT_ID,
             "data": {"focusedField": focused_field, "status": status},
