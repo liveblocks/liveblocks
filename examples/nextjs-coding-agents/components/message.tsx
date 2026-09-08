@@ -1,9 +1,10 @@
 "use client";
 
+import { useUser } from "@liveblocks/react";
 import { useDeleteFeedMessage, useSelf } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { ClockIcon, Trash2Icon } from "lucide-react";
-import { AI_USER, getUser } from "@/app/database";
+import { AI_USER } from "@/lib/agent-user";
 import { AgentParts, PullRequestCard } from "@/components/agent-parts";
 import { Markdown } from "@/lib/markdown";
 import { getRepoName } from "@/lib/repo";
@@ -51,7 +52,10 @@ function HumanMessage({
 }) {
   const self = useSelf();
   const deleteFeedMessage = useDeleteFeedMessage();
-  const user = getUser(message.data.userId);
+  const { user } = useUser(message.data.userId);
+  const displayName = user?.name ?? message.data.userId;
+  const avatarUrl =
+    user?.avatar ?? `https://github.com/${message.data.userId}.png?size=64`;
   const isOwn = self.id === message.data.userId;
   const canDelete = isOwn && !message.data.handled;
 
@@ -64,9 +68,9 @@ function HumanMessage({
     >
       {!isOwn ? (
         <img
-          src={user?.info.avatar}
+          src={avatarUrl}
           alt=""
-          title={user?.info.name}
+          title={displayName}
           className="mb-5 size-7 shrink-0 rounded-md bg-panel object-cover"
         />
       ) : null}
@@ -94,9 +98,7 @@ function HumanMessage({
           )}
         >
           {!isOwn ? (
-            <span className="font-medium text-muted">
-              {user?.info.name ?? "Unknown user"}
-            </span>
+            <span className="font-medium text-muted">{displayName}</span>
           ) : null}
           <time dateTime={new Date(message.createdAt).toISOString()}>
             {formatTime(message.createdAt)}

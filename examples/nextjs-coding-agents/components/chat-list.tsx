@@ -6,6 +6,7 @@ import { GitPullRequestIcon, Loader2Icon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { useCanWrite } from "@/app/providers";
 import { getRepoName } from "@/lib/repo";
 import type { ChatFeed } from "@/lib/types";
 
@@ -87,6 +88,7 @@ export function ChatList() {
 }
 
 function ChatListItem({ feed, active }: { feed: ChatFeed; active: boolean }) {
+  const canWrite = useCanWrite();
   const deleteFeed = useDeleteFeed();
   const router = useRouter();
   const { title, agentStatus, prUrl, repoUrl } = feed.metadata;
@@ -140,15 +142,17 @@ function ChatListItem({ feed, active }: { feed: ChatFeed; active: boolean }) {
           </span>
         </span>
       </Link>
-      <button
-        type="button"
-        onClick={() => void handleDelete()}
-        aria-label="Delete chat"
-        title="Delete chat"
-        className="absolute right-1.5 top-1.5 rounded p-1 text-subtle opacity-0 transition hover:bg-panel-active hover:text-danger group-hover:opacity-100 focus:opacity-100"
-      >
-        <Trash2Icon className="size-3.5" />
-      </button>
+      {canWrite ? (
+        <button
+          type="button"
+          onClick={() => void handleDelete()}
+          aria-label="Delete chat"
+          title="Delete chat"
+          className="absolute right-1.5 top-1.5 rounded p-1 text-subtle opacity-0 transition hover:bg-panel-active hover:text-danger group-hover:opacity-100 focus:opacity-100"
+        >
+          <Trash2Icon className="size-3.5" />
+        </button>
+      ) : null}
     </li>
   );
 }

@@ -1,47 +1,43 @@
-import { Liveblocks } from "@liveblocks/node";
-import { NextRequest, NextResponse } from "next/server";
-import { AI_USER_ID, getRandomUser, getUser } from "@/app/database";
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { getUserColor } from "@/lib/agent-user";
+import { getLiveblocks } from "@/lib/server/liveblocks";
 
 /**
  * Authenticating your Liveblocks application
  * https://liveblocks.io/docs/authentication
  *
- * The "login" in this example is fake: the client tells us which demo user
- * it wants to be, and we hand out a session for that user. Do not do this
- * in production.
+ * The Liveblocks user is the signed-in GitHub user. Team members get write
+ * access to the shared room; anyone else who can sign in gets read access,
+ * so they can watch chats in realtime without being able to post.
  */
-
-export async function POST(request: NextRequest) {
+export async function POST() {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
-  const liveblocks = new Liveblocks({
-    secret: process.env.LIVEBLOCKS_SECRET_KEY,
-    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
-  });
-
-  const { userId } = (await request.json().catch(() => ({}))) as {
-    userId?: string;
-  };
-
-  // The AI teammate never logs in; it only posts through `@liveblocks/node`.
-  // The app always sends a userId, so the random fallback is only for
-  // requests coming from outside the app.
-  const user =
-    userId && userId !== AI_USER_ID ? getUser(userId) : getRandomUser();
-
-  if (!user) {
-    return new NextResponse("User not found", { status: 403 });
+  const session = await auth();
+  if (!session?.user) {
+    return new NextResponse("Not signed in", { status: 401 });
   }
 
-  const session = liveblocks.prepareSession(`${user.id}`, {
-    userInfo: user.info,
+  const { user } = session;
+  const liveblocksSession = getLiveblocks().prepareSession(user.login, {
+    userInfo: {
+      name: user.name ?? user.login,
+      avatar: user.image ?? `https://github.com/${user.login}.png?size=128`,
+      color: getUserColor(user.login),
+    },
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard
-  session.allow(`liveblocks:examples:*`, ["*:write"]);
+  liveblocksSession.allow(
+    "liveblocks:examples:*",
+    user.role === "member"
+      ? liveblocksSession.FULL_ACCESS
+      : liveblocksSession.READ_ACCESS
+  );
 
-  const { status, body } = await session.authorize();
+  const { status, body } = await liveblocksSession.authorize();
   return new NextResponse(body, { status });
 }

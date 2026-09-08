@@ -7,9 +7,11 @@ import {
   type SDKAgent,
   type SDKMessage,
 } from "@cursor/sdk";
-import { AI_USER_ID, getUser } from "@/app/database";
-import { buildPrompt, deriveTitle } from "@/lib/prompt";
+import { AI_USER_ID } from "@/lib/agent-user";
+import { buildPrompt, deriveTitle, type Participants } from "@/lib/prompt";
+import { DIFF_ARTIFACT_PATH } from "@/lib/repo";
 import { getCursorAgentIdForFeed, getCursorApiKey } from "@/lib/server/cursor";
+import { getGitHubUsers, type GitHubUser } from "@/lib/server/github";
 import { getLiveblocks, patchFeedMetadata } from "@/lib/server/liveblocks";
 import { normalizeToolName, summarizeToolCall } from "@/lib/tool-calls";
 import type { AgentPart, ChatMessage, ChatMessageData } from "@/lib/types";
@@ -41,6 +43,8 @@ type RunOutcome = {
   cursorAgentId?: string;
   text?: string;
   git?: GitInfo;
+  // Set when the agent saved a diff of its work as an artifact
+  diffUpdatedAt?: string;
   error?: string;
   // Another workflow already owns this Cursor agent; let it do the sweep
   busy?: boolean;
@@ -76,11 +80,23 @@ export async function runAgentForChat(location: ChatLocation) {
   const repliesTo: string[] = [];
   let cursorAgentId = claim.cursorAgentId;
   let git: GitInfo | undefined;
+  let diffUpdatedAt: string | undefined;
   let text = "";
   let error: string | undefined;
   let runIndex = 0;
+  // GitHub profiles of everyone whose messages are part of this reply
+  const users: Map<string, GitHubUser> = new Map();
 
   while (pending.length > 0) {
+    const newLogins = pending
+      .map((message) => message.data.userId)
+      .filter((login) => !users.has(login));
+    for (const [login, user] of Object.entries(
+      await resolveParticipants(newLogins)
+    )) {
+      users.set(login, user);
+    }
+
     // Messages arrived mid-run: the reply written so far is only a draft,
     // since it may be wrong given the new messages. Take it out of the
     // visible message (tool calls stay as a record of the work) and hand it
@@ -94,7 +110,7 @@ export async function runAgentForChat(location: ChatLocation) {
         ...parts.filter((part) => part.type !== "text"),
         {
           type: "divider",
-          text: `Follow-up from ${formatAuthors(pending)} — revising before replying`,
+          text: `Follow-up from ${formatAuthors(pending, users)} — revising before replying`,
         },
       ];
       await showParts({ ...location, agentMessageId, parts });
@@ -106,7 +122,12 @@ export async function runAgentForChat(location: ChatLocation) {
     const outcome = await runCursor({
       ...location,
       agentMessageId,
-      prompt: buildPrompt(pending, previousReply),
+      prompt: buildPrompt({
+        messages: pending,
+        users,
+        repoRef: claim.repoRef,
+        previousReply,
+      }),
       parts,
       cursorAgentId,
       model: claim.model,
@@ -122,6 +143,7 @@ export async function runAgentForChat(location: ChatLocation) {
     parts = outcome.parts;
     cursorAgentId = outcome.cursorAgentId ?? cursorAgentId;
     git = outcome.git ?? git;
+    diffUpdatedAt = outcome.diffUpdatedAt ?? diffUpdatedAt;
     text = outcome.text ?? text;
 
     if (outcome.error) {
@@ -140,12 +162,28 @@ export async function runAgentForChat(location: ChatLocation) {
     repliesTo,
     cursorAgentId,
     git,
+    diffUpdatedAt,
     text,
     error,
     title: claim.title,
   });
 
   return { status: error ? ("error" as const) : ("done" as const) };
+}
+
+/**
+ * GitHub profiles for the people in the chat, so the prompt can address
+ * them by name and credit them on commits.
+ */
+async function resolveParticipants(
+  logins: string[]
+): Promise<Record<string, GitHubUser>> {
+  "use step";
+
+  if (logins.length === 0) {
+    return {};
+  }
+  return Object.fromEntries(await getGitHubUsers(logins));
 }
 
 /**
@@ -412,6 +450,10 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
         cloud: {
           repos: [{ url: repoUrl, startingRef: repoRef }],
           autoCreatePR: true,
+          // Several people drive one agent, so commits and PRs are authored
+          // by the Cursor GitHub App rather than whoever owns the API key.
+          // The prompt asks the agent to credit people as co-authors.
+          openAsCursorGithubApp: true,
         },
       });
       // Only remember the id once the agent actually exists, otherwise a
@@ -448,11 +490,21 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
 
     await flush(true);
 
+    // The prompt asks the agent to save a diff of its work as an artifact;
+    // note when it did so the chat can show the changes.
+    const diffArtifact = await agent
+      .listArtifacts()
+      .then((artifacts) =>
+        artifacts.find((artifact) => artifact.path === DIFF_ARTIFACT_PATH)
+      )
+      .catch(() => undefined);
+
     return {
       parts,
       cursorAgentId,
       text: result.result,
       git: toGitInfo(result.git),
+      diffUpdatedAt: diffArtifact?.updatedAt,
       error,
     };
   } catch (err) {
@@ -480,6 +532,7 @@ async function finalizeAgentMessage({
   repliesTo,
   cursorAgentId,
   git,
+  diffUpdatedAt,
   text,
   error,
   title,
@@ -489,6 +542,7 @@ async function finalizeAgentMessage({
   repliesTo: string[];
   cursorAgentId?: string;
   git?: GitInfo;
+  diffUpdatedAt?: string;
   text: string;
   error?: string;
   title: string;
@@ -538,6 +592,7 @@ async function finalizeAgentMessage({
       cursorAgentId: cursorAgentId ?? null,
       ...(git?.branch ? { branch: git.branch } : {}),
       ...(git?.prUrl ? { prUrl: git.prUrl } : {}),
+      ...(diffUpdatedAt ? { diffUpdatedAt } : {}),
     },
     feed.metadata
   );
@@ -584,11 +639,11 @@ function toGitInfo(git: RunResult["git"]): GitInfo | undefined {
   return { branch: branch.branch, prUrl: branch.prUrl };
 }
 
-function formatAuthors(messages: ChatMessage[]) {
+function formatAuthors(messages: ChatMessage[], users: Participants) {
   const names = [
     ...new Set(
       messages.map(
-        (message) => getUser(message.data.userId)?.info.name ?? "someone"
+        (message) => users.get(message.data.userId)?.name ?? message.data.userId
       )
     ),
   ];

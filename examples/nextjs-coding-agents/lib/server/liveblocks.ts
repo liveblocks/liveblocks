@@ -37,7 +37,8 @@ export async function patchFeedMetadata(
   patch: FeedMetadataPatch,
   current?: ChatFeedMetadata
 ): Promise<ChatFeedMetadata> {
-  const existing = current ?? (await liveblocks.getFeed({ roomId, feedId })).metadata;
+  const existing =
+    current ?? (await liveblocks.getFeed({ roomId, feedId })).metadata;
 
   const merged: Record<string, string | string[]> = {};
   for (const [key, value] of Object.entries({ ...existing, ...patch })) {

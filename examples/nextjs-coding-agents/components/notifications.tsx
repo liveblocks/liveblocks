@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AI_USER } from "@/app/database";
+import { AI_USER } from "@/lib/agent-user";
 import { formatRelative } from "@/components/chat-list";
 
 export function NotificationsButton({ collapsed }: { collapsed: boolean }) {

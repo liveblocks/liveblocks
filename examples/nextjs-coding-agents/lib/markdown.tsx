@@ -13,8 +13,8 @@ import ReactMarkdown, {
   type Components,
   type ExtraProps,
 } from "react-markdown";
+import { useUser } from "@liveblocks/react";
 import remarkGfm from "remark-gfm";
-import { getUser } from "@/app/database";
 import { getSkill } from "@/lib/skills";
 
 const MENTION_PATTERN = /<@([^>\s]+)>/g;
@@ -38,10 +38,10 @@ function prepareContent(content: string) {
 }
 
 function Mention({ userId }: { userId: string }) {
-  const user = getUser(userId);
+  const { user } = useUser(userId);
   return (
     <span className="inline-flex items-center rounded bg-accent-soft px-1 py-0.5 font-medium leading-tight text-accent-foreground">
-      @{user?.info.name ?? userId}
+      @{user?.name ?? userId}
     </span>
   );
 }

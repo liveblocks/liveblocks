@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { start } from "workflow/api";
+import { auth } from "@/auth";
 import { hasCursorApiKey } from "@/lib/server/cursor";
 import { isExampleRoomId } from "@/lib/server/liveblocks";
 import { runAgentForChat } from "@/workflows/run-agent";
@@ -12,6 +13,20 @@ import { runAgentForChat } from "@/workflows/run-agent";
  * once the current one finishes.
  */
 export async function POST(request: NextRequest) {
+  // Every run is billed to the server's Cursor key, so only team members
+  // may start one. Viewers can't post messages either (Liveblocks gives
+  // them read-only access), so this is belt and braces.
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+  if (session.user.role !== "member") {
+    return NextResponse.json(
+      { error: "Only team members can talk to the agent." },
+      { status: 403 }
+    );
+  }
+
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return NextResponse.json(
       { error: "Missing LIVEBLOCKS_SECRET_KEY" },

@@ -5,22 +5,25 @@ import {
   useFeeds,
   useInboxNotifications,
   useMarkInboxNotificationAsRead,
+  useRoom,
   useUpdateFeedMetadata,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import {
   CircleAlertIcon,
+  EyeIcon,
   GitBranchIcon,
   Loader2Icon,
   XIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useCanWrite } from "@/app/providers";
+import { ChangesPanel } from "@/components/changes-panel";
 import { Composer } from "@/components/composer";
 import { HelpButton } from "@/components/help-button";
 import { MessageList } from "@/components/message-list";
 import { PresenceAvatars } from "@/components/presence-avatars";
-import { PullRequestPanel } from "@/components/pull-request-panel";
 import { getRepoName } from "@/lib/repo";
 import type { ChatFeed } from "@/lib/types";
 import { useSendMessage } from "@/lib/use-send-message";
@@ -44,6 +47,8 @@ export function Chat({ feedId }: { feedId: string }) {
 }
 
 function ChatView({ feed }: { feed: ChatFeed }) {
+  const room = useRoom();
+  const canWrite = useCanWrite();
   const sendMessage = useSendMessage();
   const updateFeedMetadata = useUpdateFeedMetadata();
   const [error, setError] = useState<string | null>(null);
@@ -127,29 +132,40 @@ function ChatView({ feed }: { feed: ChatFeed }) {
                 </button>
               </div>
             ) : null}
-            <ClientSideSuspense fallback={null}>
-              <Composer
-                typingKey={feedId}
-                placeholder={
-                  running
-                    ? "Ask a follow-up — the agent will get to it after the current task"
-                    : "Ask the agent to make a change…"
-                }
-                repo={{ url: metadata.repoUrl, ref: metadata.repoRef }}
-                model={metadata.model}
-                onModelChange={handleModelChange}
-                onSend={handleSend}
-              />
-            </ClientSideSuspense>
+            {canWrite ? (
+              <ClientSideSuspense fallback={null}>
+                <Composer
+                  typingKey={feedId}
+                  placeholder={
+                    running
+                      ? "Ask a follow-up — the agent will get to it after the current task"
+                      : "Ask the agent to make a change…"
+                  }
+                  repo={{ url: metadata.repoUrl, ref: metadata.repoRef }}
+                  model={metadata.model}
+                  onModelChange={handleModelChange}
+                  onSend={handleSend}
+                />
+              </ClientSideSuspense>
+            ) : (
+              <div className="flex items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2.5 text-xs text-muted">
+                <EyeIcon className="size-3.5 shrink-0" />
+                You&apos;re watching this chat with read-only access.
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {metadata.prUrl ? (
-        <PullRequestPanel
+      {metadata.diffUpdatedAt ? (
+        <ChangesPanel
+          roomId={room.id}
+          feedId={feedId}
+          repoUrl={metadata.repoUrl}
+          branch={metadata.branch}
           prUrl={metadata.prUrl}
-          // Refetch once a run finishes, since it may have pushed more commits
-          refreshKey={`${feed.updatedAt}-${metadata.agentStatus}`}
+          // Refetch once a run finishes and saves a new diff
+          refreshKey={metadata.diffUpdatedAt}
         />
       ) : null}
     </div>

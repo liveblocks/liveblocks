@@ -5,16 +5,20 @@ import {
   useCreateFeed,
   useSelf,
 } from "@liveblocks/react/suspense";
-import { CircleAlertIcon, LockIcon, SparklesIcon, XIcon } from "lucide-react";
+import { CircleAlertIcon, EyeIcon, SparklesIcon, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useCanWrite } from "@/app/providers";
 import { Composer } from "@/components/composer";
 import { HelpButton } from "@/components/help-button";
 import { useModels } from "@/components/model-select";
 import { PresenceAvatars } from "@/components/presence-avatars";
-import { DEFAULT_REPO, REPO_LOCKED, resolveRepo, type Repo } from "@/lib/repo";
+import { RepoPicker } from "@/components/repo-picker";
+import { DEFAULT_REF, LOCKED_REPO, resolveRepo, type Repo } from "@/lib/repo";
 import { useSendMessage } from "@/lib/use-send-message";
+
+const EMPTY_REPO: Repo = LOCKED_REPO ?? { url: "", ref: DEFAULT_REF };
 
 const SUGGESTIONS = [
   {
@@ -40,8 +44,9 @@ export function NewChat() {
   const createFeed = useCreateFeed();
   const sendMessage = useSendMessage();
   const models = useModels();
+  const canWrite = useCanWrite();
   const [model, setModel] = useState<string | null>(null);
-  const [repoInput, setRepoInput] = useState<Repo>(DEFAULT_REPO);
+  const [repoInput, setRepoInput] = useState<Repo>(EMPTY_REPO);
   const [error, setError] = useState<string | null>(null);
   const creatingRef = useRef(false);
 
@@ -61,7 +66,7 @@ export function NewChat() {
       const repo = resolveRepo(repoInput);
       if (!repo) {
         setError(
-          "Enter a GitHub repository URL like https://github.com/owner/repo"
+          "Pick a repository, or enter a GitHub URL like https://github.com/owner/repo"
         );
         return;
       }
@@ -120,97 +125,68 @@ export function NewChat() {
               What should the agent work on?
             </h2>
             <p className="mt-1.5 max-w-md text-sm text-muted">
-              Everyone in this room can join the chat. The agent finishes the
+              Everyone on the team can join the chat. The agent finishes the
               current task before picking up follow-ups, then replies once.
             </p>
           </div>
 
-          <RepoField value={repoInput} onChange={setRepoInput} />
-
-          {error ? (
-            <div className="mb-2 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
-              <CircleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
-              <span className="flex-1">{error}</span>
-              <button
-                type="button"
-                onClick={() => setError(null)}
-                aria-label="Dismiss"
-                className="rounded p-0.5 hover:bg-danger/10"
-              >
-                <XIcon className="size-3" />
-              </button>
+          {!canWrite ? (
+            <div className="flex items-start gap-2 rounded-lg border border-border bg-panel px-3 py-2.5 text-xs text-muted">
+              <EyeIcon className="mt-0.5 size-3.5 shrink-0" />
+              <span>
+                You have read-only access. Pick a chat from the sidebar to watch
+                the team work with the agent in realtime.
+              </span>
             </div>
-          ) : null}
+          ) : (
+            <>
+              <RepoPicker value={repoInput} onChange={setRepoInput} />
 
-          <ClientSideSuspense fallback={null}>
-            <Composer
-              typingKey="new-chat"
-              placeholder="Describe a change, or type / to pick a skill…"
-              repo={resolveRepo(repoInput) ?? DEFAULT_REPO}
-              model={model ?? models?.defaultModelId ?? "…"}
-              onModelChange={setModel}
-              onSend={handleSend}
-            />
-          </ClientSideSuspense>
+              {error ? (
+                <div className="mb-2 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
+                  <CircleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
+                  <span className="flex-1">{error}</span>
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    aria-label="Dismiss"
+                    className="rounded p-0.5 hover:bg-danger/10"
+                  >
+                    <XIcon className="size-3" />
+                  </button>
+                </div>
+              ) : null}
 
-          <div className="mt-2 flex flex-wrap justify-center gap-2">
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion.label}
-                type="button"
-                // Errors are already surfaced via `setError`.
-                onClick={() => handleSend(suggestion.content).catch(() => {})}
-                className="rounded-full border border-border px-3 py-1 text-xs text-muted transition hover:bg-panel-hover hover:text-foreground"
-              >
-                {suggestion.label}
-              </button>
-            ))}
-          </div>
+              <ClientSideSuspense fallback={null}>
+                <Composer
+                  typingKey="new-chat"
+                  placeholder="Describe a change, or type / to pick a skill…"
+                  repo={resolveRepo(repoInput) ?? repoInput}
+                  model={model ?? models?.defaultModelId ?? "…"}
+                  onModelChange={setModel}
+                  onSend={handleSend}
+                />
+              </ClientSideSuspense>
+
+              <div className="mt-2 flex flex-wrap justify-center gap-2">
+                {SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion.label}
+                    type="button"
+                    // Errors are already surfaced via `setError`.
+                    onClick={() =>
+                      handleSend(suggestion.content).catch(() => {})
+                    }
+                    className="rounded-full border border-border px-3 py-1 text-xs text-muted transition hover:bg-panel-hover hover:text-foreground"
+                  >
+                    {suggestion.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function RepoField({
-  value,
-  onChange,
-}: {
-  value: Repo;
-  onChange: (repo: Repo) => void;
-}) {
-  return (
-    <div className="mb-3 flex items-center gap-2">
-      <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-panel px-3 py-1.5 text-xs">
-        <span className="shrink-0 text-subtle">Repository</span>
-        <input
-          type="url"
-          value={value.url}
-          readOnly={REPO_LOCKED}
-          onChange={(event) => onChange({ ...value, url: event.target.value })}
-          placeholder="https://github.com/owner/repo"
-          className="min-w-0 flex-1 bg-transparent font-mono text-xs text-foreground outline-none read-only:cursor-default"
-        />
-        {REPO_LOCKED ? (
-          <span
-            className="flex shrink-0 items-center gap-1 text-subtle"
-            title="Locked for this demo. Set REPO_LOCKED to false in lib/repo.ts to allow any repository."
-          >
-            <LockIcon className="size-3" />
-            Locked for this demo
-          </span>
-        ) : null}
-      </label>
-      <label className="flex shrink-0 items-center gap-2 rounded-lg border border-border bg-panel px-3 py-1.5 text-xs">
-        <span className="text-subtle">Branch</span>
-        <input
-          type="text"
-          value={value.ref}
-          readOnly={REPO_LOCKED}
-          onChange={(event) => onChange({ ...value, ref: event.target.value })}
-          className="w-20 bg-transparent font-mono text-xs text-foreground outline-none read-only:cursor-default"
-        />
-      </label>
     </div>
   );
 }

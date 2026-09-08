@@ -3,18 +3,33 @@ export type Repo = {
   ref: string;
 };
 
-// The repository every new chat works on. Each chat stores its own repo in
-// feed metadata, so you can let people pick any GitHub repository by
-// setting `REPO_LOCKED` to false. It's locked for the hosted demo.
-export const DEFAULT_REPO: Repo = {
-  url: "https://github.com/liveblocks/demo-comments-hover-boostr",
-  ref: "main",
-};
-
-export const REPO_LOCKED = true;
-
 const GITHUB_REPO_PATTERN =
   /^https:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/;
+
+export const DEFAULT_REF = "main";
+
+/**
+ * Where the agent is asked to save the diff of its work, as a Cursor
+ * artifact, at the end of every run. Relative to the workspace's artifact
+ * directory, which is how Cursor's API addresses it.
+ */
+export const DIFF_ARTIFACT_PATH = "artifacts/changes.diff";
+
+/**
+ * Each chat stores its own repository in feed metadata, and people pick one
+ * from the repositories connected to Cursor when starting a chat. Setting
+ * NEXT_PUBLIC_LOCKED_REPO pins every chat to one repository instead, which
+ * is how the hosted demo runs.
+ */
+export const LOCKED_REPO: Repo | null = (() => {
+  const url = normalizeRepoUrl(process.env.NEXT_PUBLIC_LOCKED_REPO ?? "");
+  return url
+    ? {
+        url,
+        ref: process.env.NEXT_PUBLIC_LOCKED_REPO_REF?.trim() || DEFAULT_REF,
+      }
+    : null;
+})();
 
 export function isValidRepoUrl(url: string) {
   return GITHUB_REPO_PATTERN.test(url.trim());
@@ -35,12 +50,12 @@ export function getRepoName(url: string) {
 }
 
 /**
- * Resolves the repo a new chat should use. When the repo is locked, the
+ * Resolves the repo a new chat should use. When a repo is locked, the
  * client's choice is ignored on the server as well as hidden in the UI.
  */
 export function resolveRepo(requested: Partial<Repo> | undefined): Repo | null {
-  if (REPO_LOCKED) {
-    return DEFAULT_REPO;
+  if (LOCKED_REPO) {
+    return LOCKED_REPO;
   }
 
   const url = requested?.url ? normalizeRepoUrl(requested.url) : null;
@@ -48,6 +63,5 @@ export function resolveRepo(requested: Partial<Repo> | undefined): Repo | null {
     return null;
   }
 
-  const ref = requested?.ref?.trim() || DEFAULT_REPO.ref;
-  return { url, ref };
+  return { url, ref: requested?.ref?.trim() || DEFAULT_REF };
 }

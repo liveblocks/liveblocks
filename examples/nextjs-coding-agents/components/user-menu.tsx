@@ -1,17 +1,15 @@
 "use client";
 
 import clsx from "clsx";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
+import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
-import { getUser, getUsers } from "@/app/database";
 import { useCurrentUser } from "@/app/providers";
 
 export function UserMenu({ collapsed }: { collapsed: boolean }) {
-  const { userId, setUserId } = useCurrentUser();
+  const user = useCurrentUser();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const users = getUsers();
-  const currentUser = getUser(userId) ?? users[0];
 
   useEffect(() => {
     if (!open) {
@@ -41,6 +39,9 @@ export function UserMenu({ collapsed }: { collapsed: boolean }) {
     };
   }, [open]);
 
+  const roleLabel =
+    user.role === "member" ? "Team member" : "Viewer · read-only";
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -51,11 +52,11 @@ export function UserMenu({ collapsed }: { collapsed: boolean }) {
           collapsed ? "justify-center p-1" : "px-1.5 py-1.5"
         )}
         aria-expanded={open}
-        aria-haspopup="listbox"
-        title={collapsed ? `${currentUser.info.name} (switch user)` : undefined}
+        aria-haspopup="menu"
+        title={collapsed ? user.name : undefined}
       >
         <img
-          src={currentUser.info.avatar}
+          src={user.avatar}
           alt=""
           className="size-7 shrink-0 rounded-md object-cover"
         />
@@ -63,10 +64,10 @@ export function UserMenu({ collapsed }: { collapsed: boolean }) {
           <>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[13px] font-medium">
-                {currentUser.info.name}
+                {user.name}
               </span>
               <span className="block truncate text-[11px] text-subtle">
-                Switch demo user
+                {roleLabel}
               </span>
             </span>
             <ChevronsUpDownIcon
@@ -79,7 +80,7 @@ export function UserMenu({ collapsed }: { collapsed: boolean }) {
 
       {open ? (
         <div
-          role="listbox"
+          role="menu"
           className={clsx(
             "absolute z-50 w-60 overflow-hidden rounded-lg border border-border bg-background shadow-xl",
             collapsed
@@ -87,40 +88,32 @@ export function UserMenu({ collapsed }: { collapsed: boolean }) {
               : "bottom-[calc(100%+4px)] left-0"
           )}
         >
-          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-            Switch user
+          <div className="flex items-center gap-2.5 px-3 py-3">
+            <img
+              src={user.avatar}
+              alt=""
+              className="size-8 shrink-0 rounded-md object-cover"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[13px] font-medium">
+                {user.name}
+              </span>
+              <span className="block truncate text-[11px] text-subtle">
+                @{user.id}
+              </span>
+            </span>
           </div>
-          {users.map((user) => {
-            const selected = user.id === userId;
-            return (
-              <button
-                key={user.id}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => {
-                  setUserId(user.id);
-                  setOpen(false);
-                }}
-                className={clsx(
-                  "flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] transition hover:bg-panel-hover",
-                  selected && "bg-panel"
-                )}
-              >
-                <img
-                  src={user.info.avatar}
-                  alt=""
-                  className="size-6 shrink-0 rounded-md object-cover"
-                />
-                <span className="min-w-0 flex-1 truncate font-medium">
-                  {user.info.name}
-                </span>
-                {selected ? (
-                  <CheckIcon className="size-4 shrink-0 text-accent" />
-                ) : null}
-              </button>
-            );
-          })}
+          <div className="border-t border-border p-1">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => void signOut({ redirectTo: "/" })}
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-muted transition hover:bg-panel-hover hover:text-foreground"
+            >
+              <LogOutIcon className="size-4 shrink-0" />
+              Sign out
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

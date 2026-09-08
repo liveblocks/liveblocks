@@ -1,4 +1,4 @@
-import { Cursor } from "@cursor/sdk";
+import { Agent, Cursor } from "@cursor/sdk";
 import { createHash } from "node:crypto";
 
 export type ModelOption = {
@@ -43,6 +43,58 @@ export async function listModels(): Promise<ModelOption[]> {
 
   modelsCache = { fetchedAt: Date.now(), models: options };
   return options;
+}
+
+// Cursor rate-limits this endpoint to about one request per minute and it
+// can take a while for accounts with many repositories, so it's cached
+// generously and refreshed in the background.
+const REPOS_TTL_MS = 10 * 60 * 1000;
+let reposCache: { fetchedAt: number; repos: string[] } | null = null;
+let reposInFlight$: Promise<string[]> | null = null;
+
+/**
+ * GitHub repositories the Cursor GitHub App can reach for this API key. This
+ * is what the agent can clone and push to, so it's the list people pick
+ * from when starting a chat.
+ */
+export async function listRepositories(): Promise<string[]> {
+  if (reposCache && Date.now() - reposCache.fetchedAt < REPOS_TTL_MS) {
+    return reposCache.repos;
+  }
+
+  reposInFlight$ ??= Cursor.repositories
+    .list({ apiKey: getCursorApiKey() })
+    .then((repos) => {
+      const urls = repos
+        .map((repo) => repo.url)
+        .sort((a, b) => a.localeCompare(b));
+      reposCache = { fetchedAt: Date.now(), repos: urls };
+      return urls;
+    })
+    .finally(() => {
+      reposInFlight$ = null;
+    });
+
+  // Serve the stale list while a refresh is running rather than blocking
+  if (reposCache) {
+    return reposCache.repos;
+  }
+  return reposInFlight$;
+}
+
+/**
+ * Downloads an artifact the agent produced. Cloud agent workspaces persist
+ * across runs, so the file reflects the latest run that wrote it.
+ */
+export async function downloadArtifact(cursorAgentId: string, path: string) {
+  const agent = await Agent.resume(cursorAgentId, {
+    apiKey: getCursorApiKey(),
+  });
+  try {
+    return await agent.downloadArtifact(path);
+  } finally {
+    agent.close();
+  }
 }
 
 /**

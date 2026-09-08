@@ -10,7 +10,6 @@ import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { ArrowUpIcon, GitBranchIcon, LockIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getUsers } from "@/app/database";
 import {
   MentionSuggestions,
   type MentionItem,
@@ -22,7 +21,7 @@ import {
   type SkillSuggestionsRef,
 } from "@/components/skill-suggestions";
 import { useTypingLabel } from "@/components/typing-indicator";
-import { getRepoName, REPO_LOCKED, type Repo } from "@/lib/repo";
+import { getRepoName, LOCKED_REPO, type Repo } from "@/lib/repo";
 import { isMessageEmpty, serializeMarkdown } from "@/lib/serialize-markdown";
 import { searchSkills, type Skill } from "@/lib/skills";
 import "./composer.css";
@@ -65,20 +64,22 @@ function createPlaceholderExtension(placeholder: string) {
   });
 }
 
-const MENTION_USERS: MentionItem[] = getUsers().map((user) => ({
-  id: user.id,
-  label: user.info.name,
-  avatar: user.info.avatar,
-}));
+type MentionSuggestion = { id: string; name: string; avatar: string };
 
-function filterMentionItems(query: string) {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) {
-    return MENTION_USERS;
-  }
-  return MENTION_USERS.filter((user) =>
-    user.label.toLowerCase().includes(normalized)
+async function fetchMentionItems(query: string): Promise<MentionItem[]> {
+  const response = await fetch(
+    `/api/users/search?text=${encodeURIComponent(query)}`
   );
+  if (!response.ok) {
+    return [];
+  }
+  // Shape is defined by /api/users/search
+  const users = (await response.json()) as MentionSuggestion[];
+  return users.map((user) => ({
+    id: user.id,
+    label: user.name,
+    avatar: user.avatar,
+  }));
 }
 
 // Skills reuse the Mention node under a different name and trigger character,
@@ -155,7 +156,7 @@ export function Composer({
         suggestion: {
           char: "@",
           pluginKey: new PluginKey("mentionSuggestion"),
-          items: ({ query }) => filterMentionItems(query),
+          items: ({ query }) => fetchMentionItems(query),
           render: () => {
             let component: ReactRenderer<MentionSuggestionsRef> | null = null;
             let unmount: (() => void) | null = null;
@@ -332,7 +333,9 @@ export function Composer({
           <span
             className="flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-muted"
             title={
-              REPO_LOCKED ? "Repository is locked for this demo" : "Repository"
+              LOCKED_REPO !== null
+                ? "Repository is locked for this deployment"
+                : "Repository"
             }
           >
             <GitBranchIcon className="size-3.5" />
@@ -340,7 +343,9 @@ export function Composer({
               {getRepoName(repo.url)}
               <span className="text-subtle"> · {repo.ref}</span>
             </span>
-            {REPO_LOCKED ? <LockIcon className="size-3 text-subtle" /> : null}
+            {LOCKED_REPO !== null ? (
+              <LockIcon className="size-3 text-subtle" />
+            ) : null}
           </span>
 
           <span className="ml-auto hidden text-[11px] text-subtle sm:block">

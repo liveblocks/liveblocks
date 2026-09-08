@@ -1,3 +1,11 @@
+/**
+ * "member": can start chats and talk to the agent (every run is billed to
+ *           the server's Cursor key, so this is the gate that matters).
+ * "viewer": signed in but not on the team; can read chats in realtime but
+ *           not post.
+ */
+export type AccessRole = "member" | "viewer";
+
 export type MessageRole = "user" | "agent";
 
 export type MessageStatus = "running" | "done" | "error";
@@ -37,16 +45,18 @@ export type ChatFeed = {
   metadata: ChatFeedMetadata;
 };
 
-/** What `/api/pr` returns for the pull request opened by the agent. */
-export type PullRequestInfo = {
-  url: string;
-  number: number;
-  title: string;
-  state: "open" | "closed" | "merged";
-  branch: string;
-  additions: number;
-  deletions: number;
-  changedFiles: number;
-  /** Unified diff of the whole pull request */
+/** What `/api/repos` returns: repositories the agent can work on. */
+export type ReposResponse = {
+  repos: string[];
+  error?: string;
+};
+
+/** What `/api/diff` returns: the agent's changes so far in a chat. */
+export type ChangesInfo = {
+  /** Unified diff against the chat's base branch */
   diff: string;
+  /** ISO timestamp of the run that produced it */
+  updatedAt: string;
+  branch?: string;
+  prUrl?: string;
 };

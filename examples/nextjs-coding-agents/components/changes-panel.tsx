@@ -7,18 +7,19 @@ import {
   ChevronDownIcon,
   CircleAlertIcon,
   ExternalLinkIcon,
-  GitMergeIcon,
-  GitPullRequestClosedIcon,
+  FileDiffIcon,
+  GitBranchIcon,
   GitPullRequestIcon,
   Loader2Icon,
   PanelRightCloseIcon,
   RefreshCwIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { PullRequestInfo } from "@/lib/types";
+import type { ChangesInfo } from "@/lib/types";
 
-const STORAGE_COLLAPSED_KEY = "liveblocks-coding-agents:pr-panel-collapsed";
-const STORAGE_WIDTH_KEY = "liveblocks-coding-agents:pr-panel-width";
+const STORAGE_COLLAPSED_KEY =
+  "liveblocks-coding-agents:changes-panel-collapsed";
+const STORAGE_WIDTH_KEY = "liveblocks-coding-agents:changes-panel-width";
 const DEFAULT_WIDTH = 520;
 const MIN_WIDTH = 360;
 
@@ -49,16 +50,39 @@ function readStorage<T>(key: string, fallback: T, parse: (raw: string) => T) {
   return raw === null ? fallback : parse(raw);
 }
 
+function countChanges(diff: string) {
+  let additions = 0;
+  let deletions = 0;
+  for (const line of diff.split("\n")) {
+    if (line.startsWith("+") && !line.startsWith("+++")) {
+      additions++;
+    } else if (line.startsWith("-") && !line.startsWith("---")) {
+      deletions++;
+    }
+  }
+  return { additions, deletions };
+}
+
 /**
- * Shows the pull request the agent opened for this chat, rendered with
- * `@pierre/diffs`. The PR URL comes from feed metadata, so everyone in the
- * chat sees the same panel; the diff itself is fetched live from GitHub.
+ * Shows the agent's changes for this chat, rendered with `@pierre/diffs`.
+ * The agent saves a diff as a Cursor artifact at the end of every run, so
+ * the panel appears as soon as the first run finishes, before any pull
+ * request exists, and updates as follow-up runs land. Everyone in the chat
+ * sees the same thing since the trigger lives in feed metadata.
  */
-export function PullRequestPanel({
+export function ChangesPanel({
+  roomId,
+  feedId,
+  repoUrl,
+  branch,
   prUrl,
   refreshKey,
 }: {
-  prUrl: string;
+  roomId: string;
+  feedId: string;
+  repoUrl: string;
+  branch?: string;
+  prUrl?: string;
   /** Change this to refetch, e.g. when the agent finishes another run */
   refreshKey: string;
 }) {
@@ -68,41 +92,48 @@ export function PullRequestPanel({
   const [width, setWidth] = useState(() =>
     readStorage(STORAGE_WIDTH_KEY, DEFAULT_WIDTH, Number)
   );
-  const [pr, setPr] = useState<PullRequestInfo | null>(null);
+  const [changes, setChanges] = useState<ChangesInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reloadCount, setReloadCount] = useState(0);
 
-  // A PR diff usually spans many files, but `PatchDiff` only accepts a
+  // The diff usually spans many files, but `PatchDiff` only accepts a
   // single-file patch, so split it up and render one `FileDiff` per file.
   const files = useMemo<FileDiffMetadata[]>(
     () =>
-      pr
-        ? parsePatchFiles(pr.diff, `pr-${pr.number}`).flatMap(
-            (patch) => patch.files
-          )
+      changes
+        ? parsePatchFiles(
+            changes.diff,
+            `${feedId}-${changes.updatedAt}`
+          ).flatMap((patch) => patch.files)
         : [],
-    [pr]
+    [changes, feedId]
   );
+  const stats = useMemo(
+    () => (changes ? countChanges(changes.diff) : null),
+    [changes]
+  );
+
+  // Where "open in new window" goes: the PR when there is one, else the
+  // branch on GitHub.
+  const externalUrl = prUrl ?? (branch ? `${repoUrl}/tree/${branch}` : repoUrl);
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
 
-    fetch(`/api/pr?url=${encodeURIComponent(prUrl)}`, {
-      signal: controller.signal,
-    })
+    const search = new URLSearchParams({ roomId, feedId });
+    fetch(`/api/diff?${search}`, { signal: controller.signal })
       .then(async (response) => {
-        const body = (await response.json()) as
-          | PullRequestInfo
-          | { error: string };
+        // Shape is defined by /api/diff
+        const body = (await response.json()) as ChangesInfo | { error: string };
         if (!response.ok || "error" in body) {
           throw new Error(
-            "error" in body ? body.error : "Could not load the pull request"
+            "error" in body ? body.error : "Could not load the changes"
           );
         }
-        setPr(body);
+        setChanges(body);
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) {
@@ -117,7 +148,7 @@ export function PullRequestPanel({
       });
 
     return () => controller.abort();
-  }, [prUrl, refreshKey, reloadCount]);
+  }, [feedId, roomId, refreshKey, reloadCount]);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((current) => {
@@ -161,15 +192,15 @@ export function PullRequestPanel({
         <button
           type="button"
           onClick={toggleCollapsed}
-          title="Show pull request"
-          aria-label="Show pull request"
+          title="Show changes"
+          aria-label="Show changes"
           className="flex size-8 items-center justify-center rounded-md text-muted transition hover:bg-panel-hover hover:text-foreground"
         >
-          <GitPullRequestIcon className="size-4" />
+          <FileDiffIcon className="size-4" />
         </button>
-        {pr ? (
+        {files.length > 0 ? (
           <span className="mt-2 text-[10px] font-medium text-subtle [writing-mode:vertical-rl]">
-            #{pr.number}
+            {files.length} {files.length === 1 ? "file" : "files"}
           </span>
         ) : null}
       </aside>
@@ -190,29 +221,38 @@ export function PullRequestPanel({
 
       <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <StateIcon state={pr?.state} />
+          {prUrl ? (
+            <GitPullRequestIcon className="size-4 shrink-0 text-success" />
+          ) : (
+            <GitBranchIcon className="size-4 shrink-0 text-muted" />
+          )}
           <div className="min-w-0">
             <div className="flex items-baseline gap-1.5">
-              <h2 className="truncate text-[13px] font-semibold">
-                {pr?.title ?? "Pull request"}
-              </h2>
-              {pr ? (
-                <span className="shrink-0 text-xs text-subtle">
-                  #{pr.number}
+              <h2 className="truncate text-[13px] font-semibold">Changes</h2>
+              {prUrl ? (
+                <a
+                  href={prUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 text-xs text-accent-foreground hover:underline"
+                >
+                  Pull request #{prUrl.split("/").pop()}
+                </a>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-muted">
+              {branch ? (
+                <span className="truncate font-mono">{branch}</span>
+              ) : null}
+              {stats ? (
+                <span className="shrink-0">
+                  <span className="text-success">+{stats.additions}</span>{" "}
+                  <span className="text-danger">−{stats.deletions}</span>
+                  {" · "}
+                  {files.length} {files.length === 1 ? "file" : "files"}
                 </span>
               ) : null}
             </div>
-            {pr ? (
-              <div className="flex items-center gap-2 text-[11px] text-muted">
-                <span className="truncate font-mono">{pr.branch}</span>
-                <span className="shrink-0">
-                  <span className="text-success">+{pr.additions}</span>{" "}
-                  <span className="text-danger">−{pr.deletions}</span>
-                  {" · "}
-                  {pr.changedFiles} {pr.changedFiles === 1 ? "file" : "files"}
-                </span>
-              </div>
-            ) : null}
           </div>
         </div>
 
@@ -227,11 +267,13 @@ export function PullRequestPanel({
           </IconButton>
           <IconButton
             label="Open in new window"
-            onClick={() => window.open(prUrl, "_blank", "noopener,noreferrer")}
+            onClick={() =>
+              window.open(externalUrl, "_blank", "noopener,noreferrer")
+            }
           >
             <ExternalLinkIcon className="size-3.5" />
           </IconButton>
-          <IconButton label="Hide pull request" onClick={toggleCollapsed}>
+          <IconButton label="Hide changes" onClick={toggleCollapsed}>
             <PanelRightCloseIcon className="size-3.5" />
           </IconButton>
         </div>
@@ -243,7 +285,7 @@ export function PullRequestPanel({
             <CircleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
             <span className="flex-1">{error}</span>
           </div>
-        ) : pr ? (
+        ) : changes ? (
           <div className="pr-diff flex flex-col gap-3 p-3">
             {files.length === 0 ? (
               <div className="py-8 text-center text-xs text-muted">
@@ -309,16 +351,6 @@ function CollapsibleFileDiff({ fileDiff }: { fileDiff: FileDiffMetadata }) {
       ) : null}
     </div>
   );
-}
-
-function StateIcon({ state }: { state?: PullRequestInfo["state"] }) {
-  if (state === "merged") {
-    return <GitMergeIcon className="size-4 shrink-0 text-accent" />;
-  }
-  if (state === "closed") {
-    return <GitPullRequestClosedIcon className="size-4 shrink-0 text-danger" />;
-  }
-  return <GitPullRequestIcon className="size-4 shrink-0 text-success" />;
 }
 
 function IconButton({

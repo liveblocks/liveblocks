@@ -1,26 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUsers } from "@/app/database";
+import { auth } from "@/auth";
+import { ALLOWED_ORG } from "@/lib/server/access";
+import {
+  getGitHubUsers,
+  listOrgMembers,
+  searchGitHubUsers,
+  type GitHubUser,
+} from "@/lib/server/github";
+
+export type MentionSuggestion = {
+  id: string;
+  name: string;
+  avatar: string;
+};
 
 /**
- * Returns a list of user IDs from a partial search input.
- * For `resolveMentionSuggestions` in LiveblocksProvider.
+ * People who can be @mentioned, from a partial search input. With
+ * GITHUB_ALLOWED_ORG set this is the organization's member list; otherwise
+ * it falls back to GitHub user search.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const text = searchParams.get("text") ?? "";
-  const query = text.trim().toLowerCase();
+  const session = await auth();
+  if (!session?.accessToken) {
+    return new NextResponse("Not signed in", { status: 401 });
+  }
 
-  const userIds = getUsers()
-    .filter((user) => {
-      if (!query) {
-        return true;
-      }
+  const query = (new URL(request.url).searchParams.get("text") ?? "")
+    .trim()
+    .toLowerCase();
 
-      const name = user.info.name.toLowerCase();
-      const id = user.id.toLowerCase();
-      return name.includes(query) || id.includes(query);
-    })
-    .map((user) => user.id);
+  let users: GitHubUser[];
+  if (ALLOWED_ORG) {
+    const members = await listOrgMembers(ALLOWED_ORG, session.accessToken);
+    users = members.filter(
+      (member) => !query || member.login.toLowerCase().includes(query)
+    );
+  } else if (query) {
+    users = await searchGitHubUsers(query, session.accessToken);
+  } else {
+    users = [];
+  }
 
-  return NextResponse.json(userIds);
+  // Member listings only carry logins; fill in display names for the few
+  // suggestions actually shown.
+  const shown = users.slice(0, 8);
+  const profiles = await getGitHubUsers(shown.map((user) => user.login));
+
+  return NextResponse.json(
+    shown.map(
+      (user): MentionSuggestion => ({
+        id: user.login,
+        name: profiles.get(user.login)?.name ?? user.login,
+        avatar: user.avatar,
+      })
+    )
+  );
 }

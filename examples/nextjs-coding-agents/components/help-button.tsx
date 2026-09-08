@@ -24,7 +24,7 @@ const FEATURES: Feature[] = [
     icon: <UsersIcon />,
     title: "Talk to it together",
     description:
-      "Open this example in two tabs and pick different users from the dropdown. Messages sent while the agent is busy are queued, then handled in one combined reply.",
+      "Everyone on the team signs in with GitHub and shares the same chats. Messages sent while the agent is busy are queued, then handled in one combined reply.",
   },
   {
     icon: <HashIcon />,
@@ -34,9 +34,9 @@ const FEATURES: Feature[] = [
   },
   {
     icon: <PenIcon />,
-    title: "Notifications",
+    title: "Notifications and diffs",
     description:
-      "When the agent finishes, everyone who took part in the chat gets a notification in the bell.",
+      "When the agent finishes, everyone who took part in the chat gets a notification in the bell, and the changes show up in the panel next to the chat.",
   },
 ];
 

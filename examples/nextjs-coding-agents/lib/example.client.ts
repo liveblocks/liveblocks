@@ -21,17 +21,3 @@ export function useExampleRoomId() {
     [exampleId]
   );
 }
-
-/**
- * `examplePreview` identifies each preview pane in the example gallery,
- * so side-by-side panes are logged in as different demo users.
- * Returns `null` outside the gallery.
- */
-export function useExamplePreviewIndex() {
-  const params = useSearchParams();
-  const examplePreview = params?.get("examplePreview");
-  return useMemo(() => {
-    const index = Number(examplePreview);
-    return examplePreview !== null && Number.isInteger(index) ? index : null;
-  }, [examplePreview]);
-}

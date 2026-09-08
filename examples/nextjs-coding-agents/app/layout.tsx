@@ -2,8 +2,10 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Suspense, type ReactNode } from "react";
+import { auth } from "@/auth";
 import { LoadingScreen, Providers } from "@/app/providers";
 import { AppShell } from "@/components/app-shell";
+import { SignInScreen } from "@/components/sign-in";
 
 export const metadata: Metadata = {
   title: "Liveblocks Coding Agents",
@@ -13,7 +15,13 @@ export const metadata: Metadata = {
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const session = await auth();
+
   return (
     <html lang="en">
       <head>
@@ -33,11 +41,24 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className={`${inter.className} h-dvh overflow-hidden`}>
-        <Suspense fallback={<LoadingScreen />}>
-          <Providers>
-            <AppShell>{children}</AppShell>
-          </Providers>
-        </Suspense>
+        {session?.user ? (
+          <Suspense fallback={<LoadingScreen />}>
+            <Providers
+              user={{
+                id: session.user.login,
+                name: session.user.name ?? session.user.login,
+                avatar:
+                  session.user.image ??
+                  `https://github.com/${session.user.login}.png?size=128`,
+                role: session.user.role,
+              }}
+            >
+              <AppShell>{children}</AppShell>
+            </Providers>
+          </Suspense>
+        ) : (
+          <SignInScreen />
+        )}
       </body>
     </html>
   );

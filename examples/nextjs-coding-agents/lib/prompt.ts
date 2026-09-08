@@ -1,10 +1,14 @@
-import { getUser } from "@/app/database";
+import { DIFF_ARTIFACT_PATH } from "@/lib/repo";
+import { coAuthorTrailer, type GitHubUser } from "@/lib/server/github";
 import {
   getSkill,
   getSkillIdsFromContent,
   stripSkillTokens,
 } from "@/lib/skills";
 import type { ChatMessage } from "@/lib/types";
+
+/** Display names for the people in a chat, keyed by GitHub login. */
+export type Participants = ReadonlyMap<string, GitHubUser>;
 
 const PREAMBLE = [
   "You are working inside a shared chat where several people talk to you at the same time.",
@@ -21,11 +25,10 @@ const FOLLOW_UP_PREAMBLE = [
   "The team will only see this final summary, so it must stand on its own.",
 ].join(" ");
 
-/** Replaces `<@userId>` tokens with `@Name` so the model sees readable names. */
-export function resolveMentions(content: string) {
-  return content.replace(/<@([^>]+)>/g, (_, userId: string) => {
-    const user = getUser(userId);
-    return user ? `@${user.info.name}` : `@${userId}`;
+/** Replaces `<@login>` tokens with `@Name` so the model sees readable names. */
+export function resolveMentions(content: string, users?: Participants) {
+  return content.replace(/<@([^>]+)>/g, (_, login: string) => {
+    return `@${users?.get(login)?.name ?? login}`;
   });
 }
 
@@ -38,7 +41,18 @@ export function resolveMentions(content: string) {
  * the new messages arrived. It was never shown to the team, so it's handed
  * back to the agent to revise into a single final reply.
  */
-export function buildPrompt(messages: ChatMessage[], previousReply?: string) {
+export function buildPrompt({
+  messages,
+  users,
+  repoRef,
+  previousReply,
+}: {
+  messages: ChatMessage[];
+  users: Participants;
+  /** Base branch, used for the diff the agent saves */
+  repoRef: string;
+  previousReply?: string;
+}) {
   const isFollowUp = previousReply !== undefined;
   const skillIds = new Set<string>();
   for (const message of messages) {
@@ -53,8 +67,11 @@ export function buildPrompt(messages: ChatMessage[], previousReply?: string) {
     .map((skill) => `## Skill: ${skill.name}\n${skill.instructions}`);
 
   const messageSections = messages.map((message) => {
-    const author = getUser(message.data.userId)?.info.name ?? "Someone";
-    const content = resolveMentions(stripSkillTokens(message.data.content));
+    const author = users.get(message.data.userId)?.name ?? message.data.userId;
+    const content = resolveMentions(
+      stripSkillTokens(message.data.content),
+      users
+    );
     return `**${author}:** ${content}`;
   });
 
@@ -69,12 +86,44 @@ export function buildPrompt(messages: ChatMessage[], previousReply?: string) {
         ]
       : ["## Messages"]),
     ...messageSections,
+    buildWrapUpInstructions(messages, users, repoRef),
   ].join("\n\n");
 }
 
+/**
+ * Housekeeping the agent does at the end of every run. Commits are made by
+ * the Cursor GitHub App, so the people who asked for the work are credited
+ * with `Co-authored-by` trailers. The diff is saved as a Cursor artifact so
+ * the chat can show the changes without needing GitHub access.
+ */
+function buildWrapUpInstructions(
+  messages: ChatMessage[],
+  users: Participants,
+  repoRef: string
+) {
+  const trailers = [
+    ...new Set(
+      messages
+        .map((message) => users.get(message.data.userId))
+        .filter((user) => user !== undefined)
+        .map((user) => coAuthorTrailer(user))
+    ),
+  ];
+
+  return [
+    "## Before you finish",
+    "1. Commit all of your changes yourself with a clear commit message. Leave a blank line after the message body and add these trailers, one per line, exactly as written:",
+    trailers.length > 0
+      ? trailers.map((t) => `   ${t}`).join("\n")
+      : "   (none)",
+    `2. Save a unified diff of everything you changed compared to \`origin/${repoRef}\` as an artifact at \`${DIFF_ARTIFACT_PATH}\` (the artifacts directory of the workspace, next to the repository, not inside it). For example: \`git diff origin/${repoRef}...HEAD > /workspace/${DIFF_ARTIFACT_PATH}\`. Do not commit this file.`,
+    '3. If you open or update a pull request, list the people above under a "Requested by" heading in its description.',
+  ].join("\n");
+}
+
 /** Chat title derived from the first human message. */
-export function deriveTitle(content: string) {
-  const plain = resolveMentions(stripSkillTokens(content))
+export function deriveTitle(content: string, users?: Participants) {
+  const plain = resolveMentions(stripSkillTokens(content), users)
     .replace(/[`*_~#>]/g, "")
     .replace(/\s+/g, " ")
     .trim();

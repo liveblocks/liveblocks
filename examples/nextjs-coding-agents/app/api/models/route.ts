@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import {
   DEFAULT_MODEL_ID,
   hasCursorApiKey,
@@ -10,6 +11,10 @@ import {
  * model dropdown in the composer.
  */
 export async function GET() {
+  if (!(await auth())) {
+    return new NextResponse("Not signed in", { status: 401 });
+  }
+
   if (!hasCursorApiKey()) {
     return NextResponse.json(
       { error: "Missing CURSOR_API_KEY", defaultModelId: DEFAULT_MODEL_ID },

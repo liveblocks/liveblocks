@@ -2,7 +2,8 @@ import type { AgentPart, MessageRole, MessageStatus } from "@/lib/types";
 
 declare global {
   interface Liveblocks {
-    // Custom user info set when authenticating with a secret key
+    // Custom user info set when authenticating with a secret key. The id is
+    // the person's GitHub login; name and avatar come from their profile.
     UserMeta: {
       id: string;
       info: {
@@ -39,6 +40,8 @@ declare global {
       // Set once the agent has pushed a branch / opened a pull request
       branch?: string;
       prUrl?: string;
+      // When the agent last saved a diff of its work as a Cursor artifact
+      diffUpdatedAt?: string;
       // Everyone who has posted in this chat; they get notified on completion
       participantIds: string[];
     };
