@@ -16,42 +16,50 @@ import {
   Loader2Icon,
   XIcon,
 } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useCanWrite } from "@/app/providers";
 import { ChangesPanel } from "@/components/changes-panel";
 import { Composer } from "@/components/composer";
 import { HelpButton } from "@/components/help-button";
 import { MessageList } from "@/components/message-list";
+import { NewChat } from "@/components/new-chat";
 import { PresenceAvatars } from "@/components/presence-avatars";
 import { getRepoName } from "@/lib/repo";
 import type { ChatFeed } from "@/lib/types";
 import { useSendMessage } from "@/lib/use-send-message";
 
+/**
+ * A chat's id is chosen before it exists: "New chat" navigates to a fresh
+ * `/chat/[id]`, which shows the empty state until the first message creates
+ * the feed, at which point this swaps to the conversation without leaving
+ * the page. The error state lives here so a failure while sending that first
+ * message survives the swap.
+ */
 export function Chat({ feedId }: { feedId: string }) {
   const { feeds } = useFeeds({ metadata: { type: "chat" } });
   const feed = feeds.find((candidate) => candidate.feedId === feedId);
+  const [error, setError] = useState<string | null>(null);
 
   if (!feed) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted">
-        <p>This chat doesn&apos;t exist or was deleted.</p>
-        <Link href="/" className="text-accent-foreground underline">
-          Start a new chat
-        </Link>
-      </div>
-    );
+    return <NewChat feedId={feedId} error={error} onError={setError} />;
   }
 
-  return <ChatView feed={feed} />;
+  return <ChatView feed={feed} error={error} onError={setError} />;
 }
 
-function ChatView({ feed }: { feed: ChatFeed }) {
+function ChatView({
+  feed,
+  error,
+  onError: setError,
+}: {
+  feed: ChatFeed;
+  error: string | null;
+  onError: (error: string | null) => void;
+}) {
   const room = useRoom();
   const canWrite = useCanWrite();
   const sendMessage = useSendMessage();
   const updateFeedMetadata = useUpdateFeedMetadata();
-  const [error, setError] = useState<string | null>(null);
   const { feedId, metadata } = feed;
   const running = metadata.agentStatus === "running";
 
@@ -66,7 +74,7 @@ function ChatView({ feed }: { feed: ChatFeed }) {
         throw err;
       }
     },
-    [feedId, sendMessage]
+    [feedId, sendMessage, setError]
   );
 
   // Feed metadata updates replace the whole object, so send everything back

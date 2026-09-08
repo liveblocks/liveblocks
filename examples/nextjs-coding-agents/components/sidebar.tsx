@@ -7,7 +7,8 @@ import {
   PanelLeftOpenIcon,
   SquarePenIcon,
 } from "lucide-react";
-import Link from "next/link";
+import { nanoid } from "nanoid";
+import { useRouter } from "next/navigation";
 import { ChatList } from "@/components/chat-list";
 import { NotificationsButton } from "@/components/notifications";
 import { UserMenu } from "@/components/user-menu";
@@ -19,6 +20,8 @@ export function Sidebar({
   collapsed: boolean;
   onToggle: () => void;
 }) {
+  const router = useRouter();
+
   return (
     <aside
       className={clsx(
@@ -53,14 +56,14 @@ export function Sidebar({
           <NotificationsButton collapsed={collapsed} />
         </ClientSideSuspense>
 
-        <Link
-          href="/"
-          aria-label="New chat"
-          title="New chat"
-          className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted transition hover:bg-panel-hover hover:text-foreground"
+        <IconButton
+          label="New chat"
+          // Each click gets a fresh id; the chat is only created once the
+          // first message is sent.
+          onClick={() => router.push(`/chat/${nanoid()}`)}
         >
           <SquarePenIcon className="size-4" />
-        </Link>
+        </IconButton>
       </header>
 
       {!collapsed ? (

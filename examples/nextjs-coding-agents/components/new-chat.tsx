@@ -6,8 +6,6 @@ import {
   useSelf,
 } from "@liveblocks/react/suspense";
 import { CircleAlertIcon, EyeIcon, SparklesIcon, XIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCanWrite } from "@/app/providers";
 import { Composer } from "@/components/composer";
@@ -38,8 +36,20 @@ const SUGGESTIONS = [
   },
 ];
 
-export function NewChat() {
-  const router = useRouter();
+/**
+ * Empty state for a chat that doesn't exist yet. The id comes from the URL;
+ * sending the first message creates the feed with it, and the parent swaps
+ * to the conversation in place.
+ */
+export function NewChat({
+  feedId,
+  error,
+  onError: setError,
+}: {
+  feedId: string;
+  error: string | null;
+  onError: (error: string | null) => void;
+}) {
   const self = useSelf();
   const createFeed = useCreateFeed();
   const sendMessage = useSendMessage();
@@ -47,7 +57,6 @@ export function NewChat() {
   const canWrite = useCanWrite();
   const [model, setModel] = useState<string | null>(null);
   const [repoInput, setRepoInput] = useState<Repo>(EMPTY_REPO);
-  const [error, setError] = useState<string | null>(null);
   const creatingRef = useRef(false);
 
   useEffect(() => {
@@ -72,7 +81,6 @@ export function NewChat() {
       }
 
       creatingRef.current = true;
-      const feedId = nanoid();
 
       try {
         await createFeed(feedId, {
@@ -88,10 +96,7 @@ export function NewChat() {
           },
         });
 
-        // Post before navigating so failures show up here, not on an
-        // unmounted component.
         await sendMessage(feedId, content);
-        router.push(`/chat/${feedId}`);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
         // Rethrow so the composer restores the draft.
@@ -100,7 +105,16 @@ export function NewChat() {
         creatingRef.current = false;
       }
     },
-    [createFeed, model, models, repoInput, router, self.id, sendMessage]
+    [
+      createFeed,
+      feedId,
+      model,
+      models,
+      repoInput,
+      self.id,
+      sendMessage,
+      setError,
+    ]
   );
 
   return (
@@ -159,7 +173,7 @@ export function NewChat() {
 
               <ClientSideSuspense fallback={null}>
                 <Composer
-                  typingKey="new-chat"
+                  typingKey={feedId}
                   placeholder="Describe a change, or type / to pick a skill…"
                   repo={resolveRepo(repoInput) ?? repoInput}
                   model={model ?? models?.defaultModelId ?? "…"}
