@@ -165,7 +165,8 @@ function ChatView({
         </div>
       </div>
 
-      {metadata.diffUpdatedAt ? (
+      {/* Shown once the agent saved a diff or pushed a branch */}
+      {metadata.diffUpdatedAt || metadata.branch ? (
         <ChangesPanel
           roomId={room.id}
           feedId={feedId}
@@ -173,7 +174,7 @@ function ChatView({
           branch={metadata.branch}
           prUrl={metadata.prUrl}
           // Refetch once a run finishes and saves a new diff
-          refreshKey={metadata.diffUpdatedAt}
+          refreshKey={metadata.diffUpdatedAt ?? metadata.branch ?? ""}
         />
       ) : null}
     </div>

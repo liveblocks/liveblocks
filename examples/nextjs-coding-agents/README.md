@@ -59,7 +59,8 @@ model per chat from the dropdown.
 - **Repositories** come from Cursor: the new chat screen lists what the Cursor
   GitHub App can reach for the configured key (`GET /v1/repositories`). Nothing
   else needs GitHub credentials, including the diff panel, which reads a diff
-  the agent saves as a Cursor artifact at the end of every run.
+  the agent saves as a Cursor artifact at the end of every run (falling back
+  to GitHub's public branch diff if the agent skipped that step).
 
 If your team wants commits under people's own names instead of the Cursor GitHub
 App, Cursor's

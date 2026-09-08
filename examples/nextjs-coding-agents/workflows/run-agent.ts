@@ -48,6 +48,8 @@ type RunOutcome = {
   error?: string;
   // Another workflow already owns this Cursor agent; let it do the sweep
   busy?: boolean;
+  // Someone pressed "Stop"; holds their GitHub login when known
+  cancelledBy?: string | null;
 };
 
 // A chat goes stale if a workflow died without releasing it
@@ -83,6 +85,7 @@ export async function runAgentForChat(location: ChatLocation) {
   let diffUpdatedAt: string | undefined;
   let text = "";
   let error: string | undefined;
+  let cancelled = false;
   let runIndex = 0;
   // GitHub profiles of everyone whose messages are part of this reply
   const users: Map<string, GitHubUser> = new Map();
@@ -151,6 +154,18 @@ export async function runAgentForChat(location: ChatLocation) {
       break;
     }
 
+    // Someone stopped the run. Like an error, this ends the whole burst;
+    // messages that were queued behind it are picked up by the next post.
+    if (outcome.cancelledBy !== undefined) {
+      cancelled = true;
+      const login = outcome.cancelledBy;
+      const stopper = login
+        ? ((await resolveParticipants([login]))[login]?.name ?? login)
+        : "someone";
+      parts = [...parts, { type: "divider", text: `Stopped by ${stopper}` }];
+      break;
+    }
+
     pending = await getPendingMessages(location);
     runIndex++;
   }
@@ -165,10 +180,17 @@ export async function runAgentForChat(location: ChatLocation) {
     diffUpdatedAt,
     text,
     error,
+    cancelled,
     title: claim.title,
   });
 
-  return { status: error ? ("error" as const) : ("done" as const) };
+  return {
+    status: error
+      ? ("error" as const)
+      : cancelled
+        ? ("cancelled" as const)
+        : ("done" as const),
+  };
 }
 
 /**
@@ -466,6 +488,14 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
 
     const run = await agent.send(prompt, { model: { id: model } });
 
+    // Publish the run id so the "Stop" button can cancel it. The agent id
+    // is stored too, since cancelling a cloud run needs both.
+    await patchFeedMetadata(
+      liveblocks,
+      { roomId, feedId },
+      { cursorAgentId, cursorRunId: run.id }
+    );
+
     for await (const event of run.stream()) {
       handleEvent(event);
       await flush();
@@ -479,10 +509,27 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
       appendText(result.result);
     }
 
+    if (result.status === "cancelled") {
+      settleRunningTools(parts, "completed");
+      await flush(true);
+      const { metadata } = await liveblocks.getFeed({ roomId, feedId });
+      return {
+        parts,
+        cursorAgentId,
+        text: result.result,
+        git: toGitInfo(result.git),
+        cancelledBy: metadata.stopRequestedBy ?? null,
+      };
+    }
+
     const error =
       result.status === "finished"
         ? undefined
         : (result.error?.message ?? `The run was ${result.status}.`);
+
+    // Not every tool call gets a "completed" event before the stream ends,
+    // so settle whatever is still marked as running now that the run is over.
+    settleRunningTools(parts, error ? "error" : "completed");
 
     if (error) {
       parts.push({ type: "error", text: error });
@@ -490,21 +537,22 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
 
     await flush(true);
 
-    // The prompt asks the agent to save a diff of its work as an artifact;
-    // note when it did so the chat can show the changes.
-    const diffArtifact = await agent
-      .listArtifacts()
-      .then((artifacts) =>
-        artifacts.find((artifact) => artifact.path === DIFF_ARTIFACT_PATH)
-      )
-      .catch(() => undefined);
+    const git = toGitInfo(result.git);
+
+    // The prompt asks the agent to save a diff of its work as an artifact.
+    // If it didn't, but it pushed a branch, the diff can still be fetched
+    // from GitHub, so the changes panel opens either way.
+    const diffArtifact = await findDiffArtifact(agent);
+    const diffUpdatedAt =
+      diffArtifact?.updatedAt ??
+      (git?.branch ? new Date().toISOString() : undefined);
 
     return {
       parts,
       cursorAgentId,
       text: result.result,
-      git: toGitInfo(result.git),
-      diffUpdatedAt: diffArtifact?.updatedAt,
+      git,
+      diffUpdatedAt,
       error,
     };
   } catch (err) {
@@ -518,9 +566,22 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
     }
 
     const message = describeError(err);
+    settleRunningTools(parts, "error");
     parts.push({ type: "error", text: message });
     await flush(true).catch(() => {});
     return { parts, cursorAgentId, error: message };
+  }
+}
+
+/** Marks every tool call that never reported a final status as finished. */
+function settleRunningTools(
+  parts: AgentPart[],
+  status: "completed" | "error"
+) {
+  for (const part of parts) {
+    if (part.type === "tool" && part.status === "running") {
+      part.status = status;
+    }
   }
 }
 
@@ -535,6 +596,7 @@ async function finalizeAgentMessage({
   diffUpdatedAt,
   text,
   error,
+  cancelled,
   title,
 }: ChatLocation & {
   agentMessageId: string;
@@ -545,6 +607,7 @@ async function finalizeAgentMessage({
   diffUpdatedAt?: string;
   text: string;
   error?: string;
+  cancelled: boolean;
   title: string;
 }) {
   "use step";
@@ -587,6 +650,8 @@ async function finalizeAgentMessage({
     {
       agentStatus: "idle",
       runningSince: null,
+      cursorRunId: null,
+      stopRequestedBy: null,
       participantIds,
       // `null` drops a stale id when the agent could not be resumed
       cursorAgentId: cursorAgentId ?? null,
@@ -599,7 +664,9 @@ async function finalizeAgentMessage({
 
   const summary = error
     ? `The agent ran into a problem: ${error}`
-    : summarize(text) || "The agent finished working on your request.";
+    : cancelled
+      ? "The run was stopped before the agent finished."
+      : summarize(text) || "The agent finished working on your request.";
 
   await Promise.all(
     participantIds.map((userId) =>
@@ -629,6 +696,29 @@ function agentMessageData(
     content: "",
     ...fields,
   };
+}
+
+/**
+ * Looks for the diff the agent was asked to save. Artifacts are uploaded
+ * from the agent's machine after it writes them, which can lag the end of
+ * the run by a moment, so this checks a few times before giving up.
+ */
+async function findDiffArtifact(agent: SDKAgent) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    const artifact = await agent
+      .listArtifacts()
+      .then((artifacts) =>
+        artifacts.find((artifact) => artifact.path === DIFF_ARTIFACT_PATH)
+      )
+      .catch(() => undefined);
+    if (artifact) {
+      return artifact;
+    }
+  }
+  return undefined;
 }
 
 function toGitInfo(git: RunResult["git"]): GitInfo | undefined {

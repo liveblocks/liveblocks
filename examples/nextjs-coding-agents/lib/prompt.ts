@@ -1,4 +1,4 @@
-import { DIFF_ARTIFACT_PATH } from "@/lib/repo";
+import { DIFF_ARTIFACT_DIR, DIFF_ARTIFACT_FILE } from "@/lib/repo";
 import { coAuthorTrailer, type GitHubUser } from "@/lib/server/github";
 import {
   getSkill,
@@ -116,7 +116,7 @@ function buildWrapUpInstructions(
     trailers.length > 0
       ? trailers.map((t) => `   ${t}`).join("\n")
       : "   (none)",
-    `2. Save a unified diff of everything you changed compared to \`origin/${repoRef}\` as an artifact at \`${DIFF_ARTIFACT_PATH}\` (the artifacts directory of the workspace, next to the repository, not inside it). For example: \`git diff origin/${repoRef}...HEAD > /workspace/${DIFF_ARTIFACT_PATH}\`. Do not commit this file.`,
+    `2. After committing, save a unified diff of everything you changed compared to \`origin/${repoRef}\` to \`${DIFF_ARTIFACT_FILE}\`, which is the artifacts directory outside the repository. Run exactly: \`mkdir -p ${DIFF_ARTIFACT_DIR} && git diff origin/${repoRef}...HEAD > ${DIFF_ARTIFACT_FILE}\`. Do this even if the diff is empty, and never commit this file.`,
     '3. If you open or update a pull request, list the people above under a "Requested by" heading in its description.',
   ].join("\n");
 }

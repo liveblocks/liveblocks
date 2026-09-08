@@ -9,11 +9,22 @@ const GITHUB_REPO_PATTERN =
 export const DEFAULT_REF = "main";
 
 /**
- * Where the agent is asked to save the diff of its work, as a Cursor
- * artifact, at the end of every run. Relative to the workspace's artifact
- * directory, which is how Cursor's API addresses it.
+ * Where the agent is asked to save the diff of its work at the end of every
+ * run. Cloud agents upload anything written to `/opt/cursor/artifacts/` on
+ * their machine, and the API addresses the upload as `artifacts/<name>`.
  */
+export const DIFF_ARTIFACT_DIR = "/opt/cursor/artifacts";
+export const DIFF_ARTIFACT_FILE = `${DIFF_ARTIFACT_DIR}/changes.diff`;
 export const DIFF_ARTIFACT_PATH = "artifacts/changes.diff";
+
+/**
+ * GitHub serves the diff between two refs of a public repository without
+ * credentials. Used as a fallback when the agent didn't save its artifact.
+ */
+export function getCompareDiffUrl(repoUrl: string, base: string, head: string) {
+  const name = getRepoName(repoUrl);
+  return `https://github.com/${name}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}.diff`;
+}
 
 /**
  * Each chat stores its own repository in feed metadata, and people pick one

@@ -37,6 +37,10 @@ declare global {
       runningSince?: string;
       // The durable Cursor cloud agent backing this chat, set on first run
       cursorAgentId?: string;
+      // The Cursor run in progress, so it can be cancelled from the UI
+      cursorRunId?: string;
+      // GitHub login of whoever pressed "Stop", read back by the workflow
+      stopRequestedBy?: string;
       // Set once the agent has pushed a branch / opened a pull request
       branch?: string;
       prUrl?: string;

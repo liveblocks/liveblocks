@@ -94,7 +94,9 @@ export function AgentParts({
     <div className="flex flex-col gap-2">
       {segments.map((item, index) => {
         if (item.type === "tools") {
-          return <ToolGroup key={index} parts={item.parts} />;
+          return (
+            <ToolGroup key={index} parts={item.parts} running={running} />
+          );
         }
 
         const part = item.part;
@@ -158,8 +160,10 @@ export function AgentParts({
 
 function ToolGroup({
   parts,
+  running,
 }: {
   parts: Extract<AgentPart, { type: "tool" }>[];
+  running: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const collapsible = parts.length > COLLAPSE_THRESHOLD;
@@ -180,22 +184,28 @@ function ToolGroup({
         </button>
       ) : null}
       {visible.map((part) => (
-        <ToolRow key={part.callId} part={part} />
+        <ToolRow key={part.callId} part={part} running={running} />
       ))}
     </div>
   );
 }
 
-function ToolRow({ part }: { part: Extract<AgentPart, { type: "tool" }> }) {
+function ToolRow({
+  part,
+  running,
+}: {
+  part: Extract<AgentPart, { type: "tool" }>;
+  running: boolean;
+}) {
   const meta = TOOL_META[part.name] ?? TOOL_META.tool;
   const Icon = meta.icon;
-  const verb =
-    part.status === "running"
-      ? (RUNNING_VERBS[part.name] ?? "Using")
-      : meta.verb;
+  // A tool can only still be running while the message itself is; older
+  // messages may have been stored before their tool calls were settled.
+  const isRunning = running && part.status === "running";
+  const verb = isRunning ? (RUNNING_VERBS[part.name] ?? "Using") : meta.verb;
 
   let trailing: ReactNode;
-  if (part.status === "running") {
+  if (isRunning) {
     trailing = <Loader2Icon className="size-3 animate-spin text-muted" />;
   } else if (part.status === "error") {
     trailing = <XIcon className="size-3 text-danger" />;
