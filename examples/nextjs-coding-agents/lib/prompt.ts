@@ -118,6 +118,7 @@ function buildWrapUpInstructions(
       : "   (none)",
     `2. After committing, save a unified diff of everything you changed compared to \`origin/${repoRef}\` to \`${DIFF_ARTIFACT_FILE}\`, which is the artifacts directory outside the repository. Run exactly: \`mkdir -p ${DIFF_ARTIFACT_DIR} && git diff origin/${repoRef}...HEAD > ${DIFF_ARTIFACT_FILE}\`. Do this even if the diff is empty, and never commit this file.`,
     '3. If you open or update a pull request, list the people above under a "Requested by" heading in its description.',
+    "4. End with a short final message for the team: two to four plain sentences on what you changed and anything they should know. The app already shows your steps, the diff, and a link to the branch or pull request, so do not repeat those, and do not include any links or a list of changed files.",
   ].join("\n");
 }
 

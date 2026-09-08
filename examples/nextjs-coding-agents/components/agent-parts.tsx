@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import {
   CheckIcon,
+  ChevronRightIcon,
   CircleAlertIcon,
   FilePenLineIcon,
   FileTextIcon,
@@ -152,6 +153,65 @@ export function AgentParts({
           <Loader2Icon className="size-3 animate-spin" />
           Follow-up received — finishing the current task, then revising the
           reply before posting
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** "3 mins 57 seconds", "1 min 2 seconds", "45 seconds" */
+export function formatDuration(ms: number) {
+  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const secondsText = `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
+  if (minutes === 0) {
+    return secondsText;
+  }
+  const minutesText = `${minutes} ${minutes === 1 ? "min" : "mins"}`;
+  return seconds === 0 ? minutesText : `${minutesText} ${secondsText}`;
+}
+
+/**
+ * A finished agent message folds everything it did behind one line, like
+ * "Worked for 3 mins 57 seconds", which expands into the full log of steps.
+ * Only the agent's closing summary stays visible.
+ */
+export function WorkLog({
+  parts,
+  durationMs,
+  status,
+}: {
+  parts: AgentPart[];
+  durationMs: number;
+  status: "done" | "error";
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const label = `${status === "error" ? "Stopped after" : "Worked for"} ${formatDuration(durationMs)}`;
+
+  if (parts.length === 0) {
+    return <div className="text-xs text-muted">{label}</div>;
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => setExpanded((value) => !value)}
+        aria-expanded={expanded}
+        className="-ml-1 inline-flex w-fit items-center gap-1 rounded px-1 py-0.5 text-xs text-muted transition hover:text-foreground"
+      >
+        <ChevronRightIcon
+          className={clsx(
+            "size-3.5 transition-transform",
+            expanded && "rotate-90"
+          )}
+        />
+        {label}
+      </button>
+      {expanded ? (
+        <div className="border-l-2 border-border pl-3">
+          <AgentParts parts={parts} running={false} />
         </div>
       ) : null}
     </div>

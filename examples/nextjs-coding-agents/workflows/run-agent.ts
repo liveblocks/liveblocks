@@ -623,6 +623,7 @@ async function finalizeAgentMessage({
       parts,
       content: text,
       repliesTo,
+      finishedAt: Date.now(),
       branch: git?.branch,
       prUrl: git?.prUrl,
     }),

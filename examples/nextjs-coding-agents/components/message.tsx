@@ -1,11 +1,21 @@
 "use client";
 
 import { useUser } from "@liveblocks/react";
-import { useDeleteFeedMessage, useSelf } from "@liveblocks/react/suspense";
+import {
+  useDeleteFeedMessage,
+  useRoom,
+  useSelf,
+} from "@liveblocks/react/suspense";
 import clsx from "clsx";
-import { ClockIcon, Trash2Icon } from "lucide-react";
+import { ClockIcon, Loader2Icon, SquareIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useCanWrite } from "@/app/providers";
 import { AI_USER } from "@/lib/agent-user";
-import { AgentParts, PullRequestCard } from "@/components/agent-parts";
+import {
+  AgentParts,
+  PullRequestCard,
+  WorkLog,
+} from "@/components/agent-parts";
 import { Markdown } from "@/lib/markdown";
 import { getRepoName } from "@/lib/repo";
 import type { ChatMessage } from "@/lib/types";
@@ -35,7 +45,12 @@ export function Message({
 }) {
   if (message.data.role === "agent") {
     return (
-      <AgentMessage message={message} repoUrl={repoUrl} holding={holding} />
+      <AgentMessage
+        message={message}
+        feedId={feedId}
+        repoUrl={repoUrl}
+        holding={holding}
+      />
     );
   }
   return <HumanMessage message={message} feedId={feedId} queued={queued} />;
@@ -127,15 +142,41 @@ function HumanMessage({
 
 function AgentMessage({
   message,
+  feedId,
   repoUrl,
   holding,
 }: {
   message: ChatMessage;
+  feedId: string;
   repoUrl: string;
   holding: boolean;
 }) {
-  const { status, parts = [], prUrl, branch, repliesTo } = message.data;
+  const canWrite = useCanWrite();
+  const {
+    status,
+    parts = [],
+    content,
+    prUrl,
+    branch,
+    repliesTo,
+    finishedAt,
+  } = message.data;
   const running = status === "running";
+
+  // Once finished, the reply is the agent's closing message, and everything
+  // it did along the way folds away behind "Worked for…". The closing
+  // message was also streamed in as the last text part, so it's left out of
+  // the log to avoid showing it twice.
+  const lastPart = parts[parts.length - 1];
+  const summary =
+    content.trim() || (lastPart?.type === "text" ? lastPart.text : "");
+  const logParts = parts.filter(
+    (part, index) =>
+      part.type !== "error" &&
+      !(index === parts.length - 1 && part.type === "text" && summary)
+  );
+  const errorParts = parts.filter((part) => part.type === "error");
+  const durationMs = (finishedAt ?? message.updatedAt) - message.createdAt;
 
   return (
     <div className="flex items-start gap-2.5">
@@ -168,7 +209,23 @@ function AgentMessage({
           ) : null}
         </div>
 
-        <AgentParts parts={parts} running={running} holding={holding} />
+        {running ? (
+          <AgentParts parts={parts} running holding={holding} />
+        ) : (
+          <div className="flex flex-col gap-2">
+            <WorkLog
+              parts={logParts}
+              durationMs={durationMs}
+              status={status === "error" ? "error" : "done"}
+            />
+            {summary ? <Markdown content={summary} /> : null}
+            {errorParts.length > 0 ? (
+              <AgentParts parts={errorParts} running={false} />
+            ) : null}
+          </div>
+        )}
+
+        {running && canWrite ? <StopRunButton feedId={feedId} /> : null}
 
         {!running ? (
           <PullRequestCard
@@ -178,6 +235,66 @@ function AgentMessage({
           />
         ) : null}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Cancels the Cursor run behind a working agent message. Anyone on the team
+ * can press it; the message credits whoever did once the workflow wraps up.
+ */
+function StopRunButton({ feedId }: { feedId: string }) {
+  const room = useRoom();
+  const [stopping, setStopping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // The parent unmounts this once the message leaves "running", so a
+  // successful stop needs no local reset. Failures re-enable the button.
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+    const timeout = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timeout);
+  }, [error]);
+
+  const stop = async () => {
+    setStopping(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/agent/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId: room.id, feedId }),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(body?.error ?? "The run could not be stopped.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setStopping(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 flex items-center gap-2 text-xs">
+      <button
+        type="button"
+        onClick={stop}
+        disabled={stopping}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-muted transition hover:border-danger/40 hover:text-danger disabled:cursor-default disabled:opacity-60 disabled:hover:border-border disabled:hover:text-muted"
+      >
+        {stopping ? (
+          <Loader2Icon className="size-3 animate-spin" />
+        ) : (
+          <SquareIcon className="size-3 fill-current" />
+        )}
+        {stopping ? "Stopping…" : "Stop run"}
+      </button>
+      {error ? <span className="text-danger">{error}</span> : null}
     </div>
   );
 }

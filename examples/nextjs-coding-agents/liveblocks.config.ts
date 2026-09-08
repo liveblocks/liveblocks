@@ -65,6 +65,8 @@ declare global {
       parts?: AgentPart[];
       // Ids of the human messages this agent reply addressed
       repliesTo?: string[];
+      // When the burst of runs ended; with `createdAt` gives "Worked for…"
+      finishedAt?: number;
       branch?: string;
       prUrl?: string;
     };
