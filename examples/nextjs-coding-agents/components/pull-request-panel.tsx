@@ -1,8 +1,10 @@
 "use client";
 
-import { PatchDiff, type FileDiffOptions } from "@pierre/diffs/react";
+import { parsePatchFiles, type FileDiffMetadata } from "@pierre/diffs";
+import { FileDiff, type FileDiffOptions } from "@pierre/diffs/react";
 import clsx from "clsx";
 import {
+  ChevronDownIcon,
   CircleAlertIcon,
   ExternalLinkIcon,
   GitMergeIcon,
@@ -12,7 +14,7 @@ import {
   PanelRightCloseIcon,
   RefreshCwIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PullRequestInfo } from "@/lib/types";
 
 const STORAGE_COLLAPSED_KEY = "liveblocks-coding-agents:pr-panel-collapsed";
@@ -26,10 +28,17 @@ const DIFF_OPTIONS: FileDiffOptions<undefined, undefined> = {
   themeType: "system",
   diffStyle: "unified",
   diffIndicators: "bars",
-  hunkSeparators: "line-info",
+  hunkSeparators: "line-info-basic",
   lineDiffType: "word-alt",
   overflow: "scroll",
   stickyHeader: true,
+  // The header renders in a shadow root, so this is the only way to style it.
+  // Hide the change-type icon; the chevron already sits in that spot.
+  unsafeCSS: "[data-diffs-header] [data-change-icon] { display: none; }",
+};
+const COLLAPSED_DIFF_OPTIONS: FileDiffOptions<undefined, undefined> = {
+  ...DIFF_OPTIONS,
+  collapsed: true,
 };
 
 function readStorage<T>(key: string, fallback: T, parse: (raw: string) => T) {
@@ -63,6 +72,18 @@ export function PullRequestPanel({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reloadCount, setReloadCount] = useState(0);
+
+  // A PR diff usually spans many files, but `PatchDiff` only accepts a
+  // single-file patch, so split it up and render one `FileDiff` per file.
+  const files = useMemo<FileDiffMetadata[]>(
+    () =>
+      pr
+        ? parsePatchFiles(pr.diff, `pr-${pr.number}`).flatMap(
+            (patch) => patch.files
+          )
+        : [],
+    [pr]
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -223,8 +244,19 @@ export function PullRequestPanel({
             <span className="flex-1">{error}</span>
           </div>
         ) : pr ? (
-          <div className="pr-diff p-3">
-            <PatchDiff patch={pr.diff} options={DIFF_OPTIONS} />
+          <div className="pr-diff flex flex-col gap-3 p-3">
+            {files.length === 0 ? (
+              <div className="py-8 text-center text-xs text-muted">
+                No changes to show
+              </div>
+            ) : (
+              files.map((file) => (
+                <CollapsibleFileDiff
+                  key={file.cacheKey ?? `${file.prevName ?? ""}→${file.name}`}
+                  fileDiff={file}
+                />
+              ))
+            )}
           </div>
         ) : (
           <div className="flex h-full items-center justify-center text-muted">
@@ -233,6 +265,49 @@ export function PullRequestPanel({
         )}
       </div>
     </aside>
+  );
+}
+
+/**
+ * One file of the PR diff. The library's own header (icon, filename, +/-
+ * counts) is kept; a chevron is slotted in front of it via `renderHeaderPrefix`
+ * and the whole header toggles the `collapsed` option, which hides the code.
+ */
+function CollapsibleFileDiff({ fileDiff }: { fileDiff: FileDiffMetadata }) {
+  const isPureRename = fileDiff.type === "rename-pure";
+  const [collapsed, setCollapsed] = useState(isPureRename);
+
+  return (
+    <div className="overflow-hidden rounded-md border border-border">
+      <FileDiff
+        fileDiff={fileDiff}
+        options={
+          collapsed || isPureRename ? COLLAPSED_DIFF_OPTIONS : DIFF_OPTIONS
+        }
+        renderHeaderPrefix={() => (
+          <button
+            type="button"
+            onClick={() => setCollapsed((current) => !current)}
+            title={collapsed ? "Expand file" : "Collapse file"}
+            aria-label={collapsed ? "Expand file" : "Collapse file"}
+            aria-expanded={!collapsed}
+            className="-ml-2.5 flex size-8 shrink-0 items-center justify-center rounded text-muted transition hover:bg-panel-hover hover:text-foreground"
+          >
+            <ChevronDownIcon
+              className={clsx(
+                "size-3.5 transition-transform",
+                collapsed && "-rotate-90"
+              )}
+            />
+          </button>
+        )}
+      />
+      {isPureRename && !collapsed ? (
+        <div className="border-t border-border px-3 py-2 text-xs text-muted">
+          File renamed without changes
+        </div>
+      ) : null}
+    </div>
   );
 }
 
