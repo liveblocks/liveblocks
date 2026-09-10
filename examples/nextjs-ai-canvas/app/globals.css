@@ -1,0 +1,52 @@
+@import "tailwindcss";
+@import "tldraw/tldraw.css";
+@import "@liveblocks/react-ui/styles.css";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter, Inter, system-ui, sans-serif);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.agent-message pre {
+  white-space: pre-wrap;
+}
+
+.agent-scrollbar {
+  scrollbar-width: thin;
+}
+
+.agent-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.agent-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.45);
+  border-radius: 999px;
+}
+
+.lucide {
+  stroke-width: 1.7;
+  opacity: 0.9;
+}
+
+/* Temp hide watermarks or recording */
+#liveblocks-badge,
+.tl-watermark_SEE-LICENSE {
+  display: none !important;
+}
