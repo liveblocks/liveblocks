@@ -1,4 +1,5 @@
-import type { LiveMap, LiveObject, LiveText } from "@liveblocks/client";
+import type { LiveMap, LiveObject } from "@liveblocks/client";
+import type { LiveblocksProsemirrorNode } from "@liveblocks/prosemirror";
 import type {
   AgentPart,
   DocumentChange,
@@ -8,10 +9,12 @@ import type {
 
 declare global {
   interface Liveblocks {
-    // Room Storage. Markdown documents the agent writes for the team (plans,
-    // reports, notes) live here, one LiveText each, keyed by
-    // `${feedId}:${slug}`. The agent rewrites them across runs and people can
-    // edit them in the side panel; LiveText merges both.
+    // Room Storage. Documents the agent writes for the team (plans, reports,
+    // notes) are keyed by `${feedId}:${slug}`. `documents` holds each one's
+    // metadata; the text itself lives in `_tiptap_docs` under the same key,
+    // as the tree of LiveObjects and LiveTexts the Tiptap editor in the side
+    // panel is bound to. The agent patches that tree between runs and people
+    // edit it live; Storage merges both.
     Storage: {
       documents: LiveMap<
         string,
@@ -21,7 +24,6 @@ declare global {
           slug: string;
           // First heading of the document, or the slug when there is none
           title: string;
-          content: LiveText;
           createdAt: string;
           updatedAt: string;
           // Timestamp of the Cursor artifact this was last synced from, so a
@@ -29,6 +31,8 @@ declare global {
           artifactUpdatedAt: string;
         }>
       >;
+      // Managed by `@liveblocks/react-tiptap` in Storage mode
+      _tiptap_docs?: LiveMap<string, LiveblocksProsemirrorNode>;
     };
 
     // Custom user info set when authenticating with a secret key. The id is

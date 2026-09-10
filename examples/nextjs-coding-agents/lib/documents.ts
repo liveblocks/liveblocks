@@ -1,10 +1,8 @@
-import type { LiveTextData } from "@liveblocks/client";
-
 /**
- * Markdown documents the agent writes for the team. The agent saves them as
- * files in its artifacts directory; after each run the workflow copies any
- * new or changed file into Storage as a LiveText, where the side panel
- * renders it and people can edit it.
+ * Documents the agent writes for the team. The agent saves them as Markdown
+ * files in its artifacts directory; after each run the workflow patches any
+ * new or changed file into the Storage-backed Tiptap document the side panel
+ * shows, where people can edit it together.
  */
 
 /** On the agent's machine; everything under `/opt/cursor/artifacts` is uploaded */
@@ -49,14 +47,9 @@ export function titleFromMarkdown(markdown: string, slug: string) {
     .join(" ");
 }
 
-/** Plain text of a LiveText as read through `useStorage` */
-export function liveTextToString(data: LiveTextData) {
-  return data.map(([text]) => text).join("");
-}
-
 /**
  * The smallest single replacement that turns `before` into `after`, so a
- * textarea edit can be applied to a LiveText without rewriting all of it.
+ * changed text run can be applied to a LiveText without rewriting all of it.
  */
 export function diffAsReplace(before: string, after: string) {
   if (before === after) {

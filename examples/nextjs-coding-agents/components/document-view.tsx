@@ -1,45 +1,98 @@
 "use client";
 
+import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "@liveblocks/prosemirror";
 import { useMutation, useStorage } from "@liveblocks/react/suspense";
 import {
-  CheckIcon,
-  CopyIcon,
-  DownloadIcon,
-  FileTextIcon,
-  PencilIcon,
-} from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+  FloatingToolbar,
+  useLiveblocksExtension,
+} from "@liveblocks/react-tiptap";
+import { Markdown } from "@tiptap/markdown";
+import { EditorContent, useEditor } from "@tiptap/react";
+import { CheckIcon, CopyIcon, DownloadIcon, FileTextIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCanWrite } from "@/app/providers";
 import { PanelIconButton } from "@/components/side-panel";
-import { diffAsReplace, liveTextToString } from "@/lib/documents";
-import { Markdown } from "@/lib/markdown";
+import { DOCUMENT_EXTENSIONS } from "@/lib/document-schema";
+
+/** How long after the last keystroke to note a document as updated */
+const TOUCH_DEBOUNCE_MS = 2_000;
 
 /**
- * One of the documents the agent wrote for this chat, read live from
- * Storage. Rendered as Markdown by default; team members can switch to a
- * plain editor whose keystrokes become LiveText operations, so their edits
- * merge with everyone else's and with the agent's next rewrite.
+ * One of the documents the agent wrote for this chat, as a multiplayer
+ * Tiptap editor bound to Storage. Team members edit it together, with each
+ * other's cursors; viewers can only read. The agent's next rewrite is
+ * patched into the same tree block by block, so edits made meanwhile stay.
  */
 export function DocumentView({ documentKey }: { documentKey: string }) {
   const document = useStorage((root) => root.documents?.[documentKey]);
   const canWrite = useCanWrite();
-  const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const updateContent = useMutation(
-    ({ storage }, next: string) => {
+  const liveblocks = useLiveblocksExtension({
+    collaborationMode: "liveblocks",
+    field: documentKey,
+    comments: false,
+    mentions: false,
+  });
+
+  // Keep the metadata people see in the tabs and cards in step with local
+  // edits: the timestamp, and the title if the first heading changed
+  const touch = useMutation(
+    ({ storage }, title: string | undefined) => {
       const record = storage.get("documents")?.get(documentKey);
       if (!record) {
         return;
       }
-      const content = record.get("content");
-      const op = diffAsReplace(content.toString(), next);
-      if (op) {
-        content.replace(op.index, op.length, op.text);
-        record.set("updatedAt", new Date().toISOString());
+      record.set("updatedAt", new Date().toISOString());
+      if (title && title !== record.get("title")) {
+        record.set("title", title);
       }
     },
     [documentKey]
+  );
+  const touchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const editor = useEditor(
+    {
+      extensions: [liveblocks, ...DOCUMENT_EXTENSIONS, Markdown],
+      editable: canWrite,
+      immediatelyRender: false,
+      editorProps: {
+        attributes: {
+          class:
+            "prose-chat prose-document min-h-full p-5 text-sm leading-relaxed outline-none",
+        },
+      },
+      onUpdate: ({ editor, transaction }) => {
+        if (
+          !transaction.docChanged ||
+          transaction.getMeta(LIVEBLOCKS_COLLABORATION_PLUGIN_KEY)
+        ) {
+          return;
+        }
+        if (touchTimeoutRef.current) {
+          clearTimeout(touchTimeoutRef.current);
+        }
+        touchTimeoutRef.current = setTimeout(() => {
+          const first = editor.state.doc.firstChild;
+          const title =
+            first?.type.name === "heading" && first.attrs.level === 1
+              ? first.textContent.trim()
+              : undefined;
+          touch(title || undefined);
+        }, TOUCH_DEBOUNCE_MS);
+      },
+    },
+    [documentKey, canWrite]
+  );
+
+  useEffect(
+    () => () => {
+      if (touchTimeoutRef.current) {
+        clearTimeout(touchTimeoutRef.current);
+      }
+    },
+    []
   );
 
   useEffect(() => {
@@ -50,24 +103,27 @@ export function DocumentView({ documentKey }: { documentKey: string }) {
     return () => clearTimeout(timeout);
   }, [copied]);
 
-  const markdown = document ? liveTextToString(document.content) : "";
-
   const copy = useCallback(() => {
-    void navigator.clipboard.writeText(markdown).then(() => setCopied(true));
-  }, [markdown]);
-
-  const download = useCallback(() => {
-    if (!document) {
+    if (!editor) {
       return;
     }
-    const blob = new Blob([markdown], { type: "text/markdown" });
+    void navigator.clipboard
+      .writeText(editor.getMarkdown())
+      .then(() => setCopied(true));
+  }, [editor]);
+
+  const download = useCallback(() => {
+    if (!document || !editor) {
+      return;
+    }
+    const blob = new Blob([editor.getMarkdown()], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const anchor = window.document.createElement("a");
     anchor.href = url;
     anchor.download = `${document.slug}.md`;
     anchor.click();
     URL.revokeObjectURL(url);
-  }, [document, markdown]);
+  }, [document, editor]);
 
   if (!document) {
     return (
@@ -88,15 +144,6 @@ export function DocumentView({ documentKey }: { documentKey: string }) {
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
-          {canWrite ? (
-            <PanelIconButton
-              label={editing ? "Preview" : "Edit"}
-              active={editing}
-              onClick={() => setEditing((value) => !value)}
-            >
-              <PencilIcon className="size-3.5" />
-            </PanelIconButton>
-          ) : null}
           <PanelIconButton
             label={copied ? "Copied" : "Copy Markdown"}
             onClick={copy}
@@ -113,22 +160,10 @@ export function DocumentView({ documentKey }: { documentKey: string }) {
         </div>
       </div>
 
-      {editing && canWrite ? (
-        <textarea
-          value={markdown}
-          onChange={(event) => updateContent(event.target.value)}
-          spellCheck={false}
-          aria-label="Edit document"
-          className="min-h-0 flex-1 resize-none bg-transparent p-4 font-mono text-[12.5px] leading-relaxed outline-none"
-        />
-      ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <Markdown
-            content={markdown}
-            className="prose-chat prose-document p-5 text-sm leading-relaxed"
-          />
-        </div>
-      )}
+      <div className="document-editor min-h-0 flex-1 overflow-y-auto">
+        <EditorContent editor={editor} className="min-h-full" />
+        {canWrite ? <FloatingToolbar editor={editor} /> : null}
+      </div>
     </>
   );
 }

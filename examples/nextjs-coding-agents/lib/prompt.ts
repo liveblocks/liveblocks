@@ -54,7 +54,8 @@ const DOCUMENT_INSTRUCTIONS = [
   "## Documents",
   `When someone asks for a written deliverable rather than code (a plan, a report, notes from an investigation, a spec, a summary), or when a document is the better format for what's being asked, write it as a Markdown file in \`${DOCS_ARTIFACT_DIR}/\`. The team sees these documents rendered in a side panel next to the chat, and can edit them there.`,
   `- Name the file with a short kebab-case slug, e.g. \`${DOCS_ARTIFACT_DIR}/release-plan.md\`. Start the file with a \`# Title\` heading.`,
-  "- To update an existing document, rewrite the whole file under the same name. The current content of each document is included below when there are any; treat that as the source of truth, since people may have edited it after you last wrote the file.",
+  "- To update an existing document, rewrite the whole file under the same name, changing only what needs to change. The current content of each document is included below when there are any; treat that as the source of truth, since people may have edited it after you last wrote the file. Only your changes are merged in, so a paragraph you leave as it is stays as it is even if someone edits it while you work.",
+  "- Stick to standard Markdown: headings, paragraphs, bold and italics, links, inline code, bulleted and numbered lists, fenced code blocks, quotes, and horizontal rules. Tables and raw HTML don't render.",
   "- These files are not part of the repository. Never commit them.",
   "- Don't create a document when a plain chat reply will do.",
 ].join("\n");

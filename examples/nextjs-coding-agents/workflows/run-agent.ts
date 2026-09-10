@@ -7,11 +7,16 @@ import {
   type SDKAgent,
   type SDKMessage,
 } from "@cursor/sdk";
-import { LiveMap, LiveObject, LiveText } from "@liveblocks/node";
+import { LiveMap, LiveObject } from "@liveblocks/node";
+import {
+  createLiveblocksProsemirrorNode,
+  getLiveblocksProsemirrorDocument,
+  liveblocksProsemirrorNodeToJson,
+  type ProseMirrorJsonNode,
+} from "@liveblocks/prosemirror";
 import { AI_USER_ID } from "@/lib/agent-user";
 import {
   getDocumentKey,
-  liveTextToString,
   slugFromArtifactPath,
   titleFromMarkdown,
 } from "@/lib/documents";
@@ -27,6 +32,11 @@ import {
   getCursorApiKey,
   resolveModelId,
 } from "@/lib/server/cursor";
+import {
+  documentToMarkdown,
+  markdownToDocument,
+} from "@/lib/server/document-markdown";
+import { patchDocument } from "@/lib/server/document-patch";
 import { getGitHubUsers, type GitHubUser } from "@/lib/server/github";
 import { getLiveblocks, patchFeedMetadata } from "@/lib/server/liveblocks";
 import { normalizeToolName, summarizeToolCall } from "@/lib/tool-calls";
@@ -144,6 +154,9 @@ export async function runAgentForChat(location: ChatLocation) {
     await markHandled(location, pending);
     repliesTo.push(...pending.map((message) => message.id));
 
+    // What the agent gets to see; also the base its edits are merged against
+    const documents = await loadDocuments(location);
+
     const outcome = await runCursor({
       ...location,
       agentMessageId,
@@ -151,7 +164,7 @@ export async function runAgentForChat(location: ChatLocation) {
         messages: pending,
         users,
         repoRef: claim.repo?.ref,
-        documents: await loadDocuments(location),
+        documents,
         previousReply,
       }),
       parts,
@@ -168,13 +181,14 @@ export async function runAgentForChat(location: ChatLocation) {
     parts = outcome.parts;
     cursorAgentId = outcome.cursorAgentId ?? cursorAgentId;
 
-    // Copy any documents the agent wrote into Storage, even after a failed
+    // Merge any documents the agent wrote into Storage, even after a failed
     // or stopped run, so partial work isn't lost. A document created earlier
     // in this burst and rewritten by a follow-up still counts as created.
     if (cursorAgentId) {
       for (const change of await syncDocuments({
         ...location,
         cursorAgentId,
+        baseDocuments: documents,
       })) {
         const earlier = documentChanges.get(change.key);
         documentChanges.set(
@@ -633,32 +647,55 @@ async function loadDocuments({
 }: ChatLocation): Promise<PromptDocument[]> {
   "use step";
 
-  // Storage may not exist yet for a room nobody has opened since documents
-  // were added; there are no documents in that case.
-  const storage = await getLiveblocks()
-    .getStorageDocument(roomId, "json")
-    .catch(() => null);
+  const documents: PromptDocument[] = [];
 
-  return Object.values(storage?.documents ?? {})
-    .filter((document) => document.feedId === feedId)
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-    .map((document) => ({
-      slug: document.slug,
-      title: document.title,
-      content: liveTextToString(document.content),
-    }));
+  // Going through `mutateStorage` gives the Live tree, which
+  // `@liveblocks/prosemirror` turns back into the editor's JSON; nothing is
+  // written since nothing is changed. Storage may not exist yet for a room
+  // nobody has opened since documents were added; there are none then.
+  await getLiveblocks()
+    .mutateStorage(roomId, ({ root }) => {
+      const records = [...(root.get("documents")?.values() ?? [])]
+        .filter((record) => record.get("feedId") === feedId)
+        .sort((a, b) => a.get("createdAt").localeCompare(b.get("createdAt")));
+
+      for (const record of records) {
+        const slug = record.get("slug");
+        const node = getLiveblocksProsemirrorDocument(
+          root,
+          getDocumentKey(feedId, slug)
+        );
+        documents.push({
+          slug,
+          title: record.get("title"),
+          content: node
+            ? documentToMarkdown(liveblocksProsemirrorNodeToJson(node))
+            : "",
+        });
+      }
+    })
+    .catch(() => {});
+
+  return documents;
 }
 
 /**
- * Copies Markdown files the agent saved under its `artifacts/docs/`
- * directory into Storage, one LiveText per document. Files that haven't
- * changed since the last sync are skipped, using the artifact's timestamp.
+ * Brings Storage up to date with the Markdown files the agent saved under
+ * its `artifacts/docs/` directory. A new file becomes a new Tiptap document;
+ * a changed file is merged into the existing one block by block, using the
+ * version the agent was shown (`baseDocuments`) to tell its changes apart
+ * from edits people made in the meantime. Files that haven't changed since
+ * the last sync are skipped, using the artifact's timestamp.
  */
 async function syncDocuments({
   roomId,
   feedId,
   cursorAgentId,
-}: ChatLocation & { cursorAgentId: string }): Promise<DocumentChange[]> {
+  baseDocuments,
+}: ChatLocation & {
+  cursorAgentId: string;
+  baseDocuments: PromptDocument[];
+}): Promise<DocumentChange[]> {
   "use step";
 
   const liveblocks = getLiveblocks();
@@ -680,12 +717,13 @@ async function syncDocuments({
       .catch(() => null);
     const existing = storage?.documents ?? {};
 
-    // Download outside the Storage mutation so it stays quick
+    // Download and convert outside the Storage mutation so it stays quick
     const updates: {
       key: string;
       slug: string;
       title: string;
-      markdown: string;
+      document: ProseMirrorJsonNode;
+      base: ProseMirrorJsonNode | undefined;
       artifactUpdatedAt: string;
     }[] = [];
     for (const artifact of artifacts) {
@@ -695,11 +733,15 @@ async function syncDocuments({
       }
       const buffer = await agent.downloadArtifact(artifact.path);
       const markdown = buffer.toString("utf8").replace(/\r\n/g, "\n");
+      const base = baseDocuments.find(
+        (document) => document.slug === artifact.slug
+      );
       updates.push({
         key,
         slug: artifact.slug,
         title: titleFromMarkdown(markdown, artifact.slug),
-        markdown,
+        document: markdownToDocument(markdown),
+        base: base ? markdownToDocument(base.content) : undefined,
         artifactUpdatedAt: artifact.updatedAt,
       });
     }
@@ -716,23 +758,32 @@ async function syncDocuments({
         documents = new LiveMap();
         root.set("documents", documents);
       }
+      // The same map the editor writes to; it creates it on first edit, but
+      // the agent may get there first
+      let tiptapDocuments = root.get("_tiptap_docs");
+      if (!tiptapDocuments) {
+        tiptapDocuments = new LiveMap();
+        root.set("_tiptap_docs", tiptapDocuments);
+      }
 
       for (const update of updates) {
-        const document = documents.get(update.key);
-        if (document) {
-          const content = document.get("content");
-          if (content.toString() !== update.markdown) {
-            content.replace(0, content.length, update.markdown);
-          }
-          document.update({
+        const record = documents.get(update.key);
+        const current = getLiveblocksProsemirrorDocument(root, update.key);
+
+        if (current) {
+          patchDocument(current, update.base, update.document);
+        } else {
+          tiptapDocuments.set(
+            update.key,
+            createLiveblocksProsemirrorNode(update.document)
+          );
+        }
+
+        if (record) {
+          record.update({
             title: update.title,
             updatedAt: now,
             artifactUpdatedAt: update.artifactUpdatedAt,
-          });
-          changes.push({
-            key: update.key,
-            title: update.title,
-            action: "updated",
           });
         } else {
           documents.set(
@@ -741,18 +792,17 @@ async function syncDocuments({
               feedId,
               slug: update.slug,
               title: update.title,
-              content: new LiveText(update.markdown),
               createdAt: now,
               updatedAt: now,
               artifactUpdatedAt: update.artifactUpdatedAt,
             })
           );
-          changes.push({
-            key: update.key,
-            title: update.title,
-            action: "created",
-          });
         }
+        changes.push({
+          key: update.key,
+          title: update.title,
+          action: record ? "updated" : "created",
+        });
       }
     });
 

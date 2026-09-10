@@ -42,14 +42,18 @@ in the chat gets an inbox notification, and the agent's changes appear in a diff
 panel next to the chat, rendered with [`@pierre/diffs`](https://diffs.com).
 
 The agent can also write Markdown documents instead of code (a plan, a report,
-notes from an investigation). It saves them as Cursor artifacts, and after each
-run the workflow copies new or changed files into the room's
-[Storage](https://liveblocks.io/docs/products/sync/storage) as a
-[`LiveText`](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveText)
-each. Documents open as tabs in the same side panel, where everyone sees them
-live; team members can edit them in place, and the agent gets the current
-content in its next prompt, so it revises the edited version rather than its own
-copy. The composer is built with [Tiptap](https://tiptap.dev/): type `@` to
+notes from an investigation). Documents open as tabs in the same side panel as
+multiplayer [Tiptap](https://tiptap.dev/) editors, backed by
+[Storage](https://liveblocks.io/docs/products/sync/storage) through
+[`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode)'s
+`collaborationMode: "liveblocks"`, so team members edit them together with live
+cursors. The agent saves its files as Cursor artifacts; after each run the
+workflow converts them with `@tiptap/markdown` and merges them into the same
+Storage tree with `Liveblocks.mutateStorage` (`lib/server/document-patch.ts`).
+It's a three-way merge against the version the agent was shown, block by block:
+paragraphs the agent didn't touch keep whatever people did to them meanwhile,
+and a changed paragraph becomes a single `LiveText` replacement rather than a
+rewrite, so nobody loses their place. The composer is also Tiptap: type `@` to
 mention teammates and `/` to pick a pre-baked skill (`lib/skills.ts`), and
 choose the model per chat from the dropdown.
 

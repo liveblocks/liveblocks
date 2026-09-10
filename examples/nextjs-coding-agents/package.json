@@ -12,10 +12,13 @@
     "@cursor/sdk": "^1.0.31",
     "@liveblocks/client": "^3.24.1",
     "@liveblocks/node": "^3.24.1",
+    "@liveblocks/prosemirror": "^3.24.1",
     "@liveblocks/react": "^3.24.1",
+    "@liveblocks/react-tiptap": "^3.24.1",
     "@pierre/diffs": "^1.4.0",
     "@tiptap/core": "^3.13.0",
     "@tiptap/extension-mention": "^3.13.0",
+    "@tiptap/markdown": "^3.31.3",
     "@tiptap/pm": "^3.13.0",
     "@tiptap/react": "^3.13.0",
     "@tiptap/starter-kit": "^3.13.0",
@@ -29,7 +32,8 @@
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "workflow": "^4.8.5"
+    "workflow": "^4.8.5",
+    "yjs": "^13.6.32"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
