@@ -89,7 +89,8 @@ export function ModelSelect({
         setOpen(false);
       }
     };
-    const handleKeyDown = (event: KeyboardEvent) => {
+    // A DOM listener, so the global KeyboardEvent rather than React's
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         setOpen(false);
