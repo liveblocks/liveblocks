@@ -4,6 +4,7 @@ import {
   DEFAULT_MODEL_ID,
   hasCursorApiKey,
   listModels,
+  resolveModelId,
 } from "@/lib/server/cursor";
 
 /**
@@ -24,7 +25,9 @@ export async function GET() {
 
   try {
     const models = await listModels();
-    return NextResponse.json({ models, defaultModelId: DEFAULT_MODEL_ID });
+    // Don't hand out a default (from CURSOR_MODEL) the key can't actually use
+    const defaultModelId = await resolveModelId(DEFAULT_MODEL_ID);
+    return NextResponse.json({ models, defaultModelId });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(

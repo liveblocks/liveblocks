@@ -213,7 +213,7 @@ function AgentMessage({
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <WorkLog
             parts={running ? parts : logParts}
             running={running}
@@ -294,7 +294,7 @@ function StopRunButton({ feedId }: { feedId: string }) {
         type="button"
         onClick={stop}
         disabled={stopping}
-        className="font-medium text-danger transition hover:underline disabled:cursor-default disabled:no-underline disabled:opacity-60"
+        className="hover:cursor-pointer text-danger transition hover:underline disabled:cursor-default disabled:no-underline disabled:opacity-60"
       >
         {stopping ? "Stopping…" : "Stop run"}
       </button>

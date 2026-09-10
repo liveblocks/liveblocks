@@ -45,6 +45,33 @@ export async function listModels(): Promise<ModelOption[]> {
   return options;
 }
 
+/**
+ * The model to actually run with. A chat's model is stored in feed metadata
+ * and the default comes from `CURSOR_MODEL`, so either can name a model the
+ * key can't use (a typo, or a model that was retired). Rather than fail the
+ * run, fall back to the configured default, then to the first model in the
+ * catalog. If the catalog can't be fetched, the requested id is used as is.
+ */
+export async function resolveModelId(requested: string): Promise<string> {
+  let models: ModelOption[];
+  try {
+    models = await listModels();
+  } catch {
+    return requested;
+  }
+  if (models.length === 0 || models.some((model) => model.id === requested)) {
+    return requested;
+  }
+
+  const fallback = models.some((model) => model.id === DEFAULT_MODEL_ID)
+    ? DEFAULT_MODEL_ID
+    : models[0].id;
+  console.warn(
+    `Model "${requested}" is not available to this Cursor API key; using "${fallback}"`
+  );
+  return fallback;
+}
+
 // Cursor rate-limits this endpoint to about one request per minute and it
 // can take a while for accounts with many repositories, so it's cached
 // generously and refreshed in the background.

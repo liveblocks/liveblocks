@@ -22,7 +22,11 @@ import {
   type PromptDocument,
 } from "@/lib/prompt";
 import { DIFF_ARTIFACT_PATH } from "@/lib/repo";
-import { getCursorAgentIdForFeed, getCursorApiKey } from "@/lib/server/cursor";
+import {
+  getCursorAgentIdForFeed,
+  getCursorApiKey,
+  resolveModelId,
+} from "@/lib/server/cursor";
 import { getGitHubUsers, type GitHubUser } from "@/lib/server/github";
 import { getLiveblocks, patchFeedMetadata } from "@/lib/server/liveblocks";
 import { normalizeToolName, summarizeToolCall } from "@/lib/tool-calls";
@@ -404,10 +408,11 @@ async function showParts({
 async function runCursor(input: RunInput): Promise<RunOutcome> {
   "use step";
 
-  const { roomId, feedId, agentMessageId, prompt, model, repoUrl, repoRef } =
-    input;
+  const { roomId, feedId, agentMessageId, prompt, repoUrl, repoRef } = input;
   const liveblocks = getLiveblocks();
   const apiKey = getCursorApiKey();
+  // The stored model may be one this key can't use; run with a fallback
+  const model = await resolveModelId(input.model);
   const parts: AgentPart[] = [...input.parts];
   let cursorAgentId = input.cursorAgentId;
 
