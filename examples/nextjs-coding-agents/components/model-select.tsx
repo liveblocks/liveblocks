@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { CheckIcon, ChevronDownIcon, CpuIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 export type ModelOption = {
   id: string;
@@ -44,6 +44,8 @@ export function useModels() {
   return state;
 }
 
+const EMPTY_OPTIONS: ModelOption[] = [];
+
 export function ModelSelect({
   value,
   onChange,
@@ -55,7 +57,25 @@ export function ModelSelect({
 }) {
   const models = useModels();
   const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const highlightedRef = useRef(0);
+  const wasOpenRef = useRef(false);
+
+  const options = models?.models ?? EMPTY_OPTIONS;
+  const current = options.find((model) => model.id === value);
+  const label = current?.displayName ?? value;
+
+  highlightedRef.current = highlighted;
+
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      const selectedIndex = options.findIndex((model) => model.id === value);
+      setHighlighted(selectedIndex >= 0 ? selectedIndex : 0);
+    }
+    wasOpenRef.current = open;
+  }, [open, options, value]);
 
   useEffect(() => {
     if (!open) {
@@ -71,7 +91,32 @@ export function ModelSelect({
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         setOpen(false);
+        return;
+      }
+      if (options.length === 0) {
+        return;
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setHighlighted((index) => Math.min(options.length - 1, index + 1));
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setHighlighted((index) => Math.max(0, index - 1));
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        setHighlighted(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        setHighlighted(options.length - 1);
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        const model = options[highlightedRef.current];
+        if (model) {
+          onChange(model.id);
+          setOpen(false);
+        }
       }
     };
     document.addEventListener("mousedown", handlePointerDown);
@@ -80,11 +125,20 @@ export function ModelSelect({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open]);
+  }, [onChange, open, options]);
 
-  const options = models?.models ?? [];
-  const current = options.find((model) => model.id === value);
-  const label = current?.displayName ?? value;
+  useEffect(() => {
+    listRef.current
+      ?.querySelector<HTMLElement>(`[data-index="${highlighted}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [highlighted]);
+
+  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      setOpen(true);
+    }
+  };
 
   return (
     <div ref={containerRef} className="relative">
@@ -92,6 +146,7 @@ export function ModelSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={handleTriggerKeyDown}
         aria-haspopup="listbox"
         aria-expanded={open}
         title={models?.error ? models.error : "Model"}
@@ -107,6 +162,7 @@ export function ModelSelect({
 
       {open ? (
         <div
+          ref={listRef}
           role="listbox"
           className="absolute bottom-[calc(100%+6px)] left-0 z-50 max-h-72 w-72 overflow-y-auto rounded-lg border border-border bg-background py-1 shadow-xl"
         >
@@ -120,7 +176,7 @@ export function ModelSelect({
               {models.error ?? "No models available"}
             </div>
           ) : (
-            options.map((model) => {
+            options.map((model, index) => {
               const selected = model.id === value;
               return (
                 <button
@@ -128,13 +184,16 @@ export function ModelSelect({
                   type="button"
                   role="option"
                   aria-selected={selected}
+                  data-index={index}
+                  onMouseEnter={() => setHighlighted(index)}
                   onClick={() => {
                     onChange(model.id);
                     setOpen(false);
                   }}
                   className={clsx(
-                    "flex w-full items-start gap-2 px-3 py-1.5 text-left transition hover:bg-panel-hover",
-                    selected && "bg-panel"
+                    "flex w-full items-start gap-2 px-3 py-1.5 text-left transition",
+                    index === highlighted && "bg-panel-hover",
+                    selected && index !== highlighted && "bg-panel"
                   )}
                 >
                   <span className="min-w-0 flex-1">

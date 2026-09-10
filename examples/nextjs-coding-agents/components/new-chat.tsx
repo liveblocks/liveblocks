@@ -93,6 +93,7 @@ export function NewChat({
             model: model ?? models?.defaultModelId ?? "composer-2.5",
             agentStatus: "idle",
             participantIds: [self.id],
+            pinned: "false",
           },
         });
 

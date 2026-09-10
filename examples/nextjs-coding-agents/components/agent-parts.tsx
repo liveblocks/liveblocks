@@ -17,6 +17,7 @@ import {
   Trash2Icon,
   WrenchIcon,
   XIcon,
+  ExternalLinkIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Markdown } from "@/lib/markdown";
@@ -95,9 +96,7 @@ export function AgentParts({
     <div className="flex flex-col gap-2">
       {segments.map((item, index) => {
         if (item.type === "tools") {
-          return (
-            <ToolGroup key={index} parts={item.parts} running={running} />
-          );
+          return <ToolGroup key={index} parts={item.parts} running={running} />;
         }
 
         const part = item.part;
@@ -318,8 +317,7 @@ export function PullRequestCard({
           {prUrl ? "Pull request opened" : "Branch pushed"}
         </span>
         <span className="block truncate font-mono text-[11px] text-muted">
-          {repoName}
-          {branch ? ` · ${branch}` : ""}
+          {branch || ""}
         </span>
       </span>
     </>
@@ -333,7 +331,9 @@ export function PullRequestCard({
       className="mt-1 flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 transition hover:bg-panel-hover"
     >
       {content}
-      <span className="shrink-0 text-xs text-muted">View on GitHub ↗</span>
+      <span className="flex shrink-0 items-center gap-1 text-xs text-muted">
+        View on GitHub <ExternalLinkIcon className="size-3 shrink-0 -mt-px" />
+      </span>
     </a>
   ) : (
     <div className="mt-1 flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">

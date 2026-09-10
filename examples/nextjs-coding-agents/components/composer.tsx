@@ -317,7 +317,7 @@ export function Composer({
     <div className="shrink-0">
       <div
         className={clsx(
-          "rounded-xl border border-border bg-background shadow-sm transition focus-within:border-subtle",
+          "rounded-2xl border border-border bg-background shadow-lg/6 transition focus-within:border-subtle",
           disabled && "opacity-60"
         )}
       >

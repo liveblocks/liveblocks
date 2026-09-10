@@ -48,6 +48,8 @@ declare global {
       diffUpdatedAt?: string;
       // Everyone who has posted in this chat; they get notified on completion
       participantIds: string[];
+      // Feed metadata is strings only, so pinned is "true" or "false"
+      pinned?: "true" | "false";
     };
 
     // The shape of every message stored in a chat's feed. Human messages

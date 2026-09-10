@@ -24,6 +24,7 @@ import { HelpButton } from "@/components/help-button";
 import { MessageList } from "@/components/message-list";
 import { NewChat } from "@/components/new-chat";
 import { PresenceAvatars } from "@/components/presence-avatars";
+import { capitalizeFirst } from "@/lib/prompt";
 import { getRepoName } from "@/lib/repo";
 import type { ChatFeed } from "@/lib/types";
 import { useSendMessage } from "@/lib/use-send-message";
@@ -90,7 +91,7 @@ function ChatView({
         <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <h1 className="truncate text-[13px] font-semibold">
-              {metadata.title || "New chat"}
+              {capitalizeFirst(metadata.title || "New chat")}
             </h1>
             <span className="hidden items-center gap-1.5 truncate text-xs text-muted md:flex">
               <GitBranchIcon className="size-3.5 shrink-0" />

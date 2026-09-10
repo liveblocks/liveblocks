@@ -131,5 +131,15 @@ export function deriveTitle(content: string, users?: Participants) {
   if (!plain) {
     return "New chat";
   }
-  return plain.length > 60 ? `${plain.slice(0, 59).trimEnd()}…` : plain;
+  const title = capitalizeFirst(
+    plain.length > 60 ? `${plain.slice(0, 59).trimEnd()}…` : plain
+  );
+  return title;
+}
+
+export function capitalizeFirst(text: string) {
+  if (!text) {
+    return text;
+  }
+  return text.charAt(0).toLocaleUpperCase() + text.slice(1);
 }
