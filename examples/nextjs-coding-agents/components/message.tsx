@@ -164,12 +164,12 @@ function AgentMessage({
   const running = status === "running";
 
   // Once finished, the reply is the agent's closing message, and everything
-  // it did along the way folds away behind "Worked for…". The closing
-  // message was also streamed in as the last text part, so it's left out of
-  // the log to avoid showing it twice.
+  // it did along the way (planning, tool calls, interim notes) folds away
+  // behind "Worked for…". The closing message is the last text streamed in;
+  // `content` holds the run's result for messages stored without parts.
   const lastPart = parts[parts.length - 1];
   const summary =
-    content.trim() || (lastPart?.type === "text" ? lastPart.text : "");
+    (lastPart?.type === "text" ? lastPart.text.trim() : "") || content.trim();
   const logParts = parts.filter(
     (part, index) =>
       part.type !== "error" &&
