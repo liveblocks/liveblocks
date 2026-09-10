@@ -86,11 +86,6 @@ export function AgentParts({
   const visibleParts =
     running && holding ? parts.filter((part) => part.type !== "text") : parts;
   const segments = segment(visibleParts);
-  const last = visibleParts[visibleParts.length - 1];
-  const showWorking =
-    running &&
-    !holding &&
-    (!last || last.type === "tool" || last.type === "divider");
 
   return (
     <div className="flex flex-col gap-2">
@@ -139,21 +134,6 @@ export function AgentParts({
             );
         }
       })}
-
-      {showWorking ? (
-        <div className="flex items-center gap-2 text-xs text-muted">
-          <Loader2Icon className="size-3 animate-spin" />
-          Working…
-        </div>
-      ) : null}
-
-      {running && holding ? (
-        <div className="flex items-center gap-2 text-xs text-muted">
-          <Loader2Icon className="size-3 animate-spin" />
-          Follow-up received — finishing the current task, then revising the
-          reply before posting
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -172,45 +152,65 @@ export function formatDuration(ms: number) {
 }
 
 /**
- * A finished agent message folds everything it did behind one line, like
- * "Worked for 3 mins 57 seconds", which expands into the full log of steps.
- * Only the agent's closing summary stays visible.
+ * Everything the agent does lives behind one line from the moment a run
+ * starts: "Working…" while it runs, then "Worked for 3 mins 57 seconds".
+ * Opening it shows the full log of steps, streaming in live. Only the
+ * agent's closing summary is shown outside of it once the run finishes.
  */
 export function WorkLog({
   parts,
+  running,
+  holding = false,
   durationMs,
   status,
+  action,
 }: {
   parts: AgentPart[];
+  running: boolean;
+  holding?: boolean;
   durationMs: number;
   status: "done" | "error";
+  // Rendered after the label while running, e.g. a stop button
+  action?: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const label = `${status === "error" ? "Stopped after" : "Worked for"} ${formatDuration(durationMs)}`;
-
-  if (parts.length === 0) {
-    return <div className="text-xs text-muted">{label}</div>;
-  }
+  const label = running
+    ? "Working…"
+    : `${status === "error" ? "Stopped after" : "Worked for"} ${formatDuration(durationMs)}`;
+  const canExpand = parts.length > 0;
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={() => setExpanded((value) => !value)}
-        aria-expanded={expanded}
-        className="-ml-1 inline-flex w-fit items-center gap-1 rounded px-1 py-0.5 text-xs text-muted transition hover:text-foreground"
-      >
-        <ChevronRightIcon
-          className={clsx(
-            "size-3.5 transition-transform",
-            expanded && "rotate-90"
-          )}
-        />
-        {label}
-      </button>
-      {expanded ? (
+      <div className="flex items-center gap-2 text-xs text-muted">
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          disabled={!canExpand}
+          aria-expanded={expanded}
+          className="-ml-1 inline-flex items-center gap-1 rounded px-1 py-0.5 transition enabled:hover:text-foreground disabled:cursor-default"
+        >
+          <ChevronRightIcon
+            className={clsx(
+              "size-3.5 transition-transform",
+              expanded && "rotate-90",
+              !canExpand && "opacity-40"
+            )}
+          />
+          {running ? <Loader2Icon className="size-3 animate-spin" /> : null}
+          {label}
+        </button>
+        {running && action ? (
+          <>
+            <span aria-hidden className="text-subtle">
+              •
+            </span>
+            {action}
+          </>
+        ) : null}
+      </div>
+      {expanded && canExpand ? (
         <div className="border-l-2 border-border pl-3">
-          <AgentParts parts={parts} running={false} />
+          <AgentParts parts={parts} running={running} holding={holding} />
         </div>
       ) : null}
     </div>
@@ -294,18 +294,31 @@ function ToolRow({
   );
 }
 
+/** Why a message shows its pull request card */
+export type GitCardKind = "opened" | "updated";
+
 export function PullRequestCard({
   prUrl,
   branch,
   repoName,
+  kind,
 }: {
   prUrl?: string;
   branch?: string;
   repoName: string;
+  kind: GitCardKind;
 }) {
   if (!prUrl && !branch) {
     return null;
   }
+
+  const title = prUrl
+    ? kind === "opened"
+      ? "Pull request opened"
+      : "Pull request updated"
+    : kind === "opened"
+      ? "Branch pushed"
+      : "Branch updated";
 
   const content = (
     <>
@@ -313,9 +326,7 @@ export function PullRequestCard({
         <GitPullRequestIcon className="size-4" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-medium">
-          {prUrl ? "Pull request opened" : "Branch pushed"}
-        </span>
+        <span className="block truncate text-[13px] font-medium">{title}</span>
         <span className="block truncate font-mono text-[11px] text-muted">
           {branch || ""}
         </span>
@@ -328,7 +339,7 @@ export function PullRequestCard({
       href={prUrl}
       target="_blank"
       rel="noreferrer noopener"
-      className="mt-1 flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 transition hover:bg-panel-hover"
+      className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 transition hover:bg-panel-hover"
     >
       {content}
       <span className="flex shrink-0 items-center gap-1 text-xs text-muted">
@@ -336,7 +347,7 @@ export function PullRequestCard({
       </span>
     </a>
   ) : (
-    <div className="mt-1 flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">
+    <div className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">
       {content}
     </div>
   );

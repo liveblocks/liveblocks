@@ -7,12 +7,13 @@ import {
   useSelf,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
-import { ClockIcon, Loader2Icon, SquareIcon, Trash2Icon } from "lucide-react";
+import { ClockIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCanWrite } from "@/app/providers";
 import { AI_USER } from "@/lib/agent-user";
 import {
   AgentParts,
+  type GitCardKind,
   PullRequestCard,
   WorkLog,
 } from "@/components/agent-parts";
@@ -33,6 +34,7 @@ export function Message({
   repoUrl,
   queued,
   holding,
+  gitCard,
 }: {
   message: ChatMessage;
   feedId: string;
@@ -42,6 +44,8 @@ export function Message({
   // Running agent message with queued human messages behind it: its text so
   // far is a draft that will be revised, so it isn't shown
   holding: boolean;
+  // Agent message whose run opened or pushed to the branch / pull request
+  gitCard: GitCardKind | null;
 }) {
   if (message.data.role === "agent") {
     return (
@@ -50,6 +54,7 @@ export function Message({
         feedId={feedId}
         repoUrl={repoUrl}
         holding={holding}
+        gitCard={gitCard}
       />
     );
   }
@@ -145,11 +150,13 @@ function AgentMessage({
   feedId,
   repoUrl,
   holding,
+  gitCard,
 }: {
   message: ChatMessage;
   feedId: string;
   repoUrl: string;
   holding: boolean;
+  gitCard: GitCardKind | null;
 }) {
   const canWrite = useCanWrite();
   const {
@@ -197,41 +204,34 @@ function AgentMessage({
           <time dateTime={new Date(message.createdAt).toISOString()}>
             {formatTime(message.createdAt)}
           </time>
-          {running ? (
-            <span className="inline-flex items-center gap-1 text-accent">
-              <span className="size-1.5 animate-pulse rounded-full bg-accent" />
-              Working
-            </span>
-          ) : status === "error" ? (
+          {running ? null : status === "error" ? (
             <span className="text-danger">Failed</span>
           ) : repliesTo && repliesTo.length > 1 ? (
             <span>Replied to {repliesTo.length} messages</span>
           ) : null}
         </div>
 
-        {running ? (
-          <AgentParts parts={parts} running holding={holding} />
-        ) : (
-          <div className="flex flex-col gap-2">
-            <WorkLog
-              parts={logParts}
-              durationMs={durationMs}
-              status={status === "error" ? "error" : "done"}
-            />
-            {summary ? <Markdown content={summary} /> : null}
-            {errorParts.length > 0 ? (
-              <AgentParts parts={errorParts} running={false} />
-            ) : null}
-          </div>
-        )}
+        <div className="flex flex-col gap-2">
+          <WorkLog
+            parts={running ? parts : logParts}
+            running={running}
+            holding={holding}
+            durationMs={durationMs}
+            status={status === "error" ? "error" : "done"}
+            action={canWrite ? <StopRunButton feedId={feedId} /> : undefined}
+          />
+          {!running && summary ? <Markdown content={summary} /> : null}
+          {!running && errorParts.length > 0 ? (
+            <AgentParts parts={errorParts} running={false} />
+          ) : null}
+        </div>
 
-        {running && canWrite ? <StopRunButton feedId={feedId} /> : null}
-
-        {!running ? (
+        {!running && gitCard ? (
           <PullRequestCard
             prUrl={prUrl}
             branch={branch}
             repoName={getRepoName(repoUrl)}
+            kind={gitCard}
           />
         ) : null}
       </div>
@@ -279,22 +279,18 @@ function StopRunButton({ feedId }: { feedId: string }) {
     }
   };
 
+  // Sits inline after "Working…", so it's plain red text rather than a button
   return (
-    <div className="mt-2 flex items-center gap-2 text-xs">
+    <>
       <button
         type="button"
         onClick={stop}
         disabled={stopping}
-        className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-muted transition hover:border-danger/40 hover:text-danger disabled:cursor-default disabled:opacity-60 disabled:hover:border-border disabled:hover:text-muted"
+        className="font-medium text-danger transition hover:underline disabled:cursor-default disabled:no-underline disabled:opacity-60"
       >
-        {stopping ? (
-          <Loader2Icon className="size-3 animate-spin" />
-        ) : (
-          <SquareIcon className="size-3 fill-current" />
-        )}
         {stopping ? "Stopping…" : "Stop run"}
       </button>
       {error ? <span className="text-danger">{error}</span> : null}
-    </div>
+    </>
   );
 }

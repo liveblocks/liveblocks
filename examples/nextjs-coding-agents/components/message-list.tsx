@@ -3,6 +3,7 @@
 import { useFeedMessages } from "@liveblocks/react/suspense";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
+import type { GitCardKind } from "@/components/agent-parts";
 import { Message } from "@/components/message";
 import type { ChatMessage } from "@/lib/types";
 
@@ -44,6 +45,33 @@ export function MessageList({
       }
     }
     return { queuedIds: queued, holdingIds: holding };
+  }, [sorted]);
+
+  // Every finished agent message carries the chat's branch and PR, but the
+  // card is only worth showing when something about them changed: the PR or
+  // branch is new, or this run edited files and so pushed to it.
+  const gitCards = useMemo(() => {
+    const cards = new Map<string, GitCardKind>();
+    let previous: { branch?: string; prUrl?: string } = {};
+    for (const message of sorted) {
+      const { role, status, branch, prUrl, parts = [] } = message.data;
+      if (role !== "agent" || status === "running" || !(branch || prUrl)) {
+        continue;
+      }
+      const isNew = branch !== previous.branch || prUrl !== previous.prUrl;
+      const edited = parts.some(
+        (part) =>
+          part.type === "tool" &&
+          (part.name === "edit" || part.name === "delete")
+      );
+      if (isNew) {
+        cards.set(message.id, "opened");
+      } else if (edited) {
+        cards.set(message.id, "updated");
+      }
+      previous = { branch, prUrl };
+    }
+    return cards;
   }, [sorted]);
 
   useEffect(() => {
@@ -94,6 +122,7 @@ export function MessageList({
             repoUrl={repoUrl}
             queued={queuedIds.has(message.id)}
             holding={holdingIds.has(message.id)}
+            gitCard={gitCards.get(message.id) ?? null}
           />
         ))}
       </div>
