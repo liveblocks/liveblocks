@@ -1,3 +1,4 @@
+import { DOCS_ARTIFACT_DIR } from "@/lib/documents";
 import { DIFF_ARTIFACT_DIR, DIFF_ARTIFACT_FILE } from "@/lib/repo";
 import { coAuthorTrailer, type GitHubUser } from "@/lib/server/github";
 import {
@@ -9,6 +10,16 @@ import type { ChatMessage } from "@/lib/types";
 
 /** Display names for the people in a chat, keyed by GitHub login. */
 export type Participants = ReadonlyMap<string, GitHubUser>;
+
+/** A document already in the chat, as shown to the agent */
+export type PromptDocument = {
+  slug: string;
+  title: string;
+  content: string;
+};
+
+// Documents are usually short; anything past this is cut in the prompt
+const MAX_DOCUMENT_CHARS = 20_000;
 
 const PREAMBLE = [
   "You are working inside a shared chat where several people talk to you at the same time.",
@@ -26,6 +37,41 @@ const FOLLOW_UP_PREAMBLE = [
 ].join(" ");
 
 /**
+ * Besides code, the agent can produce Markdown documents: plans, reports,
+ * investigation notes, specs. They're saved as artifacts and the workflow
+ * copies them into Storage after the run, where the side panel shows them.
+ */
+const DOCUMENT_INSTRUCTIONS = [
+  "## Documents",
+  `When someone asks for a written deliverable rather than code (a plan, a report, notes from an investigation, a spec, a summary), or when a document is the better format for what's being asked, write it as a Markdown file in \`${DOCS_ARTIFACT_DIR}/\`. The team sees these documents rendered in a side panel next to the chat, and can edit them there.`,
+  `- Name the file with a short kebab-case slug, e.g. \`${DOCS_ARTIFACT_DIR}/release-plan.md\`. Start the file with a \`# Title\` heading.`,
+  "- To update an existing document, rewrite the whole file under the same name. The current content of each document is included below when there are any; treat that as the source of truth, since people may have edited it after you last wrote the file.",
+  "- These files are not part of the repository. Never commit them.",
+  "- Don't create a document when a plain chat reply will do.",
+].join("\n");
+
+function buildDocumentsSection(documents: PromptDocument[]) {
+  if (documents.length === 0) {
+    return null;
+  }
+  return [
+    "## Current documents in this chat",
+    ...documents.map((document) => {
+      const truncated = document.content.length > MAX_DOCUMENT_CHARS;
+      const content = truncated
+        ? `${document.content.slice(0, MAX_DOCUMENT_CHARS)}\n\n_(truncated)_`
+        : document.content;
+      return [
+        `### ${DOCS_ARTIFACT_DIR}/${document.slug}.md — ${document.title}`,
+        "````markdown",
+        content,
+        "````",
+      ].join("\n");
+    }),
+  ].join("\n\n");
+}
+
+/**
  * The closing message is the only thing shown by default; everything else
  * the agent wrote is behind a "Worked for…" toggle, and the diff and pull
  * request have their own UI. So it's kept to a glance.
@@ -35,7 +81,7 @@ const FINAL_MESSAGE_INSTRUCTIONS = [
   "Your last message is what the team reads. Everything before it is hidden behind a toggle, and the app shows the diff, changed files, and a link to the branch or pull request on its own. Write it as:",
   "- One short paragraph, at most three sentences, in plain language: what changed and why, in past tense. If a request couldn't or shouldn't be done, say so here.",
   "- Optionally, a second short paragraph or up to four brief bullets, only for things the team should know or double-check. Skip this if there's nothing worth flagging.",
-  "Keep it under 80 words. No headings, no code blocks, no links, no file paths, no list of changed files, no restating the request, no sign-off, and don't mention committing, the diff, or the pull request.",
+  "Keep it under 80 words. No headings, no code blocks, no links, no file paths, no list of changed files, no restating the request, no sign-off, and don't mention committing, the diff, or the pull request. If you wrote a document, say so in a few words; the app shows it next to the chat, so don't paste its contents.",
 ].join("\n");
 
 /** Replaces `<@login>` tokens with `@Name` so the model sees readable names. */
@@ -58,12 +104,15 @@ export function buildPrompt({
   messages,
   users,
   repoRef,
+  documents = [],
   previousReply,
 }: {
   messages: ChatMessage[];
   users: Participants;
   /** Base branch, used for the diff the agent saves */
   repoRef: string;
+  /** Documents already written in this chat, with their current content */
+  documents?: PromptDocument[];
   previousReply?: string;
 }) {
   const isFollowUp = previousReply !== undefined;
@@ -91,6 +140,8 @@ export function buildPrompt({
   return [
     isFollowUp ? FOLLOW_UP_PREAMBLE : PREAMBLE,
     ...skillSections,
+    DOCUMENT_INSTRUCTIONS,
+    buildDocumentsSection(documents),
     ...(isFollowUp
       ? [
           "## Your draft reply (not shown to the team)",
@@ -101,7 +152,9 @@ export function buildPrompt({
     ...messageSections,
     buildWrapUpInstructions(messages, users, repoRef),
     FINAL_MESSAGE_INSTRUCTIONS,
-  ].join("\n\n");
+  ]
+    .filter((section) => section !== null)
+    .join("\n\n");
 }
 
 /**

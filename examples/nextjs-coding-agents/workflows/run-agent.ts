@@ -7,14 +7,31 @@ import {
   type SDKAgent,
   type SDKMessage,
 } from "@cursor/sdk";
+import { LiveMap, LiveObject, LiveText } from "@liveblocks/node";
 import { AI_USER_ID } from "@/lib/agent-user";
-import { buildPrompt, deriveTitle, type Participants } from "@/lib/prompt";
+import {
+  getDocumentKey,
+  liveTextToString,
+  slugFromArtifactPath,
+  titleFromMarkdown,
+} from "@/lib/documents";
+import {
+  buildPrompt,
+  deriveTitle,
+  type Participants,
+  type PromptDocument,
+} from "@/lib/prompt";
 import { DIFF_ARTIFACT_PATH } from "@/lib/repo";
 import { getCursorAgentIdForFeed, getCursorApiKey } from "@/lib/server/cursor";
 import { getGitHubUsers, type GitHubUser } from "@/lib/server/github";
 import { getLiveblocks, patchFeedMetadata } from "@/lib/server/liveblocks";
 import { normalizeToolName, summarizeToolCall } from "@/lib/tool-calls";
-import type { AgentPart, ChatMessage, ChatMessageData } from "@/lib/types";
+import type {
+  AgentPart,
+  ChatMessage,
+  ChatMessageData,
+  DocumentChange,
+} from "@/lib/types";
 
 type ChatLocation = { roomId: string; feedId: string };
 
@@ -89,6 +106,8 @@ export async function runAgentForChat(location: ChatLocation) {
   let runIndex = 0;
   // GitHub profiles of everyone whose messages are part of this reply
   const users: Map<string, GitHubUser> = new Map();
+  // Documents created or rewritten over the burst, by Storage key
+  const documentChanges: Map<string, DocumentChange> = new Map();
 
   while (pending.length > 0) {
     const newLogins = pending
@@ -129,6 +148,7 @@ export async function runAgentForChat(location: ChatLocation) {
         messages: pending,
         users,
         repoRef: claim.repoRef,
+        documents: await loadDocuments(location),
         previousReply,
       }),
       parts,
@@ -145,6 +165,24 @@ export async function runAgentForChat(location: ChatLocation) {
 
     parts = outcome.parts;
     cursorAgentId = outcome.cursorAgentId ?? cursorAgentId;
+
+    // Copy any documents the agent wrote into Storage, even after a failed
+    // or stopped run, so partial work isn't lost. A document created earlier
+    // in this burst and rewritten by a follow-up still counts as created.
+    if (cursorAgentId) {
+      for (const change of await syncDocuments({
+        ...location,
+        cursorAgentId,
+      })) {
+        const earlier = documentChanges.get(change.key);
+        documentChanges.set(
+          change.key,
+          earlier?.action === "created"
+            ? { ...change, action: "created" }
+            : change
+        );
+      }
+    }
     git = outcome.git ?? git;
     diffUpdatedAt = outcome.diffUpdatedAt ?? diffUpdatedAt;
     text = outcome.text ?? text;
@@ -178,6 +216,7 @@ export async function runAgentForChat(location: ChatLocation) {
     cursorAgentId,
     git,
     diffUpdatedAt,
+    documents: [...documentChanges.values()],
     text,
     error,
     cancelled,
@@ -573,11 +612,148 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
   }
 }
 
+/**
+ * The chat's documents as they are now in Storage, for the prompt. People
+ * can edit documents in the side panel, so the agent's own copy of the file
+ * may be stale.
+ */
+async function loadDocuments({
+  roomId,
+  feedId,
+}: ChatLocation): Promise<PromptDocument[]> {
+  "use step";
+
+  // Storage may not exist yet for a room nobody has opened since documents
+  // were added; there are no documents in that case.
+  const storage = await getLiveblocks()
+    .getStorageDocument(roomId, "json")
+    .catch(() => null);
+
+  return Object.values(storage?.documents ?? {})
+    .filter((document) => document.feedId === feedId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    .map((document) => ({
+      slug: document.slug,
+      title: document.title,
+      content: liveTextToString(document.content),
+    }));
+}
+
+/**
+ * Copies Markdown files the agent saved under its `artifacts/docs/`
+ * directory into Storage, one LiveText per document. Files that haven't
+ * changed since the last sync are skipped, using the artifact's timestamp.
+ */
+async function syncDocuments({
+  roomId,
+  feedId,
+  cursorAgentId,
+}: ChatLocation & { cursorAgentId: string }): Promise<DocumentChange[]> {
+  "use step";
+
+  const liveblocks = getLiveblocks();
+  const agent = await Agent.resume(cursorAgentId, {
+    apiKey: getCursorApiKey(),
+  });
+
+  try {
+    const artifacts = (await agent.listArtifacts()).flatMap((artifact) => {
+      const slug = slugFromArtifactPath(artifact.path);
+      return slug ? [{ ...artifact, slug }] : [];
+    });
+    if (artifacts.length === 0) {
+      return [];
+    }
+
+    const storage = await liveblocks
+      .getStorageDocument(roomId, "json")
+      .catch(() => null);
+    const existing = storage?.documents ?? {};
+
+    // Download outside the Storage mutation so it stays quick
+    const updates: {
+      key: string;
+      slug: string;
+      title: string;
+      markdown: string;
+      artifactUpdatedAt: string;
+    }[] = [];
+    for (const artifact of artifacts) {
+      const key = getDocumentKey(feedId, artifact.slug);
+      if (existing[key]?.artifactUpdatedAt === artifact.updatedAt) {
+        continue;
+      }
+      const buffer = await agent.downloadArtifact(artifact.path);
+      const markdown = buffer.toString("utf8").replace(/\r\n/g, "\n");
+      updates.push({
+        key,
+        slug: artifact.slug,
+        title: titleFromMarkdown(markdown, artifact.slug),
+        markdown,
+        artifactUpdatedAt: artifact.updatedAt,
+      });
+    }
+    if (updates.length === 0) {
+      return [];
+    }
+
+    const changes: DocumentChange[] = [];
+    const now = new Date().toISOString();
+
+    await liveblocks.mutateStorage(roomId, ({ root }) => {
+      let documents = root.get("documents");
+      if (!documents) {
+        documents = new LiveMap();
+        root.set("documents", documents);
+      }
+
+      for (const update of updates) {
+        const document = documents.get(update.key);
+        if (document) {
+          const content = document.get("content");
+          if (content.toString() !== update.markdown) {
+            content.replace(0, content.length, update.markdown);
+          }
+          document.update({
+            title: update.title,
+            updatedAt: now,
+            artifactUpdatedAt: update.artifactUpdatedAt,
+          });
+          changes.push({
+            key: update.key,
+            title: update.title,
+            action: "updated",
+          });
+        } else {
+          documents.set(
+            update.key,
+            new LiveObject({
+              feedId,
+              slug: update.slug,
+              title: update.title,
+              content: new LiveText(update.markdown),
+              createdAt: now,
+              updatedAt: now,
+              artifactUpdatedAt: update.artifactUpdatedAt,
+            })
+          );
+          changes.push({
+            key: update.key,
+            title: update.title,
+            action: "created",
+          });
+        }
+      }
+    });
+
+    return changes;
+  } finally {
+    agent.close();
+  }
+}
+
 /** Marks every tool call that never reported a final status as finished. */
-function settleRunningTools(
-  parts: AgentPart[],
-  status: "completed" | "error"
-) {
+function settleRunningTools(parts: AgentPart[], status: "completed" | "error") {
   for (const part of parts) {
     if (part.type === "tool" && part.status === "running") {
       part.status = status;
@@ -594,6 +770,7 @@ async function finalizeAgentMessage({
   cursorAgentId,
   git,
   diffUpdatedAt,
+  documents,
   text,
   error,
   cancelled,
@@ -605,6 +782,7 @@ async function finalizeAgentMessage({
   cursorAgentId?: string;
   git?: GitInfo;
   diffUpdatedAt?: string;
+  documents: DocumentChange[];
   text: string;
   error?: string;
   cancelled: boolean;
@@ -626,6 +804,7 @@ async function finalizeAgentMessage({
       finishedAt: Date.now(),
       branch: git?.branch,
       prUrl: git?.prUrl,
+      ...(documents.length > 0 ? { documents } : {}),
     }),
   });
 

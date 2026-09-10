@@ -20,8 +20,9 @@ import {
   ExternalLinkIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useSidePanel } from "@/components/side-panel";
 import { Markdown } from "@/lib/markdown";
-import type { AgentPart } from "@/lib/types";
+import type { AgentPart, DocumentChange } from "@/lib/types";
 
 const TOOL_META: Record<string, { icon: typeof FileTextIcon; verb: string }> = {
   read: { icon: FileTextIcon, verb: "Read" },
@@ -291,6 +292,37 @@ function ToolRow({
       )}
       <span className="ml-auto shrink-0">{trailing}</span>
     </div>
+  );
+}
+
+/**
+ * A document the reply created or rewrote. Clicking opens it in the side
+ * panel, where it's read live from Storage.
+ */
+export function DocumentCard({ change }: { change: DocumentChange }) {
+  const panel = useSidePanel();
+
+  return (
+    <button
+      type="button"
+      onClick={() => panel?.open(change.key)}
+      className="mt-1 flex w-full items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 text-left transition hover:bg-panel-hover"
+    >
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent-foreground">
+        <FileTextIcon className="size-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13px] font-medium">
+          {change.title}
+        </span>
+        <span className="block truncate text-[11px] text-muted">
+          {change.action === "created"
+            ? "Document created"
+            : "Document updated"}
+        </span>
+      </span>
+      <span className="shrink-0 text-xs text-muted">Open</span>
+    </button>
   );
 }
 

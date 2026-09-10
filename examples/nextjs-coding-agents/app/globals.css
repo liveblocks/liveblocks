@@ -273,3 +273,24 @@
 .prose-chat h3 {
   font-size: 0.95rem;
 }
+
+/* Documents in the side panel get document-like heading sizes and spacing. */
+.prose-document > * + * {
+  margin-top: 0.75rem;
+}
+
+.prose-document h1 {
+  margin-bottom: 0.75rem;
+  font-size: 1.375rem;
+  letter-spacing: -0.01em;
+}
+
+.prose-document h2 {
+  margin-top: 1.5rem;
+  font-size: 1.125rem;
+}
+
+.prose-document h3 {
+  margin-top: 1.25rem;
+  font-size: 1rem;
+}

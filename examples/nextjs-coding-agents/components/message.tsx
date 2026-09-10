@@ -13,6 +13,7 @@ import { useCanWrite } from "@/app/providers";
 import { AI_USER } from "@/lib/agent-user";
 import {
   AgentParts,
+  DocumentCard,
   type GitCardKind,
   PullRequestCard,
   WorkLog,
@@ -167,6 +168,7 @@ function AgentMessage({
     branch,
     repliesTo,
     finishedAt,
+    documents = [],
   } = message.data;
   const running = status === "running";
 
@@ -225,6 +227,12 @@ function AgentMessage({
             <AgentParts parts={errorParts} running={false} />
           ) : null}
         </div>
+
+        {!running
+          ? documents.map((change) => (
+              <DocumentCard key={change.key} change={change} />
+            ))
+          : null}
 
         {!running && gitCard ? (
           <PullRequestCard

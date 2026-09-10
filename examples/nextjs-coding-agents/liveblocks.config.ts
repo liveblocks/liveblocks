@@ -1,7 +1,36 @@
-import type { AgentPart, MessageRole, MessageStatus } from "@/lib/types";
+import type { LiveMap, LiveObject, LiveText } from "@liveblocks/client";
+import type {
+  AgentPart,
+  DocumentChange,
+  MessageRole,
+  MessageStatus,
+} from "@/lib/types";
 
 declare global {
   interface Liveblocks {
+    // Room Storage. Markdown documents the agent writes for the team (plans,
+    // reports, notes) live here, one LiveText each, keyed by
+    // `${feedId}:${slug}`. The agent rewrites them across runs and people can
+    // edit them in the side panel; LiveText merges both.
+    Storage: {
+      documents: LiveMap<
+        string,
+        LiveObject<{
+          feedId: string;
+          // File name the agent used, without ".md"
+          slug: string;
+          // First heading of the document, or the slug when there is none
+          title: string;
+          content: LiveText;
+          createdAt: string;
+          updatedAt: string;
+          // Timestamp of the Cursor artifact this was last synced from, so a
+          // run that didn't touch the file isn't mistaken for an edit
+          artifactUpdatedAt: string;
+        }>
+      >;
+    };
+
     // Custom user info set when authenticating with a secret key. The id is
     // the person's GitHub login; name and avatar come from their profile.
     UserMeta: {
@@ -71,6 +100,8 @@ declare global {
       finishedAt?: number;
       branch?: string;
       prUrl?: string;
+      // Documents in Storage this reply created or updated
+      documents?: DocumentChange[];
     };
 
     // Custom notification kinds, triggered from the server with

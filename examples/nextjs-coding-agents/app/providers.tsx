@@ -1,5 +1,6 @@
 "use client";
 
+import { LiveMap } from "@liveblocks/client";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
@@ -81,6 +82,7 @@ export function Providers({
           key={roomId}
           id={roomId}
           initialPresence={{ typingIn: null }}
+          initialStorage={{ documents: new LiveMap() }}
         >
           <ClientSideSuspense fallback={<LoadingScreen />}>
             {children}

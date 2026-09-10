@@ -7,21 +7,14 @@ import {
   ChevronDownIcon,
   CircleAlertIcon,
   ExternalLinkIcon,
-  FileDiffIcon,
   GitBranchIcon,
   GitPullRequestIcon,
   Loader2Icon,
-  PanelRightCloseIcon,
   RefreshCwIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { PanelIconButton } from "@/components/side-panel";
 import type { ChangesInfo } from "@/lib/types";
-
-const STORAGE_COLLAPSED_KEY =
-  "liveblocks-coding-agents:changes-panel-collapsed";
-const STORAGE_WIDTH_KEY = "liveblocks-coding-agents:changes-panel-width";
-const DEFAULT_WIDTH = 520;
-const MIN_WIDTH = 360;
 
 // Kept at module scope: @pierre/diffs re-renders when this object changes.
 const DIFF_OPTIONS: FileDiffOptions<undefined, undefined> = {
@@ -42,14 +35,6 @@ const COLLAPSED_DIFF_OPTIONS: FileDiffOptions<undefined, undefined> = {
   collapsed: true,
 };
 
-function readStorage<T>(key: string, fallback: T, parse: (raw: string) => T) {
-  if (typeof window === "undefined") {
-    return fallback;
-  }
-  const raw = localStorage.getItem(key);
-  return raw === null ? fallback : parse(raw);
-}
-
 function countChanges(diff: string) {
   let additions = 0;
   let deletions = 0;
@@ -64,13 +49,13 @@ function countChanges(diff: string) {
 }
 
 /**
- * Shows the agent's changes for this chat, rendered with `@pierre/diffs`.
- * The agent saves a diff as a Cursor artifact at the end of every run, so
- * the panel appears as soon as the first run finishes, before any pull
- * request exists, and updates as follow-up runs land. Everyone in the chat
- * sees the same thing since the trigger lives in feed metadata.
+ * The agent's changes for this chat, rendered with `@pierre/diffs`. The
+ * agent saves a diff as a Cursor artifact at the end of every run, so this
+ * is available as soon as the first run finishes, before any pull request
+ * exists, and updates as follow-up runs land. Everyone in the chat sees the
+ * same thing since the trigger lives in feed metadata.
  */
-export function ChangesPanel({
+export function ChangesView({
   roomId,
   feedId,
   repoUrl,
@@ -86,12 +71,6 @@ export function ChangesPanel({
   /** Change this to refetch, e.g. when the agent finishes another run */
   refreshKey: string;
 }) {
-  const [collapsed, setCollapsed] = useState(() =>
-    readStorage(STORAGE_COLLAPSED_KEY, false, (raw) => raw === "true")
-  );
-  const [width, setWidth] = useState(() =>
-    readStorage(STORAGE_WIDTH_KEY, DEFAULT_WIDTH, Number)
-  );
   const [changes, setChanges] = useState<ChangesInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -114,8 +93,7 @@ export function ChangesPanel({
     [changes]
   );
 
-  // Where "open in new window" goes: the PR when there is one, else the
-  // branch on GitHub.
+  // Where "open on GitHub" goes: the PR when there is one, else the branch.
   const externalUrl = prUrl ?? (branch ? `${repoUrl}/tree/${branch}` : repoUrl);
 
   useEffect(() => {
@@ -150,134 +128,54 @@ export function ChangesPanel({
     return () => controller.abort();
   }, [feedId, roomId, refreshKey, reloadCount]);
 
-  const toggleCollapsed = useCallback(() => {
-    setCollapsed((current) => {
-      localStorage.setItem(STORAGE_COLLAPSED_KEY, String(!current));
-      return !current;
-    });
-  }, []);
-
-  // Drag the left edge to resize; the width is clamped to the viewport.
-  const startResize = useCallback(
-    (event: React.PointerEvent) => {
-      event.preventDefault();
-      const startX = event.clientX;
-      const startWidth = width;
-
-      const onMove = (move: PointerEvent) => {
-        const max = Math.floor(window.innerWidth * 0.7);
-        const next = Math.min(
-          max,
-          Math.max(MIN_WIDTH, startWidth + (startX - move.clientX))
-        );
-        setWidth(next);
-      };
-      const onUp = () => {
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-        setWidth((current) => {
-          localStorage.setItem(STORAGE_WIDTH_KEY, String(current));
-          return current;
-        });
-      };
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
-    },
-    [width]
-  );
-
-  if (collapsed) {
-    return (
-      <aside className="flex h-full w-11 shrink-0 flex-col items-center border-l border-border py-2">
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          title="Show changes"
-          aria-label="Show changes"
-          className="flex size-8 items-center justify-center rounded-md text-muted transition hover:bg-panel-hover hover:text-foreground"
-        >
-          <FileDiffIcon className="size-4" />
-        </button>
-        {files.length > 0 ? (
-          <span className="mt-2 text-[10px] font-medium text-subtle [writing-mode:vertical-rl]">
-            {files.length} {files.length === 1 ? "file" : "files"}
-          </span>
-        ) : null}
-      </aside>
-    );
-  }
-
   return (
-    <aside
-      style={{ width }}
-      className="relative flex h-full shrink-0 flex-col border-l border-border bg-background"
-    >
-      <div
-        role="separator"
-        aria-orientation="vertical"
-        onPointerDown={startResize}
-        className="absolute inset-y-0 -left-1 z-10 w-2 cursor-col-resize hover:bg-accent/30"
-      />
-
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+    <>
+      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border px-3">
+        {prUrl ? (
+          <GitPullRequestIcon className="size-4 shrink-0 text-success" />
+        ) : (
+          <GitBranchIcon className="size-4 shrink-0 text-muted" />
+        )}
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] text-muted">
           {prUrl ? (
-            <GitPullRequestIcon className="size-4 shrink-0 text-success" />
-          ) : (
-            <GitBranchIcon className="size-4 shrink-0 text-muted" />
-          )}
-          <div className="min-w-0">
-            <div className="flex items-baseline gap-1.5">
-              <h2 className="truncate text-[13px] font-semibold">Changes</h2>
-              {prUrl ? (
-                <a
-                  href={prUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 text-xs text-accent-foreground hover:underline"
-                >
-                  Pull request #{prUrl.split("/").pop()}
-                </a>
-              ) : null}
-            </div>
-            <div className="flex items-center gap-2 text-[11px] text-muted">
-              {branch ? (
-                <span className="truncate font-mono">{branch}</span>
-              ) : null}
-              {stats ? (
-                <span className="shrink-0">
-                  <span className="text-success">+{stats.additions}</span>{" "}
-                  <span className="text-danger">−{stats.deletions}</span>
-                  {" · "}
-                  {files.length} {files.length === 1 ? "file" : "files"}
-                </span>
-              ) : null}
-            </div>
-          </div>
+            <a
+              href={prUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 text-xs font-medium text-accent-foreground hover:underline"
+            >
+              Pull request #{prUrl.split("/").pop()}
+            </a>
+          ) : null}
+          {branch ? <span className="truncate font-mono">{branch}</span> : null}
+          {stats ? (
+            <span className="shrink-0">
+              <span className="text-success">+{stats.additions}</span>{" "}
+              <span className="text-danger">−{stats.deletions}</span>
+              {" · "}
+              {files.length} {files.length === 1 ? "file" : "files"}
+            </span>
+          ) : null}
         </div>
-
         <div className="flex shrink-0 items-center gap-0.5">
-          <IconButton
+          <PanelIconButton
             label="Refresh"
             onClick={() => setReloadCount((count) => count + 1)}
           >
             <RefreshCwIcon
               className={clsx("size-3.5", loading && "animate-spin")}
             />
-          </IconButton>
-          <IconButton
-            label="Open in new window"
+          </PanelIconButton>
+          <PanelIconButton
+            label="Open on GitHub"
             onClick={() =>
               window.open(externalUrl, "_blank", "noopener,noreferrer")
             }
           >
             <ExternalLinkIcon className="size-3.5" />
-          </IconButton>
-          <IconButton label="Hide changes" onClick={toggleCollapsed}>
-            <PanelRightCloseIcon className="size-3.5" />
-          </IconButton>
+          </PanelIconButton>
         </div>
-      </header>
+      </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {error ? (
@@ -306,7 +204,7 @@ export function ChangesPanel({
           </div>
         )}
       </div>
-    </aside>
+    </>
   );
 }
 
@@ -350,27 +248,5 @@ function CollapsibleFileDiff({ fileDiff }: { fileDiff: FileDiffMetadata }) {
         </div>
       ) : null}
     </div>
-  );
-}
-
-function IconButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className="flex size-7 items-center justify-center rounded-md text-muted transition hover:bg-panel-hover hover:text-foreground"
-    >
-      {children}
-    </button>
   );
 }

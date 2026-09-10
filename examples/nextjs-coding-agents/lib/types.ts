@@ -27,6 +27,14 @@ export type AgentPart =
   | { type: "divider"; text: string }
   | { type: "error"; text: string };
 
+/** A document the agent created or rewrote during a reply. */
+export type DocumentChange = {
+  // Key into Storage's `documents` map
+  key: string;
+  title: string;
+  action: "created" | "updated";
+};
+
 export type ChatFeedMetadata = Liveblocks["FeedMetadata"];
 
 export type ChatMessageData = Liveblocks["FeedMessageData"];
