@@ -67,13 +67,15 @@ choose the model per chat from the dropdown.
   with `Co-authored-by` trailers and a "Requested by" list in the PR.
 - **Repositories** come from Cursor: the repository dropdown in the composer
   lists what the Cursor GitHub App can reach for the configured key
-  (`GET /v1/repositories`), and the branch dropdown next to it reads the
-  repository's branches from GitHub with the signed-in person's token. A chat
-  can also be started with no repository, in which case the agent can answer
-  questions and write documents but not open pull requests. Nothing else needs
-  GitHub credentials, including the diff panel, which reads a diff the agent
-  saves as a Cursor artifact at the end of every run (falling back to GitHub's
-  public branch diff if the agent skipped that step).
+  (`GET /v1/repositories`), and the branch dropdown next to it lists the
+  repository's branches from GitHub. Public repositories need no credentials for
+  that; for private ones set `GITHUB_TOKEN` to a read-only fine-grained token,
+  otherwise the branch can still be typed. A chat can also be started with no
+  repository, in which case the agent can answer questions and write documents
+  but not open pull requests. Nothing else needs GitHub credentials, including
+  the diff panel, which reads a diff the agent saves as a Cursor artifact at the
+  end of every run (falling back to GitHub's public branch diff if the agent
+  skipped that step).
 
 If your team wants commits under people's own names instead of the Cursor GitHub
 App, Cursor's
@@ -129,7 +131,8 @@ Alternatively, you can set up your project manually:
   talk to the agent. `GITHUB_ALLOWED_USERS` accepts a comma-separated list of
   logins as well. Leave both empty for local development to let anyone who signs
   in take part.
-- Optionally, set `CURSOR_MODEL` to change the default model for new chats, or
+- Optionally, set `CURSOR_MODEL` to change the default model for new chats,
+  `GITHUB_TOKEN` to list branches of private repositories, or
   `NEXT_PUBLIC_LOCKED_REPO` to pin every chat to one repository.
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 

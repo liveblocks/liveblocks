@@ -1,14 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { getRepoName, normalizeRepoUrl } from "@/lib/repo";
-import { listBranches } from "@/lib/server/github";
+import { hasGitHubToken, listBranches } from "@/lib/server/github";
 import type { BranchesResponse } from "@/lib/types";
 
 /**
  * Branches of a repository, for the branch dropdown on the new chat screen.
- * Read from GitHub with the signed-in person's token, so it works for any
- * repository they can see; the dropdown falls back to a typed branch name
- * when the repository can't be read.
+ * Public repositories always resolve; private ones need `GITHUB_TOKEN`. The
+ * dropdown falls back to a typed branch name when the list can't be read.
  */
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -34,7 +33,9 @@ export async function GET(request: NextRequest) {
   if (!result) {
     return NextResponse.json({
       branches: [],
-      error: "Couldn't list branches for this repository",
+      error: hasGitHubToken()
+        ? "Couldn't list branches: GITHUB_TOKEN can't read this repository. Type a branch name instead."
+        : "Couldn't list branches. If the repository is private, set GITHUB_TOKEN on the server (see README). You can still type a branch name.",
     } satisfies BranchesResponse);
   }
 

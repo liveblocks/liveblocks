@@ -175,11 +175,18 @@ const branchesCache = new Map<
   { fetchedAt: number; result: { branches: string[]; defaultBranch?: string } }
 >();
 
+/** Whether a server token for reading private repositories is configured. */
+export function hasGitHubToken() {
+  return Boolean(process.env.GITHUB_TOKEN);
+}
+
 /**
  * Branches of a repository, for the branch picker on the new chat screen.
- * Fetched with the signed-in person's token when there is one so private
- * repositories they can see work too; otherwise only public repositories
- * resolve. Returns null when the repository can't be read.
+ * Public repositories are readable with the app's credentials. Private ones
+ * need a token that can see them: `GITHUB_TOKEN` (a read-only fine-grained
+ * token for the org) when set, otherwise the signed-in person's token,
+ * which only helps if the OAuth scopes include `repo`. Returns null when
+ * the repository can't be read with any of them.
  */
 export async function listBranches(
   repoName: string,
@@ -191,11 +198,24 @@ export async function listBranches(
     return cached.result;
   }
 
-  const [repoResponse, branchesResponse] = await Promise.all([
-    githubFetch(`/repos/${repoName}`, accessToken),
-    githubFetch(`/repos/${repoName}/branches?per_page=100`, accessToken),
-  ]);
-  if (!repoResponse.ok || !branchesResponse.ok) {
+  // Most-capable credential first; each is only tried if the previous 404s
+  const tokens = [
+    ...(process.env.GITHUB_TOKEN ? [process.env.GITHUB_TOKEN] : []),
+    ...(accessToken ? [accessToken] : []),
+    undefined,
+  ];
+  let repoResponse: Response | null = null;
+  let branchesResponse: Response | null = null;
+  for (const token of tokens) {
+    [repoResponse, branchesResponse] = await Promise.all([
+      githubFetch(`/repos/${repoName}`, token),
+      githubFetch(`/repos/${repoName}/branches?per_page=100`, token),
+    ]);
+    if (repoResponse.ok && branchesResponse.ok) {
+      break;
+    }
+  }
+  if (!repoResponse?.ok || !branchesResponse?.ok) {
     return null;
   }
 
