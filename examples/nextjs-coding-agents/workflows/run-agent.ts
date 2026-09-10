@@ -1,0 +1,767 @@
+import {
+  Agent,
+  AgentBusyError,
+  AgentNotFoundError,
+  CursorSdkError,
+  type RunResult,
+  type SDKAgent,
+  type SDKMessage,
+} from "@cursor/sdk";
+import { AI_USER_ID } from "@/lib/agent-user";
+import { buildPrompt, deriveTitle, type Participants } from "@/lib/prompt";
+import { DIFF_ARTIFACT_PATH } from "@/lib/repo";
+import { getCursorAgentIdForFeed, getCursorApiKey } from "@/lib/server/cursor";
+import { getGitHubUsers, type GitHubUser } from "@/lib/server/github";
+import { getLiveblocks, patchFeedMetadata } from "@/lib/server/liveblocks";
+import { normalizeToolName, summarizeToolCall } from "@/lib/tool-calls";
+import type { AgentPart, ChatMessage, ChatMessageData } from "@/lib/types";
+
+type ChatLocation = { roomId: string; feedId: string };
+
+type Claim = {
+  cursorAgentId?: string;
+  model: string;
+  repoUrl: string;
+  repoRef: string;
+  title: string;
+};
+
+type RunInput = ChatLocation & {
+  agentMessageId: string;
+  prompt: string;
+  parts: AgentPart[];
+  cursorAgentId?: string;
+  model: string;
+  repoUrl: string;
+  repoRef: string;
+};
+
+type GitInfo = { branch?: string; prUrl?: string };
+
+type RunOutcome = {
+  parts: AgentPart[];
+  cursorAgentId?: string;
+  text?: string;
+  git?: GitInfo;
+  // Set when the agent saved a diff of its work as an artifact
+  diffUpdatedAt?: string;
+  error?: string;
+  // Another workflow already owns this Cursor agent; let it do the sweep
+  busy?: boolean;
+  // Someone pressed "Stop"; holds their GitHub login when known
+  cancelledBy?: string | null;
+};
+
+// A chat goes stale if a workflow died without releasing it
+const STALE_RUN_MS = 15 * 60 * 1000;
+const FLUSH_INTERVAL_MS = 100;
+
+/**
+ * Runs the Cursor cloud agent for one chat until no human messages are left
+ * unanswered. Messages that arrive while a run is in progress are picked up
+ * as a follow-up run on the same agent, and the whole burst is presented as
+ * a single agent reply that only completes once everyone has been handled.
+ */
+export async function runAgentForChat(location: ChatLocation) {
+  "use workflow";
+
+  const claim = await claimChat(location);
+  if (!claim) {
+    return { status: "skipped" as const };
+  }
+
+  let pending = await getPendingMessages(location);
+  if (pending.length === 0) {
+    await releaseChat(location);
+    return { status: "nothing-to-do" as const };
+  }
+
+  const agentMessageId = await createAgentMessage(location);
+
+  let parts: AgentPart[] = [];
+  const repliesTo: string[] = [];
+  let cursorAgentId = claim.cursorAgentId;
+  let git: GitInfo | undefined;
+  let diffUpdatedAt: string | undefined;
+  let text = "";
+  let error: string | undefined;
+  let cancelled = false;
+  let runIndex = 0;
+  // GitHub profiles of everyone whose messages are part of this reply
+  const users: Map<string, GitHubUser> = new Map();
+
+  while (pending.length > 0) {
+    const newLogins = pending
+      .map((message) => message.data.userId)
+      .filter((login) => !users.has(login));
+    for (const [login, user] of Object.entries(
+      await resolveParticipants(newLogins)
+    )) {
+      users.set(login, user);
+    }
+
+    // Messages arrived mid-run: the reply written so far is only a draft,
+    // since it may be wrong given the new messages. Take it out of the
+    // visible message (tool calls stay as a record of the work) and hand it
+    // to the follow-up run to revise. Only the last run's reply is shown.
+    //
+    // This is written before the messages are marked handled: clients hide
+    // the draft while a follow-up is queued, so the order avoids a flash.
+    const previousReply = runIndex > 0 ? text : undefined;
+    if (runIndex > 0) {
+      parts = [
+        ...parts.filter((part) => part.type !== "text"),
+        {
+          type: "divider",
+          text: `Follow-up from ${formatAuthors(pending, users)} — revising before replying`,
+        },
+      ];
+      await showParts({ ...location, agentMessageId, parts });
+    }
+
+    await markHandled(location, pending);
+    repliesTo.push(...pending.map((message) => message.id));
+
+    const outcome = await runCursor({
+      ...location,
+      agentMessageId,
+      prompt: buildPrompt({
+        messages: pending,
+        users,
+        repoRef: claim.repoRef,
+        previousReply,
+      }),
+      parts,
+      cursorAgentId,
+      model: claim.model,
+      repoUrl: claim.repoUrl,
+      repoRef: claim.repoRef,
+    });
+
+    if (outcome.busy) {
+      await abandonAgentMessage({ ...location, agentMessageId });
+      return { status: "busy" as const };
+    }
+
+    parts = outcome.parts;
+    cursorAgentId = outcome.cursorAgentId ?? cursorAgentId;
+    git = outcome.git ?? git;
+    diffUpdatedAt = outcome.diffUpdatedAt ?? diffUpdatedAt;
+    text = outcome.text ?? text;
+
+    if (outcome.error) {
+      error = outcome.error;
+      break;
+    }
+
+    // Someone stopped the run. Like an error, this ends the whole burst;
+    // messages that were queued behind it are picked up by the next post.
+    if (outcome.cancelledBy !== undefined) {
+      cancelled = true;
+      const login = outcome.cancelledBy;
+      const stopper = login
+        ? ((await resolveParticipants([login]))[login]?.name ?? login)
+        : "someone";
+      parts = [...parts, { type: "divider", text: `Stopped by ${stopper}` }];
+      break;
+    }
+
+    pending = await getPendingMessages(location);
+    runIndex++;
+  }
+
+  await finalizeAgentMessage({
+    ...location,
+    agentMessageId,
+    parts,
+    repliesTo,
+    cursorAgentId,
+    git,
+    diffUpdatedAt,
+    text,
+    error,
+    cancelled,
+    title: claim.title,
+  });
+
+  return {
+    status: error
+      ? ("error" as const)
+      : cancelled
+        ? ("cancelled" as const)
+        : ("done" as const),
+  };
+}
+
+/**
+ * GitHub profiles for the people in the chat, so the prompt can address
+ * them by name and credit them on commits.
+ */
+async function resolveParticipants(
+  logins: string[]
+): Promise<Record<string, GitHubUser>> {
+  "use step";
+
+  if (logins.length === 0) {
+    return {};
+  }
+  return Object.fromEntries(await getGitHubUsers(logins));
+}
+
+/**
+ * Marks the chat as running so concurrent posts don't start a second
+ * workflow. Returns null when another workflow already owns the chat.
+ */
+async function claimChat({
+  roomId,
+  feedId,
+}: ChatLocation): Promise<Claim | null> {
+  "use step";
+
+  const liveblocks = getLiveblocks();
+  const feed = await liveblocks.getFeed({ roomId, feedId });
+  const metadata = feed.metadata;
+
+  const runningSince = metadata.runningSince
+    ? Date.parse(metadata.runningSince)
+    : Number.NaN;
+  const isStale =
+    Number.isNaN(runningSince) || Date.now() - runningSince > STALE_RUN_MS;
+
+  if (metadata.agentStatus === "running" && !isStale) {
+    return null;
+  }
+
+  let title = metadata.title;
+  if (!title) {
+    const { data: messages } = await liveblocks.getFeedMessages({
+      roomId,
+      feedId,
+    });
+    const first = [...messages]
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .find((message) => message.data.role === "user");
+    title = first ? deriveTitle(first.data.content) : "New chat";
+  }
+
+  await patchFeedMetadata(
+    liveblocks,
+    { roomId, feedId },
+    {
+      agentStatus: "running",
+      runningSince: new Date().toISOString(),
+      title,
+    },
+    metadata
+  );
+
+  return {
+    cursorAgentId: metadata.cursorAgentId,
+    model: metadata.model,
+    repoUrl: metadata.repoUrl,
+    repoRef: metadata.repoRef,
+    title,
+  };
+}
+
+async function releaseChat({ roomId, feedId }: ChatLocation) {
+  "use step";
+
+  await patchFeedMetadata(
+    getLiveblocks(),
+    { roomId, feedId },
+    { agentStatus: "idle", runningSince: null }
+  );
+}
+
+/** Human messages that haven't been included in an agent run yet. */
+async function getPendingMessages({
+  roomId,
+  feedId,
+}: ChatLocation): Promise<ChatMessage[]> {
+  "use step";
+
+  const { data: messages } = await getLiveblocks().getFeedMessages({
+    roomId,
+    feedId,
+  });
+
+  return messages
+    .filter((message) => message.data.role === "user" && !message.data.handled)
+    .sort((a, b) => a.createdAt - b.createdAt);
+}
+
+async function markHandled(
+  { roomId, feedId }: ChatLocation,
+  messages: ChatMessage[]
+) {
+  "use step";
+
+  const liveblocks = getLiveblocks();
+  await Promise.all(
+    messages.map((message) =>
+      liveblocks.updateFeedMessage({
+        roomId,
+        feedId,
+        messageId: message.id,
+        data: { ...message.data, handled: true },
+      })
+    )
+  );
+}
+
+async function createAgentMessage({ roomId, feedId }: ChatLocation) {
+  "use step";
+
+  const message = await getLiveblocks().createFeedMessage({
+    roomId,
+    feedId,
+    data: {
+      role: "agent",
+      userId: AI_USER_ID,
+      content: "",
+      status: "running",
+      parts: [],
+    },
+  });
+
+  return message.id;
+}
+
+async function abandonAgentMessage({
+  roomId,
+  feedId,
+  agentMessageId,
+}: ChatLocation & { agentMessageId: string }) {
+  "use step";
+
+  await getLiveblocks()
+    .deleteFeedMessage({ roomId, feedId, messageId: agentMessageId })
+    .catch(() => {});
+}
+
+/** Overwrites the running agent message's parts between runs. */
+async function showParts({
+  roomId,
+  feedId,
+  agentMessageId,
+  parts,
+}: ChatLocation & { agentMessageId: string; parts: AgentPart[] }) {
+  "use step";
+
+  await getLiveblocks().updateFeedMessage({
+    roomId,
+    feedId,
+    messageId: agentMessageId,
+    data: agentMessageData({ status: "running", parts }),
+  });
+}
+
+/**
+ * One Cursor run. Creates (or resumes) the chat's cloud agent, sends the
+ * prompt, and streams tool calls and text into the agent message by
+ * overwriting its `parts` on a throttle.
+ */
+async function runCursor(input: RunInput): Promise<RunOutcome> {
+  "use step";
+
+  const { roomId, feedId, agentMessageId, prompt, model, repoUrl, repoRef } =
+    input;
+  const liveblocks = getLiveblocks();
+  const apiKey = getCursorApiKey();
+  const parts: AgentPart[] = [...input.parts];
+  let cursorAgentId = input.cursorAgentId;
+
+  let lastFlush = 0;
+  const flush = async (force = false) => {
+    const now = Date.now();
+    if (!force && now - lastFlush < FLUSH_INTERVAL_MS) {
+      return;
+    }
+    lastFlush = now;
+    await liveblocks.updateFeedMessage({
+      roomId,
+      feedId,
+      messageId: agentMessageId,
+      data: agentMessageData({ status: "running", parts }),
+    });
+  };
+
+  const appendText = (text: string) => {
+    const last = parts[parts.length - 1];
+    if (last?.type === "text") {
+      last.text += text;
+    } else {
+      parts.push({ type: "text", text });
+    }
+  };
+
+  const setStatus = (text: string) => {
+    const existing = parts.find((part) => part.type === "status");
+    if (existing && existing.type === "status") {
+      existing.text = text;
+    } else {
+      parts.push({ type: "status", text });
+    }
+  };
+
+  const handleEvent = (event: SDKMessage) => {
+    switch (event.type) {
+      case "status":
+        if (event.status === "CREATING") {
+          setStatus("Starting cloud agent and cloning the repository…");
+        } else if (event.status === "RUNNING") {
+          setStatus("Cloud agent ready");
+        }
+        break;
+      case "assistant":
+        for (const block of event.message.content) {
+          if (block.type === "text" && block.text) {
+            appendText(block.text);
+          }
+        }
+        break;
+      case "tool_call": {
+        const existing = parts.find(
+          (part) => part.type === "tool" && part.callId === event.call_id
+        );
+        const summary = summarizeToolCall(event.name, event.args);
+        if (existing && existing.type === "tool") {
+          existing.status = event.status;
+          if (summary) {
+            existing.summary = summary;
+          }
+        } else {
+          parts.push({
+            type: "tool",
+            callId: event.call_id,
+            name: normalizeToolName(event.name),
+            status: event.status,
+            summary,
+          });
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
+  try {
+    let agent: SDKAgent | null = null;
+
+    if (cursorAgentId) {
+      try {
+        agent = await Agent.resume(cursorAgentId, { apiKey });
+      } catch (err) {
+        // The stored agent is gone (expired, deleted, or never created);
+        // start a fresh one below instead of failing every future run.
+        if (!(err instanceof AgentNotFoundError)) {
+          throw err;
+        }
+        cursorAgentId = undefined;
+      }
+    }
+
+    if (!agent) {
+      const newAgentId = getCursorAgentIdForFeed(roomId, feedId);
+      agent = await Agent.create({
+        apiKey,
+        agentId: newAgentId,
+        model: { id: model },
+        cloud: {
+          repos: [{ url: repoUrl, startingRef: repoRef }],
+          autoCreatePR: true,
+          // Several people drive one agent, so commits and PRs are authored
+          // by the Cursor GitHub App rather than whoever owns the API key.
+          // The prompt asks the agent to credit people as co-authors.
+          openAsCursorGithubApp: true,
+        },
+      });
+      // Only remember the id once the agent actually exists, otherwise a
+      // failed create would make every later run resume a missing agent.
+      cursorAgentId = newAgentId;
+    }
+
+    setStatus("Sending request to the cloud agent…");
+    await flush(true);
+
+    const run = await agent.send(prompt, { model: { id: model } });
+
+    // Publish the run id so the "Stop" button can cancel it. The agent id
+    // is stored too, since cancelling a cloud run needs both.
+    await patchFeedMetadata(
+      liveblocks,
+      { roomId, feedId },
+      { cursorAgentId, cursorRunId: run.id }
+    );
+
+    for await (const event of run.stream()) {
+      handleEvent(event);
+      await flush();
+    }
+
+    const result = await run.wait();
+
+    // The stream already carried the assistant text; only fall back to the
+    // final result when nothing was streamed.
+    if (result.result && !parts.some((part) => part.type === "text")) {
+      appendText(result.result);
+    }
+
+    if (result.status === "cancelled") {
+      settleRunningTools(parts, "completed");
+      await flush(true);
+      const { metadata } = await liveblocks.getFeed({ roomId, feedId });
+      return {
+        parts,
+        cursorAgentId,
+        text: result.result,
+        git: toGitInfo(result.git),
+        cancelledBy: metadata.stopRequestedBy ?? null,
+      };
+    }
+
+    const error =
+      result.status === "finished"
+        ? undefined
+        : (result.error?.message ?? `The run was ${result.status}.`);
+
+    // Not every tool call gets a "completed" event before the stream ends,
+    // so settle whatever is still marked as running now that the run is over.
+    settleRunningTools(parts, error ? "error" : "completed");
+
+    if (error) {
+      parts.push({ type: "error", text: error });
+    }
+
+    await flush(true);
+
+    const git = toGitInfo(result.git);
+
+    // The prompt asks the agent to save a diff of its work as an artifact.
+    // If it didn't, but it pushed a branch, the diff can still be fetched
+    // from GitHub, so the changes panel opens either way.
+    const diffArtifact = await findDiffArtifact(agent);
+    const diffUpdatedAt =
+      diffArtifact?.updatedAt ??
+      (git?.branch ? new Date().toISOString() : undefined);
+
+    return {
+      parts,
+      cursorAgentId,
+      text: result.result,
+      git,
+      diffUpdatedAt,
+      error,
+    };
+  } catch (err) {
+    // Someone else is driving this agent (a concurrent workflow won the
+    // race). Its sweep will pick up our messages once it finishes.
+    if (
+      err instanceof AgentBusyError ||
+      (err instanceof CursorSdkError && err.status === 409)
+    ) {
+      return { parts, cursorAgentId, busy: true };
+    }
+
+    const message = describeError(err);
+    settleRunningTools(parts, "error");
+    parts.push({ type: "error", text: message });
+    await flush(true).catch(() => {});
+    return { parts, cursorAgentId, error: message };
+  }
+}
+
+/** Marks every tool call that never reported a final status as finished. */
+function settleRunningTools(
+  parts: AgentPart[],
+  status: "completed" | "error"
+) {
+  for (const part of parts) {
+    if (part.type === "tool" && part.status === "running") {
+      part.status = status;
+    }
+  }
+}
+
+async function finalizeAgentMessage({
+  roomId,
+  feedId,
+  agentMessageId,
+  parts,
+  repliesTo,
+  cursorAgentId,
+  git,
+  diffUpdatedAt,
+  text,
+  error,
+  cancelled,
+  title,
+}: ChatLocation & {
+  agentMessageId: string;
+  parts: AgentPart[];
+  repliesTo: string[];
+  cursorAgentId?: string;
+  git?: GitInfo;
+  diffUpdatedAt?: string;
+  text: string;
+  error?: string;
+  cancelled: boolean;
+  title: string;
+}) {
+  "use step";
+
+  const liveblocks = getLiveblocks();
+
+  await liveblocks.updateFeedMessage({
+    roomId,
+    feedId,
+    messageId: agentMessageId,
+    data: agentMessageData({
+      status: error ? "error" : "done",
+      parts,
+      content: text,
+      repliesTo,
+      finishedAt: Date.now(),
+      branch: git?.branch,
+      prUrl: git?.prUrl,
+    }),
+  });
+
+  // Everyone who has posted in the chat gets notified, including people
+  // whose queued messages were merged into this reply.
+  const feed = await liveblocks.getFeed({ roomId, feedId });
+  const { data: messages } = await liveblocks.getFeedMessages({
+    roomId,
+    feedId,
+  });
+  const participantIds = [
+    ...new Set([
+      ...(feed.metadata.participantIds ?? []),
+      ...messages
+        .filter((message) => message.data.role === "user")
+        .map((message) => message.data.userId),
+    ]),
+  ];
+
+  await patchFeedMetadata(
+    liveblocks,
+    { roomId, feedId },
+    {
+      agentStatus: "idle",
+      runningSince: null,
+      cursorRunId: null,
+      stopRequestedBy: null,
+      participantIds,
+      // `null` drops a stale id when the agent could not be resumed
+      cursorAgentId: cursorAgentId ?? null,
+      ...(git?.branch ? { branch: git.branch } : {}),
+      ...(git?.prUrl ? { prUrl: git.prUrl } : {}),
+      ...(diffUpdatedAt ? { diffUpdatedAt } : {}),
+    },
+    feed.metadata
+  );
+
+  const summary = error
+    ? `The agent ran into a problem: ${error}`
+    : cancelled
+      ? "The run was stopped before the agent finished."
+      : summarize(text) || "The agent finished working on your request.";
+
+  await Promise.all(
+    participantIds.map((userId) =>
+      liveblocks.triggerInboxNotification({
+        userId,
+        kind: "$agentRunCompleted",
+        subjectId: agentMessageId,
+        roomId,
+        activityData: {
+          feedId,
+          chatTitle: title,
+          summary,
+          prUrl: git?.prUrl ?? "",
+          failed: Boolean(error),
+        },
+      })
+    )
+  );
+}
+
+function agentMessageData(
+  fields: Partial<Omit<ChatMessageData, "role" | "userId">>
+): ChatMessageData {
+  return {
+    role: "agent",
+    userId: AI_USER_ID,
+    content: "",
+    ...fields,
+  };
+}
+
+/**
+ * Looks for the diff the agent was asked to save. Artifacts are uploaded
+ * from the agent's machine after it writes them, which can lag the end of
+ * the run by a moment, so this checks a few times before giving up.
+ */
+async function findDiffArtifact(agent: SDKAgent) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    const artifact = await agent
+      .listArtifacts()
+      .then((artifacts) =>
+        artifacts.find((artifact) => artifact.path === DIFF_ARTIFACT_PATH)
+      )
+      .catch(() => undefined);
+    if (artifact) {
+      return artifact;
+    }
+  }
+  return undefined;
+}
+
+function toGitInfo(git: RunResult["git"]): GitInfo | undefined {
+  const branch = git?.branches.find((entry) => entry.branch || entry.prUrl);
+  if (!branch) {
+    return undefined;
+  }
+  return { branch: branch.branch, prUrl: branch.prUrl };
+}
+
+function formatAuthors(messages: ChatMessage[], users: Participants) {
+  const names = [
+    ...new Set(
+      messages.map(
+        (message) => users.get(message.data.userId)?.name ?? message.data.userId
+      )
+    ),
+  ];
+  if (names.length <= 1) {
+    return names[0] ?? "someone";
+  }
+  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
+function summarize(text: string) {
+  const plain = text
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/[#*_`>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return plain.length > 140 ? `${plain.slice(0, 139).trimEnd()}…` : plain;
+}
+
+function describeError(err: unknown) {
+  if (err instanceof CursorSdkError) {
+    // Cursor reports missing repository access as a branch lookup failure.
+    if (err.message.includes("Failed to verify existence of branch")) {
+      return `${err.message} This usually means the Cursor GitHub App has not been granted access to the repository. Connect it in the Cursor dashboard under Integrations → GitHub, then try again.`;
+    }
+    const helpUrl =
+      "helpUrl" in err && typeof err.helpUrl === "string" ? err.helpUrl : null;
+    return helpUrl ? `${err.message} (${helpUrl})` : err.message;
+  }
+  return err instanceof Error ? err.message : "Unknown error";
+}

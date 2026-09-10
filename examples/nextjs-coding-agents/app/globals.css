@@ -1,0 +1,275 @@
+@import "tailwindcss";
+
+/* Apply hover styles on any pointer device (Tailwind v4 gates them behind
+   `@media (hover: hover)` by default, hiding hover-revealed controls on
+   touch/virtual pointers). */
+@custom-variant hover (&:hover);
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --muted: #737373;
+  --subtle: #a3a3a3;
+  --border: #e5e5e5;
+  --panel: #fafafa;
+  --panel-hover: #f0f0f0;
+  --panel-active: #e8e8e8;
+  --bubble: #f3f4f6;
+  --code-bg: #f4f4f5;
+  --accent: #5b5bd6;
+  --accent-soft: #eeeefb;
+  --accent-foreground: #4141b8;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #d97706;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #141414;
+    --foreground: #ededed;
+    --muted: #9a9a9a;
+    --subtle: #6b6b6b;
+    --border: #262626;
+    --panel: #1a1a1a;
+    --panel-hover: #232323;
+    --panel-active: #2b2b2b;
+    --bubble: #232323;
+    --code-bg: #1e1e1e;
+    --accent: #8b8bff;
+    --accent-soft: #24244a;
+    --accent-foreground: #b3b3ff;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-panel: var(--panel);
+  --color-panel-hover: var(--panel-hover);
+  --color-panel-active: var(--panel-active);
+  --color-bubble: var(--bubble);
+  --color-code-bg: var(--code-bg);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    @apply antialiased;
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 14px;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+  }
+}
+
+/* Rendered markdown (Tailwind preflight resets typography). */
+.prose-chat {
+  overflow-wrap: anywhere;
+}
+
+.prose-chat > * + * {
+  margin-top: 0.5rem;
+}
+
+.prose-chat p {
+  margin: 0;
+}
+
+.prose-chat > * + p {
+  margin-top: 0.5rem;
+}
+
+.prose-chat pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: 0.625rem 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.prose-chat .code-block {
+  margin: 0.5rem 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+}
+
+.prose-chat .code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding: 0.25rem 0.375rem 0.25rem 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.prose-chat .table-wrapper {
+  margin: 0.5rem 0;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+}
+
+.prose-chat table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  text-align: left;
+}
+
+.prose-chat th,
+.prose-chat td {
+  padding: 0.375rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.prose-chat th {
+  font-weight: 600;
+  background: var(--panel);
+  white-space: nowrap;
+}
+
+.prose-chat tr:last-child td {
+  border-bottom: 0;
+}
+
+.prose-chat blockquote {
+  margin: 0.5rem 0;
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+  color: var(--muted);
+}
+
+.prose-chat hr {
+  margin: 0.75rem 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.prose-chat input[type="checkbox"] {
+  margin-right: 0.375rem;
+  vertical-align: -0.1em;
+  accent-color: var(--accent);
+}
+
+.prose-chat li:has(> input[type="checkbox"]) {
+  list-style: none;
+  margin-left: -1.25rem;
+}
+
+.prose-chat img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+}
+
+/* Pull request diff panel (@pierre/diffs picks up font settings from here). */
+.pr-diff {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.pr-diff [data-diffs-header] {
+  font-size: 12px;
+}
+
+.prose-chat code {
+  border-radius: 0.25rem;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85em;
+}
+
+.prose-chat pre code {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+.prose-chat ul,
+.prose-chat ol {
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+}
+
+.prose-chat li + li {
+  margin-top: 0.125rem;
+}
+
+.prose-chat li > ul,
+.prose-chat li > ol {
+  margin: 0.125rem 0;
+}
+
+.prose-chat ul {
+  list-style: disc;
+}
+
+.prose-chat ul ul {
+  list-style: circle;
+}
+
+.prose-chat ol {
+  list-style: decimal;
+}
+
+.prose-chat h1,
+.prose-chat h2,
+.prose-chat h3,
+.prose-chat h4,
+.prose-chat h5,
+.prose-chat h6 {
+  margin: 0.75rem 0 0.25rem;
+  font-weight: 600;
+}
+
+.prose-chat > :is(h1, h2, h3, h4, h5, h6):first-child {
+  margin-top: 0;
+}
+
+.prose-chat h4,
+.prose-chat h5,
+.prose-chat h6 {
+  font-size: 0.9rem;
+}
+
+.prose-chat h1 {
+  font-size: 1.05rem;
+}
+
+.prose-chat h2 {
+  font-size: 1rem;
+}
+
+.prose-chat h3 {
+  font-size: 0.95rem;
+}
