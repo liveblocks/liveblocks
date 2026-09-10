@@ -55,8 +55,10 @@ declare global {
       type: "chat";
       title: string;
       createdBy: string;
-      repoUrl: string;
-      repoRef: string;
+      // Optional: a chat without a repository can still answer questions
+      // and write documents, but can't open pull requests
+      repoUrl?: string;
+      repoRef?: string;
       // Cursor model id used for every run in this chat
       model: string;
       // "idle" or "running", written by the server-side workflow

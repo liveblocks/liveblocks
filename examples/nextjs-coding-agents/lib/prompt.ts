@@ -37,6 +37,15 @@ const FOLLOW_UP_PREAMBLE = [
 ].join(" ");
 
 /**
+ * Chats can be started without a repository. The agent still has a machine
+ * to work on, but nothing is checked out and there's nowhere to push.
+ */
+const NO_REPOSITORY_NOTE = [
+  "## No repository",
+  "This chat has no repository attached: nothing is checked out and there is no remote to push to. Don't try to clone anything or open a pull request. Answer in chat, or write a document (see below) when the request calls for one. If someone asks for code changes to a repository, explain that they need to start a new chat with that repository selected.",
+].join("\n");
+
+/**
  * Besides code, the agent can produce Markdown documents: plans, reports,
  * investigation notes, specs. They're saved as artifacts and the workflow
  * copies them into Storage after the run, where the side panel shows them.
@@ -109,8 +118,8 @@ export function buildPrompt({
 }: {
   messages: ChatMessage[];
   users: Participants;
-  /** Base branch, used for the diff the agent saves */
-  repoRef: string;
+  /** Base branch, used for the diff the agent saves; unset without a repo */
+  repoRef?: string;
   /** Documents already written in this chat, with their current content */
   documents?: PromptDocument[];
   previousReply?: string;
@@ -139,6 +148,7 @@ export function buildPrompt({
 
   return [
     isFollowUp ? FOLLOW_UP_PREAMBLE : PREAMBLE,
+    repoRef === undefined ? NO_REPOSITORY_NOTE : null,
     ...skillSections,
     DOCUMENT_INSTRUCTIONS,
     buildDocumentsSection(documents),
@@ -150,7 +160,9 @@ export function buildPrompt({
         ]
       : ["## Messages"]),
     ...messageSections,
-    buildWrapUpInstructions(messages, users, repoRef),
+    repoRef === undefined
+      ? null
+      : buildWrapUpInstructions(messages, users, repoRef),
     FINAL_MESSAGE_INSTRUCTIONS,
   ]
     .filter((section) => section !== null)

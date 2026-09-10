@@ -8,20 +8,22 @@ import { EditorContent, ReactRenderer, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 import clsx from "clsx";
-import { ArrowUpIcon, GitBranchIcon, LockIcon } from "lucide-react";
+import { ArrowUpIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BranchSelect } from "@/components/branch-select";
 import {
   MentionSuggestions,
   type MentionItem,
   type MentionSuggestionsRef,
 } from "@/components/mention-suggestions";
 import { ModelSelect } from "@/components/model-select";
+import { RepoSelect } from "@/components/repo-select";
 import {
   SkillSuggestions,
   type SkillSuggestionsRef,
 } from "@/components/skill-suggestions";
 import { useTypingLabel } from "@/components/typing-indicator";
-import { getRepoName, LOCKED_REPO, type Repo } from "@/lib/repo";
+import type { Repo } from "@/lib/repo";
 import { isMessageEmpty, serializeMarkdown } from "@/lib/serialize-markdown";
 import { searchSkills, type Skill } from "@/lib/skills";
 import "./composer.css";
@@ -90,6 +92,7 @@ export function Composer({
   typingKey,
   placeholder,
   repo,
+  onRepoChange,
   model,
   onModelChange,
   onSend,
@@ -99,7 +102,10 @@ export function Composer({
   // Presence key for "X is typing…", usually the feed id
   typingKey: string;
   placeholder: string;
-  repo: Repo;
+  // null: no repository; the agent can still chat and write documents
+  repo: Repo | null;
+  // Only on the new chat screen; a chat's repository is fixed once created
+  onRepoChange?: (repo: Repo | null) => void;
   model: string;
   onModelChange: (modelId: string) => void;
   onSend: (content: string) => Promise<void>;
@@ -330,23 +336,22 @@ export function Composer({
             disabled={disabled}
           />
 
-          <span
-            className="flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-muted"
-            title={
-              LOCKED_REPO !== null
-                ? "Repository is locked for this deployment"
-                : "Repository"
-            }
-          >
-            <GitBranchIcon className="size-3.5" />
-            <span className="max-w-48 truncate">
-              {getRepoName(repo.url)}
-              <span className="text-subtle"> · {repo.ref}</span>
-            </span>
-            {LOCKED_REPO !== null ? (
-              <LockIcon className="size-3 text-subtle" />
-            ) : null}
-          </span>
+          <RepoSelect
+            value={repo}
+            onChange={onRepoChange}
+            disabled={disabled}
+          />
+          {repo ? (
+            <BranchSelect
+              repo={repo}
+              onChange={
+                onRepoChange
+                  ? (ref) => onRepoChange({ ...repo, ref })
+                  : undefined
+              }
+              disabled={disabled}
+            />
+          ) : null}
 
           <span className="ml-auto hidden text-[11px] text-subtle sm:block">
             <kbd className="font-sans">@</kbd> mention ·{" "}

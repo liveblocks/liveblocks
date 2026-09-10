@@ -59,20 +59,3 @@ export function getRepoName(url: string) {
   const match = url.match(GITHUB_REPO_PATTERN);
   return match ? `${match[1]}/${match[2]}` : url;
 }
-
-/**
- * Resolves the repo a new chat should use. When a repo is locked, the
- * client's choice is ignored on the server as well as hidden in the UI.
- */
-export function resolveRepo(requested: Partial<Repo> | undefined): Repo | null {
-  if (LOCKED_REPO) {
-    return LOCKED_REPO;
-  }
-
-  const url = requested?.url ? normalizeRepoUrl(requested.url) : null;
-  if (!url) {
-    return null;
-  }
-
-  return { url, ref: requested?.ref?.trim() || DEFAULT_REF };
-}

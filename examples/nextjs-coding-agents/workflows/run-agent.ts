@@ -21,7 +21,7 @@ import {
   type Participants,
   type PromptDocument,
 } from "@/lib/prompt";
-import { DIFF_ARTIFACT_PATH } from "@/lib/repo";
+import { DEFAULT_REF, DIFF_ARTIFACT_PATH, type Repo } from "@/lib/repo";
 import {
   getCursorAgentIdForFeed,
   getCursorApiKey,
@@ -42,8 +42,8 @@ type ChatLocation = { roomId: string; feedId: string };
 type Claim = {
   cursorAgentId?: string;
   model: string;
-  repoUrl: string;
-  repoRef: string;
+  // Absent for chats started without a repository
+  repo?: Repo;
   title: string;
 };
 
@@ -53,8 +53,7 @@ type RunInput = ChatLocation & {
   parts: AgentPart[];
   cursorAgentId?: string;
   model: string;
-  repoUrl: string;
-  repoRef: string;
+  repo?: Repo;
 };
 
 type GitInfo = { branch?: string; prUrl?: string };
@@ -151,15 +150,14 @@ export async function runAgentForChat(location: ChatLocation) {
       prompt: buildPrompt({
         messages: pending,
         users,
-        repoRef: claim.repoRef,
+        repoRef: claim.repo?.ref,
         documents: await loadDocuments(location),
         previousReply,
       }),
       parts,
       cursorAgentId,
       model: claim.model,
-      repoUrl: claim.repoUrl,
-      repoRef: claim.repoRef,
+      repo: claim.repo,
     });
 
     if (outcome.busy) {
@@ -301,8 +299,9 @@ async function claimChat({
   return {
     cursorAgentId: metadata.cursorAgentId,
     model: metadata.model,
-    repoUrl: metadata.repoUrl,
-    repoRef: metadata.repoRef,
+    repo: metadata.repoUrl
+      ? { url: metadata.repoUrl, ref: metadata.repoRef ?? DEFAULT_REF }
+      : undefined,
     title,
   };
 }
@@ -408,7 +407,7 @@ async function showParts({
 async function runCursor(input: RunInput): Promise<RunOutcome> {
   "use step";
 
-  const { roomId, feedId, agentMessageId, prompt, repoUrl, repoRef } = input;
+  const { roomId, feedId, agentMessageId, prompt, repo } = input;
   const liveblocks = getLiveblocks();
   const apiKey = getCursorApiKey();
   // The stored model may be one this key can't use; run with a fallback
@@ -453,7 +452,11 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
     switch (event.type) {
       case "status":
         if (event.status === "CREATING") {
-          setStatus("Starting cloud agent and cloning the repository…");
+          setStatus(
+            repo
+              ? "Starting cloud agent and cloning the repository…"
+              : "Starting cloud agent…"
+          );
         } else if (event.status === "RUNNING") {
           setStatus("Cloud agent ready");
         }
@@ -514,8 +517,10 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
         agentId: newAgentId,
         model: { id: model },
         cloud: {
-          repos: [{ url: repoUrl, startingRef: repoRef }],
-          autoCreatePR: true,
+          // Without a repository the agent still gets a machine, for
+          // answering questions and writing documents
+          repos: repo ? [{ url: repo.url, startingRef: repo.ref }] : undefined,
+          autoCreatePR: repo !== undefined,
           // Several people drive one agent, so commits and PRs are authored
           // by the Cursor GitHub App rather than whoever owns the API key.
           // The prompt asks the agent to credit people as co-authors.
@@ -586,7 +591,7 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
     // The prompt asks the agent to save a diff of its work as an artifact.
     // If it didn't, but it pushed a branch, the diff can still be fetched
     // from GitHub, so the changes panel opens either way.
-    const diffArtifact = await findDiffArtifact(agent);
+    const diffArtifact = repo ? await findDiffArtifact(agent) : null;
     const diffUpdatedAt =
       diffArtifact?.updatedAt ??
       (git?.branch ? new Date().toISOString() : undefined);

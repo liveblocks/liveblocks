@@ -59,6 +59,13 @@ export type ReposResponse = {
   error?: string;
 };
 
+/** Shape of `GET /api/branches?repo=` */
+export type BranchesResponse = {
+  branches: string[];
+  defaultBranch?: string;
+  error?: string;
+};
+
 /** What `/api/diff` returns: the agent's changes so far in a chat. */
 export type ChangesInfo = {
   /** Unified diff against the chat's base branch */

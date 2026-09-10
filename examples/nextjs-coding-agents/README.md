@@ -65,11 +65,15 @@ choose the model per chat from the dropdown.
   one. Commits and pull requests are authored by the Cursor GitHub App
   (`openAsCursorGithubApp`), and the people who asked for the work are credited
   with `Co-authored-by` trailers and a "Requested by" list in the PR.
-- **Repositories** come from Cursor: the new chat screen lists what the Cursor
-  GitHub App can reach for the configured key (`GET /v1/repositories`). Nothing
-  else needs GitHub credentials, including the diff panel, which reads a diff
-  the agent saves as a Cursor artifact at the end of every run (falling back to
-  GitHub's public branch diff if the agent skipped that step).
+- **Repositories** come from Cursor: the repository dropdown in the composer
+  lists what the Cursor GitHub App can reach for the configured key
+  (`GET /v1/repositories`), and the branch dropdown next to it reads the
+  repository's branches from GitHub with the signed-in person's token. A chat
+  can also be started with no repository, in which case the agent can answer
+  questions and write documents but not open pull requests. Nothing else needs
+  GitHub credentials, including the diff panel, which reads a diff the agent
+  saves as a Cursor artifact at the end of every run (falling back to GitHub's
+  public branch diff if the agent skipped that step).
 
 If your team wants commits under people's own names instead of the Cursor GitHub
 App, Cursor's

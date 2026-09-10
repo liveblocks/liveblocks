@@ -8,17 +8,15 @@ import {
 import { CircleAlertIcon, EyeIcon, SparklesIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCanWrite } from "@/app/providers";
+import { useDefaultBranch } from "@/components/branch-select";
 import { Composer } from "@/components/composer";
 import { HelpButton } from "@/components/help-button";
 import { useModels } from "@/components/model-select";
 import { PresenceAvatars } from "@/components/presence-avatars";
-import { RepoPicker } from "@/components/repo-picker";
-import { DEFAULT_REF, LOCKED_REPO, resolveRepo, type Repo } from "@/lib/repo";
+import { DEFAULT_REF, LOCKED_REPO, type Repo } from "@/lib/repo";
 import { useSendMessage } from "@/lib/use-send-message";
 
-const EMPTY_REPO: Repo = LOCKED_REPO ?? { url: "", ref: DEFAULT_REF };
-
-const SUGGESTIONS = [
+const REPO_SUGGESTIONS = [
   {
     label: "Explain the repository",
     content:
@@ -33,6 +31,25 @@ const SUGGESTIONS = [
     label: "Improve the README",
     content:
       "<skill:update-docs> Improve the README so a new contributor can get set up in five minutes.",
+  },
+];
+
+// Without a repository the agent can still research and write documents
+const DOCUMENT_SUGGESTIONS = [
+  {
+    label: "Draft a project plan",
+    content:
+      "Write a project plan document for adding realtime collaboration to an existing web app: phases, milestones, risks, and open questions.",
+  },
+  {
+    label: "Compare two approaches",
+    content:
+      "Write a document comparing server-side rendering with client-side rendering for a data-heavy dashboard, ending with a recommendation.",
+  },
+  {
+    label: "Write a launch checklist",
+    content:
+      "Write a launch checklist document for shipping a new SaaS feature, grouped by engineering, QA, marketing, and support.",
   },
 ];
 
@@ -56,7 +73,9 @@ export function NewChat({
   const models = useModels();
   const canWrite = useCanWrite();
   const [model, setModel] = useState<string | null>(null);
-  const [repoInput, setRepoInput] = useState<Repo>(EMPTY_REPO);
+  // No repository by default: the agent can chat and write documents
+  // without one, but needs one to open pull requests.
+  const [repo, setRepo] = useState<Repo | null>(LOCKED_REPO);
   const creatingRef = useRef(false);
 
   useEffect(() => {
@@ -65,21 +84,36 @@ export function NewChat({
     }
   }, [model, models]);
 
+  // A newly picked repository starts on its default branch once GitHub has
+  // told us what that is, unless a branch was chosen explicitly.
+  const branchChosenRef = useRef(false);
+  const handleRepoChange = useCallback((next: Repo | null) => {
+    setRepo((current) => {
+      // Same repository, different ref: that's the branch dropdown
+      branchChosenRef.current = next !== null && current?.url === next.url;
+      return next;
+    });
+  }, []);
+  const defaultBranch = useDefaultBranch(
+    LOCKED_REPO === null && repo ? repo.url : null
+  );
+  useEffect(() => {
+    if (
+      repo &&
+      defaultBranch &&
+      !branchChosenRef.current &&
+      repo.ref !== defaultBranch
+    ) {
+      setRepo({ ...repo, ref: defaultBranch });
+    }
+  }, [defaultBranch, repo]);
+
   const handleSend = useCallback(
     async (content: string) => {
       if (creatingRef.current) {
         return;
       }
       setError(null);
-
-      const repo = resolveRepo(repoInput);
-      if (!repo) {
-        setError(
-          "Pick a repository, or enter a GitHub URL like https://github.com/owner/repo"
-        );
-        return;
-      }
-
       creatingRef.current = true;
 
       try {
@@ -88,8 +122,7 @@ export function NewChat({
             type: "chat",
             title: "",
             createdBy: self.id,
-            repoUrl: repo.url,
-            repoRef: repo.ref,
+            ...(repo ? { repoUrl: repo.url, repoRef: repo.ref } : {}),
             model: model ?? models?.defaultModelId ?? "composer-2.5",
             agentStatus: "idle",
             participantIds: [self.id],
@@ -106,17 +139,10 @@ export function NewChat({
         creatingRef.current = false;
       }
     },
-    [
-      createFeed,
-      feedId,
-      model,
-      models,
-      repoInput,
-      self.id,
-      sendMessage,
-      setError,
-    ]
+    [createFeed, feedId, model, models, repo, self.id, sendMessage, setError]
   );
+
+  const suggestions = repo ? REPO_SUGGESTIONS : DOCUMENT_SUGGESTIONS;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -155,8 +181,6 @@ export function NewChat({
             </div>
           ) : (
             <>
-              <RepoPicker value={repoInput} onChange={setRepoInput} />
-
               {error ? (
                 <div className="mb-2 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
                   <CircleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
@@ -175,8 +199,13 @@ export function NewChat({
               <ClientSideSuspense fallback={null}>
                 <Composer
                   typingKey={feedId}
-                  placeholder="Describe a change, or type / to pick a skill…"
-                  repo={resolveRepo(repoInput) ?? repoInput}
+                  placeholder={
+                    repo
+                      ? "Describe a change, or type / to pick a skill…"
+                      : "Ask a question or describe a document to write…"
+                  }
+                  repo={repo}
+                  onRepoChange={handleRepoChange}
                   model={model ?? models?.defaultModelId ?? "…"}
                   onModelChange={setModel}
                   onSend={handleSend}
@@ -184,7 +213,7 @@ export function NewChat({
               </ClientSideSuspense>
 
               <div className="mt-2 flex flex-wrap justify-center gap-2">
-                {SUGGESTIONS.map((suggestion) => (
+                {suggestions.map((suggestion) => (
                   <button
                     key={suggestion.label}
                     type="button"

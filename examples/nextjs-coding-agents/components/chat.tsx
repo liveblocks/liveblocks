@@ -16,7 +16,7 @@ import {
   Loader2Icon,
   XIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCanWrite } from "@/app/providers";
 import {
   ChatSidePanel,
@@ -29,7 +29,7 @@ import { MessageList } from "@/components/message-list";
 import { NewChat } from "@/components/new-chat";
 import { PresenceAvatars } from "@/components/presence-avatars";
 import { capitalizeFirst } from "@/lib/prompt";
-import { getRepoName } from "@/lib/repo";
+import { DEFAULT_REF, getRepoName, type Repo } from "@/lib/repo";
 import type { ChatFeed } from "@/lib/types";
 import { useSendMessage } from "@/lib/use-send-message";
 
@@ -68,6 +68,13 @@ function ChatView({
   const { feedId, metadata } = feed;
   const running = metadata.agentStatus === "running";
   const panel = useChatSidePanel(feed);
+  const repo = useMemo<Repo | null>(
+    () =>
+      metadata.repoUrl
+        ? { url: metadata.repoUrl, ref: metadata.repoRef ?? DEFAULT_REF }
+        : null,
+    [metadata.repoRef, metadata.repoUrl]
+  );
 
   const handleSend = useCallback(
     async (content: string) => {
@@ -99,16 +106,18 @@ function ChatView({
               <h1 className="truncate text-[13px] font-semibold">
                 {capitalizeFirst(metadata.title || "New chat")}
               </h1>
-              <span className="hidden items-center gap-1.5 truncate text-xs text-muted md:flex">
-                <GitBranchIcon className="size-3.5 shrink-0" />
-                <span className="truncate">
-                  {getRepoName(metadata.repoUrl)}
-                  <span className="text-subtle">
-                    {" "}
-                    · {metadata.branch ?? metadata.repoRef}
+              {repo ? (
+                <span className="hidden items-center gap-1.5 truncate text-xs text-muted md:flex">
+                  <GitBranchIcon className="size-3.5 shrink-0" />
+                  <span className="truncate">
+                    {getRepoName(repo.url)}
+                    <span className="text-subtle">
+                      {" "}
+                      · {metadata.branch ?? repo.ref}
+                    </span>
                   </span>
                 </span>
-              </span>
+              ) : null}
               <StatusPill running={running} />
             </div>
 
@@ -127,7 +136,7 @@ function ChatView({
               </div>
             }
           >
-            <MessageList feedId={feedId} repoUrl={metadata.repoUrl} />
+            <MessageList feedId={feedId} repoUrl={repo?.url} />
             <AutoReadNotifications feedId={feedId} />
           </ClientSideSuspense>
 
@@ -156,7 +165,7 @@ function ChatView({
                         ? "Ask a follow-up — the agent will get to it after the current task"
                         : "Ask the agent to make a change…"
                     }
-                    repo={{ url: metadata.repoUrl, ref: metadata.repoRef }}
+                    repo={repo}
                     model={metadata.model}
                     onModelChange={handleModelChange}
                     onSend={handleSend}

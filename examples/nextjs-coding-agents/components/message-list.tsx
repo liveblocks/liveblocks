@@ -12,7 +12,7 @@ export function MessageList({
   repoUrl,
 }: {
   feedId: string;
-  repoUrl: string;
+  repoUrl?: string;
 }) {
   const { messages, hasFetchedAll, fetchMore, isFetchingMore } =
     useFeedMessages(feedId);

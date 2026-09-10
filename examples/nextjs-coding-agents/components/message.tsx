@@ -39,7 +39,7 @@ export function Message({
 }: {
   message: ChatMessage;
   feedId: string;
-  repoUrl: string;
+  repoUrl?: string;
   // Human message posted while the agent was busy and not yet handled
   queued: boolean;
   // Running agent message with queued human messages behind it: its text so
@@ -155,7 +155,7 @@ function AgentMessage({
 }: {
   message: ChatMessage;
   feedId: string;
-  repoUrl: string;
+  repoUrl?: string;
   holding: boolean;
   gitCard: GitCardKind | null;
 }) {
@@ -213,7 +213,7 @@ function AgentMessage({
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2">
           <WorkLog
             parts={running ? parts : logParts}
             running={running}
@@ -234,7 +234,7 @@ function AgentMessage({
             ))
           : null}
 
-        {!running && gitCard ? (
+        {!running && gitCard && repoUrl ? (
           <PullRequestCard
             prUrl={prUrl}
             branch={branch}

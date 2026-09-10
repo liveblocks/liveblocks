@@ -65,7 +65,7 @@ export function ChangesView({
 }: {
   roomId: string;
   feedId: string;
-  repoUrl: string;
+  repoUrl?: string;
   branch?: string;
   prUrl?: string;
   /** Change this to refetch, e.g. when the agent finishes another run */
@@ -94,7 +94,8 @@ export function ChangesView({
   );
 
   // Where "open on GitHub" goes: the PR when there is one, else the branch.
-  const externalUrl = prUrl ?? (branch ? `${repoUrl}/tree/${branch}` : repoUrl);
+  const externalUrl =
+    prUrl ?? (repoUrl && branch ? `${repoUrl}/tree/${branch}` : repoUrl);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -166,14 +167,16 @@ export function ChangesView({
               className={clsx("size-3.5", loading && "animate-spin")}
             />
           </PanelIconButton>
-          <PanelIconButton
-            label="Open on GitHub"
-            onClick={() =>
-              window.open(externalUrl, "_blank", "noopener,noreferrer")
-            }
-          >
-            <ExternalLinkIcon className="size-3.5" />
-          </PanelIconButton>
+          {externalUrl ? (
+            <PanelIconButton
+              label="Open on GitHub"
+              onClick={() =>
+                window.open(externalUrl, "_blank", "noopener,noreferrer")
+              }
+            >
+              <ExternalLinkIcon className="size-3.5" />
+            </PanelIconButton>
+          ) : null}
         </div>
       </div>
 

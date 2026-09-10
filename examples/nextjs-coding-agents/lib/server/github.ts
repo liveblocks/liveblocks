@@ -169,6 +169,54 @@ export async function searchGitHubUsers(
   return items.map((item) => toUser({ ...item, name: null, email: null }));
 }
 
+const BRANCHES_TTL_MS = 5 * 60 * 1000;
+const branchesCache = new Map<
+  string,
+  { fetchedAt: number; result: { branches: string[]; defaultBranch?: string } }
+>();
+
+/**
+ * Branches of a repository, for the branch picker on the new chat screen.
+ * Fetched with the signed-in person's token when there is one so private
+ * repositories they can see work too; otherwise only public repositories
+ * resolve. Returns null when the repository can't be read.
+ */
+export async function listBranches(
+  repoName: string,
+  accessToken?: string
+): Promise<{ branches: string[]; defaultBranch?: string } | null> {
+  const cacheKey = `${accessToken ?? ""}:${repoName}`;
+  const cached = branchesCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < BRANCHES_TTL_MS) {
+    return cached.result;
+  }
+
+  const [repoResponse, branchesResponse] = await Promise.all([
+    githubFetch(`/repos/${repoName}`, accessToken),
+    githubFetch(`/repos/${repoName}/branches?per_page=100`, accessToken),
+  ]);
+  if (!repoResponse.ok || !branchesResponse.ok) {
+    return null;
+  }
+
+  const { default_branch } = (await repoResponse.json()) as {
+    default_branch: string;
+  };
+  const branches = (await branchesResponse.json()) as { name: string }[];
+
+  // Default branch first, the rest alphabetically
+  const names = branches
+    .map((branch) => branch.name)
+    .filter((name) => name !== default_branch)
+    .sort((a, b) => a.localeCompare(b));
+  const result = {
+    branches: [default_branch, ...names],
+    defaultBranch: default_branch,
+  };
+  branchesCache.set(cacheKey, { fetchedAt: Date.now(), result });
+  return result;
+}
+
 /**
  * Git trailer that credits a person on a commit made by someone else (here,
  * the Cursor GitHub App). GitHub links it to their account via the email.
