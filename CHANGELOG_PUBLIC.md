@@ -32,6 +32,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 - More get started guides for new `LiveText` text editor integrations.
 - Broken link checker added to GitHub.
 
+## Dashboard
+
+- Enhanced Projects page with grid and list views, search, filters, and sorting options.
+
 ## Website
 
 - New homepage for [Liveblocks Sync](https://liveblocks.io/sync).
