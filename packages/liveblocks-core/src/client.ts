@@ -131,15 +131,6 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
      * the authentication endpoint or connect via WebSocket.
      */
     autoConnect?: boolean;
-
-    /**
-     * Enter the room without announcing any presence. Only makes sense for
-     * server-side sessions, which are invisible to the other users in the
-     * room, and for which the server will refuse to fan out presence.
-     *
-     * @private This is a private API, do no use or rely on it.
-     */
-    headless?: boolean;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -815,7 +806,6 @@ export function createClient<U extends BaseUserMeta = DU>(
           authenticate: makeAuthDelegateForRoom(roomId, authManager),
         },
         enableDebugLogging: clientOptions.enableDebugLogging,
-        headless: options.headless,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
         roomHttpClient: httpClient as LiveblocksHttpApi<TM, CM>,

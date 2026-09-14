@@ -3,6 +3,7 @@ import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
+import { TokenKind } from "./protocol/AuthToken";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type {
@@ -1551,13 +1552,6 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
 
   badgeLocation?: BadgeLocation;
 
-  /**
-   * Headless rooms have no presence to announce, and the server will not fan
-   * out presence on their behalf. Used by server-side sessions, which are
-   * invisible to the other users in the room.
-   */
-  headless?: boolean;
-
   // We would not have to pass this complicated factory/callback functions to
   // the createRoom() function if we would simply pass the Client instance to
   // the Room instance, so it can directly call this back on the Client.
@@ -1826,8 +1820,24 @@ export function createRoom<
     }
   }
 
+  /**
+   * Whether this connection is a backend session, which is a property of the
+   * credential rather than a choice: a token carrying `be` authorizes a socket
+   * held by a customer's backend, which has no presence and for which the
+   * server refuses to fan any out. There is no valid combination where this
+   * disagrees with the token, so it is never configurable.
+   */
+  function isBackendSession(): boolean {
+    const authValue = managedSocket.authValue;
+    return (
+      authValue?.type === "secret" &&
+      authValue.token.parsed.k === TokenKind.ACCESS_TOKEN &&
+      authValue.token.parsed.be === true
+    );
+  }
+
   function onDidConnect() {
-    if (!config.headless) {
+    if (!isBackendSession()) {
       // Re-broadcast the full user presence as soon as we (re)connect
       context.buffer.presenceUpdates = {
         type: "full",

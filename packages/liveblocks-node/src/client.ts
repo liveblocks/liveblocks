@@ -3594,11 +3594,9 @@ export class Liveblocks {
       },
     });
 
-    // A backend session has no presence, and the server refuses to fan any
-    // out on its behalf, so enter without announcing any.
-    const { room: liveRoom, leave } = client.enterRoom(roomId, {
-      headless: true,
-    });
+    // No presence is announced: the token authorizes a backend session, and
+    // the room derives that from the token itself.
+    const { room: liveRoom, leave } = client.enterRoom(roomId);
 
     try {
       const { root } = await liveRoom.getStorage();
