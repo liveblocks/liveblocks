@@ -2073,9 +2073,9 @@ export function createRoom<
 
       // LiveText nodes are not covered by the op diff above (their op path
       // carries pending-op transformation semantics that don't apply to
-      // authoritative snapshots). Reconcile them against the snapshot
-      // directly; locally pending text ops are preserved on top and re-sent
-      // by the offline-ops replay.
+      // authoritative snapshots). Reconcile them directly; nodes with pending
+      // text ops retain their pre-snapshot state until the offline replay
+      // returns the missing authoritative history.
       for (const [id, crdt] of nodes) {
         if (crdt.type === CrdtType.TEXT) {
           const node = context.pool.nodes.get(id);

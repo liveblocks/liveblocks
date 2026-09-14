@@ -1,5 +1,11 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/client`
+
+- Fix `LiveText` reconnect convergence with pending edits, including lost
+  acknowledgements, repeated reconnects, and queued edits. Recovery updates now
+  reach editor integrations instead of being filtered as local echoes.
+
 ### `@liveblocks/chat-sdk-adapter`
 
 - Allow `apiKey` and `webhookSecret` to be resolved per request, and add custom
@@ -1768,8 +1774,8 @@ useErrorListener((err: LiveblocksError) => {
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16) to
-learn how to adapt your code.
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16)
+to learn how to adapt your code.
 
 #### Filtering by absence of metadata
 
@@ -1792,8 +1798,8 @@ useThreads({
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16) to
-learn how to adapt your code.
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16)
+to learn how to adapt your code.
 
 #### Bug fixes
 
@@ -2306,8 +2312,8 @@ you're interested in getting access, please
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
-[threads](https://liveblocks.io/docs/products/comments/concepts#Threads),
-for more information about this change please read our
+[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
+more information about this change please read our
 [Upgrade Guide for 2.2](https://liveblocks.io/docs/api-reference/upgrading/2.2).
 
 ### `@liveblocks/react`
@@ -3530,7 +3536,8 @@ Non-existent.
 ## v1.0.0
 
 This major release marks the maturity of Liveblocks. For upgrade instructions,
-see the [1.0 upgrade guide](https://liveblocks.io/docs/api-reference/upgrading/1.0).
+see the
+[1.0 upgrade guide](https://liveblocks.io/docs/api-reference/upgrading/1.0).
 
 ## `@liveblocks/node`
 

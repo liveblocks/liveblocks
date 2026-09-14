@@ -15,9 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Promise_withResolvers } from "@liveblocks/core";
+import {
+  ClientMsgCode,
+  CrdtType,
+  OpCode,
+  Promise_withResolvers,
+  ServerMsgCode,
+} from "@liveblocks/core";
 import { E_ALREADY_LOCKED } from "async-mutex";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { makeNewInMemoryDriver } from "~/plugins/InMemoryDriver";
 import type { ActorID } from "~/Room";
@@ -130,6 +136,132 @@ describe("room", () => {
     const ticket = room.createTicket();
     room.startBrowserSession(ticket, new MockServerWebSocket());
     room.endBrowserSession(ticket.sessionKey, 1001, "bleh");
+  });
+
+  test("LiveText replay history is delivered only to its sender and duplicate replays do not fan out", async () => {
+    const storage = makeNewInMemoryDriver({
+      initialNodes: [
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        [
+          "0:1",
+          {
+            type: CrdtType.TEXT,
+            parentId: "root",
+            parentKey: "text",
+            data: [["Hello"]],
+            version: 0,
+          },
+        ],
+      ],
+    });
+    const room = new Room("replay", { storage });
+    const sender = room.createTicket();
+    const remote = room.createTicket();
+    const senderSocket = new MockServerWebSocket();
+    const remoteSocket = new MockServerWebSocket();
+    const senderMessages = vi.spyOn(senderSocket, "send");
+    const remoteMessages = vi.spyOn(remoteSocket, "send");
+    room.startBrowserSession(sender, senderSocket);
+    room.startBrowserSession(remote, remoteSocket);
+
+    await room.handleData(
+      remote.sessionKey,
+      JSON.stringify([
+        {
+          type: ClientMsgCode.UPDATE_STORAGE,
+          ops: [
+            {
+              type: OpCode.UPDATE_TEXT,
+              id: "0:1",
+              opId: "remote",
+              baseVersion: 0,
+              ops: [{ type: "insert", index: 0, text: "A" }],
+            },
+          ],
+        },
+      ])
+    );
+    senderMessages.mockClear();
+    remoteMessages.mockClear();
+
+    const replay = {
+      type: ClientMsgCode.UPDATE_STORAGE,
+      ops: [
+        {
+          type: OpCode.UPDATE_TEXT,
+          id: "0:1",
+          opId: "original",
+          baseVersion: 0,
+          replay: true,
+          ops: [{ type: "delete", index: 0, length: 2 }],
+        },
+      ],
+    };
+    await room.handleData(sender.sessionKey, JSON.stringify([replay]));
+
+    const accepted = {
+      type: OpCode.UPDATE_TEXT,
+      id: "0:1",
+      baseVersion: 1,
+      version: 2,
+      ops: [{ type: "delete", index: 1, length: 2 }],
+    };
+    expect(
+      remoteMessages.mock.calls.flatMap(([data]) => {
+        const messages: unknown = JSON.parse(data);
+        return messages;
+      })
+    ).toEqual([{ type: ServerMsgCode.UPDATE_STORAGE, ops: [accepted] }]);
+    expect(
+      senderMessages.mock.calls.flatMap(([data]) => {
+        const messages: unknown = JSON.parse(data);
+        return messages;
+      })
+    ).toEqual([
+      {
+        type: ServerMsgCode.UPDATE_STORAGE,
+        ops: [
+          {
+            ...accepted,
+            opId: "original",
+            replay: true,
+            history: [
+              { version: 1, ops: [{ type: "insert", index: 0, text: "A" }] },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    senderMessages.mockClear();
+    remoteMessages.mockClear();
+    await room.handleData(sender.sessionKey, JSON.stringify([replay]));
+    expect(remoteMessages.mock.calls).toEqual([]);
+    expect(
+      senderMessages.mock.calls.flatMap(([data]) => {
+        const messages: unknown = JSON.parse(data);
+        return messages;
+      })
+    ).toEqual([
+      {
+        type: ServerMsgCode.UPDATE_STORAGE,
+        ops: [
+          {
+            ...accepted,
+            opId: "original",
+            replay: true,
+            history: [
+              { version: 1, ops: [{ type: "insert", index: 0, text: "A" }] },
+              { version: 2, ops: accepted.ops },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(storage.get_node("0:1")).toMatchObject({
+      data: [["Allo"]],
+      version: 2,
+    });
   });
 });
 

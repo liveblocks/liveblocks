@@ -409,7 +409,7 @@ export class Storage {
       op.id,
       op.opId
     );
-    if (duplicate !== undefined) {
+    if (duplicate !== undefined && !op.replay) {
       return rectify({
         ...op,
         baseVersion: duplicate.baseVersion,
@@ -418,7 +418,7 @@ export class Storage {
       });
     }
 
-    if (op.ops.length === 0) {
+    if (op.ops.length === 0 && !op.replay) {
       // Empty updates are pure acknowledgement vehicles (e.g. an undo whose
       // content was queued behind another in-flight op on the client). Ack
       // without applying or bumping the version.
@@ -435,9 +435,31 @@ export class Storage {
         : [];
     if (
       op.baseVersion < node.version &&
-      history.length !== node.version - op.baseVersion
+      (history.length !== node.version - op.baseVersion ||
+        history.some(
+          (entry, index) => entry.version !== op.baseVersion + index + 1
+        ))
     ) {
       return reject(op, LIVE_TEXT_HISTORY_TOO_OLD_REASON);
+    }
+
+    // Replay recovery starts at the request's base version, not at the stored
+    // duplicate's base version. Include the duplicate itself and later edits.
+    const replayHistory = op.replay
+      ? { history: history.map(({ version, ops }) => ({ version, ops })) }
+      : undefined;
+    if (duplicate !== undefined) {
+      return rectify({
+        ...op,
+        ...replayHistory,
+        baseVersion: duplicate.baseVersion,
+        version: duplicate.version,
+        ops: [...duplicate.ops],
+      });
+    }
+
+    if (op.ops.length === 0) {
+      return ignore(op);
     }
 
     const acceptedOps = history.flatMap((entry) => entry.ops);
@@ -470,7 +492,13 @@ export class Storage {
       Math.max(0, version - LIVE_TEXT_HISTORY_LIMIT + 1)
     );
 
-    return accept({ ...op, baseVersion: node.version, version, ops: [...ops] });
+    return accept({
+      ...op,
+      ...replayHistory,
+      baseVersion: node.version,
+      version,
+      ops: [...ops],
+    });
   }
 
   private applyDeleteCrdtOp(op: DeleteCrdtOp & HasOpId): ApplyOpResult {

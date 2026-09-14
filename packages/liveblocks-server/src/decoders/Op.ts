@@ -175,6 +175,7 @@ const updateTextOp: Decoder<UpdateTextOp & HasOpId> = object({
   id: string,
   baseVersion: liveTextVersion,
   version: optional(liveTextVersion),
+  replay: optional(constant(true)),
   ops: array(textOperation),
 });
 

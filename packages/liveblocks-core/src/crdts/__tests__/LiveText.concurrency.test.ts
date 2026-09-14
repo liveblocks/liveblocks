@@ -369,3 +369,244 @@ describe("LiveText acknowledgement", () => {
     expect(room.history.canRedo()).toBe(false);
   });
 });
+
+describe("LiveText reconnect acknowledgements", () => {
+  function prepareLostAcknowledgement() {
+    const dispatched: UpdateTextOp[] = [];
+    const pool = createManagedPool({
+      getCurrentConnectionId: () => 0,
+      onDispatch: (ops) => {
+        for (const op of ops) {
+          if (op.type === OpCode.UPDATE_TEXT) {
+            dispatched.push(op);
+          }
+        }
+      },
+    });
+    const text = new LiveText("Hello");
+    text._attach("0:1", pool);
+    text.insert(5, "!");
+    const original = nn(dispatched[0]);
+    // The server stored this exact op, but its acknowledgement was lost.
+    // Keep the stored operation separate from its mutable replay envelope.
+    const acknowledgement: UpdateTextOp = {
+      ...original,
+      version: 1,
+      history: [{ version: 1, ops: original.ops }],
+    };
+    return { text, dispatched, acknowledgement };
+  }
+
+  test("a deduplicated acknowledgement reconciles remote snapshot edits", () => {
+    const { text, dispatched, acknowledgement } = prepareLostAcknowledgement();
+    nn(acknowledgement.history).push({
+      version: 2,
+      ops: [{ type: "insert", index: 0, text: "Remote " }],
+    });
+    text._resyncText([["Remote Hello!"]], 2, { origin: "remote" });
+    text._apply(nn(dispatched[0]), {
+      origin: "local",
+      via: "edit",
+      optimistic: true,
+    });
+    text._apply(acknowledgement, {
+      origin: "local",
+      via: "edit",
+      optimistic: false,
+    });
+
+    expect(text.toString()).toBe("Remote Hello!");
+  });
+
+  test("repeated reconnects preserve edits queued behind a stored op", () => {
+    const { text, dispatched, acknowledgement } = prepareLostAcknowledgement();
+    text.insert(0, "A");
+
+    // Lose the replay's acknowledgement too, forcing the same op to replay
+    // twice while the queued edit must survive both connection losses.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      text._resyncText([["Hello!"]], 1, { origin: "remote" });
+      text._apply(nn(dispatched[0]), {
+        origin: "local",
+        via: "edit",
+        optimistic: true,
+      });
+    }
+    text._apply(acknowledgement, {
+      origin: "local",
+      via: "edit",
+      optimistic: false,
+    });
+
+    // Only a fresh opId can persist the edits ignored by server deduplication.
+    const server = applyTextOperationsToSegments(
+      [{ text: "Hello!" }],
+      dispatched.slice(1).flatMap((op) => op.ops)
+    );
+    expect(server.map((segment) => segment.text).join("")).toBe("AHello!");
+    expect(text.toString()).toBe("AHello!");
+  });
+
+  test("rebases the restored queue when the stored op was itself rebased", () => {
+    const { text, dispatched, acknowledgement } = prepareLostAcknowledgement();
+    text.insert(6, "?");
+    // The server accepted a remote prefix before our in-flight "!", but the
+    // client received neither operation before the connection was lost.
+    text._resyncText([["Remote Hello!"]], 2, { origin: "remote" });
+    text._apply(nn(dispatched[0]), {
+      origin: "local",
+      via: "edit",
+      optimistic: true,
+    });
+    text._apply(
+      {
+        ...acknowledgement,
+        baseVersion: 1,
+        version: 2,
+        ops: [{ type: "insert", index: 12, text: "!" }],
+        history: [
+          { version: 1, ops: [{ type: "insert", index: 0, text: "Remote " }] },
+          { version: 2, ops: [{ type: "insert", index: 12, text: "!" }] },
+        ],
+      },
+      { origin: "local", via: "edit", optimistic: false }
+    );
+
+    // Evaluate recovery against the server's actual accepted history, rather
+    // than assuming the resent queue already uses snapshot coordinates.
+    const history = [
+      { version: 1, ops: [{ type: "insert", index: 0, text: "Remote " }] },
+      { version: 2, ops: [{ type: "insert", index: 12, text: "!" }] },
+    ] satisfies { version: number; ops: UpdateTextOp["ops"] }[];
+    let server = [{ text: "Remote Hello!" }];
+    for (const op of dispatched.slice(1)) {
+      let ops = op.ops;
+      for (const accepted of history) {
+        if (accepted.version > op.baseVersion) {
+          ops = transformTextOperations(ops, accepted.ops, "after");
+        }
+      }
+      server = applyTextOperationsToSegments(server, ops);
+    }
+    expect(server.map((segment) => segment.text).join("")).toBe(
+      "Remote Hello!?"
+    );
+  });
+
+  test("preserves edit order when typing before the duplicate ack arrives", () => {
+    const { text, dispatched, acknowledgement } = prepareLostAcknowledgement();
+    text.insert(0, "A");
+    text._resyncText([["Hello!"]], 1, { origin: "remote" });
+    text._apply(nn(dispatched[0]), {
+      origin: "local",
+      via: "edit",
+      optimistic: true,
+    });
+    // This deletion cancels the queued insertion, not the original "H".
+    text.delete(0, 1);
+    text._apply(acknowledgement, {
+      origin: "local",
+      via: "edit",
+      optimistic: false,
+    });
+
+    const server = applyTextOperationsToSegments(
+      [{ text: "Hello!" }],
+      dispatched.slice(1).flatMap((op) => op.ops)
+    );
+    expect(server.map((segment) => segment.text).join("")).toBe("Hello!");
+    expect(text.toString()).toBe("Hello!");
+  });
+
+  test("buffers post-snapshot remote edits until their missing predecessors arrive", () => {
+    const { text, dispatched, acknowledgement } = prepareLostAcknowledgement();
+    text._resyncText([["Remote Hello!"]], 2, { origin: "remote" });
+    text._apply(nn(dispatched[0]), {
+      origin: "local",
+      via: "edit",
+      optimistic: true,
+    });
+    text._apply(
+      {
+        type: OpCode.UPDATE_TEXT,
+        id: "0:1",
+        baseVersion: 2,
+        version: 3,
+        ops: [{ type: "delete", index: 7, length: 5 }],
+      },
+      { origin: "remote" }
+    );
+    text.insert(6, "?");
+    nn(acknowledgement.history).push(
+      { version: 2, ops: [{ type: "insert", index: 0, text: "Remote " }] },
+      { version: 3, ops: [{ type: "delete", index: 7, length: 5 }] }
+    );
+    text._apply(acknowledgement, {
+      origin: "local",
+      via: "edit",
+      optimistic: false,
+    });
+
+    expect(text.toString()).toBe("Remote !?");
+    const queued = nn(dispatched[1]);
+    const acceptedOps = nn(acknowledgement.history)
+      .filter((entry) => entry.version > queued.baseVersion)
+      .flatMap((entry) => entry.ops);
+    const ops = transformTextOperations(queued.ops, acceptedOps, "after");
+    const server = applyTextOperationsToSegments([{ text: "Remote !" }], ops);
+    expect(server.map((segment) => segment.text).join("")).toBe("Remote !?");
+    text._apply(
+      { ...queued, baseVersion: 3, version: 4, ops },
+      {
+        origin: "local",
+        via: "edit",
+        optimistic: false,
+      }
+    );
+    expect(text.toString()).toBe("Remote !?");
+  });
+
+  test("replays a history operation from the confirmed version loaded by a snapshot", () => {
+    const text = new LiveText("Hello", 7);
+    text._attach("0:1", createManagedPool({ getCurrentConnectionId: () => 0 }));
+    const undo: UpdateTextOp = {
+      type: OpCode.UPDATE_TEXT,
+      id: "0:1",
+      opId: "0:undo",
+      baseVersion: 7,
+      ops: [{ type: "delete", index: 4, length: 1 }],
+    };
+    text._apply(undo, { origin: "local", via: "undo", optimistic: true });
+    text._resyncText([["Remote Hello"]], 8, { origin: "remote" });
+    text._apply(undo, { origin: "local", via: "undo", optimistic: true });
+
+    const remote = [
+      { type: "insert", index: 0, text: "Remote " },
+    ] satisfies UpdateTextOp["ops"];
+    // Server history older than the loaded version must not be rebased again.
+    const history = [
+      { version: 7, ops: [{ type: "insert", index: 0, text: "Hello" }] },
+      { version: 8, ops: remote },
+    ] satisfies NonNullable<UpdateTextOp["history"]>;
+    const missed = history.filter((entry) => entry.version > undo.baseVersion);
+    const ops = transformTextOperations(
+      undo.ops,
+      missed.flatMap((entry) => entry.ops),
+      "after"
+    );
+    const server = applyTextOperationsToSegments(
+      [{ text: "Remote Hello" }],
+      ops
+    );
+    expect(server.map((segment) => segment.text).join("")).toBe("Remote Hell");
+    text._apply(
+      { ...undo, baseVersion: 8, version: 9, ops, history: missed },
+      {
+        origin: "local",
+        via: "undo",
+        optimistic: false,
+      }
+    );
+    expect(text.toString()).toBe("Remote Hell");
+  });
+});

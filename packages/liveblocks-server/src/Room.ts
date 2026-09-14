@@ -170,6 +170,11 @@ export function ackIgnoredOp(opId: string): IgnoredOp {
 }
 
 function stripOpId(op: Op): ServerWireOp {
+  if (op.type === OpCode.UPDATE_TEXT) {
+    // Replay recovery belongs only to the sender's acknowledgement.
+    const { opId: _, replay: _replay, history: _history, ...rest } = op;
+    return rest;
+  }
   // TODO: Optimize later! Instead of duplicating every op and
   // stripping the opId explicitly, it would be generally more
   // efficient if we treated the opIds as "envelopes" around Ops (or

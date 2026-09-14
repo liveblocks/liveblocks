@@ -174,6 +174,13 @@ export type UpdateTextOp = {
   readonly baseVersion: number;
   readonly version?: number;
   readonly ops: TextOperation[];
+  /** Request authoritative history when replaying after a storage resync. */
+  readonly replay?: true;
+  /** Server-only: accepted ops after the replay's requested base version. */
+  readonly history?: {
+    readonly version: number;
+    readonly ops: TextOperation[];
+  }[];
 };
 
 export type DeleteCrdtOp = {

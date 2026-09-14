@@ -10,7 +10,8 @@ import { useThreads } from "@liveblocks/react/suspense";
 import { useStorage, useSyncStatus } from "@liveblocks/react/suspense";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRoom } from "@liveblocks/react/suspense";
 
 const INITIAL_CONTENT = {
   type: "doc",
@@ -24,6 +25,10 @@ const INITIAL_CONTENT = {
 
 export function TiptapLiveblocksEditor({ roomId }: { roomId: string }) {
   const syncStatus = useSyncStatus();
+  const room = useRoom();
+  useEffect(() => {
+    (window as unknown as Record<string, unknown>).__room = room;
+  }, [room]);
   const { threads } = useThreads();
   const liveblocks = useLiveblocksExtension({
     collaborationMode: "liveblocks",
