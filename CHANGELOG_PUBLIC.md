@@ -18,6 +18,16 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 37 (2026-09-11)
+
+## Dashboard
+
+- Enhanced Projects page with grid and list views, search, filters, and sorting options.
+- 
+## Contributors
+
+pierrelevaillant
+
 # Week 36 (2026-09-04)
 
 ## Documentation
@@ -31,10 +41,6 @@ list and feel free to give them credit at the end of a line, e.g.:
 - New guide: [Get started with a custom canvas](https://liveblocks.io/docs/get-started/nextjs-canvas-custom).
 - More get started guides for new `LiveText` text editor integrations.
 - Broken link checker added to GitHub.
-
-## Dashboard
-
-- Enhanced Projects page with grid and list views, search, filters, and sorting options.
 
 ## Website
 
