@@ -23,7 +23,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Dashboard
 
 - Enhanced Projects page with grid and list views, search, filters, and sorting options.
-- 
+
 ## Contributors
 
 pierrelevaillant
