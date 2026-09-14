@@ -23,10 +23,10 @@ for relational data, search, and reporting through a
 | | Liveblocks | Supabase |
 | --- | --- | --- |
 | Primary purpose | Collaborative sync engine | Postgres database platform |
-| Conflict resolution | Built-in for Storage and Yjs | Application-level for Realtime |
+| Conflict resolution | Built-in for [Storage](/docs/products/sync/storage) and [Yjs](https://docs.yjs.dev/) | Application-level for Realtime |
 | Best for | Multiplayer documents, canvases, editors | Relational app data and auth |
 | Persistence model | Room-based collaborative documents | Postgres tables and rows |
-| Collaboration primitives | Presence, comments, notifications, undo | Realtime broadcasts and Postgres changes |
+| Collaboration primitives | [Presence](/docs/products/sync/presence), [Comments](/docs/products/comments), [Notifications](/docs/products/notifications), undo | Realtime broadcasts and Postgres changes |
 
 ## When to choose Liveblocks [#when-to-choose-liveblocks]
 
@@ -89,7 +89,7 @@ A common pattern keeps Liveblocks as the live editing channel and mirrors
 document snapshots to Supabase for search, analytics, and workflows. The
 [Supabase integration guide](/docs/integrations/supabase) and
 [step-by-step sync guide](/docs/guides/how-to-synchronize-your-liveblocks-storage-document-data-to-a-supabase-postgres-database)
-show how to upsert Storage data when webhooks fire. Treat Supabase as an
+show how to upsert [Storage](/docs/products/sync/storage) data when webhooks fire. Treat Supabase as an
 eventually consistent mirror, not the live editing channel.
 
 ## Get started [#get-started]

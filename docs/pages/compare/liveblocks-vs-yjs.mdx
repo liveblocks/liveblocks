@@ -21,7 +21,7 @@ build and operate yourself.
 | | Liveblocks + Yjs | Self-hosted Yjs |
 | --- | --- | --- |
 | What you get | Hosted provider, persistence, auth, product APIs | CRDT library only |
-| Networking | Managed WebSocket sync | You run y-websocket, Hocuspocus, or similar |
+| Networking | Managed WebSocket sync | You run y-websocket, [Hocuspocus](https://tiptap.dev/docs/hocuspocus/introduction), or similar |
 | Persistence | Built-in room storage | You choose and operate a database |
 | Best for | Shipping editors quickly | Maximum control and custom stacks |
 
@@ -33,13 +33,13 @@ Choose Liveblocks when you want:
   and no WebSocket server to operate
 - **Room-based auth and permissions** via
   [Liveblocks authentication](/docs/api-reference/authentication)
-- **Presence** wired to Yjs awareness through Liveblocks
-- **Comments, notifications, and version history** alongside the Yjs document
+- **[Presence](/docs/products/sync/presence)** wired to Yjs awareness through Liveblocks
+- **[Comments](/docs/products/comments), [Notifications](/docs/products/notifications), and [Version history](/docs/products/sync/version-history)** alongside the Yjs document
 - **Server-side access** through the [Node.js SDK](/docs/api-reference/liveblocks-node)
   and REST API
 
 Liveblocks also offers [LiveText](/docs/products/sync/storage#LiveText) as an
-alternative when text should live in the same Storage tree as structured data.
+alternative when text should live in the same [Storage](/docs/products/sync/storage) tree as structured data.
 See [LiveText vs Yjs](/docs/guides/livetext-vs-yjs) for that decision.
 
 ## When to choose self-hosted Yjs [#when-to-choose-self-hosted-yjs]
