@@ -3380,7 +3380,7 @@ connection with Liveblocks servers.
   - `room.subscribe("lost-connection")`: high-level API to get informed when
     Liveblocks’ automatic reconnection process is taking longer than usual, so
     you can show a toast message on screen. (See this
-    [example](https://liveblocks.io/examples/connection-status) for an
+    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status) for an
     illustration.)
 - New behavior:
   - The client will stop retrying to establish a connection in cases where
@@ -3394,7 +3394,7 @@ connection with Liveblocks servers.
   - `useStatus()` - React hook version of `room.getStatus()`
   - `useLostConnectionListener()` - React hook version of
     `room.subscribe("lost-connection")` (See this
-    [example](https://liveblocks.io/examples/connection-status) for an
+    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status) for an
     illustration.)
 
 ### Bugs fixed
