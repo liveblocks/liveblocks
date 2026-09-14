@@ -133,11 +133,11 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
     autoConnect?: boolean;
 
     /**
-     * @internal
-     *
      * Enter the room without announcing any presence. Only makes sense for
      * server-side sessions, which are invisible to the other users in the
      * room, and for which the server will refuse to fan out presence.
+     *
+     * @private This is a private API, do no use or rely on it.
      */
     headless?: boolean;
   }
