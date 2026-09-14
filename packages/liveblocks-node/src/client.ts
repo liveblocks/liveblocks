@@ -57,6 +57,8 @@ import type {
   SubscriptionDataPlain,
   ThreadData,
   ThreadDataPlain,
+  OpaqueRoom,
+  StorageStatus,
   ThreadVisibility,
   ToJson,
   UpdateRoomAccesses,
@@ -79,6 +81,7 @@ import {
   convertToUserSubscriptionData,
   createCommentAttachmentId,
   createManagedPool,
+  createClient,
   createNotificationSettings,
   createStorageFileId,
   getLiveFileId,
@@ -1037,6 +1040,48 @@ function inflateHistoryVersion(version: HistoryVersionPlain): HistoryVersion {
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
+/**
+ * Resolves once every op the callback produced has been acknowledged by the
+ * server.
+ *
+ * Waiting for "synchronized" is enough, including for LiveText, whose queued
+ * ops don't live in `unacknowledgedOps`: when an ack frees the in-flight slot,
+ * LiveText dispatches the next batch, and dispatching registers it as
+ * unacknowledged *before* the status is recomputed. So there is no window in
+ * which the room reports "synchronized" while a queued op is still waiting to
+ * go out.
+ */
+async function waitUntilStorageSynchronized(
+  room: OpaqueRoom,
+  signal?: AbortSignal
+): Promise<void> {
+  if (room.getStorageStatus() === "synchronized") {
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const unsubscribes: (() => void)[] = [];
+    const done = (err?: Error) => {
+      for (const unsub of unsubscribes) unsub();
+      if (err) reject(err);
+      else resolve();
+    };
+
+    unsubscribes.push(
+      room.events.storageStatus.subscribe((status: StorageStatus) => {
+        if (status === "synchronized") done();
+      })
+    );
+
+    if (signal) {
+      const onAbort = () => done(new Error("Aborted"));
+      signal.addEventListener("abort", onAbort, { once: true });
+      unsubscribes.push(() => signal.removeEventListener("abort", onAbort));
+      if (signal.aborted) done(new Error("Aborted"));
+    }
+  });
+}
+
 export class Liveblocks {
   readonly #secret: string;
   readonly #baseUrl: URL;
@@ -3471,7 +3516,7 @@ export class Liveblocks {
     callback: MutateStorageCallback,
     options?: MutateStorageOptions
   ): Promise<void> {
-    return this.#_mutateOneRoom(roomId, undefined, callback, options);
+    return this.#_mutateOneRoomOverSocket(roomId, undefined, callback, options);
   }
 
   /**
@@ -3512,6 +3557,56 @@ export class Liveblocks {
         this.#_mutateOneRoom(roomData.id, roomData, callback, options),
       concurrency
     );
+  }
+
+  /**
+   * Mints a short-lived token authorizing a backend session on this room, and
+   * runs the callback against a live Storage tree behind a real socket.
+   *
+   * Unlike the HTTP path below, the tree stays connected for the lifetime of
+   * the callback: ops are acknowledged, fix ops come back, and changes made by
+   * other clients while the callback is running are applied to `root`. That
+   * last part is a deliberate behavior change: `root` is no longer a snapshot
+   * frozen at the moment the callback started.
+   */
+  async #_mutateOneRoomOverSocket<RD extends RoomData | undefined>(
+    roomId: string,
+    room: RD,
+    callback: (context: { room: RD; root: LiveObject<S> }) => Awaitable<void>,
+    options?: MutateStorageOptions
+  ): Promise<void> {
+    const signal = options?.signal;
+
+    const client = createClient({
+      baseUrl: this.#baseUrl.toString(),
+      // Re-minted on every (re)connect, which is why the token can be
+      // short-lived: it only has to survive the handshake.
+      authEndpoint: async () => {
+        const res = await this.#post(
+          url`/v2/rooms/${roomId}/backend-session-token`,
+          undefined,
+          { signal }
+        );
+        if (!res.ok) {
+          throw await LiveblocksError.from(res);
+        }
+        return (await res.json()) as { token: string };
+      },
+    });
+
+    // A backend session has no presence, and the server refuses to fan any
+    // out on its behalf, so enter without announcing any.
+    const { room: liveRoom, leave } = client.enterRoom(roomId, {
+      headless: true,
+    });
+
+    try {
+      const { root } = await liveRoom.getStorage();
+      await callback({ room, root: root as LiveObject<S> });
+      await waitUntilStorageSynchronized(liveRoom, signal);
+    } finally {
+      leave();
+    }
   }
 
   async #_mutateOneRoom<RD extends RoomData | undefined>(
