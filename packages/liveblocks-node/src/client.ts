@@ -7,8 +7,6 @@ import type {
   Awaitable,
   BaseMetadata,
   BaseUserMeta,
-  ClientMsg,
-  ClientWireOp,
   CommentAttachment,
   CommentBody,
   CommentData,
@@ -39,7 +37,6 @@ import type {
   LiveFileReference,
   NotificationSettings,
   NotificationSettingsPlain,
-  Op,
   OptionalTupleUnless,
   PartialNotificationSettings,
   PartialUnless,
@@ -51,8 +48,6 @@ import type {
   RoomAccesses,
   RoomPermissions,
   RoomSubscriptionSettings,
-  StorageNode,
-  StorageUpdate,
   SubscriptionData,
   SubscriptionDataPlain,
   ThreadData,
@@ -71,7 +66,6 @@ import {
   autoRetry,
   checkBounds,
   chunk,
-  ClientMsgCode,
   convertToCommentData,
   convertToCommentUserReaction,
   convertToGroupData,
@@ -80,15 +74,12 @@ import {
   convertToThreadData,
   convertToUserSubscriptionData,
   createCommentAttachmentId,
-  createManagedPool,
   createClient,
   createNotificationSettings,
   createStorageFileId,
   getLiveFileId,
-  isPlainObject,
   LiveFile,
   LiveObject,
-  makeAbortController,
   normalizeRoomAccesses,
   normalizeRoomPermissions,
   normalizeUpdateRoomAccesses,
@@ -98,8 +89,7 @@ import {
   urljoin,
 } from "@liveblocks/core";
 
-import { asyncConsume, runConcurrently } from "./lib/itertools";
-import { LineStream, NdJsonStream } from "./lib/ndjson";
+import { runConcurrently } from "./lib/itertools";
 import { xwarn } from "./lib/xwarn";
 import { Session } from "./Session";
 import {
@@ -401,11 +391,6 @@ export type RoomUser<U extends BaseUserMeta = DU> = {
   id: string | null;
   connectionId: number;
   info: U["info"];
-};
-
-type RequestStorageMutationResponse = {
-  actor: number;
-  nodes: StorageNode[];
 };
 
 export type MutateStorageCallback = (context: {
@@ -1810,43 +1795,6 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
     return (await res.json()) as PlainLsonObject | ToJson<S>;
-  }
-
-  async #requestStorageMutation(
-    roomId: string,
-    options?: RequestOptions
-  ): Promise<RequestStorageMutationResponse> {
-    const resp = await this.#post(
-      url`/v2/rooms/${roomId}/request-storage-mutation`,
-      {},
-      options
-    );
-    if (!resp.ok) {
-      throw await LiveblocksError.from(resp);
-    }
-
-    if (resp.headers.get("content-type") !== "application/x-ndjson") {
-      throw new Error("Unexpected response content type");
-    }
-    if (resp.body === null) {
-      throw new Error("Unexpected null body in response");
-    }
-
-    const stream = resp.body
-      .pipeThrough(new TextDecoderStream()) // stream-decode all bytes to utf8 chunks
-      .pipeThrough(new LineStream()) // stream those strings by lines
-      .pipeThrough(new NdJsonStream()); // parse each line as JSON
-
-    // Read the first element from the NDJson stream and interpret it as the response data
-    const iter = stream[Symbol.asyncIterator]();
-    const first = (await iter.next()).value;
-    if (!isPlainObject(first) || typeof first.actor !== "number") {
-      throw new Error("Failed to obtain a unique session");
-    }
-
-    // The rest of the stream are all the Storage nodes
-    const nodes = (await asyncConsume(iter)) as StorageNode[];
-    return { actor: first.actor, nodes };
   }
 
   /**
@@ -3516,7 +3464,7 @@ export class Liveblocks {
     callback: MutateStorageCallback,
     options?: MutateStorageOptions
   ): Promise<void> {
-    return this.#_mutateOneRoomOverSocket(roomId, undefined, callback, options);
+    return this.#_mutateOneRoom(roomId, undefined, callback, options);
   }
 
   /**
@@ -3569,7 +3517,7 @@ export class Liveblocks {
    * last part is a deliberate behavior change: `root` is no longer a snapshot
    * frozen at the moment the callback started.
    */
-  async #_mutateOneRoomOverSocket<RD extends RoomData | undefined>(
+  async #_mutateOneRoom<RD extends RoomData | undefined>(
     roomId: string,
     room: RD,
     callback: (context: { room: RD; root: LiveObject<S> }) => Awaitable<void>,
@@ -3605,140 +3553,6 @@ export class Liveblocks {
     } finally {
       leave();
     }
-  }
-
-  async #_mutateOneRoom<RD extends RoomData | undefined>(
-    roomId: string,
-    room: RD,
-    callback: (context: { room: RD; root: LiveObject<S> }) => Awaitable<void>,
-    options?: MutateStorageOptions
-  ): Promise<void> {
-    // Hard-coded for now, see https://github.com/liveblocks/liveblocks/pull/2293#issuecomment-2740067249
-    const debounceInterval = 200;
-
-    // The plan:
-    // 1. Create a new pool
-    // 2. Download the storage contents
-    // 3. Construct the Live tree
-    // 4. Run the callback
-    // 5. Capture all the changes to the pool
-    // 6. Send the resulting ops to the server at a throttled interval
-
-    const { signal, abort } = makeAbortController(options?.signal);
-
-    // Set up a "debouncer": we'll flush the buffered ops to the server if
-    // there hasn't been an update to the buffered ops for a while. This
-    // behavior is slightly different from the browser client, which will emit
-    // ops as soon as they are available (= throttling)
-    let opsBuffer: ClientWireOp[] = [];
-    let outstandingFlush$: Promise<void> | undefined = undefined;
-    let lastFlush = performance.now();
-
-    const flushIfNeeded = (force: boolean) => {
-      if (opsBuffer.length === 0)
-        // Nothing to do
-        return;
-
-      if (outstandingFlush$) {
-        // There already is an outstanding flush, wait for it to complete
-        return;
-      }
-
-      const now = performance.now();
-      if (!(force || now - lastFlush > debounceInterval)) {
-        // We're still within the debounce window, do nothing right now
-        return;
-      }
-
-      // All good, flush right now
-      lastFlush = now;
-      const ops = opsBuffer;
-      opsBuffer = [];
-
-      outstandingFlush$ = this.#sendMessage(
-        roomId,
-        [{ type: ClientMsgCode.UPDATE_STORAGE, ops }],
-        { signal }
-      )
-        .catch((err) => {
-          // For now, if any error happens during one of the flushes, abort the entire thing
-          // TODO Think about more error handling control options here later (auto-retry, etc)
-          abort(err);
-        })
-        .finally(() => {
-          outstandingFlush$ = undefined;
-        });
-    };
-
-    // Download the storage contents
-    try {
-      const resp = await this.#requestStorageMutation(roomId, { signal });
-      const { actor, nodes } = resp;
-
-      // Create a new pool
-      const pool = createManagedPool({
-        getCurrentConnectionId: () => actor,
-        onDispatch: (
-          ops: ClientWireOp[],
-          _reverse: Op[],
-          _storageUpdates: Map<string, StorageUpdate>
-        ) => {
-          if (ops.length === 0) return;
-
-          // Capture all the changes to the pool
-          for (const op of ops) {
-            opsBuffer.push(op);
-          }
-          flushIfNeeded(/* force */ false);
-        },
-      });
-
-      // Construct the Live tree
-      const root = LiveObject._fromItems<S>(nodes, pool);
-
-      // Run the callback
-      const callback$ = callback({ room, root });
-
-      // If the callback synchronously makes changes, we'll want to flush those as soon as possible, then flush on an interval for the remainder of the async callback.
-      flushIfNeeded(/* force */ true);
-
-      await callback$;
-    } catch (e) {
-      abort();
-      throw e;
-    } finally {
-      // Await any outstanding flushes, and then flush one last time
-      await outstandingFlush$; // eslint-disable-line @typescript-eslint/await-thenable
-      flushIfNeeded(/* force */ true);
-      await outstandingFlush$; // eslint-disable-line @typescript-eslint/await-thenable
-    }
-  }
-
-  async #sendMessage(
-    roomId: string,
-    messages: ClientMsg<JsonObject, Json>[],
-    options?: RequestOptions
-  ) {
-    const res = await this.#post(
-      url`/v2/rooms/${roomId}/send-message`,
-      { messages },
-      { signal: options?.signal }
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-
-    // TODO: If res.ok, it will be a 200 response containing all returned Ops.
-    // These may include fix ops, which should get applied back to the managed
-    // pool.
-    // TODO Implement the handling of fix-ops:
-    // const data = (await res.json()) as {
-    //   messages: readonly (
-    //     | ServerMsg<JsonObject, BaseUserMeta, Json>
-    //     | readonly ServerMsg<JsonObject, BaseUserMeta, Json>[]
-    //   )[];
-    // };
-    // return data;
   }
 
   /**
