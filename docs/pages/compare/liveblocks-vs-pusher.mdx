@@ -1,78 +1,92 @@
 ---
 meta:
-  title: "Liveblocks vs Pusher"
+  title: "Liveblocks vs. Pusher Channels for collaborative apps"
   parentTitle: "Compare"
   description:
-    "Compare Liveblocks and Pusher for realtime apps. Learn when a collaboration
-    platform fits better than channels-based pub/sub messaging."
+    "Compare Liveblocks and Pusher Channels for realtime events and shared
+    documents. Understand persistence, presence, and the application logic you
+    need."
 ---
 
-[Pusher](https://pusher.com/docs) is a channels-based pub/sub service for
-pushing events to web and mobile clients. Liveblocks is a collaboration
-platform with document sync, conflict resolution, and product APIs.
+Choose Liveblocks when clients edit the same document and need a shared-data
+model. Choose Pusher Channels when your back end already owns application state
+and you need hosted events to update connected clients.
+[Storage](/docs/products/sync/storage) ·
+[Pusher Channels](https://pusher.com/docs/channels)
 
-Pusher delivers messages. Liveblocks maintains shared document state across
-clients.
+For a progress indicator, the server has already decided the value. For a
+collaborative editor, the system also needs to combine changes from participants
+and persist the resulting document.
 
-## At a glance [#at-a-glance]
+## Compare the responsibilities [#compare-the-responsibilities]
 
-| | Liveblocks | Pusher |
+| Area | Liveblocks | Pusher Channels |
 | --- | --- | --- |
-| Primary purpose | Collaborative sync engine | Pub/sub messaging |
-| Data model | Persistent collaborative documents | Channels and events |
-| Conflict resolution | Built-in | Application-level |
-| Best for | Multiplayer editors and canvases | Live updates, notifications, chat |
+| Core model | Shared documents and collaboration | Channels and events |
+| Presence | Participant [Presence](/docs/products/sync/presence) | Presence channels |
+| Persistent shared state | [Storage](/docs/products/sync/storage) document model | Add the application's storage and synchronization model |
+| Latest event | Choose events or persistent state according to the use case | Cache channels can provide the most recent event |
+| Application work | Model the document and collaboration flow | Define how messages change, persist, and restore application state |
 
-## When to choose Liveblocks [#when-to-choose-liveblocks]
+Sources: [Storage](/docs/products/sync/storage),
+[Pusher Channels](https://pusher.com/docs/channels),
+[cache channels](https://pusher.com/docs/channels/using_channels/cache-channels).
 
-Choose Liveblocks when you need:
+## Is a Pusher cache channel a persistent collaborative document? [#is-a-pusher-cache-channel-a-persistent-collaborative-document]
 
-- **Shared document state** with [Storage](/docs/products/sync/storage) or
-  [Yjs](/docs/products/sync/text-editing/yjs)
-- **Automatic conflict resolution** for simultaneous edits
-- **Collaboration features** including [Presence](/docs/products/sync/presence),
-  [Comments](/docs/products/comments), and [Notifications](/docs/products/notifications)
-- **Editor integrations** through [Sync integrations](/docs/products/sync/integrations)
+No. A cache channel delivers the latest cached event; the application decides
+what that payload represents. A complete board snapshot can be sent as an
+event, but that alone does not define how concurrent edits are merged or where
+the authoritative document is stored.
+[Pusher cache channels](https://pusher.com/docs/channels/using_channels/cache-channels)
 
-## When to choose Pusher [#when-to-choose-pusher]
-
-Choose Pusher when you need:
-
-- **Simple event broadcasting** to named channels
-- **Presence channels** for who is online without document sync
-- **Webhooks and server triggers** for lightweight realtime UX
-- **Minimal setup** for notifications, live feeds, or simple multiplayer signals
-
-## Feature comparison [#feature-comparison]
-
-| Feature | Liveblocks | Pusher |
+| Published payload | Good fit | Work still owned by the application |
 | --- | --- | --- |
-| Document sync | [Storage](/docs/products/sync/storage), Yjs | Build custom on events |
-| Conflict resolution | [Built-in](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync) | Not provided |
-| Presence | [Presence](/docs/products/sync/presence) | Presence channels |
-| Comments | [Comments](/docs/products/comments) | Build custom |
-| Text editors | [Integrations](/docs/products/sync/integrations) | Build custom |
-| Persistence | Managed per room | Not provided for document state |
-| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Private/presence channel auth |
-| Server API | [Node.js SDK](/docs/api-reference/liveblocks-node) | HTTP triggers and server SDKs |
-| Version history | [Version history](/docs/products/sync/version-history) | Build custom |
+| Latest processing percentage | A progress indicator | Produce the authoritative percentage |
+| Full board snapshot | Refreshing a view from server state | Persist the board and resolve overlapping writes |
+| Individual text operations | A custom collaborative editor | Select an editing algorithm, replay strategy, and storage |
 
-## Pricing [#pricing]
+Liveblocks is useful for the third case when you want an existing document
+system. Pusher Channels remains useful when your server already owns the state
+and clients mainly display updates.
 
-Liveblocks uses [plans and credits](/docs/pricing/plans). Pusher pricing is
-based on connections, messages, and channels. See
-[Pusher pricing](https://pusher.com/pricing) for current rates.
+## How do presence limits affect the design? [#how-do-presence-limits-affect-the-design]
 
-## Deployment [#deployment]
+Pusher documents a maximum of 100 members per presence channel, with limits on
+member metadata. Its subscription-counting feature addresses a different question:
+how many subscribers exist, rather than a full member list.
+[Presence-channel limits](https://pusher.com/docs/channels/using_channels/presence-channels)
 
-Liveblocks is managed with optional
-[self-hosting](/docs/platform/data-storage#Self-hosting).
+Liveblocks also has plan-specific simultaneous-connection limits per room. Use the
+expected number of simultaneous participants when comparing room and
+presence-channel limits. [Liveblocks limits](/docs/pricing/limits)
 
-Pusher is a fully managed service.
+## When to use hosted events [#when-to-use-hosted-events]
+
+Pusher Channels is a reasonable option when an existing back end already owns the
+data and you need to publish updates to clients. A server-produced progress
+indicator is one example: the client displays state that another system has
+already decided.
+
+Liveblocks is a fit when clients actively edit the same product surface and you
+want a shared-document model. Sync handles the document operations while Comments
+and Notifications support the review workflow.
+
+## Pricing and deployment [#pricing-and-deployment]
+
+Include the document store and synchronization layer alongside Channels in the
+Pusher estimate. Compare the same active editing workload with Liveblocks,
+including connection time, updates, and stored content where applicable.
+[Pusher pricing](https://pusher.com/pricing) ·
+[Liveblocks pricing](/docs/pricing/plans)
+
+Self-hosted Sync is a paid Enterprise add-on.
+[Deployment details](/docs/platform/data-storage#Self-hosting)
 
 ## Get started [#get-started]
 
-- Follow the [setup guide](/docs/get-started)
-- Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
-- Read the [client API](/docs/api-reference/liveblocks-client)
-- [Start for free](https://liveblocks.io/dashboard)
+Explore the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+to see the editable document that sits behind participants' updates.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
+Follow the [setup guide](/docs/get-started) for your project.

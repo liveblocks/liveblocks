@@ -1,90 +1,106 @@
 ---
 meta:
-  title: "Liveblocks vs Electric"
+  title: "Liveblocks vs. Electric Sync: documents and Postgres data"
   parentTitle: "Compare"
   description:
-    "Compare Liveblocks and Electric SQL for realtime apps. Learn when a
-    collaboration sync engine fits better than Postgres sync with a local-first
-    client."
+    "Compare Liveblocks and Electric Sync (ElectricSQL) for shared documents,
+    Postgres data, writes, Yjs editing, and self-hosting."
 ---
 
-[Electric](https://electric-sql.com/docs) syncs Postgres rows to local client
-stores for local-first applications. Liveblocks syncs collaborative documents
-with conflict resolution, presence, and editor integrations.
+Choose Liveblocks when people need to edit the same canvas, document, or
+workflow. Choose Electric Sync (ElectricSQL) when your main requirement is
+delivering Postgres records to clients while keeping your application's write
+path. Electric synchronizes database data; Liveblocks provides a shared-document
+editing model.
+[Electric Sync](https://electric-sql.com/docs/intro) ·
+[Liveblocks Storage](/docs/products/sync/storage)
 
-Electric optimizes for keeping app data aligned with Postgres. Liveblocks
-optimizes for multiplayer editing where several clients change the same
-document concurrently.
+For an issue tracker, those needs can coexist: business records live in Postgres
+while an editable specification has its own document model. The boundary is which
+system owns the content and how updates reach the rest of the application.
 
-## At a glance [#at-a-glance]
+## Compare what gets synchronized [#compare-what-gets-synchronized]
 
-| | Liveblocks | Electric |
+| Area | Liveblocks Sync | Electric Sync |
 | --- | --- | --- |
-| Primary purpose | Collaborative sync engine | Postgres-to-client sync |
-| Data model | Room-based collaborative documents | Postgres tables and shapes |
-| Conflict resolution | Built-in for [Storage](/docs/products/sync/storage) and [Yjs](https://docs.yjs.dev/) | Postgres as source of truth |
-| Best for | Editors, canvases, agents | Local-first apps backed by Postgres |
+| Core data model | Shared documents with live structures | Subsets of Postgres data called Shapes |
+| Read path | Subscribe to shared document state | Sync selected Postgres rows into clients over HTTP |
+| Write path | Edit shared data through supported client or server APIs | Send writes through your chosen application API or write pipeline |
+| Collaborative text | Supported `LiveText` and Yjs integrations | Compose with an editor synchronization layer; Electric publishes Yjs examples |
+| Self-hosting | Paid Enterprise Sync add-on | Deploy Electric with its Postgres and application services |
 
-## When to choose Liveblocks [#when-to-choose-liveblocks]
+Sources: [client API](/docs/api-reference/liveblocks-client),
+[server-side editing](/docs/products/sync/server-side-editing),
+[Electric overview](https://electric-sql.com/docs/intro),
+[write patterns](https://electric-sql.com/docs/guides/writes),
+[Yjs examples](https://electric-sql.com/docs/guides/yjs),
+[Electric deployment](https://electric-sql.com/docs/guides/deployment).
 
-Choose Liveblocks when you need:
+## Follow a change from the client back to the client [#follow-a-change-from-the-client-back-to-the-client]
 
-- **Fine-grained simultaneous editing** with
-  [conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
-- **Collaboration primitives** such as [Presence](/docs/products/sync/presence),
-  [Comments](/docs/products/comments), and [Notifications](/docs/products/notifications)
-- **Text editor integrations** via [Sync integrations](/docs/products/sync/integrations)
-- **Yjs or LiveText** for [text editing](/docs/products/sync/text-editing)
-- **[Version history](/docs/products/sync/version-history)** for collaborative snapshots
+Electric's read-path design leaves the write route with your application.
+Liveblocks applies edits to a shared document. The following paths illustrate
+that difference:
 
-## When to choose Electric [#when-to-choose-electric]
-
-Choose Electric when you need:
-
-- **Local-first UX** with offline reads and writes against a local replica
-- **Postgres as the system of record** with shapes defined over tables
-- **Sync from existing Postgres schemas** without a separate document model
-- **Integration with Electric's sync protocol** across your app data layer
-
-## Feature comparison [#feature-comparison]
-
-| Feature | Liveblocks | Electric |
+| Stage | Electric-based application | Liveblocks document |
 | --- | --- | --- |
-| Sync target | Collaborative rooms | Postgres tables |
-| Multiplayer editing merges | CRDT-like Storage, Yjs | Row-level sync; app merge logic |
-| Presence | [Presence](/docs/products/sync/presence) | Build custom |
-| Comments | [Comments](/docs/products/comments) | Build custom |
-| Text editors | [Integrations](/docs/products/sync/integrations) | Build custom |
-| Server-side access | [Node.js SDK](/docs/api-reference/liveblocks-node) | Postgres and Electric sync service |
-| Mirror to Postgres | [Webhooks](/docs/platform/webhooks), [Supabase integration](/docs/integrations/supabase) | Native Postgres sync |
-| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Your auth and Electric setup |
-| Agentic editing | [Agentic editing](/docs/products/sync/agentic-editing) | Application-level |
+| User makes a change | Local application state prepares a write | A live structure or editor integration applies a local edit |
+| Authoritative write | Your API validates and writes to Postgres | The document service applies the supported operation |
+| Other clients update | Electric delivers the relevant Postgres changes | Sync distributes document changes |
+| Reporting | Query authoritative Postgres records | Read the document or maintain a derived reporting copy |
 
-## Using both [#using-both]
+Electric's write guide describes options for optimistic updates and persistent
+local state. Your implementation determines what users see while a write is
+pending.
+[Electric write patterns](https://electric-sql.com/docs/guides/writes) ·
+[Liveblocks Storage](/docs/products/sync/storage)
 
-Teams sometimes use Liveblocks for live collaboration and mirror snapshots to
-Postgres for reporting—similar to the [Supabase integration](/docs/integrations/supabase)
-pattern. Electric addresses a different layer: keeping client replicas aligned
-with Postgres rather than hosting CRDT documents.
+## Does Electric Sync handle writes back to Postgres? [#does-electric-sync-handle-writes-back-to-postgres]
 
-## Pricing [#pricing]
+Electric describes itself as a read-path sync engine. It does not prescribe how
+your clients write back to Postgres. Its documentation covers several patterns,
+including online writes and persistent optimistic state. Your application chooses
+and operates that write path.
+[Electric writes](https://electric-sql.com/docs/guides/writes)
 
-Liveblocks uses [plans and credits](/docs/pricing/plans). Electric pricing
-depends on deployment and hosting choices; see
-[Electric documentation](https://electric-sql.com/docs) for current options.
+For an issue tracker, you might keep accounts, issues, and assignments in
+Postgres, use Electric to deliver the relevant records, and retain an existing
+API for updates. Inspect the full loop from a local edit through validation to
+the authoritative row returning to the client.
 
-## Deployment [#deployment]
+For a shared canvas, start with the operations on shapes, lists, and text.
+Evaluate whether the Liveblocks document model represents those interactions
+directly, then decide how that document connects to business records.
 
-Liveblocks is managed with optional
-[self-hosting](/docs/platform/data-storage#Self-hosting).
+## Can Electric Sync work with Yjs for collaborative editing? [#can-electric-sync-work-with-yjs-for-collaborative-editing]
 
-Electric runs as a sync service you deploy alongside Postgres, with
-[Electric deployment documentation](https://electric-sql.com/docs) describing
-topology options.
+Syncing a row containing a paragraph does not, by itself, define how two
+people's text edits merge. Electric documents examples that combine its sync with
+Yjs. Yjs supplies the text-editing model in that composition.
+[Electric and Yjs](https://electric-sql.com/docs/guides/yjs)
+
+With either design, identify the authoritative content representation. If you
+also maintain a searchable or reportable copy, define how that copy updates and
+how much delay the application can tolerate.
+
+## Pricing and deployment [#pricing-and-deployment]
+
+For Electric, include Postgres, the sync deployment, your write API, and any
+separate editor layer. For Liveblocks, include the document service or Enterprise
+deployment plus your application back end. Self-hosting does not make either
+complete system free to operate.
+[Electric deployment](https://electric-sql.com/docs/guides/deployment) ·
+[Liveblocks pricing](/docs/pricing/plans)
+
+Self-hosted Sync is a paid Enterprise add-on. Deployment options for Comments and
+Notifications are separate.
+[Deployment details](/docs/platform/data-storage#Self-hosting)
 
 ## Get started [#get-started]
 
-- Explore [Sync](/docs/products/sync)
-- Read [how conflict resolution works](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
-- Follow the [setup guide](/docs/get-started)
-- [Start for free](https://liveblocks.io/dashboard)
+Explore the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage),
+then use the [canvas guide](/docs/use-cases/canvas) to see where document state,
+presence, and application tools fit.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
+For self-hosting, [contact sales](/contact/sales).

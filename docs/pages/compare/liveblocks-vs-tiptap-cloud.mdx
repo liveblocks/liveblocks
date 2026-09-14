@@ -1,84 +1,135 @@
 ---
 meta:
-  title: "Liveblocks vs Tiptap Cloud"
+  title: "Liveblocks vs. Tiptap Cloud for collaborative editing"
   parentTitle: "Compare"
   description:
-    "Compare Liveblocks and Tiptap Cloud for collaborative editing. Learn when a
-    full sync platform fits better than a managed Tiptap collaboration backend."
+    "Compare Liveblocks and Tiptap Cloud for collaborative editing, comments, AI
+    changes, and shared application state. Choose around the complete product
+    experience."
 ---
 
-[Tiptap Cloud](https://tiptap.dev/docs/collaboration/getting-started/overview)
-provides hosted collaboration for Tiptap editors, built on Yjs. Liveblocks
-provides a broader sync platform with [Storage](/docs/products/sync/storage), [Presence](/docs/products/sync/presence), [Comments](/docs/products/comments),
-[Notifications](/docs/products/notifications), and [editor integrations](/docs/products/sync/integrations) for Tiptap and other editors.
+Choose Liveblocks when collaboration spans an editor, shared application state,
+and review workflows. Choose Tiptap Cloud when its document services and editor
+ecosystem cover the experience you want to ship. Both support collaborative
+editing; the difference is the scope of the application around it.
+[Liveblocks integrations](/docs/products/sync/integrations) ·
+[Tiptap Collaboration](https://tiptap.dev/docs/collaboration/getting-started/overview)
 
-Both can power multiplayer Tiptap. The difference is how much of the
-collaboration stack you want beyond the editor document.
+This guide uses "Tiptap Cloud" for the hosted document services now presented
+within Tiptap Platform. Tiptap Editor and those services are separate choices.
+You can use Tiptap Editor with Liveblocks. The comparison covers comments,
+document APIs, and shared application state.
+[Tiptap docs](https://tiptap.dev/docs)
 
-## At a glance [#at-a-glance]
+## Compare the service around the editor [#compare-the-service-around-the-editor]
 
-| | Liveblocks | Tiptap Cloud |
+| Area | Liveblocks | Tiptap Cloud |
 | --- | --- | --- |
-| Scope | Full collaboration platform | Tiptap-focused collaboration |
-| Document models | [Storage](/docs/products/sync/storage), [Yjs](https://docs.yjs.dev/), [LiveText](/docs/products/sync/storage#LiveText) | Yjs for Tiptap |
-| Best for | Editors plus canvases, comments, agents | Tiptap-only collaboration |
+| Editor relationship | Supports Tiptap through an integration | Collaboration service closely integrated with Tiptap |
+| Document model | Choose a supported `LiveText` or Yjs integration | Yjs-based synchronization |
+| Review features | Contextual Comments and Notifications alongside editor integrations | Document comments, version history, and snapshot comparison |
+| Back-end changes | Server-side editing APIs; behavior depends on the data model | Document APIs for retrieving and editing content |
+| Wider application | Storage for structured shared documents, with separate Comments and Notifications products | Document services for the editor; other application data keeps its own storage and synchronization design |
+| Version history | Room snapshots capture Storage and Yjs; restore behavior depends on the document model | Document snapshots and snapshot comparison, with plan-specific availability |
 
-## When to choose Liveblocks [#when-to-choose-liveblocks]
+Sources: [LiveText vs Yjs](/docs/guides/livetext-vs-yjs),
+[server-side editing](/docs/products/sync/server-side-editing),
+[Comments](/docs/products/comments), [Notifications](/docs/products/notifications),
+[Tiptap Collaboration](https://tiptap.dev/docs/collaboration/getting-started/overview),
+[Tiptap documents](https://tiptap.dev/docs/collaboration/documents).
 
-Choose Liveblocks when you need:
+## Can I keep Tiptap Editor and use Liveblocks? [#can-i-keep-tiptap-editor-and-use-liveblocks]
 
-- **Tiptap plus other data** in the same room, such as canvas shapes in
-  [Storage](/docs/products/sync/storage) alongside a Yjs document
-- **[Comments](/docs/products/comments) and [Notifications](/docs/products/notifications)** as first-class products
-- **Multiple editor integrations** via [Sync integrations](/docs/products/sync/integrations)
-- **Agentic editing** and [server-side editing](/docs/products/sync/server-side-editing)
-  across Storage and Yjs
-- **[Version history](/docs/products/sync/version-history)** that can cover Storage and Yjs together
+Yes. Liveblocks maintains `@liveblocks/react-tiptap`. Choosing that integration
+changes the collaboration service around the editor; it does not require
+replacing Tiptap with a different editor framework.
+[Official integrations](/docs/products/sync/integrations)
 
-Liveblocks provides a [Tiptap integration](/docs/products/sync/text-editing/tiptap)
-through `@liveblocks/react-tiptap`.
+For an existing application, keep three migration decisions separate:
 
-## When to choose Tiptap Cloud [#when-to-choose-tiptap-cloud]
+| Layer | Migration work |
+| --- | --- |
+| Editor schema and extensions | Keep compatible nodes and marks; verify custom extensions against the selected integration |
+| Document content | Move content into the selected Liveblocks document model and verify representative documents |
+| Service-owned data | Map document IDs, access rules, comments, and history separately; do not assume content transfer also transfers these records |
 
-Choose Tiptap Cloud when you need:
+Content, permissions, comments, and history need separate migration steps.
+Preserve the original data and validate representative documents with the new
+integration before switching providers.
 
-- **Managed Tiptap collaboration** with minimal setup for a Tiptap-only product
-- **Tiptap-native workflows** such as AI extensions tied to the Tiptap ecosystem
-- **A backend focused on the editor** without broader app sync requirements
+## How do comments and version history compare? [#how-do-comments-and-version-history-compare]
 
-## Feature comparison [#feature-comparison]
+Both services offer comments and document history. Tiptap's document services
+include snapshots, snapshot comparison, and server-side content injection.
+Availability varies by feature and plan.
+[Tiptap document services](https://tiptap.dev/docs/collaboration/documents)
 
-| Feature | Liveblocks | Tiptap Cloud |
-| --- | --- | --- |
-| Tiptap collaboration | [Tiptap integration](/docs/products/sync/text-editing/tiptap) | [Tiptap Collaboration](https://tiptap.dev/docs/collaboration/getting-started/overview) |
-| Underlying CRDT | Yjs | Yjs |
-| Structured app data | [Storage](/docs/products/sync/storage), [LiveText](/docs/products/sync/storage#LiveText) | Editor document focus |
-| Presence | [Presence](/docs/products/sync/presence) | Awareness via collaboration |
-| Comments | [Comments](/docs/products/comments) | Build custom or extensions |
-| Notifications | [Notifications](/docs/products/notifications) | Build custom |
-| Other editors | Lexical, BlockNote, CodeMirror, ProseMirror | Tiptap ecosystem |
-| Canvas and whiteboard | [Canvas guide](/docs/use-cases/canvas) with Storage | Not primary focus |
-| Server-side access | [Node.js SDK](/docs/api-reference/liveblocks-node) | Tiptap server APIs |
-| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Tiptap Cloud auth |
+Liveblocks version snapshots capture Storage and Yjs. Restoring Storage restores
+that document; it does not also restore a separate Yjs document. For a canvas with
+embedded text, keeping the text in Storage through `LiveText` gives the content
+and layout one document boundary.
+[Version history](/docs/products/sync/version-history) ·
+[LiveText vs Yjs](/docs/guides/livetext-vs-yjs)
 
-## Pricing [#pricing]
+For a workspace with a brief, a board, and review threads, map each surface
+explicitly: the editor stores the brief, shared structures hold the board,
+Comments holds discussion, and Notifications provides the return path. Tiptap
+Cloud is a strong fit when its editor-centered services cover the product.
+Liveblocks is useful when that workflow extends across several shared surfaces.
 
-Liveblocks uses [plans and credits](/docs/pricing/plans) metered on
-[collaboration minutes](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute)
-and storage. Tiptap Cloud pricing is based on Tiptap Cloud plans; see
-[Tiptap pricing](https://tiptap.dev/pricing) for current rates.
+## Editing with people and AI agents [#editing-with-people-and-ai-agents]
 
-## Deployment [#deployment]
+Tiptap's AI tooling can stream edits into a live cloud document through
+Collaboration. Liveblocks provides server-side editing for shared state. The
+editor mode and server APIs determine how an AI agent can change content while
+people are editing it.
+[Tiptap AI streaming](https://tiptap.dev/docs/content-ai/capabilities/agent/overview)
+· [Liveblocks server-side editing](/docs/products/sync/server-side-editing)
 
-Liveblocks is managed with optional
-[self-hosting](/docs/platform/data-storage#Self-hosting) on Enterprise.
-[Data retention](/docs/platform/data-storage) is documented per product.
+## Self-hosting with Hocuspocus [#self-hosting-with-hocuspocus]
 
-Tiptap Cloud is a managed service operated by Tiptap.
+[Hocuspocus](https://tiptap.dev/docs/hocuspocus/introduction) is an open-source
+collaboration back end built around Yjs. It is relevant when you want to operate
+that part of the stack yourself, and its shared-data uses extend beyond a single
+text editor. Tiptap also offers managed collaboration and enterprise deployment
+options. [Hocuspocus](https://tiptap.dev/docs/hocuspocus/introduction) ·
+[Tiptap Collaboration](https://tiptap.dev/docs/collaboration/getting-started/overview)
+
+With Hocuspocus, your team operates the collaboration server and its supporting
+infrastructure. Include that work when comparing it with a managed service.
+
+## How does document billing differ from collaboration billing? [#how-does-document-billing-differ-from-collaboration-billing]
+
+Tiptap's published monthly platform prices start at $49 for Start and $149 for
+Team. Cloud document capacity and paid add-ons affect the complete package.
+Liveblocks uses a plan with credits and metered usage. Compare the required
+services as well as the base subscriptions. Prices checked September 10, 2026.
+[Tiptap pricing](https://tiptap.dev/pricing) ·
+[Liveblocks pricing](/docs/pricing/plans)
+
+Consider an application with 200 editable briefs and 20,000 read-only logs.
+Tiptap counts documents stored in its platform; documents kept only in your own
+database do not consume cloud-document slots. Editing an existing cloud document
+does not create another slot. Keeping the logs outside the platform therefore
+changes the estimate materially.
+[Tiptap document counting](https://tiptap.dev/docs/collaboration/documents)
+
+For Liveblocks, inventory collaboration time, updates, and stored data rather
+than treating every stored document as an active editing session. Include comments
+and notifications if the workflow uses them.
+[Billing definitions](/docs/pricing/plans)
+
+Both offer deployment choices. Tiptap documents enterprise on-premises
+deployment and the open-source Hocuspocus server. Liveblocks self-hosted Sync is
+a paid Enterprise add-on; do not assume that covers every surrounding product.
+[Tiptap deployment](https://tiptap.dev/docs/collaboration/getting-started/overview)
+· [Liveblocks deployment](/docs/platform/data-storage#Self-hosting)
 
 ## Get started [#get-started]
 
-- Read [Liveblocks text editing](/docs/products/sync/text-editing)
-- Follow the [Tiptap get-started guide](/docs/get-started/nextjs-tiptap)
-- Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
-- [Start for free](https://liveblocks.io/dashboard)
+Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
+for a working application with Sync, Comments, and Notifications. Then check your
+editor against the [supported integrations](/docs/products/sync/integrations).
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
+Follow the [setup guide](/docs/get-started) for your project.

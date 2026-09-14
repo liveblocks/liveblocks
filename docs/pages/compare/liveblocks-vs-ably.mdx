@@ -1,83 +1,122 @@
 ---
 meta:
-  title: "Liveblocks vs Ably"
+  title: "Liveblocks vs. Ably for collaborative apps"
   parentTitle: "Compare"
   description:
-    "Compare Liveblocks and Ably for realtime apps. Learn when a collaboration
-    platform fits better than a pub/sub messaging service."
+    "Compare Liveblocks Sync with Ably Pub/Sub, Spaces, and LiveObjects. Choose
+    around shared-data types, collaboration features, and your existing stack."
 ---
 
-Liveblocks and [Ably](https://ably.com/docs) both deliver realtime updates over
-WebSockets, but they target different layers of the stack. Ably is a general
-pub/sub messaging platform with channels, presence, and message history.
-Liveblocks is a collaboration platform with document sync, conflict resolution,
-and product features such as comments and notifications.
+Choose Liveblocks for shared documents and the comments, review, and notification
+workflows around them. Choose Ably when its messaging, shared-state, presence,
+or chat products match your realtime architecture. Both provide more than message
+delivery. [Liveblocks docs](/docs/products/sync) ·
+[Ably products](https://ably.com/docs)
 
-## At a glance [#at-a-glance]
+This guide compares specific products: Liveblocks Sync, Comments, and
+Notifications with Ably Pub/Sub, Spaces, LiveObjects, Chat, and AI Transport.
+Ably LiveObjects provides persistent shared maps and counters; the distinction
+is which editing model and surrounding experience fit your application.
+[LiveObjects](https://ably.com/docs/products/liveobjects)
 
-| | Liveblocks | Ably |
+## Compare the building blocks [#compare-the-building-blocks]
+
+| Area | Liveblocks | Ably |
 | --- | --- | --- |
-| Primary purpose | Collaborative sync engine | Realtime messaging platform |
-| Data model | Persistent collaborative documents | Channels and messages |
-| Conflict resolution | Built-in for shared documents | Application-level |
-| Best for | Multiplayer editors, canvases, agents | Chat, notifications, live dashboards |
+| Shared state | [Storage](/docs/products/sync/storage) documents with objects, maps, lists, and text | [LiveObjects](https://ably.com/docs/products/liveobjects) with shared maps and counters |
+| Presence | [Presence](/docs/products/sync/presence) for participant state | Presence and Spaces for shared activity |
+| Document editing | [LiveText](/docs/products/sync/storage#LiveText) and supported Yjs integrations | `LiveMap` and `LiveCounter` are shared-state primitives; text editing needs a compatible editing model alongside them |
+| Product surface | Shared documents, contextual comments, and notifications | Pub/Sub for messaging, LiveObjects for shared state, Spaces for collaborative activity, and Chat for conversations |
+| Interface customization | Default comment components, primitives, and hooks | Product-specific SDKs and components, including a React Chat UI Kit |
+| Persistence | Sync data persists until explicitly deleted | LiveObjects expires after its configured inactivity period, 90 days by default |
 
-## When to choose Liveblocks [#when-to-choose-liveblocks]
+Sources: [Storage](/docs/products/sync/storage),
+[integrations](/docs/products/sync/integrations), Spaces,
+[LiveObjects](https://ably.com/docs/products/liveobjects),
+[LiveObjects storage](https://ably.com/docs/products/liveobjects/storage),
+[Liveblocks commenting interfaces](/docs/products/comments/default-components),
+[Ably Chat](https://ably.com/docs/products/chat).
 
-Choose Liveblocks when you need:
+## Choose the interface and the infrastructure together [#choose-the-interface-and-the-infrastructure-together]
 
-- **Document state** that multiple users edit simultaneously with automatic
-  [conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
-- **Collaboration primitives** including [Storage](/docs/products/sync/storage),
-  [Presence](/docs/products/sync/presence), [Comments](/docs/products/comments),
-  and [Notifications](/docs/products/notifications)
-- **Editor and canvas integrations** via [Sync integrations](/docs/products/sync/integrations)
-- **Version history** and [multiplayer undo/redo](/docs/products/sync/storage)
+For a design-review feature, users might annotate an object, mention a teammate,
+resolve a thread, and return through a notification. That workflow needs shared
+canvas data, contextual discussions, and notifications.
 
-## When to choose Ably [#when-to-choose-ably]
+With Liveblocks Comments, you can style the default components or combine hooks
+and primitives for a custom interface. This lets you choose how much of the
+commenting UI to assemble. Ably also provides ready-made UI for specific use
+cases, including its React Chat UI Kit. Choose the components that support the
+conversation in your app: a discussion attached to a document, a group chat, or
+both. [Liveblocks commenting interfaces](/docs/products/comments/default-components)
+· [Ably Chat](https://ably.com/docs/products/chat)
 
-Choose Ably when you need:
+## How do Liveblocks documents compare with Ably LiveObjects? [#how-do-liveblocks-documents-compare-with-ably-liveobjects]
 
-- **General-purpose pub/sub** for chat, notifications, live scores, or IoT
-- **Message history and rewind** for late-joining subscribers
-- **Broad protocol support** beyond WebSockets
-- **Global messaging infrastructure** without building document merge logic
+Liveblocks [Storage](/docs/products/sync/storage) includes objects, maps, ordered
+lists, and text. Ably [LiveObjects](https://ably.com/docs/products/liveobjects)
+supplies shared maps and counters. Both synchronize persistent shared state; the
+useful distinction is the operations your feature needs.
+[Liveblocks Storage](/docs/products/sync/storage) ·
+[Ably LiveObjects](https://ably.com/docs/products/liveobjects)
 
-## Feature comparison [#feature-comparison]
-
-| Feature | Liveblocks | Ably |
+| Feature in a review app | Liveblocks design | Ably design |
 | --- | --- | --- |
-| Shared document sync | [Storage](/docs/products/sync/storage), Yjs, LiveText | Build custom on channels |
-| Conflict resolution | Built-in | Not provided |
-| Presence | [Presence](/docs/products/sync/presence) with room semantics | Channel presence |
-| Comments and threads | [Comments](/docs/products/comments) | Build custom |
-| Text editor integrations | [Official integrations](/docs/products/sync/integrations) | Build custom |
-| Server-side updates | [Server-side editing](/docs/products/sync/server-side-editing) | REST and server SDKs |
-| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Token-based auth |
-| Message history | [Version history](/docs/products/sync/version-history) for documents | Message history for channels |
-| Client SDKs | React, JavaScript, React Native | Many platforms and languages |
+| Votes on a proposal | Store shared values in the document | A `LiveCounter` represents a shared count |
+| Ordered agenda with editable paragraphs | `LiveList` and a supported text integration | Define ordering and choose the text-editing layer around the shared objects |
+| Conversation attached to a shape | Contextual Comments, with application-supplied context | Select Chat or application conversation logic for the required attachment model |
 
-## Pricing [#pricing]
+Ably fits applications built around messages and shared objects. Liveblocks fits
+applications built around shared documents and their review workflows.
 
-Liveblocks bills on [plans and credits](/docs/pricing/plans), including
-[collaboration minutes](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute)
-and storage usage. See [Liveblocks limits](/docs/pricing/limits).
+## What happens when a document is inactive or a client reconnects? [#what-happens-when-a-document-is-inactive-or-a-client-reconnects]
 
-Ably pricing is based on message volume, concurrent connections, and channel
-minutes. See [Ably pricing](https://ably.com/pricing) for current rates.
+Liveblocks stores Sync data until it is explicitly deleted. Ably LiveObjects has
+a configurable inactivity retention period from 24 hours to 90 days, with 90 days
+the default; longer retention requires discussion with Ably. A document that
+must remain untouched for a year needs a retention or archive design that covers
+that lifecycle. [Liveblocks retention](/docs/platform/data-storage) ·
+[Ably object storage](https://ably.com/docs/products/liveobjects/storage)
 
-## Deployment [#deployment]
+Ably recovers short LiveObjects interruptions by replaying operations and longer
+interruptions by resynchronizing current object state. For long-term archives or
+collaborative text, you still need the corresponding storage policy and editing
+model. [Ably recovery](https://ably.com/docs/products/liveobjects/recovery)
 
-Liveblocks is a managed service with optional
-[self-hosting](/docs/platform/data-storage#Self-hosting) on Enterprise.
-[Data storage and retention](/docs/platform/data-storage) are documented per
-product area.
+## How do they support AI features? [#how-do-they-support-ai-features]
 
-Ably is a fully managed global service. Self-hosting is not the primary model.
+Ably AI Transport provides durable sessions for agent conversations, including
+streaming responses, reconnection, and access across devices. It can also use
+LiveObjects for shared session state. Liveblocks Sync lets server-side code edit
+shared documents alongside users. A resumable agent conversation and edits to a
+shared document have different requirements. An application can need both.
+[Ably AI Transport](https://ably.com/docs/products/ai-transport) ·
+[Liveblocks server-side editing](/docs/products/sync/server-side-editing)
+
+## How do the billing units compare? [#how-do-the-billing-units-compare]
+
+For LiveObjects, Ably counts inbound operations, outbound deliveries, object
+synchronization, connections, and channels under the applicable pricing model. A
+map set counts as one inbound message; delivering that update counts once per
+connected client. [LiveObjects billing](https://ably.com/docs/pricing/liveobjects)
+
+For example, 100 map-set operations delivered to three connected clients produce
+100 inbound and 300 outbound messages. That excludes initial object sync, other
+operations, connection minutes, and channel charges. It is a usage illustration,
+not an invoice estimate.
+
+Liveblocks meters collaboration time, data updates, storage, and selected
+collaboration features. Those units do not translate one-for-one into Ably
+message counts. Use the same editing session and feature scope when estimating
+either design. [Liveblocks pricing](/docs/pricing/plans)
+
+Self-hosted Liveblocks Sync is a paid Enterprise add-on.
+[Deployment details](/docs/platform/data-storage#Self-hosting)
 
 ## Get started [#get-started]
 
-- Follow the [setup guide](/docs/get-started)
-- Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
-- Read the [client API](/docs/api-reference/liveblocks-client)
-- [Start for free](https://liveblocks.io/dashboard)
+Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced),
+which brings Sync, Comments, and Notifications into one application.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
+Follow the [setup guide](/docs/get-started) for your project.

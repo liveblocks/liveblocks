@@ -1,101 +1,116 @@
 ---
 meta:
-  title: "Liveblocks vs Supabase"
+  title: "Liveblocks vs. Supabase for realtime collaboration"
   parentTitle: "Compare"
   description:
-    "Compare Liveblocks and Supabase Realtime for collaborative apps. Learn
-    when to use a sync engine vs Postgres-backed realtime, and how to use both
-    together."
+    "Compare Liveblocks and Supabase for shared editing, database updates, and
+    presence. See when to choose either tool and how they can work together."
 ---
 
-Liveblocks and [Supabase Realtime](https://supabase.com/docs/guides/realtime)
-solve different problems. Supabase is a Postgres platform with database,
-authentication, and realtime change feeds. Liveblocks is a hosted sync engine
-for collaborative documents, with conflict resolution, presence, and editor
-integrations built in.
+Choose Liveblocks when users need to edit a shared document, canvas, or workflow.
+Choose Supabase when the core requirement is a Postgres back end with realtime
+database updates. Use both when business records belong in Postgres and the
+product also needs a dedicated editing layer. [Liveblocks Sync](/docs/products/sync)
+· [Supabase database](https://supabase.com/docs/guides/database)
 
-Many teams use both: Liveblocks for the live editing experience, and Supabase
-for relational data, search, and reporting through a
-[Supabase integration](/docs/integrations/supabase).
+Liveblocks supplies the shared-data structures and editing integrations.
+Supabase supplies the relational application database. Use Liveblocks for the
+content people edit together and Supabase for the records your application
+queries.
 
-## At a glance [#at-a-glance]
+## Compare the responsibilities [#compare-the-responsibilities]
 
-| | Liveblocks | Supabase |
+| Area | Liveblocks | Supabase |
 | --- | --- | --- |
-| Primary purpose | Collaborative sync engine | Postgres database platform |
-| Conflict resolution | Built-in for [Storage](/docs/products/sync/storage) and [Yjs](https://docs.yjs.dev/) | Application-level for Realtime |
-| Best for | Multiplayer documents, canvases, editors | Relational app data and auth |
-| Persistence model | Room-based collaborative documents | Postgres tables and rows |
-| Collaboration primitives | [Presence](/docs/products/sync/presence), [Comments](/docs/products/comments), [Notifications](/docs/products/notifications), undo | Realtime broadcasts and Postgres changes |
+| Persistent data | Shared documents through [Storage](/docs/products/sync/storage) in [Sync](/docs/products/sync) | Postgres tables and relationships |
+| Realtime updates | Document synchronization, presence, and events | Broadcast, Presence, and Postgres Changes |
+| Shared text | [LiveText](/docs/products/sync/storage#LiveText) and supported Yjs integrations | Add the editor synchronization model your app needs |
+| Collaboration interface | Products for [Comments](/docs/products/comments) and [Notifications](/docs/products/notifications) alongside Sync | Realtime UI components include cursors, presence, and chat |
+| Main architecture question | Which product surfaces should share a document? | Which data and business rules should live in Postgres? |
 
-## When to choose Liveblocks [#when-to-choose-liveblocks]
+Sources: [Storage](/docs/products/sync/storage),
+[editor integrations](/docs/products/sync/integrations), [Comments](/docs/products/comments),
+[Notifications](/docs/products/notifications),
+[Supabase Realtime](https://supabase.com/docs/guides/realtime).
 
-Choose Liveblocks when you need:
+## Does Supabase Realtime merge concurrent text edits? [#does-supabase-realtime-merge-concurrent-text-edits]
 
-- **Multiplayer editing** with automatic [conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
-- **Collaboration features** such as [Presence](/docs/products/sync/presence),
-  [Comments](/docs/products/comments), and [Notifications](/docs/products/notifications)
-- **Editor integrations** for Tiptap, Lexical, BlockNote, and other tools via
-  [Sync integrations](/docs/products/sync/integrations)
-- **Version history** and [server-side editing](/docs/products/sync/server-side-editing)
-  without building your own sync layer
+[Supabase Realtime](https://supabase.com/docs/guides/realtime) delivers
+broadcasts, presence, and database changes. A collaborative text editor also
+needs rules for combining edits inside the text. Add an editor synchronization
+model, such as [Yjs](https://docs.yjs.dev/), or use a supported Liveblocks
+editor integration. A database subscription delivers the changed value; the
+editor model determines how concurrent text edits merge.
+[Supabase Realtime](https://supabase.com/docs/guides/realtime) ·
+[Liveblocks text editing](/docs/products/sync/text-editing)
 
-## When to choose Supabase [#when-to-choose-supabase]
+## Choose around the interaction [#choose-around-the-interaction]
 
-Choose Supabase when you need:
+For an order dashboard, a row update may be enough: the server changes an
+order's status, and connected clients display the new value. Supabase is a
+natural option when Postgres is already the application's source of truth.
 
-- **Relational data** with SQL, Row Level Security, and Postgres extensions
-- **Authentication and user management** as part of your backend
-- **Realtime change feeds** for table rows, suitable for dashboards and app state
-- **Self-hosted Postgres** with the [Supabase deployment model](https://supabase.com/docs/guides/self-hosting)
+For a planning board, store each card in a live structure. One person changes
+its title while another changes its due date: because those are separate keys,
+both edits can remain. The UI reflects a shared result without an
+application-specific event protocol for merging those fields.
+[Conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
 
-## Feature comparison [#feature-comparison]
+[Sync](/docs/products/sync)'s behavior depends on the data type. Separate fields
+can preserve separate changes; concurrent writes to the same scalar field
+resolve by server arrival order. A shared-data system doesn't remove the need to
+model your document deliberately.
+[Conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
 
-| Feature | Liveblocks | Supabase |
+## Can I use Liveblocks with Supabase? [#can-i-use-liveblocks-with-supabase]
+
+Yes. Keep business records in Supabase and editable documents in Liveblocks. The
+documented integration sends a reporting copy from Liveblocks to Supabase
+through webhooks. It is one-way and eventually consistent; updating that copy in
+Postgres does not edit the Liveblocks document.
+[Supabase integration](/docs/integrations/supabase)
+
+For a planning app, this division gives each kind of data a clear owner:
+
+| Data | Authoritative system | How the app uses it |
 | --- | --- | --- |
-| Collaborative documents | [Storage](/docs/products/sync/storage), [LiveText](/docs/products/sync/storage#LiveText), [Yjs](/docs/products/sync/text-editing/yjs) | Build on top of Realtime or Postgres |
-| Conflict-free editing | Built-in CRDT-like types and Yjs hosting | Not provided; you implement merge logic |
-| Presence and cursors | [Presence](/docs/products/sync/presence) | Build custom with Realtime channels |
-| Comments and threads | [Comments](/docs/products/comments) product | Build custom tables and Realtime |
-| Text editor integrations | [Official integrations](/docs/products/sync/integrations) | Community patterns with Realtime |
-| Server-side document access | [Node.js SDK](/docs/api-reference/liveblocks-node), REST API | SQL and Postgres functions |
-| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) with your auth provider | Built-in Supabase Auth |
-| Offline support | Optimistic updates and reconnect handling | Depends on client implementation |
-| Mirror to Postgres | [Webhooks and Supabase integration](/docs/integrations/supabase) | Native Postgres storage |
+| Projects, accounts, and billing | Supabase | Query records and enforce application rules |
+| Shared board and card content | Liveblocks | Participants edit the same document |
+| Searchable board summary | Supabase mirror | Query a derived copy; tolerate webhook delay |
 
-## Pricing [#pricing]
+In this design, store the Liveblocks room ID with the project record so your
+server can authorize the correct document. Keep mirrored content read-only from
+the application's perspective.
 
-Liveblocks uses usage-based [plans and credits](/docs/pricing/plans), metered on
-[collaboration minutes](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute),
-storage updates, and related usage. See [Liveblocks limits](/docs/pricing/limits)
-for plan details.
+## How do the costs differ? [#how-do-the-costs-differ]
 
-Supabase pricing is based on database size, bandwidth, and Realtime
-connections. See [Supabase pricing](https://supabase.com/pricing) for current
-rates.
+Supabase Pro starts at $25 per month and includes $10 in compute credits, enough
+for one Micro instance. Additional projects and usage can increase that amount.
+Liveblocks is an additional service when the application keeps Supabase.
+[Supabase pricing](https://supabase.com/pricing)
 
-## Deployment [#deployment]
+For an illustrative monthly workflow with 1,000 active editing sessions, two
+participants per session, and 15 minutes of continuous collaboration, the
+Liveblocks collaboration meter is 30,000 minutes. At $0.002 per minute, that is
+$60 of metered usage before credits. It excludes stored data, updates, comments,
+and other usage. Solo sessions are not billed as collaboration minutes.
+[Collaboration-minute definition](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute)
 
-Liveblocks runs as a managed service. Enterprise customers can
-[self-host Sync](/docs/platform/data-storage#Self-hosting). Data
-[retention and storage](/docs/platform/data-storage) policies apply per product
-area.
+That calculation measures the editing layer, not a replacement for the Supabase
+bill. Apply the selected plan's credits once across all Liveblocks usage.
+[Plans and credits](/docs/pricing/plans)
 
-Supabase offers managed cloud hosting and [self-hosted deployment](https://supabase.com/docs/guides/self-hosting).
-
-## Using both together [#using-both-together]
-
-A common pattern keeps Liveblocks as the live editing channel and mirrors
-document snapshots to Supabase for search, analytics, and workflows. The
-[Supabase integration guide](/docs/integrations/supabase) and
-[step-by-step sync guide](/docs/guides/how-to-synchronize-your-liveblocks-storage-document-data-to-a-supabase-postgres-database)
-show how to upsert [Storage](/docs/products/sync/storage) data when webhooks fire. Treat Supabase as an
-eventually consistent mirror, not the live editing channel.
+Supabase supports self-hosting. Liveblocks offers self-hosted Sync as a paid
+Enterprise add-on. Your infrastructure, database, backups, and operations remain
+part of a self-hosted budget.
+[Supabase deployment](https://supabase.com/docs/guides/self-hosting) ·
+[Liveblocks deployment](/docs/platform/data-storage#Self-hosting)
 
 ## Get started [#get-started]
 
-- Follow the [setup guide](/docs/get-started)
-- Build a [collaborative canvas](/docs/use-cases/canvas) or
-  [text editor](/docs/use-cases/text-editor)
-- Explore the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
-- [Start for free](https://liveblocks.io/dashboard)
+Try the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced),
+then use the [Supabase integration](/docs/integrations/supabase) if you need a
+reporting copy in Postgres.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
+Follow the [setup guide](/docs/get-started) for your project.
