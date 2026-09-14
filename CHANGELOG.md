@@ -3562,7 +3562,7 @@ Liveblocks account.
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
     to verify event requests from Liveblock's webhook functionality. It also
     provides fully typed `WebhookEvents`.
-  - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
+  - Check out our [Webhooks guide](https://liveblocks.io/docs/platform/webhooks)
     for more details
 
 ## v0.19.8
@@ -3724,7 +3724,7 @@ Internal updates:
 All packages now provide an `isReadOnly` flag on user instances. It is available
 when getting self or others. `isReadOnly` is true when storage is read-only, see
 the
-[room management guide](https://liveblocks.io/docs/guides/managing-rooms-users-permissions#permissions)
+[room management guide](https://liveblocks.io/docs/api-reference/authentication#Default-room-permissions)
 for more information.
 
 ```ts
@@ -3785,7 +3785,7 @@ In **@liveblocks/react**:
   ```
 
   To read more, see
-  https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+  https://liveblocks.io/docs/api-reference/troubleshooting#stale-props-zombie-child
 
 - In **@liveblocks/zustand**:
   - Fix a confusing error message
