@@ -1,0 +1,13 @@
+.DS_Store
+node_modules
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.vercel
+.next
+.liveblocks
+out
+next-env.d.ts
+AGENTS.md
+CLAUDE.md
