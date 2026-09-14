@@ -1,0 +1,111 @@
+---
+meta:
+  title: "Build vs buy: Liveblocks"
+  parentTitle: "Compare"
+  description:
+    "Compare building your own collaboration stack with AI assistance vs using
+    Liveblocks. Learn what you still need to operate when you build vs buy."
+---
+
+AI coding tools can scaffold WebSocket servers, CRDT wiring, and editor
+integrations quickly. That speed can make building a collaboration stack feel
+within reach. The remaining work is often operational: auth, persistence,
+scaling, conflict edge cases, and product features such as comments and
+notifications.
+
+Liveblocks is the buy option: a hosted sync engine with
+[Storage](/docs/products/sync/storage), [Presence](/docs/products/sync/presence),
+[Comments](/docs/products/comments), [Notifications](/docs/products/notifications),
+and [editor integrations](/docs/products/sync/integrations) already integrated.
+
+## At a glance [#at-a-glance]
+
+| | Build with AI + open source | Liveblocks |
+| --- | --- | --- |
+| Time to first demo | Fast with generated boilerplate | Fast with SDKs and examples |
+| Time to production | Depends on infra, auth, and edge cases | Managed sync and persistence |
+| Conflict resolution | You choose and operate CRDTs | Built-in Storage and Yjs |
+| Ongoing ops | WebSockets, DB, monitoring, scaling | Managed service |
+| Best for | Fully custom protocols and control | Shipping collaboration products |
+
+## What AI helps you build quickly [#what-ai-helps-you-build-quickly]
+
+With AI assistance, teams often generate:
+
+- A [Socket.IO](https://socket.io/docs/v4/) or WebSocket server with rooms
+- Basic [Yjs](https://docs.yjs.dev/) provider wiring for an editor
+- Client hooks that broadcast cursor positions
+- Starter persistence to Postgres or Redis
+
+These pieces demonstrate multiplayer editing in a prototype. Production usually
+requires more.
+
+## What you still own when you build [#what-you-still-own-when-you-build]
+
+Building your own stack typically means owning:
+
+| Area | Considerations |
+| --- | --- |
+| Authentication and permissions | Room access, read/write scopes, token refresh |
+| Persistence | Snapshot strategy, compaction, recovery, backups |
+| Conflict resolution | CRDT choice, merge semantics, undo/redo behavior |
+| Scaling | Sticky sessions, horizontal WebSocket scaling, regional latency |
+| Presence | Awareness cleanup, reconnect continuity |
+| Comments and notifications | Thread model, mentions, delivery channels |
+| Version history | Snapshot storage, restore semantics |
+| Agentic editing | Validated server writes alongside human edits |
+| Monitoring | Connection health, sync lag, error rates |
+
+Liveblocks documents [conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync),
+[authentication](/docs/api-reference/authentication),
+[server-side editing](/docs/products/sync/server-side-editing), and
+[data storage](/docs/platform/data-storage) for the managed path.
+
+## When to build [#when-to-build]
+
+Build your own stack when you need:
+
+- **Non-standard sync protocols** that do not map to documents or CRDTs
+- **Deep infrastructure control** for compliance or custom deployment topologies
+- **Existing realtime systems** you must extend rather than replace
+- **Engineering capacity** to operate WebSocket infrastructure long term
+
+## When to buy Liveblocks [#when-to-buy-liveblocks]
+
+Choose Liveblocks when you need:
+
+- **Production multiplayer** without operating sync servers
+- **Editor and canvas integrations** via [Sync integrations](/docs/products/sync/integrations)
+- **Comments, notifications, and presence** as product-ready APIs
+- **Predictable billing** through [plans and credits](/docs/pricing/plans)
+- **Optional self-hosting** on Enterprise via
+  [self-hosting](/docs/platform/data-storage#Self-hosting)
+
+## Feature comparison [#feature-comparison]
+
+| Capability | Build with AI + OSS | Liveblocks |
+| --- | --- | --- |
+| WebSocket infrastructure | You deploy and scale | Managed |
+| Document sync | Yjs, custom CRDTs, or OT | [Storage](/docs/products/sync/storage), [Yjs](/docs/products/sync/text-editing/yjs), [LiveText](/docs/products/sync/storage#LiveText) |
+| Auth | Your implementation | [Liveblocks authentication](/docs/api-reference/authentication) |
+| Comments | Build custom | [Comments](/docs/products/comments) |
+| Notifications | Build custom | [Notifications](/docs/products/notifications) |
+| Version history | Build custom | [Version history](/docs/products/sync/version-history) |
+| Agentic editing | Build custom | [Agentic editing](/docs/products/sync/agentic-editing) |
+| Examples and docs | Community + generated code | [Get started](/docs/get-started), [use cases](/docs/use-cases/canvas) |
+
+## Pricing [#pricing]
+
+Building incurs infrastructure, database, and engineering costs that vary by
+scale. Liveblocks uses usage-based [plans and credits](/docs/pricing/plans),
+including [collaboration minutes](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute).
+See [Liveblocks limits](/docs/pricing/limits) for plan boundaries.
+
+## Get started [#get-started]
+
+- Compare [Liveblocks vs Yjs](/docs/compare/liveblocks-vs-yjs) and
+  [Liveblocks vs Socket.IO](/docs/compare/liveblocks-vs-socketio)
+- Follow the [setup guide](/docs/get-started)
+- Explore the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+- Use [agent skills](/docs/tools/agent-skills) to integrate Liveblocks with AI tools
+- [Start for free](https://liveblocks.io/dashboard)

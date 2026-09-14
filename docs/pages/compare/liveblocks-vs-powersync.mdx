@@ -1,0 +1,85 @@
+---
+meta:
+  title: "Liveblocks vs PowerSync"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and PowerSync for realtime apps. Learn when a
+    collaboration sync engine fits better than offline-first SQLite sync to
+    Postgres."
+---
+
+[PowerSync](https://docs.powersync.com/) syncs Postgres (or MongoDB) to local
+SQLite databases for offline-first mobile and web clients. Liveblocks syncs
+collaborative documents with conflict resolution, presence, and editor
+integrations.
+
+PowerSync optimizes for offline-capable app data mirrored from a database.
+Liveblocks optimizes for realtime multiplayer editing on shared documents.
+
+## At a glance [#at-a-glance]
+
+| | Liveblocks | PowerSync |
+| --- | --- | --- |
+| Primary purpose | Collaborative sync engine | SQLite sync to backend DB |
+| Data model | Room-based collaborative documents | SQL tables in local SQLite |
+| Conflict resolution | Built-in for Storage and Yjs | Backend rules and sync buckets |
+| Best for | Editors, canvases, agents | Offline-first apps with SQL data |
+
+## When to choose Liveblocks [#when-to-choose-liveblocks]
+
+Choose Liveblocks when you need:
+
+- **Multiplayer document editing** with
+  [conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+- **Collaboration features** such as [Presence](/docs/products/sync/presence),
+  [Comments](/docs/products/comments), and [Notifications](/docs/products/notifications)
+- **Text editor integrations** via [Sync integrations](/docs/products/sync/integrations)
+- **Version history** and [agentic editing](/docs/products/sync/agentic-editing)
+- **Web and agent clients** connecting over managed sync
+
+## When to choose PowerSync [#when-to-choose-powersync]
+
+Choose PowerSync when you need:
+
+- **Offline-first mobile apps** with local SQLite queries
+- **Postgres or MongoDB as source of truth** synced to devices
+- **Bucket-based sync rules** over relational data
+- **Field operations teams** already standardized on PowerSync
+
+## Feature comparison [#feature-comparison]
+
+| Feature | Liveblocks | PowerSync |
+| --- | --- | --- |
+| Sync target | Collaborative rooms | Local SQLite |
+| Multiplayer editing | CRDT-like Storage, Yjs | App-level on synced rows |
+| Presence | [Presence](/docs/products/sync/presence) | Build custom |
+| Comments | [Comments](/docs/products/comments) | Build custom |
+| Text editors | [Integrations](/docs/products/sync/integrations) | Build custom |
+| Offline | Optimistic sync with reconnect | Local SQLite reads/writes |
+| Backend | Managed Liveblocks | Postgres/Mongo + PowerSync service |
+| Server-side updates | [Server-side editing](/docs/products/sync/server-side-editing) | Backend writes + sync |
+| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Your auth + sync rules |
+| Mirror to Postgres | [Webhooks](/docs/platform/webhooks), integrations | Native Postgres sync |
+
+## Pricing [#pricing]
+
+Liveblocks uses [plans and credits](/docs/pricing/plans). PowerSync pricing
+depends on plan tier and usage; see
+[PowerSync pricing](https://www.powersync.com/pricing) for current rates.
+
+## Deployment [#deployment]
+
+Liveblocks is managed with optional
+[self-hosting](/docs/platform/data-storage#Self-hosting).
+[Data retention](/docs/platform/data-storage) is documented per product.
+
+PowerSync deploys as a sync service connected to your database, with
+[PowerSync deployment docs](https://docs.powersync.com/) describing self-hosted
+and cloud options.
+
+## Get started [#get-started]
+
+- Explore [Sync](/docs/products/sync)
+- Read [how conflict resolution works](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+- Follow the [setup guide](/docs/get-started)
+- [Start for free](https://liveblocks.io/dashboard)

@@ -1,0 +1,78 @@
+---
+meta:
+  title: "Liveblocks vs Pusher"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Pusher for realtime apps. Learn when a collaboration
+    platform fits better than channels-based pub/sub messaging."
+---
+
+[Pusher](https://pusher.com/docs) is a channels-based pub/sub service for
+pushing events to web and mobile clients. Liveblocks is a collaboration
+platform with document sync, conflict resolution, and product APIs.
+
+Pusher delivers messages. Liveblocks maintains shared document state across
+clients.
+
+## At a glance [#at-a-glance]
+
+| | Liveblocks | Pusher |
+| --- | --- | --- |
+| Primary purpose | Collaborative sync engine | Pub/sub messaging |
+| Data model | Persistent collaborative documents | Channels and events |
+| Conflict resolution | Built-in | Application-level |
+| Best for | Multiplayer editors and canvases | Live updates, notifications, chat |
+
+## When to choose Liveblocks [#when-to-choose-liveblocks]
+
+Choose Liveblocks when you need:
+
+- **Shared document state** with [Storage](/docs/products/sync/storage) or
+  [Yjs](/docs/products/sync/text-editing/yjs)
+- **Automatic conflict resolution** for simultaneous edits
+- **Collaboration features** including [Presence](/docs/products/sync/presence),
+  [Comments](/docs/products/comments), and [Notifications](/docs/products/notifications)
+- **Editor integrations** through [Sync integrations](/docs/products/sync/integrations)
+
+## When to choose Pusher [#when-to-choose-pusher]
+
+Choose Pusher when you need:
+
+- **Simple event broadcasting** to named channels
+- **Presence channels** for who is online without document sync
+- **Webhooks and server triggers** for lightweight realtime UX
+- **Minimal setup** for notifications, live feeds, or simple multiplayer signals
+
+## Feature comparison [#feature-comparison]
+
+| Feature | Liveblocks | Pusher |
+| --- | --- | --- |
+| Document sync | [Storage](/docs/products/sync/storage), Yjs | Build custom on events |
+| Conflict resolution | [Built-in](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync) | Not provided |
+| Presence | [Presence](/docs/products/sync/presence) | Presence channels |
+| Comments | [Comments](/docs/products/comments) | Build custom |
+| Text editors | [Integrations](/docs/products/sync/integrations) | Build custom |
+| Persistence | Managed per room | Not provided for document state |
+| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Private/presence channel auth |
+| Server API | [Node.js SDK](/docs/api-reference/liveblocks-node) | HTTP triggers and server SDKs |
+| Version history | [Version history](/docs/products/sync/version-history) | Build custom |
+
+## Pricing [#pricing]
+
+Liveblocks uses [plans and credits](/docs/pricing/plans). Pusher pricing is
+based on connections, messages, and channels. See
+[Pusher pricing](https://pusher.com/pricing) for current rates.
+
+## Deployment [#deployment]
+
+Liveblocks is managed with optional
+[self-hosting](/docs/platform/data-storage#Self-hosting).
+
+Pusher is a fully managed service.
+
+## Get started [#get-started]
+
+- Follow the [setup guide](/docs/get-started)
+- Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
+- Read the [client API](/docs/api-reference/liveblocks-client)
+- [Start for free](https://liveblocks.io/dashboard)

@@ -1,0 +1,84 @@
+---
+meta:
+  title: "Liveblocks vs Tiptap Cloud"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Tiptap Cloud for collaborative editing. Learn when a
+    full sync platform fits better than a managed Tiptap collaboration backend."
+---
+
+[Tiptap Cloud](https://tiptap.dev/docs/collaboration/getting-started/overview)
+provides hosted collaboration for Tiptap editors, built on Yjs. Liveblocks
+provides a broader sync platform with Storage, Presence, Comments,
+Notifications, and integrations for Tiptap and other editors.
+
+Both can power multiplayer Tiptap. The difference is how much of the
+collaboration stack you want beyond the editor document.
+
+## At a glance [#at-a-glance]
+
+| | Liveblocks | Tiptap Cloud |
+| --- | --- | --- |
+| Scope | Full collaboration platform | Tiptap-focused collaboration |
+| Document models | Storage, Yjs, LiveText | Yjs for Tiptap |
+| Best for | Editors plus canvases, comments, agents | Tiptap-only collaboration |
+
+## When to choose Liveblocks [#when-to-choose-liveblocks]
+
+Choose Liveblocks when you need:
+
+- **Tiptap plus other data** in the same room, such as canvas shapes in
+  [Storage](/docs/products/sync/storage) alongside a Yjs document
+- **Comments and notifications** as first-class products
+- **Multiple editor integrations** via [Sync integrations](/docs/products/sync/integrations)
+- **Agentic editing** and [server-side editing](/docs/products/sync/server-side-editing)
+  across Storage and Yjs
+- **Version history** that can cover Storage and Yjs together
+
+Liveblocks provides a [Tiptap integration](/docs/products/sync/text-editing/tiptap)
+through `@liveblocks/react-tiptap`.
+
+## When to choose Tiptap Cloud [#when-to-choose-tiptap-cloud]
+
+Choose Tiptap Cloud when you need:
+
+- **Managed Tiptap collaboration** with minimal setup for a Tiptap-only product
+- **Tiptap-native workflows** such as AI extensions tied to the Tiptap ecosystem
+- **A backend focused on the editor** without broader app sync requirements
+
+## Feature comparison [#feature-comparison]
+
+| Feature | Liveblocks | Tiptap Cloud |
+| --- | --- | --- |
+| Tiptap collaboration | [Tiptap integration](/docs/products/sync/text-editing/tiptap) | [Tiptap Collaboration](https://tiptap.dev/docs/collaboration/getting-started/overview) |
+| Underlying CRDT | Yjs | Yjs |
+| Structured app data | [Storage](/docs/products/sync/storage), [LiveText](/docs/products/sync/storage#LiveText) | Editor document focus |
+| Presence | [Presence](/docs/products/sync/presence) | Awareness via collaboration |
+| Comments | [Comments](/docs/products/comments) | Build custom or extensions |
+| Notifications | [Notifications](/docs/products/notifications) | Build custom |
+| Other editors | Lexical, BlockNote, CodeMirror, ProseMirror | Tiptap ecosystem |
+| Canvas and whiteboard | [Canvas guide](/docs/use-cases/canvas) with Storage | Not primary focus |
+| Server-side access | [Node.js SDK](/docs/api-reference/liveblocks-node) | Tiptap server APIs |
+| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Tiptap Cloud auth |
+
+## Pricing [#pricing]
+
+Liveblocks uses [plans and credits](/docs/pricing/plans) metered on
+[collaboration minutes](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute)
+and storage. Tiptap Cloud pricing is based on Tiptap Cloud plans; see
+[Tiptap pricing](https://tiptap.dev/pricing) for current rates.
+
+## Deployment [#deployment]
+
+Liveblocks is managed with optional
+[self-hosting](/docs/platform/data-storage#Self-hosting) on Enterprise.
+[Data retention](/docs/platform/data-storage) is documented per product.
+
+Tiptap Cloud is a managed service operated by Tiptap.
+
+## Get started [#get-started]
+
+- Read [Liveblocks text editing](/docs/products/sync/text-editing)
+- Follow the [Tiptap get-started guide](/docs/get-started/nextjs-tiptap)
+- Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
+- [Start for free](https://liveblocks.io/dashboard)

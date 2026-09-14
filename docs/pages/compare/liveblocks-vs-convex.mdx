@@ -1,0 +1,81 @@
+---
+meta:
+  title: "Liveblocks vs Convex"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Convex for realtime apps. Learn when a collaboration
+    sync engine fits better than a reactive backend with queries and mutations."
+---
+
+[Convex](https://docs.convex.dev/) is a reactive backend with TypeScript
+functions, queries, and mutations that update clients automatically. Liveblocks
+is a hosted sync engine for collaborative documents with conflict resolution,
+presence, and editor integrations.
+
+Both can deliver realtime UX. Convex optimizes for app backend logic and
+database queries. Liveblocks optimizes for multiplayer editing and
+collaboration primitives.
+
+## At a glance [#at-a-glance]
+
+| | Liveblocks | Convex |
+| --- | --- | --- |
+| Primary purpose | Collaborative sync engine | Reactive application backend |
+| Data model | Room-based collaborative documents | Tables and documents in Convex DB |
+| Conflict resolution | Built-in for Storage and Yjs | Transactional mutations |
+| Best for | Multiplayer editors and canvases | Full-stack apps with server functions |
+
+## When to choose Liveblocks [#when-to-choose-liveblocks]
+
+Choose Liveblocks when you need:
+
+- **Fine-grained collaborative editing** with
+  [conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+  for simultaneous edits on the same fields
+- **Editor and canvas integrations** via [Sync integrations](/docs/products/sync/integrations)
+- **Presence, comments, and notifications** as dedicated products
+- **Yjs or LiveText** for [text editing](/docs/products/sync/text-editing)
+- **Version history** and per-user undo for collaborative documents
+
+## When to choose Convex [#when-to-choose-convex]
+
+Choose Convex when you need:
+
+- **Server functions** for business logic, scheduling, and integrations
+- **Reactive queries** that rerender when database rows change
+- **A unified backend** for auth, storage, and API logic
+- **Transactional updates** where last-write semantics on rows are sufficient
+
+## Feature comparison [#feature-comparison]
+
+| Feature | Liveblocks | Convex |
+| --- | --- | --- |
+| Multiplayer document sync | [Storage](/docs/products/sync/storage), Yjs | Build on mutations and subscriptions |
+| CRDT-style merges | Built-in | Application-level |
+| Presence | [Presence](/docs/products/sync/presence) | Build custom |
+| Comments | [Comments](/docs/products/comments) | Build custom tables |
+| Text editors | [Integrations](/docs/products/sync/integrations) | Community patterns |
+| Server-side logic | [Server-side editing](/docs/products/sync/server-side-editing), webhooks | Convex functions |
+| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Convex auth integrations |
+| Offline and reconnect | Built into sync client | Client cache and sync |
+| Agentic editing | [Agentic editing](/docs/products/sync/agentic-editing) | Functions and actions |
+
+## Pricing [#pricing]
+
+Liveblocks uses [plans and credits](/docs/pricing/plans). Convex pricing is
+based on function calls, storage, and bandwidth. See
+[Convex pricing](https://www.convex.dev/pricing) for current rates.
+
+## Deployment [#deployment]
+
+Liveblocks is managed with optional
+[self-hosting](/docs/platform/data-storage#Self-hosting).
+
+Convex is a managed cloud platform. Self-hosting is not the primary model.
+
+## Get started [#get-started]
+
+- Explore [Sync](/docs/products/sync)
+- Follow the [setup guide](/docs/get-started)
+- Build a [collaborative canvas](/docs/use-cases/canvas)
+- [Start for free](https://liveblocks.io/dashboard)

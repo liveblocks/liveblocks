@@ -1,0 +1,89 @@
+---
+meta:
+  title: "Liveblocks vs Yjs"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Yjs for collaborative editing. Learn when to host Yjs
+    on Liveblocks vs running your own provider and persistence."
+---
+
+[Yjs](https://docs.yjs.dev/) is a CRDT library for merging concurrent edits.
+Liveblocks can host Yjs documents through
+[Liveblocks Yjs](/docs/products/sync/text-editing/yjs), or you can run Yjs with
+your own WebSocket provider and database.
+
+The choice is not about merge correctness—both approaches resolve conflicts. It
+is about how much infrastructure, persistence, and product surface you want to
+build and operate yourself.
+
+## At a glance [#at-a-glance]
+
+| | Liveblocks + Yjs | Self-hosted Yjs |
+| --- | --- | --- |
+| What you get | Hosted provider, persistence, auth, product APIs | CRDT library only |
+| Networking | Managed WebSocket sync | You run y-websocket, Hocuspocus, or similar |
+| Persistence | Built-in room storage | You choose and operate a database |
+| Best for | Shipping editors quickly | Maximum control and custom stacks |
+
+## When to choose Liveblocks [#when-to-choose-liveblocks]
+
+Choose Liveblocks when you want:
+
+- **Hosted Yjs sync** with [`@liveblocks/yjs`](/docs/products/sync/text-editing/yjs)
+  and no WebSocket server to operate
+- **Room-based auth and permissions** via
+  [Liveblocks authentication](/docs/api-reference/authentication)
+- **Presence** wired to Yjs awareness through Liveblocks
+- **Comments, notifications, and version history** alongside the Yjs document
+- **Server-side access** through the [Node.js SDK](/docs/api-reference/liveblocks-node)
+  and REST API
+
+Liveblocks also offers [LiveText](/docs/products/sync/storage#LiveText) as an
+alternative when text should live in the same Storage tree as structured data.
+See [LiveText vs Yjs](/docs/guides/livetext-vs-yjs) for that decision.
+
+## When to choose self-hosted Yjs [#when-to-choose-self-hosted-yjs]
+
+Choose self-hosted Yjs when you need:
+
+- **Full control** over the sync protocol, persistence format, and deployment
+- **Custom providers** such as WebRTC, IndexedDB-only, or hybrid topologies
+- **No vendor dependency** for the CRDT and transport layers
+- **Existing Yjs infrastructure** you already operate in production
+
+## Feature comparison [#feature-comparison]
+
+| Feature | Liveblocks + Yjs | Self-hosted Yjs |
+| --- | --- | --- |
+| CRDT engine | [Yjs](https://docs.yjs.dev/) | [Yjs](https://docs.yjs.dev/) |
+| Sync provider | [Liveblocks Yjs](/docs/products/sync/text-editing/yjs) | y-websocket, Hocuspocus, custom |
+| Persistence | Managed per room | Your database and ops |
+| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Your auth layer |
+| Presence | Liveblocks [Presence](/docs/products/sync/presence) | Yjs awareness + your backend |
+| Editor bindings | [Integrations](/docs/products/sync/integrations) | y-prosemirror, y-codemirror, etc. |
+| Version history | [Version history](/docs/products/sync/version-history) | Build custom snapshots |
+| Server-side editing | [Server-side editing](/docs/products/sync/server-side-editing) | Custom with Yjs updates |
+| Structured app data | [Storage](/docs/products/sync/storage) in same room | Separate from Yjs doc |
+| Offline support | Provider reconnect and optional IndexedDB | Provider-dependent |
+
+## Pricing [#pricing]
+
+Liveblocks uses [plans and credits](/docs/pricing/plans) metered on
+[collaboration minutes](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute)
+and storage. Yjs itself is MIT-licensed; self-hosting costs are your
+infrastructure and engineering time.
+
+## Deployment [#deployment]
+
+With Liveblocks, deployment is managed. Enterprise customers can
+[self-host Sync](/docs/platform/data-storage#Self-hosting).
+
+Self-hosted Yjs requires you to deploy, scale, and monitor WebSocket servers,
+databases, and backup strategies.
+
+## Get started [#get-started]
+
+- Read [Liveblocks Yjs](/docs/products/sync/text-editing/yjs)
+- Compare [LiveText vs Yjs](/docs/guides/livetext-vs-yjs)
+- Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
+- Follow the [setup guide](/docs/get-started)

@@ -1,0 +1,83 @@
+---
+meta:
+  title: "Liveblocks vs Ably"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Ably for realtime apps. Learn when a collaboration
+    platform fits better than a pub/sub messaging service."
+---
+
+Liveblocks and [Ably](https://ably.com/docs) both deliver realtime updates over
+WebSockets, but they target different layers of the stack. Ably is a general
+pub/sub messaging platform with channels, presence, and message history.
+Liveblocks is a collaboration platform with document sync, conflict resolution,
+and product features such as comments and notifications.
+
+## At a glance [#at-a-glance]
+
+| | Liveblocks | Ably |
+| --- | --- | --- |
+| Primary purpose | Collaborative sync engine | Realtime messaging platform |
+| Data model | Persistent collaborative documents | Channels and messages |
+| Conflict resolution | Built-in for shared documents | Application-level |
+| Best for | Multiplayer editors, canvases, agents | Chat, notifications, live dashboards |
+
+## When to choose Liveblocks [#when-to-choose-liveblocks]
+
+Choose Liveblocks when you need:
+
+- **Document state** that multiple users edit simultaneously with automatic
+  [conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+- **Collaboration primitives** including [Storage](/docs/products/sync/storage),
+  [Presence](/docs/products/sync/presence), [Comments](/docs/products/comments),
+  and [Notifications](/docs/products/notifications)
+- **Editor and canvas integrations** via [Sync integrations](/docs/products/sync/integrations)
+- **Version history** and [multiplayer undo/redo](/docs/products/sync/storage)
+
+## When to choose Ably [#when-to-choose-ably]
+
+Choose Ably when you need:
+
+- **General-purpose pub/sub** for chat, notifications, live scores, or IoT
+- **Message history and rewind** for late-joining subscribers
+- **Broad protocol support** beyond WebSockets
+- **Global messaging infrastructure** without building document merge logic
+
+## Feature comparison [#feature-comparison]
+
+| Feature | Liveblocks | Ably |
+| --- | --- | --- |
+| Shared document sync | [Storage](/docs/products/sync/storage), Yjs, LiveText | Build custom on channels |
+| Conflict resolution | Built-in | Not provided |
+| Presence | [Presence](/docs/products/sync/presence) with room semantics | Channel presence |
+| Comments and threads | [Comments](/docs/products/comments) | Build custom |
+| Text editor integrations | [Official integrations](/docs/products/sync/integrations) | Build custom |
+| Server-side updates | [Server-side editing](/docs/products/sync/server-side-editing) | REST and server SDKs |
+| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Token-based auth |
+| Message history | [Version history](/docs/products/sync/version-history) for documents | Message history for channels |
+| Client SDKs | React, JavaScript, React Native | Many platforms and languages |
+
+## Pricing [#pricing]
+
+Liveblocks bills on [plans and credits](/docs/pricing/plans), including
+[collaboration minutes](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute)
+and storage usage. See [Liveblocks limits](/docs/pricing/limits).
+
+Ably pricing is based on message volume, concurrent connections, and channel
+minutes. See [Ably pricing](https://ably.com/pricing) for current rates.
+
+## Deployment [#deployment]
+
+Liveblocks is a managed service with optional
+[self-hosting](/docs/platform/data-storage#Self-hosting) on Enterprise.
+[Data storage and retention](/docs/platform/data-storage) are documented per
+product area.
+
+Ably is a fully managed global service. Self-hosting is not the primary model.
+
+## Get started [#get-started]
+
+- Follow the [setup guide](/docs/get-started)
+- Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
+- Read the [client API](/docs/api-reference/liveblocks-client)
+- [Start for free](https://liveblocks.io/dashboard)

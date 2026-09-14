@@ -1,0 +1,80 @@
+---
+meta:
+  title: "Liveblocks vs Socket.IO"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Socket.IO for realtime apps. Learn when a
+    collaboration platform replaces a custom WebSocket server."
+---
+
+[Socket.IO](https://socket.io/docs/v4/) is a WebSocket library and server for
+event-based realtime communication. Liveblocks is a hosted collaboration
+platform with document sync, conflict resolution, and product APIs.
+
+Socket.IO gives you transport and rooms. Liveblocks gives you multiplayer
+documents, presence, and editor integrations on top of managed sync.
+
+## At a glance [#at-a-glance]
+
+| | Liveblocks | Socket.IO |
+| --- | --- | --- |
+| Primary purpose | Collaborative sync engine | WebSocket transport and events |
+| State model | Persistent conflict-free documents | Events you define |
+| Conflict resolution | Built-in | Build custom |
+| Best for | Editors, canvases, multiplayer UX | Custom realtime protocols |
+
+## When to choose Liveblocks [#when-to-choose-liveblocks]
+
+Choose Liveblocks when you need:
+
+- **Shared document state** with [Storage](/docs/products/sync/storage) or
+  [Yjs](/docs/products/sync/text-editing/yjs) instead of hand-rolled merges
+- **Collaboration features** such as [Presence](/docs/products/sync/presence),
+  [Comments](/docs/products/comments), and [Notifications](/docs/products/notifications)
+- **Editor integrations** through [Sync integrations](/docs/products/sync/integrations)
+- **Managed scaling** without operating Socket.IO adapters and persistence
+
+## When to choose Socket.IO [#when-to-choose-socketio]
+
+Choose Socket.IO when you need:
+
+- **Full control** over message formats, room logic, and server code
+- **Custom protocols** that do not map to document sync
+- **Self-hosted infrastructure** on your own servers or containers
+- **Minimal abstraction** and the ability to pair with libraries like Yjs via
+  y-socket.io
+
+## Feature comparison [#feature-comparison]
+
+| Feature | Liveblocks | Socket.IO |
+| --- | --- | --- |
+| Transport | Managed WebSockets | WebSocket with fallbacks |
+| Document sync | [Storage](/docs/products/sync/storage), Yjs, LiveText | Build custom |
+| Conflict resolution | [Built-in](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync) | Not provided |
+| Presence | [Presence](/docs/products/sync/presence) | Build custom |
+| Comments | [Comments](/docs/products/comments) | Build custom |
+| Persistence | Managed per room | You implement |
+| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Your middleware |
+| Server-side API | [Node.js SDK](/docs/api-reference/liveblocks-node), REST | Your Node server |
+| Version history | [Version history](/docs/products/sync/version-history) | Build custom |
+| Horizontal scaling | Managed | Redis adapter and ops |
+
+## Pricing [#pricing]
+
+Liveblocks uses [plans and credits](/docs/pricing/plans). Socket.IO is
+open source; costs are your servers, adapters, persistence, and maintenance.
+
+## Deployment [#deployment]
+
+Liveblocks is managed with optional
+[self-hosting](/docs/platform/data-storage#Self-hosting) on Enterprise.
+
+Socket.IO runs on infrastructure you deploy and scale, including sticky sessions
+and pub/sub adapters for multi-node setups.
+
+## Get started [#get-started]
+
+- Follow the [setup guide](/docs/get-started)
+- Explore the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+- Read the [client API](/docs/api-reference/liveblocks-client)
+- [Start for free](https://liveblocks.io/dashboard)

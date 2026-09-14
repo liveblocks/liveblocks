@@ -1,0 +1,90 @@
+---
+meta:
+  title: "Liveblocks vs Electric"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Electric SQL for realtime apps. Learn when a
+    collaboration sync engine fits better than Postgres sync with a local-first
+    client."
+---
+
+[Electric](https://electric-sql.com/docs) syncs Postgres rows to local client
+stores for local-first applications. Liveblocks syncs collaborative documents
+with conflict resolution, presence, and editor integrations.
+
+Electric optimizes for keeping app data aligned with Postgres. Liveblocks
+optimizes for multiplayer editing where several clients change the same
+document concurrently.
+
+## At a glance [#at-a-glance]
+
+| | Liveblocks | Electric |
+| --- | --- | --- |
+| Primary purpose | Collaborative sync engine | Postgres-to-client sync |
+| Data model | Room-based collaborative documents | Postgres tables and shapes |
+| Conflict resolution | Built-in for Storage and Yjs | Postgres as source of truth |
+| Best for | Editors, canvases, agents | Local-first apps backed by Postgres |
+
+## When to choose Liveblocks [#when-to-choose-liveblocks]
+
+Choose Liveblocks when you need:
+
+- **Fine-grained simultaneous editing** with
+  [conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+- **Collaboration primitives** such as [Presence](/docs/products/sync/presence),
+  [Comments](/docs/products/comments), and [Notifications](/docs/products/notifications)
+- **Text editor integrations** via [Sync integrations](/docs/products/sync/integrations)
+- **Yjs or LiveText** for [text editing](/docs/products/sync/text-editing)
+- **Version history** for collaborative snapshots
+
+## When to choose Electric [#when-to-choose-electric]
+
+Choose Electric when you need:
+
+- **Local-first UX** with offline reads and writes against a local replica
+- **Postgres as the system of record** with shapes defined over tables
+- **Sync from existing Postgres schemas** without a separate document model
+- **Integration with Electric's sync protocol** across your app data layer
+
+## Feature comparison [#feature-comparison]
+
+| Feature | Liveblocks | Electric |
+| --- | --- | --- |
+| Sync target | Collaborative rooms | Postgres tables |
+| Multiplayer editing merges | CRDT-like Storage, Yjs | Row-level sync; app merge logic |
+| Presence | [Presence](/docs/products/sync/presence) | Build custom |
+| Comments | [Comments](/docs/products/comments) | Build custom |
+| Text editors | [Integrations](/docs/products/sync/integrations) | Build custom |
+| Server-side access | [Node.js SDK](/docs/api-reference/liveblocks-node) | Postgres and Electric sync service |
+| Mirror to Postgres | [Webhooks](/docs/platform/webhooks), [Supabase integration](/docs/integrations/supabase) | Native Postgres sync |
+| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) | Your auth and Electric setup |
+| Agentic editing | [Agentic editing](/docs/products/sync/agentic-editing) | Application-level |
+
+## Using both [#using-both]
+
+Teams sometimes use Liveblocks for live collaboration and mirror snapshots to
+Postgres for reporting—similar to the [Supabase integration](/docs/integrations/supabase)
+pattern. Electric addresses a different layer: keeping client replicas aligned
+with Postgres rather than hosting CRDT documents.
+
+## Pricing [#pricing]
+
+Liveblocks uses [plans and credits](/docs/pricing/plans). Electric pricing
+depends on deployment and hosting choices; see
+[Electric documentation](https://electric-sql.com/docs) for current options.
+
+## Deployment [#deployment]
+
+Liveblocks is managed with optional
+[self-hosting](/docs/platform/data-storage#Self-hosting).
+
+Electric runs as a sync service you deploy alongside Postgres, with
+[Electric deployment documentation](https://electric-sql.com/docs) describing
+topology options.
+
+## Get started [#get-started]
+
+- Explore [Sync](/docs/products/sync)
+- Read [how conflict resolution works](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+- Follow the [setup guide](/docs/get-started)
+- [Start for free](https://liveblocks.io/dashboard)

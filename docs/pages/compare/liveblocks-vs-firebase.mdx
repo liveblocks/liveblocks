@@ -1,0 +1,81 @@
+---
+meta:
+  title: "Liveblocks vs Firebase"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Firebase for realtime apps. Learn when a
+    collaboration sync engine fits better than Firebase Realtime Database or
+    Firestore."
+---
+
+[Firebase](https://firebase.google.com/docs) provides Realtime Database,
+Firestore, authentication, and hosting for mobile and web apps. Liveblocks is
+a hosted sync engine for collaborative documents with conflict resolution,
+presence, and editor integrations.
+
+Firebase excels at app backends and document stores with security rules.
+Liveblocks excels at multiplayer editing where several users change the same
+structured state concurrently.
+
+## At a glance [#at-a-glance]
+
+| | Liveblocks | Firebase |
+| --- | --- | --- |
+| Primary purpose | Collaborative sync engine | App backend platform |
+| Realtime model | Room-based sync with CRDT-like merges | Document/path listeners |
+| Conflict resolution | Built-in for Storage and Yjs | Last-write or transactional rules |
+| Best for | Editors, canvases, multiplayer UX | Mobile and web app backends |
+
+## When to choose Liveblocks [#when-to-choose-liveblocks]
+
+Choose Liveblocks when you need:
+
+- **Simultaneous editing** on shared documents with
+  [conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+- **Collaboration products** such as [Presence](/docs/products/sync/presence),
+  [Comments](/docs/products/comments), and [Notifications](/docs/products/notifications)
+- **Text editor integrations** via [Sync integrations](/docs/products/sync/integrations)
+- **Version history** and [server-side editing](/docs/products/sync/server-side-editing)
+
+## When to choose Firebase [#when-to-choose-firebase]
+
+Choose Firebase when you need:
+
+- **Mobile-first backends** with Auth, Cloud Functions, and Analytics
+- **Document or collection storage** with security rules
+- **Simple realtime listeners** for app state that does not require CRDT merges
+- **Existing Firebase ecosystem** integration across your stack
+
+## Feature comparison [#feature-comparison]
+
+| Feature | Liveblocks | Firebase |
+| --- | --- | --- |
+| Collaborative documents | [Storage](/docs/products/sync/storage), Yjs | Firestore or Realtime Database |
+| Merge semantics | CRDT-like types and Yjs | Last-write or transactions |
+| Presence | [Presence](/docs/products/sync/presence) | Build custom |
+| Comments | [Comments](/docs/products/comments) | Build custom collections |
+| Editor integrations | [Official integrations](/docs/products/sync/integrations) | Build custom |
+| Authentication | [Liveblocks authentication](/docs/api-reference/authentication) with your provider | Firebase Auth |
+| Server-side updates | [Node.js SDK](/docs/api-reference/liveblocks-node) | Cloud Functions, Admin SDK |
+| Offline support | Sync client with reconnect | Firestore offline persistence |
+| File storage | [LiveFile](/docs/products/sync/storage#LiveFile) | Firebase Storage |
+
+## Pricing [#pricing]
+
+Liveblocks uses [plans and credits](/docs/pricing/plans). Firebase pricing
+depends on reads, writes, storage, and Realtime Database connections. See
+[Firebase pricing](https://firebase.google.com/pricing) for current rates.
+
+## Deployment [#deployment]
+
+Liveblocks is managed with optional
+[self-hosting](/docs/platform/data-storage#Self-hosting).
+
+Firebase is a Google-managed platform.
+
+## Get started [#get-started]
+
+- Follow the [setup guide](/docs/get-started)
+- Explore the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+- Read about [Sync](/docs/products/sync)
+- [Start for free](https://liveblocks.io/dashboard)
