@@ -647,6 +647,9 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
     metadata: {
       roomType: "whiteboard",
     },
+
+    // Optional, filter by whether rooms contain at least one thread
+    hasThreads: true,
   },
 
   // Optional, authenticate this user on a specific organization
@@ -660,6 +663,9 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
 The `query` option also allows you to pass a
 [query language](/docs/guides/how-to-filter-rooms-using-query-language) string
 instead of a `query` object.
+
+The `hasThreads` filter includes threads regardless of their resolved status or
+visibility.
 
 ##### Pagination
 
@@ -723,6 +729,9 @@ const roomsIterator = await liveblocks.iterRooms({
     metadata: {
       roomType: "whiteboard",
     },
+
+    // Optional, filter by whether rooms contain at least one thread
+    hasThreads: true,
   },
 });
 
@@ -735,6 +744,9 @@ for await (const room of roomsIterator) {
 The `query` option also allows you to pass a
 [query language](/docs/guides/how-to-filter-rooms-using-query-language) string
 instead of a `query` object.
+
+The `hasThreads` filter includes threads regardless of their resolved status or
+visibility.
 
 ##### Mass deleting rooms
 

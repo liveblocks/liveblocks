@@ -51,7 +51,8 @@ async with client:
 
 This endpoint returns a list of your rooms. The rooms are returned sorted by
 creation date, from newest to oldest. You can filter rooms by room ID prefixes,
-metadata, users accesses, and groups accesses. Corresponds to
+metadata, whether they contain threads, users accesses, and groups accesses.
+Corresponds to
 [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
 There is a pagination system where the cursor to the next page is returned in
@@ -74,7 +75,7 @@ result = client.get_rooms(
     # limit=20,
     # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
     # organization_id="org_123456789",
-    # query="metadata[\"color\"]:\"blue\"",
+    # query="metadata[\"color\"]:\"blue\" AND hasThreads:true",
     # user_id="user-123",
     # group_ids="group1,group2",
 )
@@ -83,14 +84,14 @@ print(result)
 
 **Parameters:**
 
-| Name              | Type           | Required | Description                                                                                                                                                                                                                                                                                 |
-| ----------------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `limit`           | `int \| Unset` | No       | A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_                                                                                                                                                                 |
-| `starting_after`  | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                                                                                                                                                                                            |
-| `organization_id` | `str \| Unset` | No       | A filter on organization ID.                                                                                                                                                                                                                                                                |
-| `query`           | `str \| Unset` | No       | Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language). |
-| `user_id`         | `str \| Unset` | No       | A filter on users accesses.                                                                                                                                                                                                                                                                 |
-| `group_ids`       | `str \| Unset` | No       | A filter on groups accesses. Multiple groups can be used.                                                                                                                                                                                                                                   |
+| Name              | Type           | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----------------- | -------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `limit`           | `int \| Unset` | No       | A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20. _(default: `20`)_                                                                                                                                                                                                                                                                                                |
+| `starting_after`  | `str \| Unset` | No       | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.                                                                                                                                                                                                                                                                                                                           |
+| `organization_id` | `str \| Unset` | No       | A filter on organization ID.                                                                                                                                                                                                                                                                                                                                                                                               |
+| `query`           | `str \| Unset` | No       | Query to filter rooms. You can filter by `roomId`, `metadata`, and `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering" AND hasThreads:true`. The `hasThreads` filter includes threads regardless of their resolved status or visibility. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language). |
+| `user_id`         | `str \| Unset` | No       | A filter on users accesses.                                                                                                                                                                                                                                                                                                                                                                                                |
+| `group_ids`       | `str \| Unset` | No       | A filter on groups accesses. Multiple groups can be used.                                                                                                                                                                                                                                                                                                                                                                  |
 
 ---
 

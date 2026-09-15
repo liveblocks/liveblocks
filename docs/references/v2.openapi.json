@@ -13,7 +13,7 @@
     "/rooms": {
       "get": {
         "summary": "Get rooms",
-        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).\n\nThere is a pagination system where the cursor to the next page is returned in the response as `nextCursor`, which can be combined with `startingAfter`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
+        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, whether they contain threads, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).\n\nThere is a pagination system where the cursor to the next page is returned in the response as `nextCursor`, which can be combined with `startingAfter`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
         "tags": ["Room"],
         "parameters": [
           {
@@ -49,8 +49,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).",
-              "example": "metadata[\"color\"]:\"blue\""
+              "description": "Query to filter rooms. You can filter by `roomId`, `metadata`, and `hasThreads`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\" AND hasThreads:true`. The `hasThreads` filter includes threads regardless of their resolved status or visibility. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).",
+              "example": "metadata[\"color\"]:\"blue\" AND hasThreads:true"
             },
             "in": "query",
             "name": "query"
