@@ -7,11 +7,31 @@ meta:
     presence. See when to choose either tool and how they can work together."
 ---
 
-Choose Liveblocks when users need to edit a shared document, canvas, or workflow.
-Choose Supabase when the core requirement is a Postgres back end with realtime
-database updates. Use both when business records belong in Postgres and the
-product also needs a dedicated editing layer. [Liveblocks Sync](/docs/products/sync)
-· [Supabase database](https://supabase.com/docs/guides/database)
+Choose Liveblocks when users need to edit a shared document, canvas, or
+workflow. Choose Supabase when the core requirement is a Postgres back end with
+realtime database updates. Use both when business records belong in Postgres and
+the product also needs a dedicated editing layer.
+[Liveblocks Sync](/docs/products/sync) ·
+[Supabase database](https://supabase.com/docs/guides/database).
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Liveblocks Sync"
+    href="/docs/products/sync"
+    description="Document-based realtime collaboration"
+    visual={
+      <DocsLiveblocksIcon className="fill-product-icon-brand h-auto w-7" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Supabase database"
+    href="https://supabase.com/docs/guides/database"
+    description="Postgres-based database with realtime updates"
+    visual={<DocsSupabaseIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
 
 Liveblocks supplies the shared-data structures and editing integrations.
 Supabase supplies the relational application database. Use Liveblocks for the
@@ -20,16 +40,17 @@ queries.
 
 ## Compare the responsibilities [#compare-the-responsibilities]
 
-| Area | Liveblocks | Supabase |
-| --- | --- | --- |
-| Persistent data | Shared documents through [Storage](/docs/products/sync/storage) in [Sync](/docs/products/sync) | Postgres tables and relationships |
-| Realtime updates | Document synchronization, presence, and events | Broadcast, Presence, and Postgres Changes |
-| Shared text | [LiveText](/docs/products/sync/storage#LiveText) and supported Yjs integrations | Add the editor synchronization model your app needs |
-| Collaboration interface | Products for [Comments](/docs/products/comments) and [Notifications](/docs/products/notifications) alongside Sync | Realtime UI components include cursors, presence, and chat |
-| Main architecture question | Which product surfaces should share a document? | Which data and business rules should live in Postgres? |
+| Area                       | Liveblocks                                                                                                        | Supabase                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Persistent data            | Shared documents through [Storage](/docs/products/sync/storage) in [Sync](/docs/products/sync)                    | Postgres tables and relationships                          |
+| Realtime updates           | Document synchronization, presence, and events                                                                    | Broadcast, Presence, and Postgres Changes                  |
+| Shared text                | [LiveText](/docs/products/sync/storage#LiveText) and supported Yjs integrations                                   | Add the editor synchronization model your app needs        |
+| Collaboration interface    | Products for [Comments](/docs/products/comments) and [Notifications](/docs/products/notifications) alongside Sync | Realtime UI components include cursors, presence, and chat |
+| Main architecture question | Which product surfaces should share a document?                                                                   | Which data and business rules should live in Postgres?     |
 
 Sources: [Storage](/docs/products/sync/storage),
-[editor integrations](/docs/products/sync/integrations), [Comments](/docs/products/comments),
+[editor integrations](/docs/products/sync/integrations),
+[Comments](/docs/products/comments),
 [Notifications](/docs/products/notifications),
 [Supabase Realtime](https://supabase.com/docs/guides/realtime).
 
@@ -72,11 +93,11 @@ Postgres does not edit the Liveblocks document.
 
 For a planning app, this division gives each kind of data a clear owner:
 
-| Data | Authoritative system | How the app uses it |
-| --- | --- | --- |
-| Projects, accounts, and billing | Supabase | Query records and enforce application rules |
-| Shared board and card content | Liveblocks | Participants edit the same document |
-| Searchable board summary | Supabase mirror | Query a derived copy; tolerate webhook delay |
+| Data                            | Authoritative system | How the app uses it                          |
+| ------------------------------- | -------------------- | -------------------------------------------- |
+| Projects, accounts, and billing | Supabase             | Query records and enforce application rules  |
+| Shared board and card content   | Liveblocks           | Participants edit the same document          |
+| Searchable board summary        | Supabase mirror      | Query a derived copy; tolerate webhook delay |
 
 In this design, store the Liveblocks room ID with the project record so your
 server can authorize the correct document. Keep mirrored content read-only from
@@ -108,7 +129,8 @@ part of a self-hosted budget.
 
 ## Get started [#get-started]
 
-Try the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced),
+Try the
+[editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced),
 then use the [Supabase integration](/docs/integrations/supabase) if you need a
 reporting copy in Postgres.
 
