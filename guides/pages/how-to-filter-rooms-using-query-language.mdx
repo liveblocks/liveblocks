@@ -46,14 +46,13 @@ can be filtered. If you wish to return a single specific room, instead use the
 [Get Room API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId) or
 [`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId).
 
-You can also filter rooms by whether they contain threads:
+You can also filter rooms by whether they contain comments:
 
 ```text
-hasThreads:true
+hasComments:true
 ```
 
-Use `hasThreads:false` to return rooms with no threads. Resolved and private
-threads count but deleted threads do not.
+Use `hasComments:false` to return rooms with no comments.
 
 ### How to use
 

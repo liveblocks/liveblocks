@@ -2,7 +2,7 @@
 
 ### `@liveblocks/node`
 
-- Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`.
+- Add a `hasComments` query filter to `getRooms()` and `iterRooms()`.
 
 ### `@liveblocks/chat-sdk-adapter`
 

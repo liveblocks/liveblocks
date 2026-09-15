@@ -445,7 +445,7 @@ export type RoomsQueryCriteria = {
    * @example
    * ```
    * {
-   *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:" AND hasThreads:true'
+   *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:" AND hasComments:true'
    * }
    * ```
    * @example
@@ -458,7 +458,7 @@ export type RoomsQueryCriteria = {
    *     roomId: {
    *       startsWith: "liveblocks:"
    *     },
-   *     hasThreads: true
+   *     hasComments: true
    *   }
    * }
    * ```
@@ -470,8 +470,8 @@ export type RoomsQueryCriteria = {
         roomId?: {
           startsWith: string;
         };
-        /** Whether the room contains at least one thread, regardless of its resolved status or visibility. */
-        hasThreads?: boolean;
+        /** Whether the room contains at least one comment. */
+        hasComments?: boolean;
       };
 };
 
@@ -1329,14 +1329,14 @@ export class Liveblocks {
    * -----------------------------------------------------------------------------------------------*/
 
   /**
-   * Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID, metadata, whether they contain threads, users accesses, and groups accesses.
+   * Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID, metadata, whether they contain comments, users accesses, and groups accesses.
    * @param params.limit (optional) A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20.
    * @param params.startingAfter (optional) A cursor used for pagination. You get the value from the response of the previous page.
    * @param params.userId (optional) A filter on users accesses.
    * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
    * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
    * @param params.organizationId (optional) A filter on organization ID.
-   * @param params.query (optional) A query to filter rooms by. It is based on our query language. You can filter by metadata, room ID, and whether rooms contain threads.
+   * @param params.query (optional) A query to filter rooms by. It is based on our query language. You can filter by metadata, room ID, and whether rooms contain comments.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of rooms.
    */
@@ -1391,7 +1391,7 @@ export class Liveblocks {
    * @param criteria.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
    * @param criteria.query.roomId (optional) A filter by room ID.
    * @param criteria.query.metadata (optional) A filter by metadata.
-   * @param criteria.query.hasThreads (optional) A filter by whether rooms contain threads.
+   * @param criteria.query.hasComments (optional) A filter by whether rooms contain comments.
    *
    * @param options.pageSize (optional) The page size to use for each request.
    * @param options.signal (optional) An abort signal to cancel the request.

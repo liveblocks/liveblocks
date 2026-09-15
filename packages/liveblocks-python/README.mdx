@@ -49,7 +49,7 @@ async with client:
 
 This endpoint returns a list of your rooms. The rooms are returned sorted by
 creation date, from newest to oldest. You can filter rooms by room ID prefixes,
-metadata, whether they contain threads, users accesses, and groups accesses.
+metadata, whether they contain comments, users accesses, and groups accesses.
 Corresponds to
 [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
@@ -71,7 +71,7 @@ result = client.get_rooms(
     # limit=20,
     # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
     # organization_id="org_123456789",
-    # query="metadata[\"color\"]:\"blue\" AND hasThreads:true",
+    # query="metadata[\"color\"]:\"blue\" AND hasComments:true",
     # user_id="user-123",
     # group_ids="group1,group2",
 )
@@ -92,10 +92,10 @@ print(result)
   </PropertiesListItem>
   <PropertiesListItem name="query" type="str | Unset">
     Query to filter rooms. You can filter by `roomId`, `metadata`, and
-    `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND
-    roomId^"liveblocks:engineering" AND hasThreads:true`. The `hasThreads`
-    filter includes threads regardless of their resolved status or visibility.
-    Learn more about [filtering rooms with query
+    `hasComments`, for example, `metadata["roomType"]:"whiteboard" AND
+    roomId^"liveblocks:engineering" AND hasComments:true`. The `hasComments`
+    filter checks whether rooms contain at least one comment. Learn more about
+    [filtering rooms with query
     language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
   </PropertiesListItem>
   <PropertiesListItem name="user_id" type="str | Unset">
