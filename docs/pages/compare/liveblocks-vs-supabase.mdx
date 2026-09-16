@@ -7,132 +7,110 @@ meta:
     presence. See when to choose either tool and how they can work together."
 ---
 
-Choose Liveblocks when users need to edit a shared document, canvas, or
-workflow. Choose Supabase when the core requirement is a Postgres back end with
-realtime database updates. Use both when business records belong in Postgres and
-the product also needs a dedicated editing layer.
-[Liveblocks Sync](/docs/products/sync) ·
-[Supabase database](https://supabase.com/docs/guides/database).
+[Liveblocks](/docs/) is a realtime collaboration platform for shared documents,
+presence, comments, and text editors. [Supabase](https://supabase.com/docs) is
+a hosted Postgres database with auth, file storage, and realtime updates.
 
-<ListGrid columns={2}>
-  <DocsCard
-    type="technology"
-    title="Liveblocks Sync"
-    href="/docs/products/sync"
-    description="Document-based realtime collaboration"
-    visual={
-      <DocsLiveblocksIcon className="fill-product-icon-brand h-auto w-7" />
-    }
-  />
-  <DocsCard
-    type="technology"
-    title="Supabase database"
-    href="https://supabase.com/docs/guides/database"
-    description="Postgres-based database with realtime updates"
-    visual={<DocsSupabaseIcon className="fill-product-icon-brand h-auto w-6" />}
-  />
-</ListGrid>
+## Which should you choose? [#which-should-you-choose]
 
-Liveblocks supplies the shared-data structures and editing integrations.
-Supabase supplies the relational application database. Use Liveblocks for the
-content people edit together and Supabase for the records your application
-queries.
+Choose Liveblocks when several people edit the same document, canvas, or board
+at the same time. Choose Supabase when you primarily need a Postgres database and
+want clients to subscribe to changes in it. Use both when your business records
+belong in Postgres and your product also needs collaborative editing.
 
 ## Compare the responsibilities [#compare-the-responsibilities]
 
-| Area                       | Liveblocks                                                                                                        | Supabase                                                   |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Persistent data            | Shared documents through [Storage](/docs/products/sync/storage) in [Sync](/docs/products/sync)                    | Postgres tables and relationships                          |
-| Realtime updates           | Document synchronization, presence, and events                                                                    | Broadcast, Presence, and Postgres Changes                  |
-| Shared text                | [LiveText](/docs/products/sync/storage#LiveText) and supported Yjs integrations                                   | Add the editor synchronization model your app needs        |
-| Collaboration interface    | Products for [Comments](/docs/products/comments) and [Notifications](/docs/products/notifications) alongside Sync | Realtime UI components include cursors, presence, and chat |
-| Main architecture question | Which product surfaces should share a document?                                                                   | Which data and business rules should live in Postgres?     |
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Supabase                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Persistence         | Shared documents in Storage <InfoTooltip>A CRDT-based document store. Concurrent edits merge automatically, and data is kept until you delete it. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                       | Postgres tables <InfoTooltip>Each project gets its own Postgres database. <a href="https://supabase.com/docs/guides/database" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                      |
+| Realtime updates    | Document changes, presence, and broadcast events <InfoTooltip>Presence is short-lived per-user state such as cursor position or selection. <a href="/docs/products/sync/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                             | Broadcast, Presence, and Postgres Changes <InfoTooltip>Send messages between clients, track who is online, and subscribe to database row changes. <a href="https://supabase.com/docs/guides/realtime" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                              |
+| Conflict resolution | CRDT-based: concurrent edits to objects, lists, maps, and text merge automatically <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                  | None: Postgres serializes writes, so the last write to a row wins                                                                                                                                                                                                                                                                                                                                          |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more <InfoTooltip>Official packages for popular editors, plus Yjs guides for others. <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                | Not built in; requires a CRDT library connected to Realtime                                                                                                                                                                                                                                                                                                                                                 |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications <InfoTooltip>React components you can drop in, plus hooks for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | Cursors, avatar stacks, and chat <InfoTooltip>Components from the Supabase UI library that you copy into your project. <a href="https://supabase.com/ui/docs/nextjs/realtime-cursor" className="font-medium text-product-brand">Realtime Cursor</a>, <a href="https://supabase.com/ui/docs/nextjs/realtime-avatar-stack" className="font-medium text-product-brand">Realtime Avatar Stack</a>.</InfoTooltip> |
+| Authentication      | Your server issues access tokens using your existing auth <InfoTooltip>Works with any auth provider, including Supabase Auth. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                             | Supabase Auth with Row Level Security <InfoTooltip>RLS policies in Postgres control what each user can read and write. <a href="https://supabase.com/docs/guides/database/postgres/row-level-security" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                              |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                   | Which data and business rules belong in Postgres?                                                                                                                                                                                                                                                                                                                                                          |
 
-Sources: [Storage](/docs/products/sync/storage),
-[editor integrations](/docs/products/sync/integrations),
-[Comments](/docs/products/comments),
-[Notifications](/docs/products/notifications),
-[Supabase Realtime](https://supabase.com/docs/guides/realtime).
+## Does Supabase merge concurrent edits? [#does-supabase-merge-concurrent-edits]
 
-## Does Supabase Realtime merge concurrent text edits? [#does-supabase-realtime-merge-concurrent-text-edits]
+No. [Supabase Realtime](https://supabase.com/docs/guides/realtime) relays
+messages, and Postgres serializes writes; neither merges concurrent changes.
+Two updates to the same row run one after the other, and the second overwrites
+whatever columns it sets. This matters most for text: merging two users'
+edits to the same paragraph requires a CRDT, so a collaborative text editor on
+Supabase means adding a CRDT library and connecting it to Realtime yourself.
 
-[Supabase Realtime](https://supabase.com/docs/guides/realtime) delivers
-broadcasts, presence, and database changes. A collaborative text editor also
-needs rules for combining edits inside the text. Add an editor synchronization
-model, such as [Yjs](https://docs.yjs.dev/), or use a supported Liveblocks
-editor integration. A database subscription delivers the changed value; the
-editor model determines how concurrent text edits merge.
-[Supabase Realtime](https://supabase.com/docs/guides/realtime) ·
-[Liveblocks text editing](/docs/products/sync/text-editing)
+Liveblocks handles this with [Storage](/docs/products/sync/storage), whose data
+types merge concurrent edits, and with
+[LiveText and Yjs-based editor integrations](/docs/products/sync/text-editing)
+for text.
 
-## Choose around the interaction [#choose-around-the-interaction]
+## Row updates vs. shared documents [#row-updates-vs-shared-documents]
 
 For an order dashboard, a row update may be enough: the server changes an
-order's status, and connected clients display the new value. Supabase is a
-natural option when Postgres is already the application's source of truth.
+order's status, and connected clients show the new value. Supabase is a natural
+fit when Postgres is already the source of truth.
 
-For a planning board, store each card in a live structure. One person changes
-its title while another changes its due date: because those are separate keys,
-both edits can remain. The UI reflects a shared result without an
-application-specific event protocol for merging those fields.
-[Conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+For a planning board, store each card in Liveblocks Storage. One person changes
+its title while another changes its due date: because those are separate
+fields, both edits are kept.
 
-[Sync](/docs/products/sync)'s behavior depends on the data type. Separate fields
-can preserve separate changes; concurrent writes to the same scalar field
-resolve by server arrival order. A shared-data system doesn't remove the need to
-model your document deliberately.
-[Conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+How Liveblocks
+[resolves conflicts](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+depends on the data type. Edits to different fields all survive. Concurrent
+writes to the same single value are last-write-wins, ordered by arrival at the
+server. You still need to structure your document so that the edits you care
+about land in separate fields.
 
 ## Can I use Liveblocks with Supabase? [#can-i-use-liveblocks-with-supabase]
 
-Yes. Keep business records in Supabase and editable documents in Liveblocks. The
-documented integration sends a reporting copy from Liveblocks to Supabase
-through webhooks. It is one-way and eventually consistent; updating that copy in
-Postgres does not edit the Liveblocks document.
-[Supabase integration](/docs/integrations/supabase)
+Yes. Keep business records in Supabase and editable documents in Liveblocks.
+The [Supabase integration](/docs/integrations/supabase) uses webhooks to write
+a copy of Liveblocks data into Postgres for search and reporting. The sync is
+one-way and eventually consistent: edits to the Postgres copy do not flow back
+to Liveblocks, and the copy can lag by a few seconds.
 
-For a planning app, this division gives each kind of data a clear owner:
+For a planning app, this gives each kind of data one source of truth:
 
-| Data                            | Authoritative system | How the app uses it                          |
-| ------------------------------- | -------------------- | -------------------------------------------- |
-| Projects, accounts, and billing | Supabase             | Query records and enforce application rules  |
-| Shared board and card content   | Liveblocks           | Participants edit the same document          |
-| Searchable board summary        | Supabase mirror      | Query a derived copy; tolerate webhook delay |
+| Data                            | Source of truth                                                                                                                                                                                                                                                                       | How the app uses it                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Projects, accounts, and billing | Supabase                                                                                                                                                                                                                                                                              | Query records and enforce business rules  |
+| Shared board and card content   | Liveblocks                                                                                                                                                                                                                                                                            | Everyone edits the same document          |
+| Searchable board summary        | Copy in Supabase <InfoTooltip>A webhook fetches the latest document and upserts one row per room. Webhook events are throttled, so the copy can be a few seconds behind. <a href="/docs/integrations/supabase" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> | Query the copy; expect a short delay      |
 
-In this design, store the Liveblocks room ID with the project record so your
-server can authorize the correct document. Keep mirrored content read-only from
-the application's perspective.
+Store the Liveblocks room ID on the project record so your server knows which
+room to authorize. Treat the copy in Supabase as read-only.
 
 ## How do the costs differ? [#how-do-the-costs-differ]
 
-Supabase Pro starts at $25 per month and includes $10 in compute credits, enough
-for one Micro instance. Additional projects and usage can increase that amount.
-Liveblocks is an additional service when the application keeps Supabase.
-[Supabase pricing](https://supabase.com/pricing)
+[Supabase Pro](https://supabase.com/pricing) starts at $25 per month and
+includes $10 in compute credits, enough for one Micro instance. Each extra
+project adds its own compute cost. Realtime is billed separately: Pro includes
+500 peak concurrent connections and 5 million messages per month, then $10 per
+1,000 connections and $2.50 per million messages. Liveblocks is an additional
+cost when you keep Supabase.
 
-For an illustrative monthly workflow with 1,000 active editing sessions, two
-participants per session, and 15 minutes of continuous collaboration, the
-Liveblocks collaboration meter is 30,000 minutes. At $0.002 per minute, that is
-$60 of metered usage before credits. It excludes stored data, updates, comments,
-and other usage. Solo sessions are not billed as collaboration minutes.
-[Collaboration-minute definition](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute)
+As an example, take 1,000 editing sessions a month, each with two people
+working together for 15 minutes. That is 30,000
+[collaboration minutes](/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute),
+billed at
+{/* prettier-ignore */} <Limits.RealtimeCollaborationMinutesPrice /> before
+credits. Stored data, comments, and other usage are billed on top. Time spent
+alone in a room is free.
 
-That calculation measures the editing layer, not a replacement for the Supabase
-bill. Apply the selected plan's credits once across all Liveblocks usage.
-[Plans and credits](/docs/pricing/plans)
+That covers collaboration only, not a replacement for the Supabase bill. Your
+[plan's credits](/docs/pricing/plans) apply once across all Liveblocks usage.
 
-Supabase supports self-hosting. Liveblocks offers self-hosted Sync as a paid
-Enterprise add-on. Your infrastructure, database, backups, and operations remain
-part of a self-hosted budget.
-[Supabase deployment](https://supabase.com/docs/guides/self-hosting) ·
-[Liveblocks deployment](/docs/platform/data-storage#Self-hosting)
+Supabase can be [self-hosted](https://supabase.com/docs/guides/self-hosting).
+Liveblocks offers [self-hosting](/docs/platform/data-storage#Self-hosting) as a
+paid add-on on the Enterprise plan. Either way, your own servers, database,
+backups, and operations are part of the budget.
 
 ## Get started [#get-started]
 
 Try the
 [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced),
 then use the [Supabase integration](/docs/integrations/supabase) if you need a
-reporting copy in Postgres.
+copy of the data in Postgres.
 
 [Start building with Liveblocks for free](https://liveblocks.io/dashboard).
 Follow the [setup guide](/docs/get-started) for your project.
