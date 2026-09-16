@@ -203,7 +203,7 @@ export function ChangesView({
           </div>
         ) : (
           <div className="flex h-full items-center justify-center text-muted">
-            <Loader2Icon className="size-4 animate-spin" />
+            <Loader2Icon className="size-3.5 animate-spin" />
           </div>
         )}
       </div>

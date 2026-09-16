@@ -121,7 +121,7 @@ export function SidePanel({
           aria-label="Show panel"
           className="flex size-8 items-center justify-center rounded-md text-muted transition hover:bg-panel-hover hover:text-foreground"
         >
-          <PanelRightOpenIcon className="size-4" />
+          <PanelRightOpenIcon className="size-3.5" />
         </button>
         <span className="my-1 h-px w-5 bg-border" />
         {/* One shortcut per tab: opens the panel on that tab */}
@@ -181,7 +181,7 @@ export function SidePanel({
                     : "text-muted hover:bg-panel-hover hover:text-foreground"
                 )}
               >
-                <span className="shrink-0 [&>svg]:size-3.5">{tab.icon}</span>
+                <span className="shrink-0">{tab.icon}</span>
                 <span className="truncate">{tab.label}</span>
               </button>
             );
