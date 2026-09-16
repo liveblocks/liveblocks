@@ -47,14 +47,14 @@ export function useChatSidePanel(feed: ChatFeed) {
             {
               id: CHANGES_TAB,
               label: "Changes",
-              icon: <FileDiffIcon className="size-3.5" />,
+              icon: <FileDiffIcon className="size-4" />,
             },
           ]
         : []),
       ...documents.map((document) => ({
         id: document.key,
         label: document.title,
-        icon: <FileTextIcon className="size-3.5" />,
+        icon: <FileTextIcon className="size-4" />,
       })),
     ],
     [documents, hasChanges]

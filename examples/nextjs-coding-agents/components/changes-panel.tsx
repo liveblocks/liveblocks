@@ -133,9 +133,9 @@ export function ChangesView({
     <>
       <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border px-3">
         {prUrl ? (
-          <GitPullRequestIcon className="size-3.5 shrink-0 text-success" />
+          <GitPullRequestIcon className="size-4 shrink-0 text-success" />
         ) : (
-          <GitBranchIcon className="size-3.5 shrink-0 text-muted" />
+          <GitBranchIcon className="size-4 shrink-0 text-muted" />
         )}
         <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] text-muted">
           {prUrl ? (
@@ -164,7 +164,7 @@ export function ChangesView({
             onClick={() => setReloadCount((count) => count + 1)}
           >
             <RefreshCwIcon
-              className={clsx("size-3.5", loading && "animate-spin")}
+              className={clsx("size-4", loading && "animate-spin")}
             />
           </PanelIconButton>
           {externalUrl ? (
@@ -174,7 +174,7 @@ export function ChangesView({
                 window.open(externalUrl, "_blank", "noopener,noreferrer")
               }
             >
-              <ExternalLinkIcon className="size-3.5" />
+              <ExternalLinkIcon className="size-4" />
             </PanelIconButton>
           ) : null}
         </div>
@@ -183,7 +183,7 @@ export function ChangesView({
       <div className="min-h-0 flex-1 overflow-y-auto">
         {error ? (
           <div className="m-3 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
-            <CircleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
+            <CircleAlertIcon className="mt-0.5 size-4 shrink-0" />
             <span className="flex-1">{error}</span>
           </div>
         ) : changes ? (
@@ -203,7 +203,7 @@ export function ChangesView({
           </div>
         ) : (
           <div className="flex h-full items-center justify-center text-muted">
-            <Loader2Icon className="size-3.5 animate-spin" />
+            <Loader2Icon className="size-4 animate-spin" />
           </div>
         )}
       </div>
@@ -238,7 +238,7 @@ function CollapsibleFileDiff({ fileDiff }: { fileDiff: FileDiffMetadata }) {
           >
             <ChevronDownIcon
               className={clsx(
-                "size-3.5 transition-transform",
+                "size-4 transition-transform",
                 collapsed && "-rotate-90"
               )}
             />
