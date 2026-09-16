@@ -133,9 +133,9 @@ export function ChangesView({
     <>
       <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border px-3">
         {prUrl ? (
-          <GitPullRequestIcon className="size-4 shrink-0 text-success" />
+          <GitPullRequestIcon className="size-3.5 shrink-0 text-success" />
         ) : (
-          <GitBranchIcon className="size-4 shrink-0 text-muted" />
+          <GitBranchIcon className="size-3.5 shrink-0 text-muted" />
         )}
         <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] text-muted">
           {prUrl ? (

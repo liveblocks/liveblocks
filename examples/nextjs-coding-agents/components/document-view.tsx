@@ -136,7 +136,7 @@ export function DocumentView({ documentKey }: { documentKey: string }) {
   return (
     <>
       <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border px-3">
-        <FileTextIcon className="size-4 shrink-0 text-muted" />
+        <FileTextIcon className="size-3.5 shrink-0 text-muted" />
         <div className="flex min-w-0 flex-1 items-baseline gap-2 text-[11px] text-muted">
           <span className="truncate font-mono">{document.slug}.md</span>
           <span className="shrink-0">
