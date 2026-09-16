@@ -360,7 +360,7 @@ describe("client", () => {
 
     test("should return a list of room when getRooms with query params receives a successful response", async () => {
       const expectedQuery =
-        "hasComments:true roomId^'liveblocks:' metadata['color']:'blue' metadata['size']:'10'";
+        "hasThreads:true roomId^'liveblocks:' metadata['color']:'blue' metadata['size']:'10'";
 
       server.use(
         http.get(`${DEFAULT_BASE_URL}/v2/rooms`, (res) => {
@@ -399,7 +399,7 @@ describe("client", () => {
             roomId: {
               startsWith: "liveblocks:",
             },
-            hasComments: true,
+            hasThreads: true,
           },
         })
       ).resolves.toEqual({

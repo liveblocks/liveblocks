@@ -49,8 +49,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "Query to filter rooms. You can filter by `roomId`, `metadata`, and `hasComments`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\" AND hasComments:true`. The `hasComments` filter checks whether rooms contain at least one comment. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).",
-              "example": "metadata[\"color\"]:\"blue\" AND hasComments:true"
+              "description": "Query to filter rooms. You can filter by `roomId`, `metadata`, and `hasThreads`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\" AND hasThreads:true`. The `hasThreads` filter checks whether rooms contain at least one thread. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).",
+              "example": "metadata[\"color\"]:\"blue\" AND hasThreads:true"
             },
             "in": "query",
             "name": "query"

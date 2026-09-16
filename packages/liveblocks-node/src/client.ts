@@ -445,7 +445,7 @@ export type RoomsQueryCriteria = {
    * @example
    * ```
    * {
-   *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:" AND hasComments:true'
+   *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:" AND hasThreads:true'
    * }
    * ```
    * @example
@@ -458,7 +458,7 @@ export type RoomsQueryCriteria = {
    *     roomId: {
    *       startsWith: "liveblocks:"
    *     },
-   *     hasComments: true
+   *     hasThreads: true
    *   }
    * }
    * ```
@@ -470,8 +470,8 @@ export type RoomsQueryCriteria = {
         roomId?: {
           startsWith: string;
         };
-        /** Whether the room contains at least one comment. */
-        hasComments?: boolean;
+        /** Whether the room contains at least one thread. */
+        hasThreads?: boolean;
       };
 };
 
@@ -1391,7 +1391,7 @@ export class Liveblocks {
    * @param criteria.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
    * @param criteria.query.roomId (optional) A filter by room ID.
    * @param criteria.query.metadata (optional) A filter by metadata.
-   * @param criteria.query.hasComments (optional) A filter by whether rooms contain comments.
+   * @param criteria.query.hasThreads (optional) A filter by whether rooms contain threads.
    *
    * @param options.pageSize (optional) The page size to use for each request.
    * @param options.signal (optional) An abort signal to cancel the request.

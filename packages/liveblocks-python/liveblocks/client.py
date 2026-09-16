@@ -209,11 +209,11 @@ class Liveblocks:
                 `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
             organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
             query (str | Unset): Query to filter rooms. You can filter by `roomId`, `metadata`, and
-                `hasComments`, for example, `metadata["roomType"]:"whiteboard" AND
-                roomId^"liveblocks:engineering" AND hasComments:true`. The `hasComments` filter checks
-                whether rooms contain at least one comment. Learn more about [filtering rooms with query
+                `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND
+                roomId^"liveblocks:engineering" AND hasThreads:true`. The `hasThreads` filter checks
+                whether rooms contain at least one thread. Learn more about [filtering rooms with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
-                Example: metadata["color"]:"blue" AND hasComments:true.
+                Example: metadata["color"]:"blue" AND hasThreads:true.
             user_id (str | Unset): A filter on users accesses. Example: user-123.
             group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
                 Example: group1,group2.
@@ -3793,11 +3793,11 @@ class AsyncLiveblocks:
                 `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
             organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
             query (str | Unset): Query to filter rooms. You can filter by `roomId`, `metadata`, and
-                `hasComments`, for example, `metadata["roomType"]:"whiteboard" AND
-                roomId^"liveblocks:engineering" AND hasComments:true`. The `hasComments` filter checks
-                whether rooms contain at least one comment. Learn more about [filtering rooms with query
+                `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND
+                roomId^"liveblocks:engineering" AND hasThreads:true`. The `hasThreads` filter checks
+                whether rooms contain at least one thread. Learn more about [filtering rooms with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
-                Example: metadata["color"]:"blue" AND hasComments:true.
+                Example: metadata["color"]:"blue" AND hasThreads:true.
             user_id (str | Unset): A filter on users accesses. Example: user-123.
             group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
                 Example: group1,group2.
