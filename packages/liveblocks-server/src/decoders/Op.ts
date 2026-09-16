@@ -49,22 +49,12 @@ import type {
 } from "~/protocol";
 
 import { jsonObjectYolo, jsonYolo } from "./jsonYolo";
+import { fileSize, liveTextVersion } from "./numbers";
 
 type HasOpId = { opId: string };
 
 const intent = oneOf(["set", "push"] as const);
 const storageFileId = sized(startsWith("fl_"), { size: 24 });
-const fileSize = number.refine(
-  (value) => Number.isSafeInteger(value) && value >= 0,
-  "Must be a valid file size"
-);
-
-const liveTextVersion = number.reject((value) =>
-  Number.isSafeInteger(value) && value >= 0
-    ? null
-    : "Must be a non-negative safe integer"
-);
-
 const updateObjectOp: Decoder<UpdateObjectOp & HasOpId> = object({
   type: constant(OpCode.UPDATE_OBJECT),
   opId: string,
