@@ -1,0 +1,118 @@
+---
+meta:
+  title: "Build vs. buy realtime collaboration with AI"
+  parentTitle: "Compare"
+  description:
+    "Compare building collaboration with an AI coding assistant and using
+    Liveblocks. See who owns document sync, persistence, permissions, recovery,
+    and maintenance."
+---
+
+Use AI with Liveblocks when you want to build the product around an existing
+collaboration system. Build a custom system with AI when you need to control the
+synchronization architecture and can own its operation and maintenance. AI can
+assist either implementation.
+
+Liveblocks provides the shared-data model and collaboration products. Your team
+defines the interface, application rules, and permissions. With a custom build,
+your team also selects and connects the protocol, persistence, and recovery
+layers. [Liveblocks Sync](/docs/products/sync)
+
+## Compare the work around the generated code [#compare-the-work-around-the-generated-code]
+
+| Responsibility | Building your own with AI | Building with AI and Liveblocks |
+| --- | --- | --- |
+| Shared editing | Choose or implement a synchronization model and connect its parts | Use the supported live structures or editor integration |
+| Persistence and reconnection | Assemble storage and recovery behavior; validate the combined system | Build around the service's documented persistence and connection behavior |
+| Permissions | Design and enforce access across your services | Connect your identity system and configure resource access |
+| Comments and notifications | Build the features or integrate additional products | Integrate and customize Liveblocks' collaboration products |
+| Operations | Operate the infrastructure you deploy and maintain its integrations | Managed service, or self-hosted Sync with your team operating the deployment |
+
+Sources for the Liveblocks capabilities:
+[client API](/docs/api-reference/liveblocks-client),
+[authentication](/docs/api-reference/authentication),
+[Comments](/docs/products/comments), [Notifications](/docs/products/notifications).
+AI can help implement either column; your team remains responsible for the
+application's behavior.
+
+A custom build can use existing libraries. [Yjs](https://docs.yjs.dev/) provides
+a shared-data model, and [Socket.IO](https://socket.io/docs/v4/) provides
+event-based communication. Using AI to assemble those tools is different from
+asking it to invent every layer. Your team still needs to validate how the
+selected pieces work together.
+
+## Can I use an AI coding assistant with Liveblocks? [#can-i-use-an-ai-coding-assistant-with-liveblocks]
+
+Yes. A coding assistant can build the interface, connect supported integrations,
+and implement application rules around Liveblocks. The choice is whether your
+team also owns the synchronization system. Using a managed service does not
+prevent using AI to write application code.
+[Liveblocks setup](/docs/get-started)
+
+The [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+provides source code for the shared surface. Adapt its interface and document
+model to your product, then test permissions and editing behavior.
+
+## What work remains after AI generates a collaboration prototype? [#what-work-remains-after-ai-generates-a-collaboration-prototype]
+
+Suppose you ask a coding assistant to build a planning board with live cursors
+and editable cards. Two browser windows showing the same update demonstrate one
+useful behavior. Before shipping, define what should happen in the less
+straightforward cases:
+
+- Two people edit different fields on the same card, then both edit the same field.
+- One person changes text while another inserts text at the same position.
+- A participant disconnects, continues editing, and returns after someone else has changed the document.
+- A user loses permission while an existing session remains open.
+
+Use these cases to evaluate either implementation. Define the expected results,
+then test the implementation against them.
+
+Liveblocks also requires deliberate data modeling. For example, concurrent writes
+to the same scalar field can resolve to one value. Choosing a managed system does
+not decide what your product should do when two people assign different owners
+to a task.
+[Conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+
+## Choose what your team wants to maintain [#choose-what-your-team-wants-to-maintain]
+
+A custom system can make sense when you need specific protocol behavior, an
+infrastructure arrangement, or control that the services you evaluated do not
+provide. Plan for the engineering ownership that comes with those requirements.
+
+Liveblocks is a fit when its shared-data model and collaboration products cover
+the feature you want to ship. Your team can use AI to build the application
+around that foundation: the interface, document structure, permissions, and
+workflows that make the product useful.
+
+## Work through one concurrent update [#work-through-one-concurrent-update]
+
+Start with a card whose title is "Launch" and owner is "Maya." Alice changes the
+title to "Launch plan" while Ben changes the owner to "Lee." With those fields
+on separate keys in a `LiveObject`, both changes can remain. If both change the
+owner, only one scalar value remains according to the documented resolution rule.
+[Conflict behavior](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+
+A custom build needs an explicit result for both cases. A full-object overwrite
+can erase the unrelated title change; field-level updates avoid that particular
+problem, while concurrent text still needs its own editing model. Ask the coding
+assistant to express those expected outcomes before writing the implementation.
+
+## Pricing and deployment [#pricing-and-deployment]
+
+Estimate the same feature in both approaches: implementation, production
+validation, infrastructure, incident handling, dependency updates, and
+document-model changes. Include service and AI-tool costs. Generating the first
+version does not establish lifetime cost; neither approach is automatically
+cheaper. [Liveblocks pricing](/docs/pricing/plans)
+
+Self-hosted Sync is a paid Enterprise add-on.
+[Deployment details](/docs/platform/data-storage#Self-hosting)
+
+## Get started [#get-started]
+
+Start from the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+and the [setup guide](/docs/get-started). Define the product behavior you want
+the assistant to build around that foundation.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).

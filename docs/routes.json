@@ -861,6 +861,64 @@
     ]
   },
   {
+    "title": "Compare",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "Overview",
+        "path": "/compare"
+      },
+      {
+        "title": "Liveblocks vs Supabase",
+        "path": "/compare/liveblocks-vs-supabase"
+      },
+      {
+        "title": "Liveblocks vs Ably",
+        "path": "/compare/liveblocks-vs-ably"
+      },
+      {
+        "title": "Liveblocks vs Yjs",
+        "path": "/compare/liveblocks-vs-yjs"
+      },
+      {
+        "title": "Liveblocks vs Socket.IO",
+        "path": "/compare/liveblocks-vs-socketio"
+      },
+      {
+        "title": "Liveblocks vs Tiptap Cloud",
+        "path": "/compare/liveblocks-vs-tiptap-cloud"
+      },
+      {
+        "title": "Liveblocks vs Convex",
+        "path": "/compare/liveblocks-vs-convex"
+      },
+      {
+        "title": "Liveblocks vs Firebase",
+        "path": "/compare/liveblocks-vs-firebase"
+      },
+      {
+        "title": "Liveblocks vs Pusher",
+        "path": "/compare/liveblocks-vs-pusher"
+      },
+      {
+        "title": "Build vs buy",
+        "path": "/compare/liveblocks-vs-building-with-ai"
+      },
+      {
+        "title": "Liveblocks vs Electric",
+        "path": "/compare/liveblocks-vs-electric"
+      },
+      {
+        "title": "Liveblocks vs Zero",
+        "path": "/compare/liveblocks-vs-zero"
+      },
+      {
+        "title": "Liveblocks vs PowerSync",
+        "path": "/compare/liveblocks-vs-powersync"
+      }
+    ]
+  },
+  {
     "title": "Errors",
     "hidden": true,
     "routes": [

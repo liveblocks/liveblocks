@@ -1,0 +1,124 @@
+---
+meta:
+  title: "Liveblocks vs. Convex for collaborative apps"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Convex for shared editing, reactive queries, and
+    self-hosting. Choose where your documents, data, and business logic belong."
+---
+
+Choose Liveblocks to add shared editing and review features while keeping your
+application back end. Choose Convex when you want reactive queries and
+transactional functions at the center of that back end. Convex also has a
+collaborative editor component, so the decision depends on the complete product
+you are building.
+[Liveblocks Sync](/docs/products/sync) ·
+[Convex realtime](https://docs.convex.dev/realtime) ·
+[ProseMirror component](https://www.convex.dev/components/prosemirror-sync)
+
+For a planning tool, Convex can own projects and application rules; Liveblocks
+can own the editable canvas or specification. Either may cover enough of your
+workflow alone. If you use both, give each piece of data one authoritative home.
+
+## Compare the data path [#compare-the-data-path]
+
+| Area | Liveblocks | Convex |
+| --- | --- | --- |
+| Main abstraction | Rooms and shared documents | Database, queries, and mutations |
+| Client updates | Synchronized document changes | Reactive query results |
+| Concurrency | Merge behavior defined by the shared-data type | Optimistic concurrency control and serializable transactions |
+| Text collaboration | Supported `LiveText` and Yjs editor integrations | ProseMirror synchronization component, including Tiptap and BlockNote integration |
+| Application boundary | Shared documents alongside your existing back end | Queries and mutations form the application back end |
+| Self-hosted option | Sync through the Enterprise add-on | Deploy the Convex back end on your servers |
+
+Sources: [Storage](/docs/products/sync/storage),
+[Convex realtime](https://docs.convex.dev/realtime),
+[Convex concurrency](https://docs.convex.dev/database/advanced/optimistic-concurrency-control),
+[Convex ProseMirror component](https://www.convex.dev/components/prosemirror-sync),
+[editor integrations](/docs/products/sync/integrations),
+[Liveblocks deployment scope](/docs/platform/data-storage#Self-hosting),
+[Convex self-hosting](https://docs.convex.dev/production/hosting/self-hosting).
+
+## Can I use Convex with Liveblocks? [#can-i-use-convex-with-liveblocks]
+
+Yes, by assigning each system a separate responsibility in your application.
+This is an application architecture, not a built-in two-way connector. Convex
+can own project records and business rules while Liveblocks owns an editable
+document. Changes across the two systems do not share one transaction.
+
+| User action | Authoritative write | What the interface updates |
+| --- | --- | --- |
+| Reassign a project | Convex mutation | Subscribed project queries |
+| Edit a paragraph | Liveblocks editor integration | The shared document |
+| Publish a document summary | Application service copies the chosen revision into Convex | Search or reporting views |
+
+Copying the summary requires application code that handles delayed or failed
+updates. Keep a document ID and revision reference so the reporting view can
+identify which content it represents.
+[Convex realtime](https://docs.convex.dev/realtime) ·
+[Liveblocks server-side editing](/docs/products/sync/server-side-editing)
+
+## When is Convex's editor component enough? [#when-is-convexs-editor-component-enough]
+
+Convex's ProseMirror synchronization component includes Tiptap and BlockNote
+integrations. It is a reasonable starting point when your app already uses Convex
+and the component covers the editor you need. Its documentation includes
+`useTiptapSync` and `useBlockNoteSync`, so collaborative text is not a feature
+you necessarily build from scratch.
+[Component and examples](https://www.convex.dev/components/prosemirror-sync)
+
+Choose a Liveblocks integration when you also want its shared-document structures
+and review products across the application. The editor integration handles shared
+text; Comments, Notifications, and room permissions support the review workflow
+around it.
+
+## Database transactions and text edits [#database-transactions-and-text-edits]
+
+Convex provides transaction guarantees and retries conflicting mutations. That is
+meaningful concurrency support. A database transaction and a text-editing
+algorithm still answer different questions: one protects an application update;
+the other determines how concurrent edits become a document.
+
+Convex's ProseMirror component supplies the editing model for supported editors.
+[Convex concurrency](https://docs.convex.dev/database/advanced/optimistic-concurrency-control)
+· [ProseMirror component](https://www.convex.dev/components/prosemirror-sync)
+
+In a specification, a status update can be a transactional record change while
+edits inside the paragraph use an editor synchronization model. Use Convex's
+component when it covers that editor. Use a Liveblocks integration when the
+editing surface and the surrounding review features are the work you want the
+service to cover.
+
+## Pricing and deployment [#pricing-and-deployment]
+
+Price the application back end and the editing feature separately. Convex alone
+and Convex plus Liveblocks have different service boundaries; include the shared
+editing and review features required by your app in each estimate.
+[Convex pricing](https://www.convex.dev/pricing) ·
+[Liveblocks pricing](/docs/pricing/plans)
+
+Self-hosted Sync is a paid Enterprise add-on. Deployment options for Comments and
+Notifications are separate.
+[Deployment details](/docs/platform/data-storage#Self-hosting)
+
+## What usage should I budget for? [#what-usage-should-i-budget-for]
+
+Convex's usage definitions include function calls, database resources, and action
+compute. Subscription updates count as function calls, so a button click is not a
+complete proxy for billable activity. Liveblocks adds its own document and
+collaboration usage when both services are used.
+[Convex usage definitions](https://docs.convex.dev/production/usage) ·
+[Liveblocks rates](/docs/pricing/plans)
+
+For a planning app, measure a task reassignment and a paragraph-editing session
+separately. Record the queries that rerun, the document updates, and participant
+time. That separates database activity from collaboration usage.
+
+## Get started [#get-started]
+
+Explore the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+and [server-side editing](/docs/products/sync/server-side-editing) guide. Use
+them to map a collaborative document to the business records in your back end.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
+For self-hosting, [contact sales](/contact/sales).

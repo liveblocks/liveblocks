@@ -1,0 +1,100 @@
+---
+meta:
+  title: "Liveblocks vs. Socket.IO for collaborative editing"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Socket.IO for collaborative apps. Understand which
+    parts of messaging, document sync, persistence, and recovery you own."
+---
+
+Choose Liveblocks when your feature needs shared-document editing and you want
+an existing synchronization model. Choose [Socket.IO](https://socket.io/docs/v4/)
+when you need event transport and want to control the application protocol and
+server. Socket.IO provides communication; your selected stack determines how
+those events become a persistent document.
+[Liveblocks Sync](/docs/products/sync) · [Socket.IO](https://socket.io/docs/v4/)
+
+For a multiplayer board, sending "this card moved" is one responsibility.
+Resolving another participant's edit and restoring the board for a returning
+user are additional responsibilities.
+
+## Compare what you build [#compare-what-you-build]
+
+| Responsibility | Liveblocks | Socket.IO |
+| --- | --- | --- |
+| Client/server communication | Provided by the service | Event transport, acknowledgments, reconnection, and room broadcasting |
+| Persistent shared document | [Storage](/docs/products/sync/storage) in [Sync](/docs/products/sync) | Select a database and define the document lifecycle |
+| Concurrent editing | Data-type-specific merge behavior | Design the application protocol or add a synchronization layer |
+| Recovery | Storage queues local edits for reconnection in an already-loaded session | Configure transport recovery and define persistent document recovery |
+| Operations | Managed Sync, or self-hosted Sync on Enterprise | Operate the servers and supporting services you deploy |
+
+Sources: [Socket.IO](https://socket.io/docs/v4/),
+[delivery guarantees](https://socket.io/docs/v4/delivery-guarantees),
+[Storage](/docs/products/sync/storage),
+[conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync).
+
+## Is Socket.IO enough for collaborative editing? [#is-socketio-enough-for-collaborative-editing]
+
+Socket.IO supplies event transport, rooms, acknowledgments, and reconnection. An
+editor also needs a document model, persistence, and rules for concurrent
+changes. You can build those rules or connect an existing synchronization
+library. Liveblocks supplies a document model and service for that layer.
+[Socket.IO](https://socket.io/docs/v4/) ·
+[Liveblocks Storage](/docs/products/sync/storage)
+
+Consider a card with a title and due date:
+
+| Step | With a Liveblocks document | With a custom Socket.IO stack |
+| --- | --- | --- |
+| Alice edits the title while Ben changes the due date | Edits to separate keys can both remain | The application's update protocol must preserve both changes |
+| Both assign a different due date | Same-field resolution follows the data type's documented rule | The application defines the authoritative result |
+| Ben reconnects | The client synchronizes the loaded document | Restore the document through the chosen snapshot/replay design |
+
+For a due-date field, one value must win. Choose that behavior deliberately; use
+a text-editing model when changes inside a paragraph need to merge.
+[Conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+
+## Does Socket.IO reconnection restore the document? [#does-socketio-reconnection-restore-the-document]
+
+Automatic reconnection restores a connection. Socket.IO's optional
+connection-state recovery can also restore a session's rooms, socket data, and
+missed packets within its configured window. Recovery is not always successful,
+and adapter support matters. The application still needs a path to restore
+persistent document state when recovery fails.
+[Connection-state recovery](https://socket.io/docs/v4/connection-state-recovery)
+
+Default message delivery is at most once; stronger delivery patterns require
+configuration or application logic. Define how your document store handles
+duplicate operations, missed updates, and concurrent writes.
+[Delivery guarantees](https://socket.io/docs/v4/delivery-guarantees)
+
+## When a custom system makes sense [#when-a-custom-system-makes-sense]
+
+Socket.IO is a reasonable choice when your team wants control over the event
+protocol and server behavior. For example, a server-authoritative application may
+already have its own state model and only need a way to deliver updates.
+
+Liveblocks is a fit when the requirement is a shared editor, canvas, or workflow
+and you want to build on an existing synchronization model. You define the
+document structure and application permissions; Sync handles the supported
+document operations.
+
+## Pricing and deployment [#pricing-and-deployment]
+
+Include server operation, the database, synchronization dependencies, and
+maintenance in the Socket.IO estimate. Compare that with the Liveblocks service
+and application integration. A free transport library and a complete hosted
+feature have different cost boundaries.
+[Liveblocks pricing](/docs/pricing/plans)
+
+Self-hosted Sync is a paid Enterprise add-on.
+[Deployment details](/docs/platform/data-storage#Self-hosting)
+
+## Get started [#get-started]
+
+Open the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+and inspect its source. Use it to see the application code around an existing
+synchronization system.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
+Follow the [setup guide](/docs/get-started) for your project.

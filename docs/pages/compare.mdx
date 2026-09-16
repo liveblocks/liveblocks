@@ -1,0 +1,56 @@
+---
+meta:
+  title: "Compare realtime tools"
+  description:
+    "Compare Liveblocks with Supabase, Ably, Yjs, and other tools. Understand
+    the tradeoffs for shared editing, realtime events, and application data."
+---
+
+Choose infrastructure based on what your app needs to keep in sync. A database
+subscription, a message channel, and a shared document solve different problems.
+
+These guides explain where Liveblocks fits alongside other tools, what each
+approach provides, and which decisions stay with your application.
+
+| Your decision | Start here |
+| --- | --- |
+| You use Postgres and want to add shared editing | [Liveblocks vs. Supabase](/docs/compare/liveblocks-vs-supabase) |
+| You're evaluating managed realtime infrastructure | [Liveblocks vs. Ably](/docs/compare/liveblocks-vs-ably) |
+| You're choosing a collaboration stack around Yjs | [Liveblocks vs. Yjs](/docs/compare/liveblocks-vs-yjs) |
+| You're considering a custom event-based implementation | [Liveblocks vs. Socket.IO](/docs/compare/liveblocks-vs-socketio) |
+| You're choosing a managed service for a collaborative editor | [Liveblocks vs. Tiptap Cloud](/docs/compare/liveblocks-vs-tiptap-cloud) |
+| You're considering using AI to build your own collaboration system | [Build vs. buy realtime collaboration with AI](/docs/compare/liveblocks-vs-building-with-ai) |
+
+Liveblocks provides realtime infrastructure for multiplayer apps and agents.
+Start with the part of your product people work on together: a document, canvas,
+form, or workflow. Use [Sync](/docs/products/sync) for that shared state and
+connect it to the rest of your stack. [Explore Sync](/docs/products/sync).
+
+## Compare sync architectures [#compare-sync-architectures]
+
+If you're choosing how application data reaches the client, compare the data
+model as well as deployment:
+
+- [Liveblocks vs. Electric Sync](/docs/compare/liveblocks-vs-electric): Postgres
+  read-path sync and shared documents.
+- [Liveblocks vs. Rocicorp Zero](/docs/compare/liveblocks-vs-zero): Reactive
+  queries and shared editing.
+- [Liveblocks vs. PowerSync](/docs/compare/liveblocks-vs-powersync): Local
+  SQLite, offline writes, and collaboration.
+- [Liveblocks vs. Convex](/docs/compare/liveblocks-vs-convex): Reactive
+  application logic and shared documents.
+
+## More database and messaging comparisons [#more-database-and-messaging-comparisons]
+
+- [Liveblocks vs. Firebase](/docs/compare/liveblocks-vs-firebase): Compare shared
+  editing with Firestore and Realtime Database.
+- [Liveblocks vs. Pusher Channels](/docs/compare/liveblocks-vs-pusher): Compare
+  persistent documents with hosted events.
+
+## Get started [#get-started]
+
+Explore the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+or [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced),
+then follow the [setup guide](/docs/get-started).
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
