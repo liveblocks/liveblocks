@@ -16,7 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRun } from "./run-context";
 import type { Answer, NodeResultData, RunStatus } from "./runs";
 import type { WorkflowSummary } from "./server/liveblocks";
@@ -375,10 +375,13 @@ function RunList() {
     [feeds]
   );
 
-  // Auto-select the newest run when nothing is selected yet, e.g. a run that
-  // came in through the API.
+  // Preview the newest run once, when the panel first loads. After that the
+  // selection is the user's: exiting the preview must not re-select a run.
+  const didAutoSelect = useRef(false);
+
   useEffect(() => {
-    if (selectedRunId === null && runs.length > 0) {
+    if (!didAutoSelect.current && selectedRunId === null && runs.length > 0) {
+      didAutoSelect.current = true;
       selectRun(runs[0].feedId);
     }
   }, [runs, selectedRunId, selectRun]);
@@ -408,7 +411,9 @@ function RunList() {
           <li key={run.feedId}>
             <button
               type="button"
-              onClick={() => selectRun(run.feedId)}
+              // Clicking the selected run again exits the preview.
+              onClick={() => selectRun(selected ? null : run.feedId)}
+              title={selected ? "Exit run preview" : "Preview this run"}
               className={`flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left ${
                 selected
                   ? "border-violet-300 bg-violet-50"

@@ -29,7 +29,7 @@ import {
   type IsValidConnection,
   type NodeChange,
 } from "@xyflow/react";
-import { Bot, Redo2, Sparkles, Undo2 } from "lucide-react";
+import { Bot, Eye, Redo2, Sparkles, Undo2, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -62,6 +62,43 @@ function FlowCursor({ userId }: CursorsCursorProps) {
   return <Cursor color={user?.color} label={user?.name} />;
 }
 
+/**
+ * Shown while a run is previewed on the canvas. Exiting returns the canvas to
+ * plain editing: no dimmed nodes, no highlighted path.
+ */
+function RunPreviewBanner() {
+  const { selectedRunId, selectRun, messages } = useRun();
+
+  if (selectedRunId === null) {
+    return null;
+  }
+
+  const running = messages.some((message) => message.status === "running");
+  const failed = messages.some((message) => message.status === "error");
+  const label = running
+    ? "Run in progress"
+    : failed
+      ? "Run failed"
+      : "Run preview";
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-white py-1 pl-2.5 pr-1 text-xs shadow ring-1 ring-neutral-950/5">
+      <Eye className="size-3.5 text-violet-600" />
+      <span className="font-medium text-neutral-800">{label}</span>
+      <span className="text-neutral-400">
+        {messages.length} node{messages.length === 1 ? "" : "s"} · Esc
+      </span>
+      <button
+        type="button"
+        onClick={() => selectRun(null)}
+        className="inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
+      >
+        <X className="size-3.5" /> Exit preview
+      </button>
+    </div>
+  );
+}
+
 function Toast({ message }: { message: string | null }) {
   if (!message) {
     return null;
@@ -76,7 +113,7 @@ function Toast({ message }: { message: string | null }) {
 
 export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
   const reactFlow = useReactFlow<WorkflowNode, WorkflowEdge>();
-  const { results, selectedRunId } = useRun();
+  const { results, selectedRunId, selectRun } = useRun();
   const undo = useUndo();
   const redo = useRedo();
   const canUndo = useCanUndo();
@@ -105,6 +142,13 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
         ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && selectedRunId !== null) {
+        if (!isEditableTarget(event.target)) {
+          selectRun(null);
+        }
+        return;
+      }
+
       const isModZ =
         event.key.toLowerCase() === "z" &&
         (event.metaKey || event.ctrlKey) &&
@@ -127,7 +171,7 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [undo, redo, canUndo, canRedo]);
+  }, [undo, redo, canUndo, canRedo, selectedRunId, selectRun]);
 
   const reachable = useMemo(
     () => getReachableNodeIds(nodes, edges),
@@ -308,6 +352,9 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
         </Panel>
         <Panel position="top-center">
           <Toast message={toast} />
+        </Panel>
+        <Panel position="top-right">
+          <RunPreviewBanner />
         </Panel>
       </ReactFlow>
     </div>
