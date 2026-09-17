@@ -1,0 +1,36 @@
+{
+  "name": "@liveblocks-examples/nextjs-typesafe-workflow-builder",
+  "description": "Collaborative AI workflow builder with Liveblocks, React Flow, TypeSafe (Jev), and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^3.23.0",
+    "@liveblocks/node": "^3.23.0",
+    "@liveblocks/react": "^3.23.0",
+    "@liveblocks/react-flow": "^3.23.0",
+    "@liveblocks/react-ui": "^3.23.0",
+    "@typesafe-ai/sdk": "^0.6.0",
+    "@xyflow/react": "^12.10.1",
+    "ai": "^6.0.136",
+    "lucide-react": "^0.475.0",
+    "nanoid": "^5.1.7",
+    "next": "^16.2.12",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^18.11.19",
+    "@types/react": "^18.0.38",
+    "@types/react-dom": "^18.0.11",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.2.2"
+  }
+}

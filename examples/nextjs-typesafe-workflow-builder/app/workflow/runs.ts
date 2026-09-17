@@ -1,0 +1,74 @@
+import type { WorkflowNodeType } from "./shared";
+
+export type RunStatus = "running" | "complete" | "error";
+export type RunTrigger = "test" | "api";
+export type NodeStatus = "running" | "complete" | "error" | "skipped";
+
+export type ChoiceAnswer = {
+  type: "choice";
+  choice: string;
+  confidence: number;
+  probabilities: Record<string, number>;
+};
+
+export type ScoreAnswer = {
+  type: "score";
+  // Expected score, may fall between two integer levels.
+  score: number;
+  // Rounded level index that decided which handle fired.
+  level: number;
+  confidence: number;
+  probabilities: Record<string, number>;
+};
+
+export type NoulAnswer = {
+  type: "noul";
+  noul: number;
+  threshold: number;
+};
+
+export type Answer = ChoiceAnswer | ScoreAnswer | NoulAnswer;
+
+/**
+ * The data stored in one feed message: the result of executing one node.
+ */
+export type NodeResultData = {
+  nodeId: string;
+  nodeType: WorkflowNodeType;
+  label: string;
+  status: NodeStatus;
+  // Ids of the upstream nodes whose handles fired into this node.
+  parentNodeIds: string[];
+  // The resolved `input` state this node received.
+  input: string;
+  // LLM output (streams in) or, for Jev nodes, the input passed through.
+  output?: string;
+  // Jev answers keyed by question id.
+  answers?: Record<string, Answer>;
+  // Source handles that fired on this node.
+  firedHandles?: string[];
+  // Set when the node ran against a mock instead of a real provider.
+  mock?: boolean;
+  model?: string;
+  durationMs?: number;
+  error?: string;
+  startedAt: number;
+};
+
+export type RunSummary = {
+  runId: string;
+  status: RunStatus;
+  trigger: RunTrigger;
+  input: string;
+  startedAt: number;
+  completedAt?: number;
+  error?: string;
+};
+
+export type RunTrace = RunSummary & {
+  nodes: NodeResultData[];
+};
+
+export const MAX_INPUT_PREVIEW = 200;
+export const MAX_NODE_EXECUTIONS = 25;
+export const RUN_TIMEOUT_MS = 60_000;
