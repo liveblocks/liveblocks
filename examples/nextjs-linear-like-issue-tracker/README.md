@@ -30,6 +30,13 @@ You can optionally enable an AI assistant that you can mention it comments and
 will stream in replies. The assistant can create new issues, and edit the
 current issue, showing AI presence as it works.
 
+The sparkle buttons in the sidebar use
+[Jev](https://docs.typesafe.ai/introduction), TypeSafe's System One model, to
+classify the issue: it fills in priority, progress, and assignee, and picks
+labels, by answering typed questions with calibrated probabilities. The code
+then decides what to apply based on confidence, for example only overwriting an
+existing priority when Jev is very sure.
+
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/linear-like-issue-tracker.png" width="536" alt="Issue tracker" />
 
 ## Getting started
@@ -67,6 +74,16 @@ You need your own Anthropic API key to run the AI agent.
   [Anthropic Dashboard](https://platform.claude.com/settings/keys)
 - Add your Anthropic API key to `.env.local` as the `ANTHROPIC_API_KEY`
   environment variable
+
+### Setting up TypeSafe (Jev)
+
+The "properties" and "labels" sparkle buttons call Jev through the
+[TypeSafe JavaScript SDK](https://docs.typesafe.ai/sdk/javascript).
+
+- Create an account on [TypeSafe](https://typesafe.ai) and create an API key
+- Add it to `.env.local` as the `TYPESAFE_API_KEY` environment variable
+- The questions, confidence thresholds, and update rules live in
+  `src/lib/ai-issue-button-jev.ts`
 
 ### Manual setup
 

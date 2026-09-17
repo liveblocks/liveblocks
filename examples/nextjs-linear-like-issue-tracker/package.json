@@ -21,6 +21,7 @@
     "@radix-ui/react-select": "^2.1.7",
     "@types/node": "20.3.3",
     "@types/react-dom": "18.2.25",
+    "@typesafe-ai/sdk": "^0.6.0",
     "ai": "^6.0.141",
     "autoprefixer": "^10.4.23",
     "classnames": "^2.5.1",
