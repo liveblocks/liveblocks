@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { Liveblocks, WebhookHandler } from "@liveblocks/node";
-import { replyToComment } from "@/lib/spreadsheet-server";
+import { reviewComment } from "@/lib/jev-review";
 
 // Add your webhook secret from the project's webhooks dashboard. Point a
-// `commentCreated` webhook at this endpoint to enable AI comment replies.
+// `commentCreated` webhook at this endpoint to enable AI comment replies and
+// the Jev-powered comment review (see lib/jev-review.ts).
 const WEBHOOK_SECRET = process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY;
 
 export async function POST(request: Request) {
@@ -26,14 +27,17 @@ export async function POST(request: Request) {
     return new NextResponse("Could not verify webhook call", { status: 400 });
   }
 
-  // Reply when the AI is @mentioned in a new comment.
+  // Every new human comment goes through the reviewer: an @mention of the AI
+  // gets a direct reply (with tools); anything else is classified by Jev —
+  // "Fix it" applies the recommended fix, a question gets an answer, "leave
+  // it" resolves the thread — and checked for new issues.
   if (event.type === "commentCreated" && process.env.LIVEBLOCKS_SECRET_KEY) {
     const { roomId, threadId, commentId } = event.data;
     const liveblocks = new Liveblocks({
       secret: process.env.LIVEBLOCKS_SECRET_KEY,
     });
     try {
-      await replyToComment(liveblocks, roomId, threadId, commentId);
+      await reviewComment(liveblocks, roomId, threadId, commentId);
     } catch (error) {
       console.error(error);
     }
