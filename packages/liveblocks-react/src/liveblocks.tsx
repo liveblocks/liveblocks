@@ -50,7 +50,7 @@ import {
   useIsInsideRoom,
 } from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
-import { ensureNotServerSide } from "./lib/ssr";
+import { useBrowser } from "./lib/use-browser";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -565,8 +565,7 @@ function useInboxNotificationsSuspense_withClient(
   client: OpaqueClient,
   options?: UseInboxNotificationsOptions
 ) {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const store = getLiveblocksExtrasForClient(client).store;
 
@@ -636,8 +635,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
   client: OpaqueClient,
   options?: UseInboxNotificationsOptions
 ) {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const store = getLiveblocksExtrasForClient(client).store;
 
@@ -934,8 +932,7 @@ function useNotificationSettingsSuspense_withClient(
   NotificationSettingsAsyncSuccess,
   (settings: PartialNotificationSettings) => void,
 ] {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const store = getLiveblocksExtrasForClient(client).store;
 
@@ -1238,8 +1235,7 @@ function useAiChats(options?: UseAiChatsOptions): AiChatsAsyncResult {
 }
 
 function useAiChatsSuspense(options?: UseAiChatsOptions): AiChatsAsyncSuccess {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
@@ -1295,8 +1291,7 @@ function useAiChatMessagesSuspense(
   /** @internal */
   options?: { branchId?: MessageId }
 ): AiChatMessagesAsyncSuccess {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
@@ -1339,8 +1334,7 @@ function useAiChat(chatId: string): AiChatAsyncResult {
 }
 
 function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
@@ -1388,8 +1382,7 @@ function useUrlMetadata(url: string): UrlMetadataAsyncResult {
  * const { metadata } = useUrlMetadata("https://liveblocks.io");
  */
 function useUrlMetadataSuspense(url: string): UrlMetadataAsyncSuccess {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
@@ -1943,8 +1936,7 @@ function useUserThreadsSuspense_experimental<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
 >(options: UseUserThreadsOptions<TM> = {}): ThreadsAsyncSuccess<TM, CM> {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const client = useClient();
   const { store } = getLiveblocksExtrasForClient<TM, CM>(client);

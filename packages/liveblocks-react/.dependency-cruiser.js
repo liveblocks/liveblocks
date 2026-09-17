@@ -153,7 +153,7 @@ export default {
       severity: "error",
       from: { path: "^src/lib/" },
       to: {
-        pathNot: "(^src/lib/|src/types/|liveblocks-.*|node_modules/react/)",
+        pathNot: "(^src/lib/|src/types/|liveblocks-.*|node_modules/react(-dom)?/)",
       },
     },
   ],
