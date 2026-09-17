@@ -41,6 +41,20 @@ export function CommentOverlay({
     lastSubmitRef.current = Date.now();
   }, []);
 
+  // Release the grid's selection while a thread/composer is open. Handsontable
+  // refocuses the selected cell whenever its data is replaced (e.g. the AI
+  // editing a cell → `updateData` → `selection.refresh()`), which blurs the
+  // composer and makes Radix treat it as "focus outside" and close the popover.
+  // With no selection there's nothing to refocus, so remote changes leave the
+  // open thread alone. (Clicking into the popover already deselects, via
+  // `outsideClickDeselects` in Table.tsx; this covers threads opened by
+  // single-click or from the toolbar.)
+  useEffect(() => {
+    if (openCell) {
+      hotRef.current?.hotInstance?.deselectCell();
+    }
+  }, [hotRef, openCell]);
+
   const visualRow = openCell ? rowIds.indexOf(openCell.rowId) : -1;
   const visualCol = openCell ? colIds.indexOf(openCell.colId) : -1;
 

@@ -17,12 +17,14 @@ import {
 import { AI_USER_ID, AI_USER_NAME } from "@/database";
 import { cellKey, type CellFormat } from "@/liveblocks.config";
 import { colIndexToLetters, toA1 } from "@/lib/a1";
+import { parseFix, serializeFix, type Fix, type FixOp } from "@/lib/fix";
 import {
+  applyFix,
   CHAT_MODEL,
   mentionsAi,
   readStorage,
   replyInThread,
-  showAiEditing,
+  snapshotText,
   threadToMessages,
   type StorageJson,
 } from "@/lib/spreadsheet-server";
@@ -39,8 +41,13 @@ import {
  * Two triggers:
  *  - a human edits a cell (client → POST /api/jev-review) → `reviewCellEdit`
  *  - a human leaves a comment (`commentCreated` webhook) → `reviewComment`,
- *    where Jev additionally classifies the comment's intent ("Fix it" → apply
- *    the proposed fix with tools, a question → answer, "leave it" → resolve).
+ *    where Jev additionally classifies the comment's intent ("go ahead" →
+ *    apply the proposed fix, a question → answer, "leave it" → resolve).
+ *
+ * Every review comment carries its fix, ready to apply, in `metadata.fix`
+ * (see lib/fix.ts). The "Fix it" button (POST /api/apply-fix →
+ * `applyReviewFix`) writes it to Storage immediately with `mutateStorage`,
+ * without another model call.
  */
 
 // --- Tuning ------------------------------------------------------------------
@@ -709,19 +716,76 @@ function logAnswers(label: string, answers: Answers) {
 
 // --- Writing the comment -----------------------------------------------------
 
+type Review = { text: string; fix: Fix | null };
+
 // The LLM writes ONE comment from the fired checks: one sentence per finding,
-// in order, each with a concrete recommendation. It only recommends — the
-// user applies changes with the "Fix it" button (which Jev then classifies).
+// in order, each with a concrete recommendation — and, in the same call, the
+// concrete edits that recommendation amounts to (`fix`). The fix is saved on
+// the comment so "Fix it" can apply it instantly (see applyReviewFix); the
+// comment itself only recommends. The LLM always gets the *whole* spreadsheet
+// (`snapshotText`), unlike Jev, whose `state.sheet` is capped to fit its token
+// budget.
 async function writeReviewComment(
   a1: string,
   findings: Finding[],
   state: EntryType,
+  storage: StorageJson,
   thread: ThreadData | null
-): Promise<string | null> {
-  const { generateText } = await import("ai");
+): Promise<Review | null> {
+  const { generateText, Output } = await import("ai");
+  const { z } = await import("zod");
   const messages = thread ? await threadToMessages(thread) : [];
-  const { text } = await generateText({
+  // Drop Jev's truncated `sheet` from the context — the full sheet is passed
+  // separately below.
+  const context = JSON.stringify(state, (key, value) =>
+    key === "sheet" ? undefined : value
+  );
+  const { output } = await generateText({
     model: CHAT_MODEL,
+    output: Output.object({
+      schema: z.object({
+        comment: z
+          .string()
+          .describe("The review comment to post on the cell's thread."),
+        // One flat shape for both kinds of edit: OpenAI's structured outputs
+        // reject `oneOf`/unions, and every field must be present (hence
+        // `nullable`, not `optional`).
+        fix: z
+          .array(
+            z.object({
+              op: z
+                .enum(["setValue", "format"])
+                .describe("`setValue` writes a cell; `format` styles a range."),
+              cell: z
+                .string()
+                .describe(
+                  'A1 reference: a single cell for setValue (e.g. "B2"), a cell or range for format (e.g. "B2:B9").'
+                ),
+              value: z
+                .string()
+                .nullable()
+                .describe(
+                  "setValue only: the new cell value (a formula starts with '='). null for format."
+                ),
+              numberFormat: z
+                .enum(["general", "currency", "percent"])
+                .nullable()
+                .describe("format only; null to leave unchanged."),
+              bold: z.boolean().nullable().describe("format only."),
+              italic: z.boolean().nullable().describe("format only."),
+              align: z
+                .enum(["left", "center", "right"])
+                .nullable()
+                .describe("format only."),
+            })
+          )
+          .describe(
+            "The exact edits that apply every recommendation in `comment`, in " +
+              "order. Empty when the findings can't be fixed by setting values " +
+              "or formats (e.g. an open question, or a duplicate to discuss)."
+          ),
+      }),
+    }),
     system:
       `You are ${AI_USER_NAME}, reviewing a shared spreadsheet. A reviewer ` +
       `flagged the findings below on cell ${a1}. Write ONE short comment for ` +
@@ -731,7 +795,10 @@ async function writeReviewComment(
       `add a greeting or sign-off. Light Markdown (bold, italics, inline code) ` +
       `only — no headings, lists, or tables. Do not prefix with your name. You ` +
       `are only recommending: do not claim to have changed anything. The user ` +
-      `can accept with a "Fix it" button under your comment.` +
+      `can accept with a "Fix it" button under your comment, which applies ` +
+      `\`fix\` exactly as you return it — so \`fix\` must match what the ` +
+      `comment recommends, use A1 references, and only touch cells the ` +
+      `recommendation is about.` +
       (thread
         ? ` The existing conversation on this cell is given as prior messages; don't repeat what's already been said.`
         : ""),
@@ -747,35 +814,60 @@ async function writeReviewComment(
           })),
           null,
           2
-        )}\n\nSpreadsheet context:\n${JSON.stringify(state)}`,
+        )}\n\nCell, row, column and thread context:\n${context}\n\n${snapshotText(storage)}`,
       },
     ],
   });
-  const reply = text.trim();
-  return reply || null;
+  const text = output.comment.trim();
+  if (!text) {
+    return null;
+  }
+  const ops: FixOp[] = [];
+  for (const raw of output.fix) {
+    if (raw.op === "setValue") {
+      if (raw.value !== null) {
+        ops.push({ op: "setValue", cell: raw.cell, value: raw.value });
+      }
+      continue;
+    }
+    const format: CellFormat = {};
+    if (raw.numberFormat !== null) format.numberFormat = raw.numberFormat;
+    if (raw.bold !== null) format.bold = raw.bold;
+    if (raw.italic !== null) format.italic = raw.italic;
+    if (raw.align !== null) format.align = raw.align;
+    if (Object.keys(format).length > 0) {
+      ops.push({ op: "format", range: raw.cell, format });
+    }
+  }
+  return { text, fix: ops.length > 0 ? { ops } : null };
 }
 
 // Post the review as the AI user, tagged `review: "pending"` so the UI shows
-// "Fix it" / "Ignore" under it. Appends to the cell's open thread if any.
+// "Fix it" / "Ignore" under it, with the ready-to-apply fix saved alongside.
+// Appends to the cell's open thread if any.
 async function postReview(
   liveblocks: LiveblocksClient,
   roomId: string,
   cell: CellRef,
   thread: ThreadData | null,
-  text: string
+  review: Review
 ): Promise<void> {
-  const body = markdownToCommentBody(text);
+  const body = markdownToCommentBody(review.text);
+  const fix = review.fix ? serializeFix(review.fix) : null;
+  const metadata: Liveblocks["CommentMetadata"] = fix
+    ? { review: "pending", fix }
+    : { review: "pending" };
   if (thread) {
     await liveblocks.createComment({
       roomId,
       threadId: thread.id,
-      data: { userId: AI_USER_ID, body, metadata: { review: "pending" } },
+      data: { userId: AI_USER_ID, body, metadata },
     });
   } else {
     await liveblocks.createThread({
       roomId,
       data: {
-        comment: { userId: AI_USER_ID, body, metadata: { review: "pending" } },
+        comment: { userId: AI_USER_ID, body, metadata },
         metadata: { rowId: cell.rowId, colId: cell.colId },
       },
     });
@@ -783,7 +875,7 @@ async function postReview(
 }
 
 // Flip every pending review comment in the thread to `status`, hiding the
-// buttons for everyone.
+// buttons for everyone, and drop any saved fix so it can't be applied twice.
 async function settlePendingReviews(
   liveblocks: LiveblocksClient,
   roomId: string,
@@ -791,17 +883,98 @@ async function settlePendingReviews(
   status: "accepted" | "ignored"
 ): Promise<void> {
   for (const comment of thread.comments) {
-    if (comment.metadata?.review === "pending") {
+    if (comment.metadata?.review === "pending" || comment.metadata?.fix) {
       await liveblocks
         .editCommentMetadata({
           roomId,
           threadId: thread.id,
           commentId: comment.id,
-          data: { metadata: { review: status }, userId: AI_USER_ID },
+          data: { metadata: { review: status, fix: null }, userId: AI_USER_ID },
         })
         .catch((error) => console.error("[jev] editCommentMetadata", error));
     }
   }
+}
+
+// --- Applying a saved fix ----------------------------------------------------
+
+// The newest review comment in the thread that still carries a saved fix.
+function pendingFix(
+  thread: ThreadData
+): { commentId: string; fix: Fix } | null {
+  for (let i = thread.comments.length - 1; i >= 0; i--) {
+    const comment = thread.comments[i];
+    if (comment.userId !== AI_USER_ID || comment.deletedAt) {
+      continue;
+    }
+    const fix = parseFix(comment.metadata?.fix);
+    if (fix) {
+      return { commentId: comment.id, fix };
+    }
+  }
+  return null;
+}
+
+// Apply the fix saved on a review comment straight to Storage — no LLM
+// involved — then confirm in the thread and resolve it. Returns false when the
+// comment has no (remaining) fix, so callers can fall back to asking the AI.
+async function applySavedFix(
+  liveblocks: LiveblocksClient,
+  roomId: string,
+  thread: ThreadData,
+  commentId?: string
+): Promise<boolean> {
+  const pending = pendingFix(thread);
+  if (!pending || (commentId && pending.commentId !== commentId)) {
+    return false;
+  }
+  // Claim the fix first so a second press (or a concurrent webhook) doesn't
+  // apply it again.
+  await liveblocks.editCommentMetadata({
+    roomId,
+    threadId: thread.id,
+    commentId: pending.commentId,
+    data: { metadata: { review: "accepted", fix: null }, userId: AI_USER_ID },
+  });
+  const summary = await applyFix(liveblocks, roomId, pending.fix);
+  if (summary) {
+    await liveblocks.createComment({
+      roomId,
+      threadId: thread.id,
+      data: {
+        userId: AI_USER_ID,
+        body: markdownToCommentBody(`Done — ${summary}.`),
+      },
+    });
+    await resolveThread(liveblocks, roomId, thread, "accepted");
+  } else {
+    await liveblocks.createComment({
+      roomId,
+      threadId: thread.id,
+      data: {
+        userId: AI_USER_ID,
+        body: markdownToCommentBody(
+          "I couldn't apply that fix — the cell it targeted no longer exists."
+        ),
+      },
+    });
+  }
+  return true;
+}
+
+/**
+ * Entry point for the "Fix it" button (POST /api/apply-fix): applies the fix
+ * the reviewer saved on `commentId` when it wrote the comment. Returns whether
+ * a saved fix was found and applied.
+ */
+export async function applyReviewFix(
+  liveblocks: LiveblocksClient,
+  roomId: string,
+  threadId: string,
+  commentId: string
+): Promise<boolean> {
+  const thread = await liveblocks.getThread({ roomId, threadId });
+  return applySavedFix(liveblocks, roomId, thread, commentId);
 }
 
 async function resolveThread(
@@ -913,14 +1086,13 @@ async function reviewCellEdit(
   const checks = CHECKS.filter((c) => c.scope === "cell" || thread !== null);
   const questions = buildQuestions(checks, thread !== null);
 
-  showAiEditing(liveblocks, roomId, [cell]);
   const { answers } = await jev.systemOne({ state, questions });
   logAnswers(`cell edit on ${a1} (${value || "cleared"})`, answers);
 
   // The edit fixed what the thread was about → say so and resolve.
   const resolvable = noulOf(answers, "thread_resolvable");
   if (thread && resolvable >= FIRE_THRESHOLD) {
-    const text = await writeReviewComment(
+    const review = await writeReviewComment(
       a1,
       [
         {
@@ -929,13 +1101,15 @@ async function reviewCellEdit(
         },
       ],
       state,
+      storage,
       thread
     );
-    if (text) {
+    if (review) {
+      // Nothing left to fix here, so the comment is posted without a fix.
       await liveblocks.createComment({
         roomId,
         threadId: thread.id,
-        data: { userId: AI_USER_ID, body: markdownToCommentBody(text) },
+        data: { userId: AI_USER_ID, body: markdownToCommentBody(review.text) },
       });
     }
     await resolveThread(liveblocks, roomId, thread, "accepted");
@@ -951,9 +1125,9 @@ async function reviewCellEdit(
     return;
   }
 
-  const text = await writeReviewComment(a1, findings, state, thread);
-  if (text) {
-    await postReview(liveblocks, roomId, cell, thread, text);
+  const review = await writeReviewComment(a1, findings, state, storage, thread);
+  if (review) {
+    await postReview(liveblocks, roomId, cell, thread, review);
   }
 }
 
@@ -1032,7 +1206,6 @@ export async function reviewComment(
     latest_comment_intent: INTENT_QUESTION,
   };
 
-  showAiEditing(liveblocks, roomId, [cell]);
   const { answers } = await jev.systemOne({ state, questions });
   logAnswers(`comment on ${a1}`, answers);
 
@@ -1041,6 +1214,11 @@ export async function reviewComment(
   if (intent.confidence >= FIRE_THRESHOLD) {
     switch (intent.choice) {
       case "approve_fix": {
+        // "yes, go ahead" typed by hand: prefer the fix the reviewer saved
+        // with its comment; only ask the LLM when there isn't one.
+        if (await applySavedFix(liveblocks, roomId, thread)) {
+          return;
+        }
         await replyInThread(liveblocks, roomId, thread, {
           tools: true,
           instruction:
@@ -1080,8 +1258,8 @@ export async function reviewComment(
   if (findings.length === 0) {
     return;
   }
-  const text = await writeReviewComment(a1, findings, state, thread);
-  if (text) {
-    await postReview(liveblocks, roomId, cell, thread, text);
+  const review = await writeReviewComment(a1, findings, state, storage, thread);
+  if (review) {
+    await postReview(liveblocks, roomId, cell, thread, review);
   }
 }

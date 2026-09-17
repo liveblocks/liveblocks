@@ -21,6 +21,7 @@ import {
   type CellFormat,
   type SelectedCell,
 } from "@/liveblocks.config";
+import { describeFix, type Fix } from "@/lib/fix";
 import { isFormatEmpty, mergeFormat } from "@/lib/format";
 import {
   colIndexToLetters,
@@ -334,6 +335,60 @@ export async function formatCells(
     showAiEditing(liveblocks, roomId, cells);
   });
   return `Formatted ${rangeA1.toUpperCase()}.`;
+}
+
+// Apply a saved review fix (see lib/fix.ts) in ONE mutation, highlighting every
+// touched cell as a single box while it happens. Returns a one-line summary of
+// what was applied, or null if nothing in the fix resolved to a real cell (e.g.
+// the row/column was deleted since the review).
+export async function applyFix(
+  liveblocks: LiveblocksClient,
+  roomId: string,
+  fix: Fix
+): Promise<string | null> {
+  let applied = 0;
+  await liveblocks.mutateStorage(roomId, ({ root }) => {
+    const map = root.get("cells");
+    const touched: SelectedCell[] = [];
+    for (const op of fix.ops) {
+      if (op.op === "setValue") {
+        const pos = parseA1(op.cell);
+        const target = pos && rowColIds(root, pos.row, pos.col);
+        if (target) {
+          writeValue(map, target.rowId, target.colId, op.value);
+          touched.push(target);
+          applied++;
+        }
+      } else {
+        const range = parseA1Range(op.range);
+        if (!range) {
+          continue;
+        }
+        const patch = { ...op.format };
+        if (patch.numberFormat === "general") {
+          patch.numberFormat = undefined;
+        }
+        let hit = false;
+        for (let r = range.start.row; r <= range.end.row; r++) {
+          for (let c = range.start.col; c <= range.end.col; c++) {
+            const target = rowColIds(root, r, c);
+            if (target) {
+              writeFormat(map, target.rowId, target.colId, patch);
+              touched.push(target);
+              hit = true;
+            }
+          }
+        }
+        if (hit) {
+          applied++;
+        }
+      }
+    }
+    if (touched.length > 0) {
+      showAiEditing(liveblocks, roomId, touched);
+    }
+  });
+  return applied > 0 ? describeFix(fix) : null;
 }
 
 export async function sortByColumn(
@@ -697,11 +752,8 @@ export async function replyInThread(
 
   const messages = await threadToMessages(thread);
 
-  // Show the AI working on the cell while it drafts the reply.
-  if (onCell) {
-    showAiEditing(liveblocks, roomId, [{ rowId, colId }]);
-  }
-
+  // No presence while drafting: the AI's highlight only appears when a tool
+  // actually edits the sheet (see the `showAiEditing` calls in the edit ops).
   const { generateText, stepCountIs } = await import("ai");
   const tools = options.tools
     ? await createSpreadsheetTools(liveblocks, roomId)
