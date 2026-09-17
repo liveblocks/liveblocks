@@ -4,7 +4,7 @@ import {
   type IssuePriorityId,
   type IssueProgressId,
 } from "@/config";
-import { AI_USER_INFO, getUsers } from "@/database";
+import { AI_USER_INFO, getUserExpertise, getUsers } from "@/database";
 import {
   applyIssuePropertyUpdates,
   type IssuePropertyUpdates,
@@ -117,19 +117,24 @@ const PROGRESS_QUESTION = choice(
   } satisfies Record<Exclude<IssueProgressId, "none">, string>
 );
 
-// Assignee options are the demo users, built at request time.
+// Assignee options are the demo users, built at request time. Each option
+// describes what that person owns (see USER_EXPERTISE in database.ts) so Jev
+// can route by area when nobody is named explicitly.
 function buildAssigneeQuestion() {
   const criteria: Record<string, string> = {
-    none: "No specific person is named or clearly implied as the owner.",
+    none: "Nobody on the team is a clear fit, or the issue is too vague to route.",
   };
   for (const user of getUsers()) {
     if (user.id === AI_USER_INFO.id) {
       continue;
     }
-    criteria[user.id] = `${user.info.name} (${user.id})`;
+    const expertise = getUserExpertise(user.id);
+    criteria[user.id] = expertise
+      ? `${user.info.name} — owns: ${expertise}`
+      : user.info.name;
   }
   return choice(
-    "Which team member does the title or description name, or clearly imply, should own this issue?",
+    "Who should own this issue? If the text names a team member, pick them. Otherwise pick the person whose area of ownership best matches the work described.",
     criteria
   );
 }
@@ -187,8 +192,10 @@ export const JEV_THRESHOLDS = {
   overridePriority: 0.85,
   // Below this we fall back to `todo` rather than guess a workflow state.
   fillProgress: 0.5,
-  // Assigning work to a person is the most consequential change here.
-  assignee: 0.7,
+  // Assigning work to a person is the most consequential change here. Routing
+  // by area of ownership is fuzzier than matching a name, so this sits at the
+  // "genuinely unsure" floor; `none` is always an option Jev can pick.
+  assignee: 0.5,
   // Labels: add when clearly yes, remove an existing one only when clearly no.
   addLabel: 0.6,
   removeLabel: 0.2,
@@ -265,7 +272,9 @@ export function decidePropertyUpdates(
       `Assignee → ${assignee.choice} (confidence ${pct(assignee.confidence)})`
     );
   } else {
-    notes.push("Assignee left empty: nobody is clearly implied");
+    notes.push(
+      `Assignee left empty: no clear owner (best guess ${assignee.choice}, confidence ${pct(assignee.confidence)})`
+    );
   }
 
   return { updates, notes };
