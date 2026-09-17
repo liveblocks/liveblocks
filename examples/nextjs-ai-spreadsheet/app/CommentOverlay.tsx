@@ -12,6 +12,10 @@ import type { HotTableRef } from "@handsontable/react-wrapper";
 import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
 import { useOrder } from "./OrderContext";
 import { useCellThread } from "./CellThreadContext";
+import { ReviewComment } from "./ReviewComment";
+
+// Render the reviewer's recommendations with "Fix it" / "Ignore" buttons.
+const THREAD_COMPONENTS = { Comment: ReviewComment };
 
 type Rect = { top: number; left: number; width: number; height: number };
 
@@ -127,6 +131,7 @@ export function CommentOverlay({
           }}
           style={{ zIndex: 50 }}
           autoFocus
+          components={THREAD_COMPONENTS}
         >
           <div style={{ width: "100%", height: "100%" }} />
         </FloatingThread>
