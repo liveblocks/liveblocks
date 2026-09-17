@@ -39,6 +39,9 @@ export type NodeResultData = {
   status: NodeStatus;
   // Ids of the upstream nodes whose handles fired into this node.
   parentNodeIds: string[];
+  // Whether this node required every incoming handle to fire ("all") or just
+  // one ("any").
+  activation?: "any" | "all";
   // The resolved `input` state this node received.
   input: string;
   // LLM output (streams in) or, for Jev nodes, the input passed through.

@@ -99,6 +99,8 @@ export function createDemoWorkflow(): {
       id: "escalation",
       position: { x: COLUMN * 2, y: ROW * 2 },
       label: "Escalation summary",
+      // AND: runs only when both `intent = billing` and `urgent = yes` fired.
+      activation: "all",
       system: "You write terse internal notes for a support team lead.",
       prompt:
         "Summarize this urgent ticket in two bullet points for the on-call lead. Intent: {{answers.intent}}. Frustration: {{answers.frustration}}.\n\n{{input}}",
@@ -147,7 +149,13 @@ export function createDemoWorkflow(): {
       target: "technical-reply",
     }),
     createWorkflowEdge({
-      id: "e-triage-escalation",
+      id: "e-triage-escalation-billing",
+      source: "triage",
+      sourceHandle: questionHandleId("intent", "billing"),
+      target: "escalation",
+    }),
+    createWorkflowEdge({
+      id: "e-triage-escalation-urgent",
       source: "triage",
       sourceHandle: questionHandleId("urgent", "yes"),
       target: "escalation",

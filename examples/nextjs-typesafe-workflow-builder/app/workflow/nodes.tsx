@@ -3,6 +3,7 @@
 import {
   Handle,
   Position,
+  useNodeConnections,
   useReactFlow,
   useUpdateNodeInternals,
   type NodeProps,
@@ -27,9 +28,11 @@ import {
   IN_HANDLE,
   LLM_MODELS,
   createQuestion,
+  getActivation,
   getSourceHandles,
   slugify,
   truncate,
+  type ActivationMode,
   type Criterion,
   type HandleDef,
   type InputNode,
@@ -67,6 +70,54 @@ function StatusIcon({ status }: { status: NodeStatus | undefined }) {
   }
 }
 
+/**
+ * "Runs when" setting for nodes with incoming edges. `all` turns a node with
+ * several incoming handles into an AND gate.
+ */
+function ActivationControl({
+  id,
+  activation,
+  incomingCount,
+}: {
+  id: string;
+  activation: ActivationMode;
+  incomingCount: number;
+}) {
+  const { updateNodeData } = useReactFlow<WorkflowNode>();
+
+  return (
+    <div className="flex flex-col gap-1">
+      <FieldLabel>Runs when</FieldLabel>
+      <div className="flex rounded border border-neutral-200 p-0.5 text-xs">
+        {(
+          [
+            ["any", "Any input fires", "OR"],
+            ["all", "All inputs fire", "AND"],
+          ] as const
+        ).map(([mode, label, short]) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => updateNodeData(id, { activation: mode })}
+            className={`nodrag flex-1 rounded px-2 py-1 ${
+              activation === mode
+                ? "bg-neutral-900 text-white"
+                : "text-neutral-600 hover:bg-neutral-100"
+            }`}
+          >
+            {label} <span className="opacity-60">({short})</span>
+          </button>
+        ))}
+      </div>
+      {activation === "all" && incomingCount < 2 ? (
+        <p className="text-[11px] leading-relaxed text-amber-700">
+          Connect two or more handles into this node to make the AND useful.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function NodeFrame({
   id,
   node,
@@ -95,6 +146,8 @@ function NodeFrame({
   const { updateNodeData } = useReactFlow<WorkflowNode>();
   const updateNodeInternals = useUpdateNodeInternals();
   const { selectedRunId } = useRun();
+  const incoming = useNodeConnections({ id, handleType: "target" });
+  const activation = node.type === "input" ? null : getActivation(node.data);
   const handleKey = handles.map((handle) => handle.id).join("|");
 
   useEffect(() => {
@@ -113,12 +166,22 @@ function NodeFrame({
       data-status={result?.status}
     >
       {hasTarget && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          id={IN_HANDLE}
-          className="workflow-handle"
-        />
+        <>
+          <Handle
+            type="target"
+            position={Position.Left}
+            id={IN_HANDLE}
+            className="workflow-handle"
+          />
+          {activation === "all" ? (
+            <span
+              className="absolute -left-2 top-1/2 -translate-x-full -translate-y-1/2 rounded bg-neutral-900 px-1 py-0.5 text-[9px] font-semibold tracking-wide text-white"
+              title={`Runs only when all ${incoming.length} incoming handles fire`}
+            >
+              AND
+            </span>
+          ) : null}
+        </>
       )}
 
       <div className="flex items-center gap-2 border-b border-neutral-100 px-3 py-2">
@@ -140,7 +203,22 @@ function NodeFrame({
         <StatusIcon status={result?.status} />
       </div>
 
-      <div className="px-3 py-2">{selected ? editor : summary}</div>
+      <div className="px-3 py-2">
+        {selected ? (
+          <div className="flex flex-col gap-3">
+            {editor}
+            {activation !== null ? (
+              <ActivationControl
+                id={id}
+                activation={activation}
+                incomingCount={incoming.length}
+              />
+            ) : null}
+          </div>
+        ) : (
+          summary
+        )}
+      </div>
 
       {result?.error && (
         <div className="mx-3 mb-2 rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
@@ -542,7 +620,8 @@ const JevNodeView = memo(({ id, data, selected }: NodeProps<JevNode>) => {
           </div>
           <p className="text-[11px] leading-relaxed text-neutral-400">
             Each answer becomes a handle. Connect a handle to run the next node
-            only when that answer fires.
+            only when that answer fires; connect two handles into one node set
+            to &ldquo;all inputs fire&rdquo; for an AND.
           </p>
         </div>
       }

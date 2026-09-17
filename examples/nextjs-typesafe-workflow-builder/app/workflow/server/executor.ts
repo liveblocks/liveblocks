@@ -14,6 +14,7 @@ import {
   ANY_HANDLE,
   INPUT_NODE_ID,
   OUT_HANDLE,
+  getActivation,
   getReachableNodeIds,
   questionHandleId,
   renderTemplate,
@@ -212,7 +213,11 @@ async function runWorkflow(
         state.firedHandles.has(edge.sourceHandle)
     );
 
-    if (fired.length === 0) {
+    // `any`: at least one incoming handle fired (OR). `all`: every incoming
+    // handle fired (AND). Parents that never ran count as not fired.
+    const requireAll = getActivation(node.data) === "all";
+
+    if (fired.length === 0 || (requireAll && fired.length < incoming.length)) {
       return null;
     }
 
@@ -238,6 +243,7 @@ async function runWorkflow(
       label: node.data.label,
       status: "running",
       parentNodeIds,
+      activation: requireAll ? "all" : "any",
       input: nodeInput,
       startedAt: nodeStartedAt,
     };

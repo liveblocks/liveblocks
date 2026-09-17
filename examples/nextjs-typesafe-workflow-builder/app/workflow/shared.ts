@@ -66,9 +66,19 @@ export type InputNodeData = {
   sample: string;
 };
 
+/**
+ * How a node with several incoming edges decides to run:
+ * - `any` (default, OR): at least one incoming handle fired.
+ * - `all` (AND): every incoming handle fired. Connect two answer handles
+ *   (e.g. `intent = billing` and `urgent = yes`) into one node and set it to
+ *   `all` to express "if this AND that".
+ */
+export type ActivationMode = "any" | "all";
+
 export type JevNodeData = {
   label: string;
   questions: QuestionDef[];
+  activation?: ActivationMode;
 };
 
 export type LlmNodeData = {
@@ -76,7 +86,14 @@ export type LlmNodeData = {
   model: string;
   system: string;
   prompt: string;
+  activation?: ActivationMode;
 };
+
+export function getActivation(data: {
+  activation?: ActivationMode;
+}): ActivationMode {
+  return data.activation ?? "any";
+}
 
 export type InputNode = Node<InputNodeData, "input">;
 export type JevNode = Node<JevNodeData, "jev">;
@@ -218,6 +235,7 @@ export function createJevNode(args: {
   position: Point;
   label?: string;
   questions?: QuestionDef[];
+  activation?: ActivationMode;
   selected?: boolean;
 }): JevNode {
   return {
@@ -228,6 +246,7 @@ export function createJevNode(args: {
     data: {
       label: args.label ?? "Jev",
       questions: args.questions ?? [createQuestion("choice", 1)],
+      activation: args.activation ?? "any",
     },
   };
 }
@@ -239,6 +258,7 @@ export function createLlmNode(args: {
   model?: string;
   system?: string;
   prompt?: string;
+  activation?: ActivationMode;
   selected?: boolean;
 }): LlmNode {
   return {
@@ -251,6 +271,7 @@ export function createLlmNode(args: {
       model: args.model ?? DEFAULT_LLM_MODEL,
       system: args.system ?? "",
       prompt: args.prompt ?? "{{input}}",
+      activation: args.activation ?? "any",
     },
   };
 }

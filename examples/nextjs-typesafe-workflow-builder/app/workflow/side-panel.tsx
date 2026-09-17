@@ -214,6 +214,14 @@ function TraceNode({
           <span className="flex-1 truncate text-xs font-medium text-neutral-900">
             {message.label}
           </span>
+          {message.activation === "all" ? (
+            <span
+              className="rounded bg-neutral-900 px-1 text-[10px] font-semibold text-white"
+              title="Ran because all incoming handles fired"
+            >
+              AND
+            </span>
+          ) : null}
           {message.mock ? (
             <span className="rounded bg-amber-50 px-1 text-[10px] font-medium text-amber-700">
               mock

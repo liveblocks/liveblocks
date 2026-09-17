@@ -63,6 +63,20 @@ Alternatively, you can set up your project manually:
 
 </details>
 
+## How conditions work
+
+Every answer a Jev node can give is a handle on its right edge: one per Choice
+option, one per Score level, and `yes` / `no` for a yes-no question (with an
+editable threshold). Connecting a handle to another node means "run that node
+only when this answer fires".
+
+- **IF this OR that**: connect several handles into one node and leave it on
+  "any input fires" (the default).
+- **IF this AND that**: connect several handles into one node and switch it to
+  "all inputs fire". The node shows an `AND` badge at its input and only runs
+  when every connected handle fired. The demo's "Escalation summary" node works
+  this way: it needs `intent = billing` and `urgent = yes`.
+
 ## Triggering a workflow over REST
 
 ```bash
