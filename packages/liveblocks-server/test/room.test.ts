@@ -138,7 +138,148 @@ describe("room", () => {
     room.endBrowserSession(ticket.sessionKey, 1001, "bleh");
   });
 
-  test("LiveText replay history is delivered only to its sender and duplicate replays do not fan out", async () => {
+  test.each([undefined, true] as const)(
+    "LiveText history is delivered only when requested and only to its sender (includeTextHistory: %s)",
+    async (includeTextHistory) => {
+      const storage = makeNewInMemoryDriver({
+        initialNodes: [
+          ["root", { type: CrdtType.OBJECT, data: {} }],
+          [
+            "0:1",
+            {
+              type: CrdtType.TEXT,
+              parentId: "root",
+              parentKey: "text",
+              data: [["Hello"]],
+              version: 0,
+            },
+          ],
+        ],
+      });
+      const room = new Room("replay", { storage });
+      const sender = room.createTicket();
+      const remote = room.createTicket();
+      const senderSocket = new MockServerWebSocket();
+      const remoteSocket = new MockServerWebSocket();
+      const senderMessages = vi.spyOn(senderSocket, "send");
+      const remoteMessages = vi.spyOn(remoteSocket, "send");
+      room.startBrowserSession(sender, senderSocket);
+      room.startBrowserSession(remote, remoteSocket);
+
+      await room.handleData(
+        remote.sessionKey,
+        JSON.stringify([
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                type: OpCode.UPDATE_TEXT,
+                id: "0:1",
+                opId: "remote",
+                baseVersion: 0,
+                ops: [{ type: "insert", index: 0, text: "A" }],
+              },
+            ],
+          },
+        ])
+      );
+      senderMessages.mockClear();
+      remoteMessages.mockClear();
+
+      const replay = {
+        type: ClientMsgCode.UPDATE_STORAGE,
+        includeTextHistory,
+        ops: [
+          {
+            type: OpCode.UPDATE_TEXT,
+            id: "0:1",
+            opId: "original",
+            baseVersion: 0,
+            ops: [{ type: "delete", index: 0, length: 2 }],
+          },
+        ],
+      };
+      await room.handleData(sender.sessionKey, JSON.stringify([replay]));
+
+      const accepted = {
+        type: OpCode.UPDATE_TEXT,
+        id: "0:1",
+        baseVersion: 1,
+        version: 2,
+        ops: [{ type: "delete", index: 1, length: 2 }],
+      };
+      expect(
+        remoteMessages.mock.calls.flatMap(([data]) => {
+          const messages: unknown = JSON.parse(data);
+          return messages;
+        })
+      ).toEqual([{ type: ServerMsgCode.UPDATE_STORAGE, ops: [accepted] }]);
+      expect(
+        senderMessages.mock.calls.flatMap(([data]) => {
+          const messages: unknown = JSON.parse(data);
+          return messages;
+        })
+      ).toEqual([
+        {
+          type: ServerMsgCode.UPDATE_STORAGE,
+          ops: [
+            {
+              ...accepted,
+              opId: "original",
+              ...(includeTextHistory
+                ? {
+                    history: [
+                      {
+                        version: 1,
+                        ops: [{ type: "insert", index: 0, text: "A" }],
+                      },
+                    ],
+                  }
+                : {}),
+            },
+          ],
+        },
+      ]);
+
+      senderMessages.mockClear();
+      remoteMessages.mockClear();
+      await room.handleData(sender.sessionKey, JSON.stringify([replay]));
+      expect(remoteMessages.mock.calls).toEqual([]);
+      expect(
+        senderMessages.mock.calls.flatMap(([data]) => {
+          const messages: unknown = JSON.parse(data);
+          return messages;
+        })
+      ).toEqual([
+        {
+          type: ServerMsgCode.UPDATE_STORAGE,
+          ops: [
+            {
+              ...accepted,
+              opId: "original",
+              ...(includeTextHistory
+                ? {
+                    history: [
+                      {
+                        version: 1,
+                        ops: [{ type: "insert", index: 0, text: "A" }],
+                      },
+                      { version: 2, ops: accepted.ops },
+                    ],
+                  }
+                : {}),
+            },
+          ],
+        },
+      ]);
+      expect(storage.get_node("0:1")).toMatchObject({
+        data: [["Allo"]],
+        version: 2,
+      });
+    }
+  );
+
+  test("reconciles each text node from its own base version in a mixed storage batch", async () => {
     const storage = makeNewInMemoryDriver({
       initialNodes: [
         ["root", { type: CrdtType.OBJECT, data: {} }],
@@ -147,25 +288,31 @@ describe("room", () => {
           {
             type: CrdtType.TEXT,
             parentId: "root",
-            parentKey: "text",
+            parentKey: "title",
             data: [["Hello"]],
             version: 0,
           },
         ],
+        [
+          "0:2",
+          {
+            type: CrdtType.TEXT,
+            parentId: "root",
+            parentKey: "body",
+            data: [["World"]],
+            version: 4,
+          },
+        ],
       ],
     });
-    const room = new Room("replay", { storage });
+    const room = new Room("reconcile-mixed-batch", { storage });
     const sender = room.createTicket();
-    const remote = room.createTicket();
-    const senderSocket = new MockServerWebSocket();
-    const remoteSocket = new MockServerWebSocket();
-    const senderMessages = vi.spyOn(senderSocket, "send");
-    const remoteMessages = vi.spyOn(remoteSocket, "send");
-    room.startBrowserSession(sender, senderSocket);
-    room.startBrowserSession(remote, remoteSocket);
+    const socket = new MockServerWebSocket();
+    const messages = vi.spyOn(socket, "send");
+    room.startBrowserSession(sender, socket);
 
     await room.handleData(
-      remote.sessionKey,
+      sender.sessionKey,
       JSON.stringify([
         {
           type: ClientMsgCode.UPDATE_STORAGE,
@@ -173,47 +320,58 @@ describe("room", () => {
             {
               type: OpCode.UPDATE_TEXT,
               id: "0:1",
-              opId: "remote",
+              opId: "title:remote",
               baseVersion: 0,
               ops: [{ type: "insert", index: 0, text: "A" }],
+            },
+            {
+              type: OpCode.UPDATE_TEXT,
+              id: "0:2",
+              opId: "body:remote",
+              baseVersion: 4,
+              ops: [{ type: "insert", index: 5, text: "!" }],
             },
           ],
         },
       ])
     );
-    senderMessages.mockClear();
-    remoteMessages.mockClear();
+    messages.mockClear();
 
-    const replay = {
-      type: ClientMsgCode.UPDATE_STORAGE,
-      ops: [
+    const objectOp = {
+      type: OpCode.UPDATE_OBJECT,
+      id: "root",
+      opId: "object:local",
+      data: { status: "edited" },
+    };
+    await room.handleData(
+      sender.sessionKey,
+      JSON.stringify([
         {
-          type: OpCode.UPDATE_TEXT,
-          id: "0:1",
-          opId: "original",
-          baseVersion: 0,
-          replay: true,
-          ops: [{ type: "delete", index: 0, length: 2 }],
+          type: ClientMsgCode.UPDATE_STORAGE,
+          includeTextHistory: true,
+          ops: [
+            objectOp,
+            {
+              type: OpCode.UPDATE_TEXT,
+              id: "0:1",
+              opId: "title:local",
+              baseVersion: 0,
+              ops: [{ type: "insert", index: 5, text: "?" }],
+            },
+            {
+              type: OpCode.UPDATE_TEXT,
+              id: "0:2",
+              opId: "body:local",
+              baseVersion: 4,
+              ops: [{ type: "insert", index: 0, text: "B" }],
+            },
+          ],
         },
-      ],
-    };
-    await room.handleData(sender.sessionKey, JSON.stringify([replay]));
+      ])
+    );
 
-    const accepted = {
-      type: OpCode.UPDATE_TEXT,
-      id: "0:1",
-      baseVersion: 1,
-      version: 2,
-      ops: [{ type: "delete", index: 1, length: 2 }],
-    };
     expect(
-      remoteMessages.mock.calls.flatMap(([data]) => {
-        const messages: unknown = JSON.parse(data);
-        return messages;
-      })
-    ).toEqual([{ type: ServerMsgCode.UPDATE_STORAGE, ops: [accepted] }]);
-    expect(
-      senderMessages.mock.calls.flatMap(([data]) => {
+      messages.mock.calls.flatMap(([data]) => {
         const messages: unknown = JSON.parse(data);
         return messages;
       })
@@ -221,47 +379,32 @@ describe("room", () => {
       {
         type: ServerMsgCode.UPDATE_STORAGE,
         ops: [
+          objectOp,
           {
-            ...accepted,
-            opId: "original",
-            replay: true,
+            type: OpCode.UPDATE_TEXT,
+            id: "0:1",
+            opId: "title:local",
+            baseVersion: 1,
+            version: 2,
+            ops: [{ type: "insert", index: 6, text: "?" }],
             history: [
               { version: 1, ops: [{ type: "insert", index: 0, text: "A" }] },
+            ],
+          },
+          {
+            type: OpCode.UPDATE_TEXT,
+            id: "0:2",
+            opId: "body:local",
+            baseVersion: 5,
+            version: 6,
+            ops: [{ type: "insert", index: 0, text: "B" }],
+            history: [
+              { version: 5, ops: [{ type: "insert", index: 5, text: "!" }] },
             ],
           },
         ],
       },
     ]);
-
-    senderMessages.mockClear();
-    remoteMessages.mockClear();
-    await room.handleData(sender.sessionKey, JSON.stringify([replay]));
-    expect(remoteMessages.mock.calls).toEqual([]);
-    expect(
-      senderMessages.mock.calls.flatMap(([data]) => {
-        const messages: unknown = JSON.parse(data);
-        return messages;
-      })
-    ).toEqual([
-      {
-        type: ServerMsgCode.UPDATE_STORAGE,
-        ops: [
-          {
-            ...accepted,
-            opId: "original",
-            replay: true,
-            history: [
-              { version: 1, ops: [{ type: "insert", index: 0, text: "A" }] },
-              { version: 2, ops: accepted.ops },
-            ],
-          },
-        ],
-      },
-    ]);
-    expect(storage.get_node("0:1")).toMatchObject({
-      data: [["Allo"]],
-      version: 2,
-    });
   });
 });
 

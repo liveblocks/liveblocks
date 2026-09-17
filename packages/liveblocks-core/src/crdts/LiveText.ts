@@ -565,16 +565,12 @@ export class LiveText extends AbstractCrdt {
     const mutableOp = op as {
       baseVersion: number;
       ops: TextOperation[];
-      replay?: true;
     };
 
     // Never compose the queue into an existing opId: the server may already
     // have stored that op and will deduplicate any additional content.
     if (op.opId !== undefined && op.opId === this.#inFlightOpId) {
       mutableOp.baseVersion = this.#version;
-      if (this.#reconnecting) {
-        mutableOp.replay = true;
-      }
       mutableOp.ops = [...this.#inFlightOps];
       return { modified: false };
     }

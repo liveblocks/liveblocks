@@ -415,17 +415,17 @@ describe("Storage LiveText", () => {
       ),
     ]);
 
-    const result = storage.applyOps([
-      {
-        ...updateTextOp(
+    const result = storage.applyOps(
+      [
+        updateTextOp(
           "0:1",
           0,
           [{ type: "delete", index: 0, length: 2 }],
           "replay"
         ),
-        replay: true,
-      },
-    ]);
+      ],
+      { includeTextHistory: true }
+    );
 
     expect(result).toEqual([
       {
@@ -434,7 +434,6 @@ describe("Storage LiveText", () => {
           type: OpCode.UPDATE_TEXT,
           id: "0:1",
           opId: "replay",
-          replay: true,
           baseVersion: 1,
           version: 2,
           ops: [{ type: "delete", index: 1, length: 2 }],
@@ -492,12 +491,13 @@ describe("Storage LiveText", () => {
     ]);
 
     for (let attempt = 0; attempt < 2; attempt++) {
-      expect(storage.applyOps([{ ...original, replay: true }])).toEqual([
+      expect(
+        storage.applyOps([original], { includeTextHistory: true })
+      ).toEqual([
         {
           action: "rectified",
           ackOp: {
             ...original,
-            replay: true,
             baseVersion: 1,
             version: 2,
             ops: [{ type: "delete", index: 1, length: 2 }],
@@ -554,13 +554,10 @@ describe("Storage LiveText", () => {
       ]);
       driver.purge_live_text_history_before("0:1", 2);
 
-      const result = storage.applyOps([
-        {
-          ...original,
-          opId: duplicate ? original.opId : "new",
-          replay: true,
-        },
-      ]);
+      const result = storage.applyOps(
+        [{ ...original, opId: duplicate ? original.opId : "new" }],
+        { includeTextHistory: true }
+      );
       expect(result).toMatchObject([
         {
           action: "rejected",

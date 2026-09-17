@@ -24,6 +24,14 @@ describe("LiveText reconnect convergence", () => {
       remoteText: " remote",
       expected: "Local Reconnect title remote",
     },
+    {
+      name: "reconciles with empty history when the server is already at the requested base",
+      localIndex: 15,
+      localText: " local",
+      remoteIndex: 0,
+      remoteText: "",
+      expected: "Reconnect title local",
+    },
   ])(
     "$name",
     async ({ localIndex, localText, remoteIndex, remoteText, expected }) => {
@@ -68,4 +76,49 @@ describe("LiveText reconnect convergence", () => {
       expect(storageA.root.toJSON()).toEqual(serverStorage.root.toJSON());
     }
   );
+
+  test("reconciles multiple text nodes alongside ordinary offline storage edits", async () => {
+    const { roomA, roomB, storageA, storageB } = await prepareStorageTest<{
+      title: LiveText;
+      body: LiveText;
+      status: string;
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        title: { liveblocksType: "LiveText", data: [["Title"]] },
+        body: { liveblocksType: "LiveText", data: [["Body"]] },
+        status: "initial",
+      },
+    });
+
+    // Give the two text nodes different confirmed base versions.
+    storageB.root.get("body").insert(4, "!");
+    await vi.waitFor(() => {
+      expect(roomB.getStorageStatus()).toBe("synchronized");
+      expect(storageA.root.get("body").toString()).toBe("Body!");
+    });
+
+    roomA.disconnect();
+    storageA.root.get("title").insert(5, " local");
+    storageA.root.get("body").insert(0, "Local ");
+    storageA.root.set("status", "edited offline");
+    storageB.root.get("title").insert(0, "Remote ");
+    storageB.root.get("body").insert(5, " remote");
+    await vi.waitFor(() => {
+      expect(roomB.getStorageStatus()).toBe("synchronized");
+    });
+
+    roomA.connect();
+    const expected = {
+      title: [["Remote Title local"]],
+      body: [["Local Body! remote"]],
+      status: "edited offline",
+    };
+    await vi.waitFor(() => {
+      expect(roomA.getStorageStatus()).toBe("synchronized");
+      expect(roomB.getStorageStatus()).toBe("synchronized");
+      expect(storageA.root.toJSON()).toEqual(expected);
+      expect(storageB.root.toJSON()).toEqual(expected);
+    });
+  });
 });

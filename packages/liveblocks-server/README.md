@@ -29,13 +29,15 @@ expertise that are not yet easy to package.
 
 ## LiveText reconnect protocol
 
-An `UPDATE_TEXT` replay sets `replay: true` and retains the client's confirmed
-`baseVersion`. Its acknowledgement includes `history`: the ordered
-`{ version, ops }` entries after that base through the server version before
-applying the replay. For an already-stored operation, this includes that
-operation and any later edits. History is sent only to the reconnecting client;
-incomplete retained history is rejected rather than approximated from a
-snapshot.
+An `UPDATE_STORAGE` message sets `includeTextHistory: true` when resending
+operations after a storage resync. Each `UPDATE_TEXT` retains the client's
+confirmed `baseVersion`, and its acknowledgement includes `history`: the ordered
+`{ version, ops }` entries for that node after that base through the server
+version before applying the operation. For an already-stored operation, this
+includes that operation and any later edits. History is sent only to the
+reconnecting client; incomplete retained history is rejected rather than
+approximated from a snapshot. Other storage ops and messages without
+`includeTextHistory` keep their normal acknowledgement behavior.
 
 ## License
 

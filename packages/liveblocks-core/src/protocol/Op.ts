@@ -174,9 +174,7 @@ export type UpdateTextOp = {
   readonly baseVersion: number;
   readonly version?: number;
   readonly ops: TextOperation[];
-  /** Request authoritative history when replaying after a storage resync. */
-  readonly replay?: true;
-  /** Server-only: accepted ops after the replay's requested base version. */
+  /** Server-only: accepted ops after the requested base version when reconciling. */
   readonly history?: {
     readonly version: number;
     readonly ops: TextOperation[];

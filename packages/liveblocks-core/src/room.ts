@@ -2733,6 +2733,7 @@ export function createRoom<
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
       ops: result.opsToEmit,
+      includeTextHistory: true,
     });
 
     notify(result.updates);

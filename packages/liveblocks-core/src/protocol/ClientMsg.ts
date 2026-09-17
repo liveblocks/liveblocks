@@ -113,6 +113,8 @@ export type UpdatePresenceClientMsg<P extends JsonObject> =
 export type UpdateStorageClientMsg = {
   readonly type: ClientMsgCode.UPDATE_STORAGE;
   readonly ops: ClientWireOp[];
+  /** Include authoritative history in text acknowledgements after a storage resync. */
+  readonly includeTextHistory?: true;
 };
 
 export type FetchStorageClientMsg = {

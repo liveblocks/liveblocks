@@ -79,35 +79,23 @@ describe("LiveText op decoder", () => {
     ).toBe(true);
   });
 
-  test("accepts replay requests but strips client-supplied recovery history", () => {
+  test("strips client-supplied recovery history and op-level history requests", () => {
     const request = {
       type: OpCode.UPDATE_TEXT,
       opId: "1:2",
       id: "1:1",
       baseVersion: 0,
-      replay: true,
       ops: [{ type: "insert", index: 0, text: "Hello" }],
     };
     expect(
       op.verify({
         ...request,
+        replay: true,
+        includeTextHistory: true,
         history: [
           { version: 1, ops: [{ type: "delete", index: 0, length: 5 }] },
         ],
       })
     ).toEqual(request);
-  });
-
-  test("rejects a non-true replay flag", () => {
-    expect(
-      op.decode({
-        type: OpCode.UPDATE_TEXT,
-        opId: "1:2",
-        id: "1:1",
-        baseVersion: 0,
-        replay: "true",
-        ops: [{ type: "insert", index: 0, text: "Hello" }],
-      }).ok
-    ).toBe(false);
   });
 });
