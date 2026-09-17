@@ -1,12 +1,11 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
+
+import { browser } from "./react-dom";
 
 const reactExports: Record<string, unknown> = React;
-const reactDOMExports: Record<string, unknown> = ReactDOM;
 
-// Keep bundlers from turning these into named imports, which older React versions lack.
+// Keep bundlers from turning this into a named import, which React 18 lacks.
 const reactUse = reactExports[" use ".trim().toString()];
-const browser = reactDOMExports[" browser ".trim().toString()];
 
 export function useBrowser(): void {
   if (isFunction(reactUse) && isFunction(browser)) {

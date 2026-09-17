@@ -1,6 +1,5 @@
 import { createClient } from "@liveblocks/client";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -13,7 +12,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.doUnmock("react");
-  vi.doUnmock("react-dom");
+  vi.doUnmock("../lib/react-dom");
   vi.unstubAllGlobals();
 });
 
@@ -122,5 +121,5 @@ function mockBrowserSupport(
   browser: (() => unknown) | undefined
 ) {
   vi.doMock("react", () => ({ ...React, use: nativeUse }));
-  vi.doMock("react-dom", () => ({ ...ReactDOM, browser }));
+  vi.doMock("../lib/react-dom", () => ({ browser }));
 }

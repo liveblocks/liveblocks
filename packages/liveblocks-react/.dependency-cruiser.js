@@ -91,6 +91,8 @@ export default {
       from: {},
       to: {
         dependencyTypes: ["npm-no-pkg", "npm-unknown"],
+        // peerDependenciesMeta also gets classified as npm-no-pkg.
+        dependencyTypesNot: ["npm-peer"],
       },
     },
 
@@ -153,7 +155,8 @@ export default {
       severity: "error",
       from: { path: "^src/lib/" },
       to: {
-        pathNot: "(^src/lib/|src/types/|liveblocks-.*|node_modules/react(-dom)?/)",
+        pathNot:
+          "(^src/lib/|src/types/|liveblocks-.*|node_modules/react(-dom)?/|^module$)",
       },
     },
   ],
