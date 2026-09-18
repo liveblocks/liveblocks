@@ -48,10 +48,9 @@ function createRoomMetadataValueDecoder(): Decoder<string | string[]> {
     (x) =>
       typeof x === "string"
         ? metadataStringValue
-        : array(metadataStringValue).refine(
-            (value) => value.length <= MAX_METADATA_VALUE_LIST_LENGTH,
-            `Must be at most ${MAX_METADATA_VALUE_LIST_LENGTH} items`
-          )
+        : sized(array(metadataStringValue), {
+            max: MAX_METADATA_VALUE_LIST_LENGTH,
+          })
   );
 }
 
@@ -67,7 +66,7 @@ const feedMetadataRecordForCreate = record(
   roomMetadataValueDecoder
 ).refine(
   (value) => Object.keys(value).length <= MAX_METADATA_COUNT,
-  `Must be at most ${MAX_METADATA_COUNT} items`
+  `Must have at most ${MAX_METADATA_COUNT} items`
 );
 
 /**
@@ -92,7 +91,7 @@ const feedMetadataRecordForFilter = record(
   feedMetadataNullableValueDecoder
 ).refine(
   (value) => Object.keys(value).length <= MAX_METADATA_COUNT,
-  `Must be at most ${MAX_METADATA_COUNT} items`
+  `Must have at most ${MAX_METADATA_COUNT} items`
 );
 
 /**
