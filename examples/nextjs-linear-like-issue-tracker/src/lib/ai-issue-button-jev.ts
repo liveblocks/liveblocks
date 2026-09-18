@@ -123,7 +123,7 @@ const PROGRESS_QUESTION = choice(
 // can route by area when nobody is named explicitly.
 function buildAssigneeQuestion() {
   const criteria: Record<string, string> = {
-    none: "Nobody on the team is a clear fit, or the issue is too vague to route.",
+    none: "The issue is empty or so vague that it is impossible to tell what area it touches.",
   };
   for (const user of getUsers()) {
     if (user.id === AI_USER_INFO.id) {
@@ -193,10 +193,9 @@ export const JEV_THRESHOLDS = {
   overridePriority: 0.85,
   // Below this we fall back to `todo` rather than guess a workflow state.
   fillProgress: 0.5,
-  // Assigning work to a person is the most consequential change here. Routing
-  // by area of ownership is fuzzier than matching a name, so this sits at the
-  // "genuinely unsure" floor; `none` is always an option Jev can pick.
-  assignee: 0.5,
+  // An empty assignee is always filled with the most likely owner, unless Jev
+  // puts at least this much probability on "nobody fits".
+  assigneeNone: 0.5,
   // Labels: add when clearly yes, remove an existing one only when clearly no.
   addLabel: 0.6,
   removeLabel: 0.2,
@@ -263,22 +262,45 @@ export function decidePropertyUpdates(
   const assignee = answers.assignee;
   if (current.assignedTo !== "none") {
     notes.push(`Assignee kept as ${current.assignedTo}`);
-  } else if (
-    assignee.choice !== "none" &&
-    assignableUserIds.has(assignee.choice) &&
-    assignee.confidence >= JEV_THRESHOLDS.assignee
-  ) {
-    updates.assignedTo = assignee.choice;
-    notes.push(
-      `Assignee → ${assignee.choice} (confidence ${pct(assignee.confidence)})`
-    );
   } else {
-    notes.push(
-      `Assignee left empty: no clear owner (best guess ${assignee.choice}, confidence ${pct(assignee.confidence)})`
-    );
+    // With many people to choose from, probability is often split between a
+    // few plausible owners, so `confidence` (which measures spread) is a poor
+    // gate here. Instead, read the distribution: skip only when Jev clearly
+    // says nobody fits, otherwise assign the most likely person.
+    const bestHuman = mostLikelyUser(assignee.probabilities, assignableUserIds);
+    const noneProbability = assignee.probabilities.none ?? 0;
+
+    if (bestHuman === null) {
+      notes.push("Assignee left empty: no assignable users");
+    } else if (noneProbability >= JEV_THRESHOLDS.assigneeNone) {
+      notes.push(
+        `Assignee left empty: Jev says nobody fits (${pct(noneProbability)})`
+      );
+    } else {
+      updates.assignedTo = bestHuman.id;
+      notes.push(
+        `Assignee → ${bestHuman.id} (${pct(bestHuman.probability)} likely)`
+      );
+    }
   }
 
   return { updates, notes };
+}
+
+function mostLikelyUser(
+  probabilities: Readonly<Record<string, number>>,
+  assignableUserIds: ReadonlySet<string>
+): { id: string; probability: number } | null {
+  let best: { id: string; probability: number } | null = null;
+  for (const [id, probability] of Object.entries(probabilities)) {
+    if (!assignableUserIds.has(id)) {
+      continue;
+    }
+    if (best === null || probability > best.probability) {
+      best = { id, probability };
+    }
+  }
+  return best;
 }
 
 export type LabelDecision = {
