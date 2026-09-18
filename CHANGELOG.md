@@ -2,6 +2,12 @@
 
 ## v3.25.0
 
+### `@liveblocks/react`
+
+- With React and React DOM 19.3 or later, Suspense hooks can now use React’s
+  built-in `Suspense` instead of Liveblocks’ `ClientSideSuspense`. Earlier React
+  versions still require `ClientSideSuspense`.
+
 ### `@liveblocks/node`
 
 - Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`.

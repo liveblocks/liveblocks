@@ -42,6 +42,9 @@
       }
     }
   },
+  "browser": {
+    "./dist/react-dom.node.js": "./dist/react-dom.cjs"
+  },
   "files": [
     "dist/**",
     "suspense/**",
@@ -54,7 +57,7 @@
     "start": "tsup --watch",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
-    "lint:package": "publint --strict && attw --pack && bun scripts/check-exports.ts",
+    "lint:package": "publint --strict && node scripts/check-browser.mts && attw --pack && bun scripts/check-exports.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
@@ -70,13 +73,17 @@
   "peerDependencies": {
     "@types/react": "^18 || ^19",
     "@types/react-dom": "^18 || ^19",
-    "react": "^18 || ^19 || ^19.0.0-rc"
+    "react": "^18 || ^19 || ^19.0.0-rc",
+    "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
   "peerDependenciesMeta": {
     "@types/react": {
       "optional": true
     },
     "@types/react-dom": {
+      "optional": true
+    },
+    "react-dom": {
       "optional": true
     }
   },

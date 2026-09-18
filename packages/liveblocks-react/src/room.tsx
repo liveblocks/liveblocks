@@ -87,7 +87,7 @@ import {
   useIsInsideRoom,
   useRoomOrNull,
 } from "./contexts";
-import { ensureNotServerSide } from "./lib/ssr";
+import { useBrowser } from "./lib/use-browser";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -1643,7 +1643,7 @@ function useFeedsSuspense_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>,
   options?: UseFeedsOptions
 ): FeedsAsyncSuccess {
-  ensureNotServerSide();
+  useBrowser();
   const client = useClient();
   const room = useRoom_withRoomContext(RoomContext);
 
@@ -1667,7 +1667,7 @@ function useFeedMessagesSuspense_withRoomContext(
   feedId: string,
   options?: UseFeedMessagesOptions
 ): FeedMessagesAsyncSuccess {
-  ensureNotServerSide();
+  useBrowser();
 
   const client = useClient();
   const room = useRoom_withRoomContext(RoomContext);
@@ -3144,8 +3144,7 @@ function useRoomSubscriptionSettingsSuspense_withRoomContext(
   RoomSubscriptionSettingsAsyncSuccess,
   (settings: Partial<RoomSubscriptionSettings>) => void,
 ] {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
@@ -3425,8 +3424,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
 function useHistoryVersionsSuspense_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
 ): HistoryVersionsAsyncSuccess {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const client = useClient();
   const room = useRoom_withRoomContext(RoomContext);
@@ -3517,8 +3515,7 @@ function useUpdateRoomSubscriptionSettings() {
 function useSuspendUntilPresenceReady_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
 ): void {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const room = useRoom_withRoomContext(RoomContext);
   use(room.waitUntilPresenceReady());
@@ -3739,8 +3736,7 @@ function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
 function useSuspendUntilStorageReady_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
 ): void {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const room = useRoom_withRoomContext(RoomContext);
   use(room.waitUntilStorageReady());
@@ -3807,8 +3803,7 @@ function useThreadsSuspense_withRoomContext<
   RoomContext: Context<OpaqueRoom | null>,
   options: UseThreadsOptions<TM> = {}
 ): ThreadsAsyncSuccess<TM, CM> {
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
+  useBrowser();
 
   const client = useClient();
   const room = useRoom_withRoomContext(RoomContext);
