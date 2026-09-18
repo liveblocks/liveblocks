@@ -576,6 +576,53 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 /*                                   API tab                                  */
 /* -------------------------------------------------------------------------- */
 
+type SnippetLanguage = "curl" | "javascript" | "python";
+
+const SNIPPET_LANGUAGES: { id: SnippetLanguage; label: string }[] = [
+  { id: "curl", label: "curl" },
+  { id: "javascript", label: "JavaScript" },
+  { id: "python", label: "Python" },
+];
+
+const SNIPPET_INPUT =
+  "I was charged twice for order A-104. Please refund the duplicate.";
+
+function getSnippet(language: SnippetLanguage, url: string): string {
+  switch (language) {
+    case "curl":
+      return [
+        `curl -X POST "${url}" \\`,
+        `  -H "Content-Type: application/json" \\`,
+        `  -d '${JSON.stringify({ input: SNIPPET_INPUT })}'`,
+      ].join("\n");
+    case "javascript":
+      return [
+        `const response = await fetch(${JSON.stringify(url)}, {`,
+        `  method: "POST",`,
+        `  headers: { "Content-Type": "application/json" },`,
+        `  body: JSON.stringify({`,
+        `    input: ${JSON.stringify(SNIPPET_INPUT)},`,
+        `  }),`,
+        `});`,
+        ``,
+        `const run = await response.json();`,
+        `console.log(run.status, run.nodes);`,
+      ].join("\n");
+    case "python":
+      return [
+        `import requests`,
+        ``,
+        `response = requests.post(`,
+        `    ${JSON.stringify(url)},`,
+        `    json={"input": ${JSON.stringify(SNIPPET_INPUT)}},`,
+        `)`,
+        ``,
+        `run = response.json()`,
+        `print(run["status"], run["nodes"])`,
+      ].join("\n");
+  }
+}
+
 function ApiTab({
   workflow,
   exampleId,
@@ -583,6 +630,7 @@ function ApiTab({
   workflow: WorkflowSummary;
   exampleId: string | null;
 }) {
+  const [language, setLanguage] = useState<SnippetLanguage>("curl");
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState(() =>
     getApiUrl(workflow.workflowId, exampleId)
@@ -592,10 +640,10 @@ function ApiTab({
     setUrl(getApiUrl(workflow.workflowId, exampleId));
   }, [workflow.workflowId, exampleId]);
 
-  const command = `curl -X POST "${url}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"input": "I was charged twice for order A-104. Please refund the duplicate."}'`;
+  const snippet = getSnippet(language, url);
 
   async function copy() {
-    await navigator.clipboard.writeText(command);
+    await navigator.clipboard.writeText(snippet);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
@@ -607,18 +655,39 @@ function ApiTab({
         <code className="rounded bg-neutral-100 px-1">input</code> string. The
         run shows up in the Runs tab for everyone in the room.
       </p>
-      <div className="relative">
-        <pre className="overflow-x-auto rounded-md bg-neutral-900 p-3 font-mono text-[11px] leading-relaxed text-neutral-100">
-          {command}
+      <div className="overflow-hidden rounded-md bg-neutral-900">
+        <div className="flex items-center gap-0.5 border-b border-neutral-800 px-1.5 py-1">
+          {SNIPPET_LANGUAGES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setLanguage(item.id)}
+              aria-pressed={language === item.id}
+              className={`rounded px-2 py-1 text-[11px] font-medium ${
+                language === item.id
+                  ? "bg-neutral-700 text-white"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => void copy()}
+            className="ml-auto inline-flex items-center gap-1 rounded px-1.5 py-1 text-[11px] text-neutral-300 hover:bg-neutral-700 hover:text-white"
+          >
+            {copied ? (
+              <Check className="size-3" />
+            ) : (
+              <Copy className="size-3" />
+            )}
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+        <pre className="overflow-x-auto p-3 font-mono text-[11px] leading-relaxed text-neutral-100">
+          {snippet}
         </pre>
-        <button
-          type="button"
-          onClick={() => void copy()}
-          className="absolute right-2 top-2 inline-flex items-center gap-1 rounded bg-neutral-700 px-1.5 py-1 text-[11px] text-white hover:bg-neutral-600"
-        >
-          {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
-          {copied ? "Copied" : "Copy"}
-        </button>
       </div>
       <ul className="flex flex-col gap-1.5 leading-relaxed">
         <li>
