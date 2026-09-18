@@ -2,6 +2,10 @@
 
 ## v3.25.0
 
+### `@liveblocks/node`
+
+- Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`.
+
 ### `@liveblocks/chat-sdk-adapter`
 
 - Allow `apiKey` and `webhookSecret` to be resolved per request, and add custom
