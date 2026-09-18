@@ -7,8 +7,8 @@ meta:
 ---
 
 When retrieving rooms with our REST API, it’s possible to filter for specific
-threads using [custom metadata](/docs/products/comments/metadata) and room ID
-prefixes using our custom query language. This enables the
+rooms using custom metadata and room ID prefixes using our custom query
+language. This enables the
 [Get Rooms REST API](/docs/api-reference/rest-api-endpoints#get-rooms) to have
 filtering that works the same as with
 [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).
@@ -45,6 +45,14 @@ Note that room metadata can contain `strings` or `arrays`, but only `strings`
 can be filtered. If you wish to return a single specific room, instead use the
 [Get Room API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId) or
 [`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId).
+
+You can also filter rooms by whether they contain threads:
+
+```text
+hasThreads:true
+```
+
+Use `hasThreads:false` to return rooms with no threads.
 
 ### How to use
 
