@@ -21,7 +21,37 @@ export type SlateEmptyText = {
 
 export type ComposerEditor = BaseEditor & ReactEditor & HistoryEditor;
 
-export type ComposerBodyBlockElement = ComposerBodyParagraph;
+export type ComposerBodyBulletedList = {
+  type: "bulleted-list";
+  children: ComposerBodyListItem[];
+};
+
+export type ComposerBodyNumberedList = {
+  type: "numbered-list";
+  children: ComposerBodyListItem[];
+};
+
+export type ComposerBodyTaskList = {
+  type: "task-list";
+  children: ComposerBodyListItem[];
+};
+
+export type ComposerBodyList =
+  | ComposerBodyBulletedList
+  | ComposerBodyNumberedList
+  | ComposerBodyTaskList;
+
+export type ComposerBodyListItem = {
+  type: "list-item";
+  checked?: boolean;
+  children: [ComposerBodyParagraph, ...ComposerBodyList[]];
+};
+
+export type ComposerBodyBlockElement =
+  | ComposerBodyParagraph
+  | ComposerBodyBulletedList
+  | ComposerBodyNumberedList
+  | ComposerBodyTaskList;
 
 export type ComposerBodyInlineElement =
   | ComposerBodyText
@@ -30,10 +60,9 @@ export type ComposerBodyInlineElement =
   | ComposerBodyCustomLink;
 
 export type ComposerBodyElement =
-  | ComposerBodyParagraph
-  | ComposerBodyMention
-  | ComposerBodyAutoLink
-  | ComposerBodyCustomLink;
+  | ComposerBodyBlockElement
+  | ComposerBodyListItem
+  | ComposerBodyInlineNonTextElement;
 
 export type ComposerBodyInlineNonTextElement = Exclude<
   ComposerBodyInlineElement,

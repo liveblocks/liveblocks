@@ -6,11 +6,15 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
   CommentBody,
   CommentBodyBlockElement,
+  CommentBodyBulletedList,
   CommentBodyElement,
   CommentBodyInlineElement,
   CommentBodyLink,
+  CommentBodyListItem,
   CommentBodyMention,
+  CommentBodyNumberedList,
   CommentBodyParagraph,
+  CommentBodyTaskList,
   CommentBodyText,
 } from "../protocol/Comments";
 import type { Awaitable } from "../types/Awaitable";
@@ -30,6 +34,9 @@ type CommentBodyElementName =
 
 type CommentBodyBlockElements = {
   paragraph: CommentBodyParagraph;
+  "bulleted-list": CommentBodyBulletedList;
+  "numbered-list": CommentBodyNumberedList;
+  "task-list": CommentBodyTaskList;
 };
 
 type CommentBodyInlineElements = {
@@ -154,6 +161,24 @@ export function isCommentBodyParagraph(
   return "type" in element && element.type === "paragraph";
 }
 
+function isCommentBodyBulletedList(
+  element: CommentBodyElement
+): element is CommentBodyBulletedList {
+  return "type" in element && element.type === "bulleted-list";
+}
+
+function isCommentBodyNumberedList(
+  element: CommentBodyElement
+): element is CommentBodyNumberedList {
+  return "type" in element && element.type === "numbered-list";
+}
+
+function isCommentBodyTaskList(
+  element: CommentBodyElement
+): element is CommentBodyTaskList {
+  return "type" in element && element.type === "task-list";
+}
+
 export function isCommentBodyText(
   element: CommentBodyElement
 ): element is CommentBodyText {
@@ -178,6 +203,9 @@ export function isCommentBodyLink(
 
 const commentBodyElementsGuards = {
   paragraph: isCommentBodyParagraph,
+  "bulleted-list": isCommentBodyBulletedList,
+  "numbered-list": isCommentBodyNumberedList,
+  "task-list": isCommentBodyTaskList,
   text: isCommentBodyText,
   link: isCommentBodyLink,
   mention: isCommentBodyMention,
@@ -188,10 +216,51 @@ const commentBodyElementsTypes: Record<
   "block" | "inline"
 > = {
   paragraph: "block",
+  "bulleted-list": "block",
+  "numbered-list": "block",
+  "task-list": "block",
   text: "inline",
   link: "inline",
   mention: "inline",
 };
+
+function visitCommentBodyInlines(
+  block: CommentBodyBlockElement,
+  guard: (node: CommentBodyElement) => boolean,
+  visitor: CommentBodyVisitor | undefined
+): void {
+  if (block.type === "paragraph") {
+    for (const inline of block.children) {
+      if (guard(inline)) {
+        visitor?.(inline);
+      }
+    }
+
+    return;
+  }
+
+  for (const item of block.children) {
+    visitCommentBodyInlinesInListItem(item, guard, visitor);
+  }
+}
+
+function visitCommentBodyInlinesInListItem(
+  item: CommentBodyListItem,
+  guard: (node: CommentBodyElement) => boolean,
+  visitor: CommentBodyVisitor | undefined
+): void {
+  for (const child of item.children) {
+    if (child.type === "paragraph") {
+      for (const inline of child.children) {
+        if (guard(inline)) {
+          visitor?.(inline);
+        }
+      }
+    } else {
+      visitCommentBodyInlines(child, guard, visitor);
+    }
+  }
+}
 
 function traverseCommentBody(
   body: CommentBody,
@@ -226,11 +295,7 @@ function traverseCommentBody(
     }
 
     if (type === "all" || type === "inline") {
-      for (const inline of block.children) {
-        if (guard(inline)) {
-          visitor?.(inline);
-        }
-      }
+      visitCommentBodyInlines(block, guard, visitor);
     }
   }
 }
@@ -623,7 +688,13 @@ export async function stringifyCommentBody(
     );
 
   const blocks = body.content.flatMap((block, blockIndex) => {
+    // TODO(lists): serialize bulleted-list, numbered-list, and task-list for plain/html/markdown.
     switch (block.type) {
+      case "bulleted-list":
+      case "numbered-list":
+      case "task-list":
+        return [];
+
       case "paragraph": {
         const inlines = block.children.flatMap((inline, inlineIndex) => {
           if (isCommentBodyMention(inline)) {
