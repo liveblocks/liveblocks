@@ -862,6 +862,10 @@ export function generateArbitraries() {
       const depthIdentifier = fc.createDepthIdentifier();
       const depthSize = options?.depthSize;
       const maxDepth = options?.maxDepth;
+      // `record()` rejects `__proto__` keys outright as a prototype-pollution
+      // vector, so a LiveObject or LiveMap carrying one is not valid input for
+      // the API. Don't generate it.
+      const dataKey = fc.string().filter((k) => k !== "__proto__");
       return fc.letrec<{
         PlainLson: PlainLson;
         PlainLsonObject: PlainLsonObject;
@@ -879,11 +883,11 @@ export function generateArbitraries() {
         ),
         PlainLsonObject: fc.record({
           liveblocksType: fc.constant("LiveObject" as const),
-          data: fc.dictionary(fc.string(), tie("PlainLson"), { maxKeys: options?.maxKeys ?? 5 }), // prettier-ignore
+          data: fc.dictionary(dataKey, tie("PlainLson"), { maxKeys: options?.maxKeys ?? 5 }), // prettier-ignore
         }),
         PlainLsonMap: fc.record({
           liveblocksType: fc.constant("LiveMap" as const),
-          data: fc.dictionary(fc.string(), tie("PlainLson"), { maxKeys: options?.maxKeys ?? 5 }), // prettier-ignore
+          data: fc.dictionary(dataKey, tie("PlainLson"), { maxKeys: options?.maxKeys ?? 5 }), // prettier-ignore
         }),
         PlainLsonList: fc.record({
           liveblocksType: fc.constant("LiveList" as const),
