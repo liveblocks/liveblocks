@@ -10,6 +10,7 @@ import {
   type IssuePropertyUpdates,
 } from "@/lib/apply-issue-property-updates";
 import { writeFeedComplete, writeFeedStatus } from "@/lib/ai-feed-messages";
+import type { BackgroundTasks } from "@/lib/background-tasks";
 import { loadIssueDescriptionMarkdown } from "@/lib/issue-context-markdown";
 import type { ImmutableStorage } from "@/liveblocks.config";
 import { liveblocks } from "@/liveblocks.server.config";
@@ -324,30 +325,47 @@ export function decideLabels(
 // ---------------------------------------------------------------------------
 // Runners: one request to Jev, then apply the decision and report to the feed
 // ---------------------------------------------------------------------------
+//
+// Jev answers in well under a second, so the only things awaited on the
+// critical path are: loading the issue, the Jev call, and the storage
+// mutation. Presence, feed status messages, and the room-metadata sync are
+// handed to `background` and flushed once the fields have already updated.
 
 type FeedTarget = { roomId: string; feedId: string };
 
-async function finish(
+function queueStatus(
+  background: BackgroundTasks,
+  target: FeedTarget,
+  label: string
+): void {
+  background.queue(() => writeFeedStatus(target, label));
+}
+
+function queueComplete(
+  background: BackgroundTasks,
   target: FeedTarget,
   notes: string[],
   startedAt: number
-): Promise<void> {
-  await writeFeedStatus(target, "Done…");
-  await writeFeedComplete(target, {
-    response: notes.join("\n"),
-    reasoning: "",
-    thinkingTime: (performance.now() - startedAt) / 1000,
-  });
+): void {
+  queueStatus(background, target, "Done…");
+  background.queue(() =>
+    writeFeedComplete(target, {
+      response: notes.join("\n"),
+      reasoning: "",
+      thinkingTime: (performance.now() - startedAt) / 1000,
+    })
+  );
 }
 
 export async function runJevPropertiesButton(
-  target: FeedTarget
+  target: FeedTarget,
+  background: BackgroundTasks
 ): Promise<void> {
   const startedAt = performance.now();
   const client = getTypeSafeClient();
 
   const snapshot = await loadIssueSnapshot(target.roomId);
-  await writeFeedStatus(target, "Asking Jev…");
+  queueStatus(background, target, "Asking Jev…");
 
   const { answers } = await client.systemOne({
     state: toJevState(snapshot),
@@ -366,25 +384,28 @@ export async function runJevPropertiesButton(
   );
 
   if (updates.priority !== undefined) {
-    await writeFeedStatus(target, "Updating priority…");
+    queueStatus(background, target, "Updating priority…");
   }
   if (updates.progress !== undefined) {
-    await writeFeedStatus(target, "Updating progress…");
+    queueStatus(background, target, "Updating progress…");
   }
   if (updates.assignedTo !== undefined) {
-    await writeFeedStatus(target, "Assigning user…");
+    queueStatus(background, target, "Assigning user…");
   }
-  await applyIssuePropertyUpdates(target.roomId, updates);
+  await applyIssuePropertyUpdates(target.roomId, updates, background);
 
-  await finish(target, notes, startedAt);
+  queueComplete(background, target, notes, startedAt);
 }
 
-export async function runJevLabelsButton(target: FeedTarget): Promise<void> {
+export async function runJevLabelsButton(
+  target: FeedTarget,
+  background: BackgroundTasks
+): Promise<void> {
   const startedAt = performance.now();
   const client = getTypeSafeClient();
 
   const snapshot = await loadIssueSnapshot(target.roomId);
-  await writeFeedStatus(target, "Asking Jev…");
+  queueStatus(background, target, "Asking Jev…");
 
   const { answers } = await client.systemOne({
     state: toJevState(snapshot),
@@ -394,9 +415,9 @@ export async function runJevLabelsButton(target: FeedTarget): Promise<void> {
   const { labels, changed, notes } = decideLabels(answers, snapshot.labels);
 
   if (changed) {
-    await writeFeedStatus(target, "Updating labels…");
-    await applyIssuePropertyUpdates(target.roomId, { labels });
+    queueStatus(background, target, "Updating labels…");
+    await applyIssuePropertyUpdates(target.roomId, { labels }, background);
   }
 
-  await finish(target, notes, startedAt);
+  queueComplete(background, target, notes, startedAt);
 }

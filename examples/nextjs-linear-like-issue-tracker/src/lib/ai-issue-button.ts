@@ -13,6 +13,7 @@ import {
   buildButtonLinksSystemPrompt,
   type AiIssueButtonKind,
 } from "@/lib/ai-issue-button-prompts";
+import { BackgroundTasks } from "@/lib/background-tasks";
 import { buildIssueContextMarkdown } from "@/lib/issue-context-markdown";
 import { getRoomId } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
@@ -59,16 +60,13 @@ export async function prepareAiIssueButton(input: {
   const feedId = `issue-button-${kind}-${nanoid(10)}`;
 
   try {
-    await Promise.all([
-      liveblocks.createFeed({
-        roomId,
-        feedId,
-        metadata: { type: "ai-issue-button", kind },
-      }),
-      showAiPresence(roomId),
-    ]);
-
-    await writeFeedStatus({ roomId, feedId }, "Starting…");
+    // Only the feed is awaited here: the client subscribes to it as soon as
+    // this action returns. Presence and status messages happen in the run.
+    await liveblocks.createFeed({
+      roomId,
+      feedId,
+      metadata: { type: "ai-issue-button", kind },
+    });
 
     return { ok: true, ctx: { roomId, feedId, kind } };
   } catch (err) {
@@ -151,18 +149,26 @@ async function streamLinksButtonToFeed(ctx: AiIssueButtonRunContext) {
 export async function runAiIssueButtonStream(
   ctx: AiIssueButtonRunContext
 ): Promise<{ status: number; error?: string }> {
+  // Presence and feed status writes never block the visible update; they are
+  // collected here and flushed after the work is done.
+  const background = new BackgroundTasks();
+  background.add(showAiPresence(ctx.roomId));
+  background.queue(() => writeFeedStatus(ctx, "Starting…"));
+
   try {
     switch (ctx.kind) {
       case "links":
         await streamLinksButtonToFeed(ctx);
         break;
       case "properties":
-        await runJevPropertiesButton(ctx);
+        await runJevPropertiesButton(ctx, background);
         break;
       case "labels":
-        await runJevLabelsButton(ctx);
+        await runJevLabelsButton(ctx, background);
         break;
     }
+
+    await background.flush();
 
     // Let the AI editing-type outlines linger briefly, then clear presence.
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -170,6 +176,7 @@ export async function runAiIssueButtonStream(
 
     return { status: 200 };
   } catch (err) {
+    await background.flush();
     await hideAiPresence(ctx.roomId).catch(() => undefined);
     // Close the feed so the button stops spinning even when the model call
     // failed (e.g. a missing API key).
