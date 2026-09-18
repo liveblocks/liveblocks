@@ -4,6 +4,7 @@
 
 ### `@liveblocks/node`
 
+- **Breaking change:** Node 22 or higher is now required.
 - Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`.
 
 ### `@liveblocks/chat-sdk-adapter`
