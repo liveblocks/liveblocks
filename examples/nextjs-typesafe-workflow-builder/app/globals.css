@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/* Tailwind v4 gates `hover:` behind `@media (hover: hover)`; keep hover
+   styles working with synthetic pointers too. */
+@custom-variant hover (&:hover);
+
+html,
+body {
+  @apply h-full w-full bg-neutral-50 antialiased;
+}
+
+/* React Flow ships default node chrome; our custom nodes bring their own. */
+.react-flow__node {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  width: auto;
+  box-shadow: none;
+  font-size: inherit;
+  text-align: left;
+}
+
+.react-flow__node.selected .workflow-node {
+  box-shadow: none;
+}
+
+.workflow-node-unreachable .workflow-node {
+  opacity: 0.55;
+}
+
+/* Handles */
+.workflow-handle.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #ffffff;
+  background: #a3a3a3;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08);
+}
+
+.workflow-handle.react-flow__handle-right {
+  right: -5px;
+}
+
+.workflow-handle.react-flow__handle-left {
+  left: -5px;
+}
+
+.workflow-handle.react-flow__handle:hover,
+.workflow-handle.react-flow__handle.connectingfrom,
+.workflow-handle.react-flow__handle.valid {
+  background: #7c3aed;
+}
+
+.workflow-handle[data-fired] {
+  background: #7c3aed;
+  box-shadow: 0 0 0 3px rgb(124 58 237 / 0.2);
+}
+
+/* Edges */
+.react-flow__edge-path {
+  stroke: #a3a3a3;
+  stroke-width: 1.5;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #171717;
+}
+
+.workflow-edge-fired .react-flow__edge-path {
+  stroke: #7c3aed;
+  stroke-width: 2;
+}
+
+.workflow-edge-muted .react-flow__edge-path {
+  stroke: #d4d4d4;
+}
+
+.react-flow__connectionline path {
+  stroke: #7c3aed;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+/* Controls */
+.react-flow__controls {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.08),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  border: none;
+  width: 28px;
+  height: 28px;
+}
+
+.react-flow__controls-button svg {
+  max-width: 14px;
+  max-height: 14px;
+}
+
+.react-flow__controls-button:disabled {
+  opacity: 0.4;
+}
+
+/* Live cursors from @liveblocks/react-flow */
+.lb-root.lb-cursor {
+  pointer-events: none;
+}
