@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* Apply hover styles on any pointer device (Tailwind v4 gates them behind
+   `@media (hover: hover)` by default, hiding hover-revealed controls on
+   touch/virtual pointers). */
+@custom-variant hover (&:hover);
+
+:root {
+  --sidebar: #3f0e40;
+  --sidebar-hover: rgb(255 255 255 / 0.08);
+  --sidebar-active: rgb(255 255 255 / 0.16);
+  --sidebar-border: rgb(255 255 255 / 0.1);
+  --sidebar-foreground: rgb(255 255 255 / 0.92);
+  --sidebar-muted: rgb(255 255 255 / 0.65);
+
+  --chat-bg: #ffffff;
+  --brand: #4f46e5;
+  --brand-50: color-mix(in srgb, var(--brand) 10%, white);
+  --brand-100: color-mix(in srgb, var(--brand) 18%, white);
+  --brand-200: color-mix(in srgb, var(--brand) 30%, white);
+  --brand-300: color-mix(in srgb, var(--brand) 45%, white);
+  --brand-400: color-mix(in srgb, var(--brand) 65%, white);
+  --brand-500: var(--brand);
+  --brand-600: color-mix(in srgb, var(--brand) 90%, black);
+  --brand-700: color-mix(in srgb, var(--brand) 75%, black);
+  --brand-800: color-mix(in srgb, var(--brand) 55%, black);
+  --brand-900: color-mix(in srgb, var(--brand) 35%, black);
+}
+
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    @apply antialiased;
+    background: var(--chat-bg);
+    color: #1a1d21;
+  }
+}
