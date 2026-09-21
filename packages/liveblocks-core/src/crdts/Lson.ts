@@ -48,6 +48,10 @@ type JsonObjectOf<O extends LsonObject> =
 /**
  * The Json value a plain Lson object serializes to: an opaque record collapses
  * to ReadonlyJsonObject, anything else is mapped key by key.
+ *
+ * Inferring V keeps this conditional resolvable, which ToJson's variance
+ * depends on. Deferring it makes unrelated assignments fail, such as
+ * LiveList<never> to Lson.
  */
 // prettier-ignore
 type JsonOfLsonObject<L extends LsonObject> =
