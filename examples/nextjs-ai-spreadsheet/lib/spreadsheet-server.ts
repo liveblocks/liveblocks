@@ -6,6 +6,8 @@ import {
   markdownToCommentBody,
   stringifyCommentBody,
   type CommentBody,
+  type CommentData,
+  type ThreadData,
 } from "@liveblocks/node";
 import {
   AI_USER_AVATAR,
@@ -19,6 +21,7 @@ import {
   type CellFormat,
   type SelectedCell,
 } from "@/liveblocks.config";
+import { describeFix, type Fix } from "@/lib/fix";
 import { isFormatEmpty, mergeFormat } from "@/lib/format";
 import {
   colIndexToLetters,
@@ -332,6 +335,60 @@ export async function formatCells(
     showAiEditing(liveblocks, roomId, cells);
   });
   return `Formatted ${rangeA1.toUpperCase()}.`;
+}
+
+// Apply a saved review fix (see lib/fix.ts) in ONE mutation, highlighting every
+// touched cell as a single box while it happens. Returns a one-line summary of
+// what was applied, or null if nothing in the fix resolved to a real cell (e.g.
+// the row/column was deleted since the review).
+export async function applyFix(
+  liveblocks: LiveblocksClient,
+  roomId: string,
+  fix: Fix
+): Promise<string | null> {
+  let applied = 0;
+  await liveblocks.mutateStorage(roomId, ({ root }) => {
+    const map = root.get("cells");
+    const touched: SelectedCell[] = [];
+    for (const op of fix.ops) {
+      if (op.op === "setValue") {
+        const pos = parseA1(op.cell);
+        const target = pos && rowColIds(root, pos.row, pos.col);
+        if (target) {
+          writeValue(map, target.rowId, target.colId, op.value);
+          touched.push(target);
+          applied++;
+        }
+      } else {
+        const range = parseA1Range(op.range);
+        if (!range) {
+          continue;
+        }
+        const patch = { ...op.format };
+        if (patch.numberFormat === "general") {
+          patch.numberFormat = undefined;
+        }
+        let hit = false;
+        for (let r = range.start.row; r <= range.end.row; r++) {
+          for (let c = range.start.col; c <= range.end.col; c++) {
+            const target = rowColIds(root, r, c);
+            if (target) {
+              writeFormat(map, target.rowId, target.colId, patch);
+              touched.push(target);
+              hit = true;
+            }
+          }
+        }
+        if (hit) {
+          applied++;
+        }
+      }
+    }
+    if (touched.length > 0) {
+      showAiEditing(liveblocks, roomId, touched);
+    }
+  });
+  return applied > 0 ? describeFix(fix) : null;
 }
 
 export async function sortByColumn(
@@ -654,42 +711,12 @@ export async function createSpreadsheetTools(
 
 // --- AI comment replies ------------------------------------------------------
 
-// When someone @mentions the AI in a cell's comment thread, generate a reply and
-// post it back into the same thread as the AI user. Kept deliberately simple: no
-// workflow, no streaming — just read the thread, generate one reply, and create
-// a comment. Triggered by the `commentCreated` webhook.
-export async function replyToComment(
-  liveblocks: LiveblocksClient,
-  roomId: string,
-  threadId: string,
-  commentId: string
-): Promise<void> {
-  const thread = await liveblocks.getThread({ roomId, threadId });
-  const trigger = thread.comments.find((c) => c.id === commentId);
+export const CHAT_MODEL = "openai/gpt-5.4-mini";
 
-  // Ignore deleted comments and the AI's own comments (avoids reply loops).
-  if (!trigger?.body || trigger.userId === AI_USER_ID) {
-    return;
-  }
-
-  // Only reply when the AI is actually @mentioned in the new comment.
-  const mentioned = getMentionsFromCommentBody(trigger.body).some(
-    (mention) => mention.id === AI_USER_ID
-  );
-  if (!mentioned) {
-    return;
-  }
-
-  // Figure out which cell this thread is on, for context.
-  const storage = await readStorage(liveblocks, roomId);
-  const { rowId, colId } = thread.metadata;
-  const row = storage.rowIds.indexOf(rowId);
-  const col = storage.colIds.indexOf(colId);
-  const onCell = row !== -1 && col !== -1;
-  const a1 = onCell ? toA1(row, col) : "a cell";
-  const cellValue = storage.cells[cellKey(rowId, colId)]?.value || "(empty)";
-
-  // Turn the thread into a chat transcript.
+// Turn a thread into a chat transcript (deleted comments are skipped).
+export async function threadToMessages(
+  thread: ThreadData
+): Promise<{ role: "user" | "assistant"; content: string }[]> {
   const messages: { role: "user" | "assistant"; content: string }[] = [];
   for (const comment of thread.comments) {
     if (!comment.body) {
@@ -700,23 +727,50 @@ export async function replyToComment(
       content: await stringifyCommentBody(comment.body),
     });
   }
+  return messages;
+}
 
-  // Show the AI working on the cell while it drafts the reply.
-  if (onCell) {
-    showAiEditing(liveblocks, roomId, [{ rowId, colId }]);
-  }
+// Generate one reply for a cell's thread and post it as the AI user. With
+// `tools`, the model can also edit the sheet (used for @mentions and approved
+// fixes); without, it can only talk (used for questions). `instruction` is an
+// optional extra directive appended to the system prompt, e.g. "apply the fix
+// you proposed earlier in this thread".
+export async function replyInThread(
+  liveblocks: LiveblocksClient,
+  roomId: string,
+  thread: ThreadData,
+  options: { tools: boolean; instruction?: string }
+): Promise<string | null> {
+  // Figure out which cell this thread is on, for context.
+  const storage = await readStorage(liveblocks, roomId);
+  const { rowId, colId } = thread.metadata;
+  const row = storage.rowIds.indexOf(rowId);
+  const col = storage.colIds.indexOf(colId);
+  const onCell = row !== -1 && col !== -1;
+  const a1 = onCell ? toA1(row, col) : "a cell";
+  const cellValue = storage.cells[cellKey(rowId, colId)]?.value || "(empty)";
 
+  const messages = await threadToMessages(thread);
+
+  // No presence while drafting: the AI's highlight only appears when a tool
+  // actually edits the sheet (see the `showAiEditing` calls in the edit ops).
   const { generateText, stepCountIs } = await import("ai");
-  const tools = await createSpreadsheetTools(liveblocks, roomId);
+  const tools = options.tools
+    ? await createSpreadsheetTools(liveblocks, roomId)
+    : undefined;
   const { text } = await generateText({
-    model: "openai/gpt-5.4-mini",
+    model: CHAT_MODEL,
     system:
       `You are ${AI_USER_NAME}, replying inside a comment thread on cell ${a1} ` +
       `(current value: ${cellValue}) of a shared spreadsheet. Reply concisely ` +
       `and helpfully. You may use light Markdown (bold, italics, links) but no ` +
       `headings, lists, or tables. Do not prefix your reply with your name. ` +
-      `If the comment asks you to change the sheet, use your tools to make the ` +
-      `edits, then briefly confirm what you did in your reply.\n\n` +
+      (options.tools
+        ? `If the comment asks you to change the sheet, use your tools to make ` +
+          `the edits, then briefly confirm what you did in your reply. `
+        : `You cannot edit the sheet from here; only answer. `) +
+      (options.instruction ? `\n\n${options.instruction}` : "") +
+      `\n\n` +
       snapshotText(storage),
     messages,
     tools,
@@ -725,15 +779,28 @@ export async function replyToComment(
 
   const reply = text.trim();
   if (!reply) {
-    return;
+    return null;
   }
 
   await liveblocks.createComment({
     roomId,
-    threadId,
+    threadId: thread.id,
     data: {
       userId: AI_USER_ID,
       body: markdownToCommentBody(reply),
     },
   });
+  return reply;
+}
+
+// Whether the AI user is @mentioned in a comment. An @mention is an explicit
+// instruction, so the webhook handler replies directly (with tools) without
+// asking Jev what the comment means (see lib/jev-review.ts).
+export function mentionsAi(comment: CommentData): boolean {
+  return (
+    !!comment.body &&
+    getMentionsFromCommentBody(comment.body).some(
+      (mention) => mention.id === AI_USER_ID
+    )
+  );
 }
