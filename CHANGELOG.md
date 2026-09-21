@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v3.24.2
+
 ### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
 
 - Fix edge cases in return types of `.toJSON()`, `useStorage()` selectors, and
