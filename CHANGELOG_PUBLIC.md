@@ -1127,7 +1127,7 @@ nperez0111, marcbouchenoire, ctnicholas
 ## Zen Router
 
 - Zen Router was released, our open-source HTTP router.
-- [Documentation website for Zen Router](https://github.com/liveblocks/zenrouter)
+- [Documentation website for Zen Router](https://zenrouter.liveblocks.io)
   was published.
 - [Repo for Zen Router](https://github.com/liveblocks/zenrouter) was published.
 
