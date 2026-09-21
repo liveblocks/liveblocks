@@ -69,6 +69,11 @@ export function WorkflowList({
         </header>
 
         <ul className="workflow-list">
+          {workflows.length === 0 ? (
+            <li className="px-3 py-4 text-xs text-neutral-400">
+              No workflows yet.
+            </li>
+          ) : null}
           {workflows.map((workflow) => (
             <li
               key={workflow.workflowId}

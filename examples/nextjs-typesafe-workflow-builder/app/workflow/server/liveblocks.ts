@@ -100,7 +100,9 @@ export async function createWorkflow(
 ): Promise<WorkflowSummary> {
   const workflowId = nanoid(10);
   const roomId = getRoomId(workflowId, exampleId);
-  const name = options.name ?? DEMO_WORKFLOW_NAME;
+  const name =
+    options.name ??
+    (options.seedDemo ? DEMO_WORKFLOW_NAME : "Untitled workflow");
 
   const room = await liveblocks.createRoom(roomId, {
     defaultAccesses: ["room:write"],
@@ -108,9 +110,7 @@ export async function createWorkflow(
   });
 
   const { nodes, edges } =
-    options.seedDemo === false
-      ? { nodes: [], edges: [] }
-      : createDemoWorkflow();
+    options.seedDemo === true ? createDemoWorkflow() : { nodes: [], edges: [] };
 
   await mutateFlow<WorkflowNode, WorkflowEdge>(
     { client: liveblocks, roomId, storageKey: FLOW_STORAGE_KEY },

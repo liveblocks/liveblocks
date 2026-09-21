@@ -311,11 +311,13 @@ export function createQuestion(type: QuestionType, index: number): QuestionDef {
 export function createInputNode(args: {
   position: Point;
   sample?: string;
+  selected?: boolean;
 }): InputNode {
   return {
     id: INPUT_NODE_ID,
     type: "input",
     position: args.position,
+    selected: args.selected,
     deletable: false,
     data: { label: "Input", sample: args.sample ?? "" },
   };

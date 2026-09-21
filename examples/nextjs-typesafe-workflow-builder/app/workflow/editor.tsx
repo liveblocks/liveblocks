@@ -33,6 +33,7 @@ import {
   Bot,
   Eye,
   FileOutput,
+  MessageSquareText,
   Plus,
   Redo2,
   Sparkles,
@@ -53,6 +54,7 @@ import {
   FLOW_STORAGE_KEY,
   IN_HANDLE,
   WORKFLOW_EDGE_TYPE,
+  createInputNode,
   createJevNode,
   createLlmNode,
   createOutputNode,
@@ -291,7 +293,7 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
   );
 
   const addNode = useCallback(
-    (kind: "jev" | "llm" | "output") => {
+    (kind: "input" | "jev" | "llm" | "output") => {
       // Place new nodes near the center of the current viewport, offset so
       // repeated clicks don't stack exactly.
       const container = document.querySelector(".react-flow");
@@ -312,11 +314,13 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
         .map((node) => ({ type: "select", id: node.id, selected: false }));
 
       const item =
-        kind === "jev"
-          ? createJevNode({ position, selected: true })
-          : kind === "llm"
-            ? createLlmNode({ position, selected: true })
-            : createOutputNode({ position, selected: true });
+        kind === "input"
+          ? createInputNode({ position, selected: true })
+          : kind === "jev"
+            ? createJevNode({ position, selected: true })
+            : kind === "llm"
+              ? createLlmNode({ position, selected: true })
+              : createOutputNode({ position, selected: true });
 
       onNodesChange([...deselect, { type: "add", item }]);
     },
@@ -387,6 +391,18 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
             <span className="hidden items-center gap-1.5 border-r border-neutral-200 px-2 py-1 text-[11px] font-medium text-neutral-400 xl:flex">
               <Plus className="size-3.5" aria-hidden /> Add node
             </span>
+            {nodes.some((node) => node.type === "input") ? null : (
+              <button
+                type="button"
+                onClick={() => addNode("input")}
+                className="toolbar-button hover:bg-neutral-100 hover:text-neutral-900"
+              >
+                <span className="toolbar-icon bg-neutral-100 text-neutral-600">
+                  <MessageSquareText className="size-4" />
+                </span>{" "}
+                Input
+              </button>
+            )}
             <button
               type="button"
               onClick={() => addNode("jev")}

@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import { WorkflowList } from "./workflow/workflow-list";
-import { createWorkflow, listWorkflows } from "./workflow/server/liveblocks";
+import { listWorkflows } from "./workflow/server/liveblocks";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +11,7 @@ function getParam(params: SearchParams, key: string): string | null {
 }
 
 /**
- * Lists workflows (one Liveblocks room each). The first visit seeds a demo
- * workflow and opens it directly.
+ * Lists workflows (one Liveblocks room each). Workflows are created explicitly.
  */
 export default async function Page({
   searchParams,
@@ -39,21 +37,6 @@ export default async function Page({
   }
 
   const workflows = await listWorkflows(exampleId);
-
-  if (workflows.length === 0) {
-    const workflow = await createWorkflow(exampleId);
-    const search = new URLSearchParams();
-
-    for (const key of ["exampleId", "examplePreview"]) {
-      const value = getParam(params, key);
-
-      if (value) {
-        search.set(key, value);
-      }
-    }
-
-    redirect(`/w/${workflow.workflowId}${search.size > 0 ? `?${search}` : ""}`);
-  }
 
   return <WorkflowList workflows={workflows} exampleId={exampleId} />;
 }

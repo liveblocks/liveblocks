@@ -19,7 +19,7 @@ const COLUMN = 340;
 const ROW = 260;
 
 /**
- * Seeded into every new workflow. Mirrors TypeSafe's intent-routing pattern:
+ * Optional demo, seeded only when explicitly requested. Mirrors intent routing:
  * one Jev call classifies the ticket, and handles route to specialist LLMs.
  */
 export function createDemoWorkflow(): {

@@ -633,7 +633,14 @@ function RunsTab({
           <button
             type="button"
             onClick={() => void run()}
-            disabled={isStarting || value.trim() === ""}
+            disabled={
+              isStarting || value.trim() === "" || inputNode?.type !== "input"
+            }
+            title={
+              inputNode?.type !== "input"
+                ? "Add an Input node to run the workflow"
+                : undefined
+            }
             className="primary-button !min-h-7 !text-[11px]"
           >
             {isStarting ? (
