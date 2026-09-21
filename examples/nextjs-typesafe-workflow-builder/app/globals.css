@@ -21,10 +21,6 @@ body {
   text-align: left;
 }
 
-.react-flow__node.selected .workflow-node {
-  box-shadow: none;
-}
-
 .workflow-node-unreachable .workflow-node {
   opacity: 0.55;
 }
@@ -100,6 +96,11 @@ body {
 .react-flow__controls-button svg {
   max-width: 14px;
   max-height: 14px;
+}
+
+/* React Flow fills control SVGs; Lucide undo/redo icons are strokes. */
+.react-flow__controls-button svg.lucide {
+  fill: none;
 }
 
 .react-flow__controls-button:disabled {

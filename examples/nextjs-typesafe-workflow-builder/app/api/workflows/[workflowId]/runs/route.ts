@@ -14,7 +14,7 @@ export const maxDuration = 120;
  *
  * Responds `202 { runId }` immediately while the run streams into a
  * Liveblocks feed in the workflow's room. Add `?wait=true` to block until the
- * run finishes and get the full trace back as JSON.
+ * run finishes and get `{ output: string[], nodes, ... }` back as JSON.
  *
  * `exampleId` is only used when this example is embedded on liveblocks.io.
  */

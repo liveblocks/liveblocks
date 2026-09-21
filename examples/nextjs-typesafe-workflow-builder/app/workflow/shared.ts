@@ -7,6 +7,7 @@ export const FLOW_STORAGE_KEY = "flow" as const;
 // Edges use React Flow's built-in smoothstep renderer.
 export const WORKFLOW_EDGE_TYPE = "smoothstep" as const;
 export const INPUT_NODE_ID = "input";
+export const OUTPUT_NODE_ID = "output";
 
 // Handle ids. Target handles are always `in`; source handles depend on the node.
 export const IN_HANDLE = "in";
@@ -89,6 +90,16 @@ export type LlmNodeData = {
   activation?: ActivationMode;
 };
 
+/**
+ * Unique sink, like the input node. Collects the text of every parent that
+ * fired into it; the REST API returns that list as `output: string[]`.
+ * To merge several drafts into one string, run them through an LLM node first.
+ */
+export type OutputNodeData = {
+  label: string;
+  activation?: ActivationMode;
+};
+
 export function getActivation(data: {
   activation?: ActivationMode;
 }): ActivationMode {
@@ -98,7 +109,8 @@ export function getActivation(data: {
 export type InputNode = Node<InputNodeData, "input">;
 export type JevNode = Node<JevNodeData, "jev">;
 export type LlmNode = Node<LlmNodeData, "llm">;
-export type WorkflowNode = InputNode | JevNode | LlmNode;
+export type OutputNode = Node<OutputNodeData, "output">;
+export type WorkflowNode = InputNode | JevNode | LlmNode | OutputNode;
 export type WorkflowNodeType = WorkflowNode["type"];
 
 export type WorkflowEdgeData = Record<string, never>;
@@ -171,6 +183,8 @@ export function getSourceHandles(node: WorkflowNode): HandleDef[] {
           title: "Fires on every run that reaches this node",
         },
       ];
+    case "output":
+      return [];
   }
 }
 
@@ -246,6 +260,25 @@ export function createJevNode(args: {
     data: {
       label: args.label ?? "Jev",
       questions: args.questions ?? [createQuestion("choice", 1)],
+      activation: args.activation ?? "any",
+    },
+  };
+}
+
+export function createOutputNode(args: {
+  position: Point;
+  label?: string;
+  activation?: ActivationMode;
+  selected?: boolean;
+}): OutputNode {
+  return {
+    id: OUTPUT_NODE_ID,
+    type: "output",
+    position: args.position,
+    deletable: false,
+    selected: args.selected,
+    data: {
+      label: args.label ?? "Output",
       activation: args.activation ?? "any",
     },
   };

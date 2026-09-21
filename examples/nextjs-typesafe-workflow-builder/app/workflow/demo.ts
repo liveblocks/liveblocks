@@ -2,6 +2,7 @@ import {
   createInputNode,
   createJevNode,
   createLlmNode,
+  createOutputNode,
   createWorkflowEdge,
   questionHandleId,
   OUT_HANDLE,
@@ -127,6 +128,9 @@ export function createDemoWorkflow(): {
       prompt:
         "Rewrite this reply so it opens with a sincere, specific apology. Keep everything else the same.\n\n{{input}}",
     }),
+    createOutputNode({
+      position: { x: COLUMN * 5, y: ROW },
+    }),
   ];
 
   const edges: WorkflowEdge[] = [
@@ -171,6 +175,30 @@ export function createDemoWorkflow(): {
       source: "tone-check",
       sourceHandle: questionHandleId("apologetic", "no"),
       target: "rewrite",
+    }),
+    createWorkflowEdge({
+      id: "e-rewrite-output",
+      source: "rewrite",
+      sourceHandle: OUT_HANDLE,
+      target: "output",
+    }),
+    createWorkflowEdge({
+      id: "e-tone-output",
+      source: "tone-check",
+      sourceHandle: questionHandleId("apologetic", "yes"),
+      target: "output",
+    }),
+    createWorkflowEdge({
+      id: "e-technical-output",
+      source: "technical-reply",
+      sourceHandle: OUT_HANDLE,
+      target: "output",
+    }),
+    createWorkflowEdge({
+      id: "e-escalation-output",
+      source: "escalation",
+      sourceHandle: OUT_HANDLE,
+      target: "output",
     }),
   ];
 

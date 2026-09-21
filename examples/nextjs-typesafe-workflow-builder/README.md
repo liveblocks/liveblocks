@@ -87,7 +87,11 @@ curl -X POST "http://localhost:3000/api/workflows/<workflowId>/runs?wait=true" \
 
 The workflow id is the last segment of the workflow URL (`/w/<workflowId>`);
 without `wait=true` the endpoint responds `202` with `{ runId }` immediately and
-the run streams into the feed.
+the run streams into the feed. With `wait=true` the JSON includes `output`,
+always a `string[]` of the texts that reached the output node (one connected
+node that fired yields `["…"]`; several yield `["…", "…"]`; none yields `[]`).
+To merge several drafts into one string, connect them to an LLM node first, then
+to output.
 
 ### Deploy on Vercel
 

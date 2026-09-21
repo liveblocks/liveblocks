@@ -102,6 +102,10 @@ async function runWorkflow(
       liveblocks.updateFeed({ roomId, feedId: runId, metadata: finalMetadata })
     );
 
+    const outputMessage = [...messages.values()].find(
+      (message) => message.nodeType === "output" && message.status === "complete"
+    );
+
     return {
       runId,
       status: finalMetadata.status,
@@ -110,6 +114,7 @@ async function runWorkflow(
       startedAt,
       completedAt,
       ...(finalError ? { error: finalError } : {}),
+      output: outputMessage?.outputs ?? [],
       nodes: [...messages.values()].sort((a, b) => a.startedAt - b.startedAt),
     };
   };
@@ -280,8 +285,21 @@ async function runWorkflow(
         });
       }
 
-      return await executeLlm(node, base, messageId, {
-        input: nodeInput,
+      if (node.type === "llm") {
+        return await executeLlm(node, base, messageId, {
+          input: nodeInput,
+          answers,
+          rawAnswers,
+        });
+      }
+
+      const texts = parentNodeIds
+        .map(
+          (id) => fired.find(({ edge }) => edge.source === id)!.state!.output
+        )
+        .filter((text) => text.length > 0);
+
+      return await executeOutput(base, messageId, texts, {
         answers,
         rawAnswers,
       });
@@ -428,6 +446,34 @@ async function runWorkflow(
       answers: context.answers,
       rawAnswers: context.rawAnswers,
       firedHandles: new Set([OUT_HANDLE]),
+    };
+  }
+
+  async function executeOutput(
+    base: NodeResultData,
+    messageId: string | undefined,
+    texts: string[],
+    context: Pick<NodeState, "answers" | "rawAnswers">
+  ): Promise<NodeState> {
+    const joined = texts.join("\n\n");
+
+    await writeMessage(
+      {
+        ...base,
+        status: "complete",
+        output: joined,
+        outputs: texts,
+        firedHandles: [],
+        durationMs: Date.now() - base.startedAt,
+      },
+      messageId
+    );
+
+    return {
+      output: joined,
+      answers: context.answers,
+      rawAnswers: context.rawAnswers,
+      firedHandles: new Set(),
     };
   }
 

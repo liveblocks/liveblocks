@@ -12,6 +12,7 @@ import {
   Bot,
   Sparkles,
   MessageSquareText,
+  FileOutput,
   CircleDashed,
   ChevronLeft,
   ChevronRight,
@@ -69,6 +70,8 @@ function NodeTypeIcon({ type }: { type: WorkflowNodeType }) {
       return <Sparkles className="size-3.5 text-violet-600" />;
     case "llm":
       return <Bot className="size-3.5 text-sky-600" />;
+    case "output":
+      return <FileOutput className="size-3.5 text-emerald-600" />;
   }
 }
 
@@ -262,6 +265,25 @@ function TraceNode({
               <span className="ml-0.5 inline-block h-3 w-1 animate-pulse bg-violet-500 align-middle" />
             ) : null}
           </p>
+        ) : null}
+
+        {message.nodeType === "output" &&
+        (message.outputs?.length ?? 0) > 0 ? (
+          <ul className="flex flex-col gap-1.5 border-t border-neutral-100 px-2.5 py-1.5">
+            {(message.outputs ?? []).map((text, index, list) => (
+              <li
+                key={index}
+                className="whitespace-pre-wrap text-xs leading-relaxed text-neutral-700"
+              >
+                {list.length > 1 ? (
+                  <span className="mr-1 font-mono text-neutral-400">
+                    [{index}]
+                  </span>
+                ) : null}
+                {text}
+              </li>
+            ))}
+          </ul>
         ) : null}
 
         {message.status === "skipped" ? (
@@ -606,7 +628,7 @@ function getSnippet(language: SnippetLanguage, url: string): string {
         `});`,
         ``,
         `const run = await response.json();`,
-        `console.log(run.status, run.nodes);`,
+        `console.log(run.output);`,
       ].join("\n");
     case "python":
       return [
@@ -618,7 +640,7 @@ function getSnippet(language: SnippetLanguage, url: string): string {
         `)`,
         ``,
         `run = response.json()`,
-        `print(run["status"], run["nodes"])`,
+        `print(run["output"])`,
       ].join("\n");
   }
 }
@@ -652,8 +674,12 @@ function ApiTab({
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 text-xs text-neutral-600">
       <p className="leading-relaxed">
         Trigger this workflow from anywhere by POSTing JSON with an{" "}
-        <code className="rounded bg-neutral-100 px-1">input</code> string. The
-        run shows up in the Runs tab for everyone in the room.
+        <code className="rounded bg-neutral-100 px-1">input</code> string. With{" "}
+        <code className="rounded bg-neutral-100 px-1">?wait=true</code> the
+        response includes{" "}
+        <code className="rounded bg-neutral-100 px-1">output</code>, always an
+        array of the texts that reached the output node. The run also shows up
+        in the Runs tab for everyone in the room.
       </p>
       <div className="overflow-hidden rounded-md bg-neutral-900">
         <div className="flex items-center gap-0.5 border-b border-neutral-800 px-1.5 py-1">
@@ -692,7 +718,10 @@ function ApiTab({
       <ul className="flex flex-col gap-1.5 leading-relaxed">
         <li>
           <code className="rounded bg-neutral-100 px-1">?wait=true</code> blocks
-          until the run finishes and returns the full trace as JSON.
+          until the run finishes and returns JSON with{" "}
+          <code className="rounded bg-neutral-100 px-1">output: string[]</code>{" "}
+          (one entry per node that fired into the output node) plus the full
+          trace.
         </li>
         <li>
           Without it, the endpoint responds{" "}

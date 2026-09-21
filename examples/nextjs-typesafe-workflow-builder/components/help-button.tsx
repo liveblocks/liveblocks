@@ -18,7 +18,7 @@ const FEATURES: Feature[] = [
     icon: <WorkflowIcon />,
     title: "Build a decision workflow",
     description:
-      "Start from the input node, add Jev nodes that ask TypeSafe typed questions (choice, score, yes/no), and connect their answer handles to LLM nodes that only run when that answer fires.",
+      "Start from the input node, add Jev nodes that ask TypeSafe typed questions (choice, score, yes/no), and connect their answer handles to LLM nodes that only run when that answer fires. Connect finished nodes to the single output node; the REST API returns those texts as an array. To merge several drafts into one string, run them through an LLM node first.",
   },
   {
     icon: <PlayIcon />,
@@ -30,7 +30,7 @@ const FEATURES: Feature[] = [
     icon: <TerminalIcon />,
     title: "Trigger over REST",
     description:
-      "Copy the curl command from the API tab and POST any text to the workflow endpoint; the run shows up in everyone's panel.",
+      "Copy the curl command from the API tab and POST any text to the workflow endpoint. With ?wait=true the JSON includes output: string[] — the texts that reached the output node.",
   },
   {
     icon: <UsersIcon />,

@@ -29,7 +29,7 @@ import {
   type IsValidConnection,
   type NodeChange,
 } from "@xyflow/react";
-import { Bot, Eye, Redo2, Sparkles, Undo2, X } from "lucide-react";
+import { Bot, Eye, FileOutput, Redo2, Sparkles, Undo2, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -45,6 +45,7 @@ import {
   WORKFLOW_EDGE_TYPE,
   createJevNode,
   createLlmNode,
+  createOutputNode,
   createWorkflowEdge,
   getReachableNodeIds,
   wouldCreateCycle,
@@ -262,7 +263,7 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
   );
 
   const addNode = useCallback(
-    (kind: "jev" | "llm") => {
+    (kind: "jev" | "llm" | "output") => {
       // Place new nodes near the center of the current viewport, offset so
       // repeated clicks don't stack exactly.
       const container = document.querySelector(".react-flow");
@@ -285,7 +286,9 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
       const item =
         kind === "jev"
           ? createJevNode({ position, selected: true })
-          : createLlmNode({ position, selected: true });
+          : kind === "llm"
+            ? createLlmNode({ position, selected: true })
+            : createOutputNode({ position, selected: true });
 
       onNodesChange([...deselect, { type: "add", item }]);
     },
@@ -348,6 +351,15 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
             >
               <Bot className="size-3.5 text-sky-600" /> LLM node
             </button>
+            {nodes.some((node) => node.type === "output") ? null : (
+              <button
+                type="button"
+                onClick={() => addNode("output")}
+                className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-emerald-50 hover:text-emerald-700"
+              >
+                <FileOutput className="size-3.5 text-emerald-600" /> Output node
+              </button>
+            )}
           </div>
         </Panel>
         <Panel position="top-center">

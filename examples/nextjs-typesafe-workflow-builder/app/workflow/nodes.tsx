@@ -14,6 +14,7 @@ import {
   Bot,
   Check,
   CircleDashed,
+  FileOutput,
   Loader2,
   MessageSquareText,
   Plus,
@@ -38,6 +39,7 @@ import {
   type InputNode,
   type JevNode,
   type LlmNode,
+  type OutputNode,
   type QuestionDef,
   type QuestionType,
   type WorkflowNode,
@@ -160,7 +162,7 @@ function NodeFrame({
 
   return (
     <div
-      className="workflow-node rounded-lg bg-white shadow ring-1 ring-neutral-950/10 transition-opacity data-[selected]:ring-2 data-[selected]:ring-violet-500"
+      className="workflow-node rounded-lg bg-white shadow-lg ring-1 ring-neutral-950/10 outline-2 outline-offset-0 outline-transparent transition-opacity data-[selected]:outline-violet-500"
       style={{ width: NODE_WIDTH, opacity: dimmed ? 0.45 : 1 }}
       data-selected={selected ? "" : undefined}
       data-status={result?.status}
@@ -184,20 +186,21 @@ function NodeFrame({
         </>
       )}
 
-      <div className="flex items-center gap-2 border-b border-neutral-100 px-3 py-2">
+      <div className="flex items-center gap-1.5 border-b border-neutral-100 p-2">
         <span
-          className="flex size-6 shrink-0 items-center justify-center rounded-md text-white"
+          className="flex size-5 shrink-0 items-center justify-center rounded text-white"
           style={{ background: accent }}
         >
           {icon}
         </span>
         <TextField
           aria-label="Node name"
+          fit
           value={node.data.label}
           onCommit={(label) => updateNodeData(id, { label })}
-          className="!border-transparent !bg-transparent !px-1 !text-sm !font-medium hover:!border-neutral-200"
+          className="!border-transparent !bg-transparent !font-medium hover:!border-neutral-200"
         />
-        <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+        <span className="ml-auto shrink-0 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
           {typeLabel}
         </span>
         <StatusIcon status={result?.status} />
@@ -226,35 +229,39 @@ function NodeFrame({
         </div>
       )}
 
-      <div className="border-t border-neutral-100 py-1">
-        {handles.map((handle) => (
-          <div
-            key={handle.id}
-            className="relative flex h-6 items-center justify-end pr-3"
-            title={handle.title}
-          >
-            <span
-              className={`truncate text-xs ${
-                fired.has(handle.id)
-                  ? "font-medium text-violet-700"
-                  : "text-neutral-500"
-              }`}
+      {handles.length > 0 ? (
+        <div className="border-t border-neutral-100 py-1">
+          {handles.map((handle) => (
+            <div
+              key={handle.id}
+              className="relative flex h-6 items-center justify-end pr-3"
+              title={handle.title}
             >
-              {handle.questionId ? (
-                <span className="text-neutral-400">{handle.questionId} · </span>
-              ) : null}
-              {handle.label}
-            </span>
-            <Handle
-              type="source"
-              position={Position.Right}
-              id={handle.id}
-              className="workflow-handle"
-              data-fired={fired.has(handle.id) ? "" : undefined}
-            />
-          </div>
-        ))}
-      </div>
+              <span
+                className={`truncate text-xs ${
+                  fired.has(handle.id)
+                    ? "font-medium text-violet-700"
+                    : "text-neutral-500"
+                }`}
+              >
+                {handle.questionId ? (
+                  <span className="text-neutral-400">
+                    {handle.questionId} ·{" "}
+                  </span>
+                ) : null}
+                {handle.label}
+              </span>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={handle.id}
+                className="workflow-handle"
+                data-fired={fired.has(handle.id) ? "" : undefined}
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -589,7 +596,7 @@ const JevNodeView = memo(({ id, data, selected }: NodeProps<JevNode>) => {
       }
       editor={
         <div className="flex flex-col gap-2">
-          <FieldLabel>Questions (one TypeSafe call)</FieldLabel>
+          <FieldLabel>Questions</FieldLabel>
           {data.questions.map((question, index) => (
             <QuestionEditor
               key={index}
@@ -618,11 +625,6 @@ const JevNodeView = memo(({ id, data, selected }: NodeProps<JevNode>) => {
               )
             )}
           </div>
-          <p className="text-[11px] leading-relaxed text-neutral-400">
-            Each answer becomes a handle. Connect a handle to run the next node
-            only when that answer fires; connect two handles into one node set
-            to &ldquo;all inputs fire&rdquo; for an AND.
-          </p>
         </div>
       }
     />
@@ -690,7 +692,7 @@ const LlmNodeView = memo(({ id, data, selected }: NodeProps<LlmNode>) => {
             </Select>
           </label>
           <label className="flex flex-col gap-1">
-            <FieldLabel>System (optional)</FieldLabel>
+            <FieldLabel>System</FieldLabel>
             <TextArea
               rows={2}
               value={data.system}
@@ -710,9 +712,63 @@ const LlmNodeView = memo(({ id, data, selected }: NodeProps<LlmNode>) => {
           <p className="text-[11px] leading-relaxed text-neutral-400">
             Use <code>{"{{input}}"}</code>, <code>{"{{answers.<id>}}"}</code>,{" "}
             <code>{"{{answers.<id>.probability}}"}</code> and{" "}
-            <code>{"{{answers.<id>.confidence}}"}</code>.
+            <code>{"{{answers.<id>.confidence}}"}</code>. When several nodes
+            connect in, <code>{"{{input}}"}</code> is their texts joined — useful
+            for combining drafts before the output node.
           </p>
         </div>
+      }
+    />
+  );
+});
+
+/* -------------------------------------------------------------------------- */
+/*                                 Output node                                */
+/* -------------------------------------------------------------------------- */
+
+const OutputNodeView = memo(({ id, data, selected }: NodeProps<OutputNode>) => {
+  const { results } = useRun();
+  const result = results.get(id);
+  const node: OutputNode = { id, type: "output", position: { x: 0, y: 0 }, data };
+  const texts = result?.outputs ?? [];
+
+  return (
+    <NodeFrame
+      id={id}
+      node={node}
+      selected={selected}
+      icon={<FileOutput className="size-3.5" />}
+      accent="#059669"
+      typeLabel="Output"
+      result={result}
+      hasTarget
+      handles={getSourceHandles(node)}
+      summary={
+        texts.length > 0 ? (
+          <div className="flex flex-col gap-1.5">
+            {texts.map((text, index) => (
+              <p
+                key={index}
+                className="max-h-24 overflow-hidden whitespace-pre-wrap rounded bg-neutral-50 px-2 py-1 text-xs leading-relaxed text-neutral-700"
+              >
+                {truncate(text, 220)}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs leading-relaxed text-neutral-500">
+            Texts that reach this node are returned as{" "}
+            <code className="rounded bg-neutral-100 px-1">output: string[]</code>{" "}
+            from the REST API.
+          </p>
+        )
+      }
+      editor={
+        <p className="text-[11px] leading-relaxed text-neutral-500">
+          Connect one or more nodes here. The API always returns an array of the
+          texts that fired into this node. To merge several drafts into one
+          string, run them through an LLM node first.
+        </p>
       }
     />
   );
@@ -722,4 +778,5 @@ export const nodeTypes: NodeTypes = {
   input: InputNodeView,
   jev: JevNodeView,
   llm: LlmNodeView,
+  output: OutputNodeView,
 };

@@ -46,6 +46,8 @@ export type NodeResultData = {
   input: string;
   // LLM output (streams in) or, for Jev nodes, the input passed through.
   output?: string;
+  // Output node only: the parent texts that reached it, in connection order.
+  outputs?: string[];
   // Jev answers keyed by question id.
   answers?: Record<string, Answer>;
   // Source handles that fired on this node.
@@ -70,6 +72,9 @@ export type RunSummary = {
 
 export type RunTrace = RunSummary & {
   nodes: NodeResultData[];
+  // Texts that reached the output node. Always an array: one connected parent
+  // that fired yields `["…"]`; several yield `["…", "…"]`; none yields `[]`.
+  output: string[];
 };
 
 export const MAX_INPUT_PREVIEW = 200;

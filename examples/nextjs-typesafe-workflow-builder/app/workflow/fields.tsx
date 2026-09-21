@@ -35,16 +35,20 @@ export function TextField({
   value,
   onCommit,
   className,
+  fit,
   ...props
 }: Omit<ComponentProps<"input">, "value" | "onChange"> & {
   value: string;
   onCommit: (value: string) => void;
+  /** Size the input to its text so surrounding space stays free for dragging. */
+  fit?: boolean;
 }) {
   const { draft, setDraft, commit } = useDraft(value, onCommit);
 
-  return (
+  const input = (
     <input
       {...props}
+      size={fit ? 1 : undefined}
       value={draft}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={commit}
@@ -58,8 +62,26 @@ export function TextField({
         }
       }}
       spellCheck={false}
-      className={`${inputClassName} ${className ?? ""}`}
+      className={`${inputClassName} ${fit ? "absolute inset-0 h-full !w-full !min-w-0 !px-1 !py-0 font-[inherit] text-[length:inherit] leading-[inherit]" : ""} ${className ?? ""}`}
     />
+  );
+
+  if (!fit) {
+    return input;
+  }
+
+  // Hidden copy sizes the control to the text; the input is taken out of flow
+  // so its default 20ch width cannot stretch the header.
+  return (
+    <span className="relative inline-flex h-5 max-w-full shrink-0 items-center text-xs font-medium leading-5">
+      <span
+        aria-hidden
+        className="invisible whitespace-pre pl-1 pr-2.5"
+      >
+        {draft || " "}
+      </span>
+      {input}
+    </span>
   );
 }
 
