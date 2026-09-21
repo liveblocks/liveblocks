@@ -143,7 +143,8 @@ use other Liveblocks APIs to
 ### Disconnecting users [#disconnecting-users]
 
 When a user’s access is removed, they are not automatically disconnected from
-the room. After updating the room, broadcast an event with their user ID using
+the room. After updating the room accesses, one way to remove users is to
+broadcast an event with their user ID using
 [`Liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).
 
 ```ts
@@ -164,7 +165,7 @@ await liveblocks.broadcastEvent("document-a", {
 // +++
 ```
 
-In a component that’s always mounted in the room, listen with
+On the client, you can listen for this event with
 [`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener) and
 compare the event’s user ID to the current user with
 [`useSelf`](/docs/api-reference/liveblocks-react#useSelf). If they match, reload
