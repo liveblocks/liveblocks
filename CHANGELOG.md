@@ -1,6 +1,6 @@
 ## vNEXT (not yet released)
 
-### `@liveblocks/*`
+### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
 
 - Fix edge cases in return types of `.toJSON()`, `useStorage()` selectors, and
   `getStorageDocument(roomId, "json")`:
