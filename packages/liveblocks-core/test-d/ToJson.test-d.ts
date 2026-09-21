@@ -3,6 +3,7 @@ import type {
   Lson,
   LsonObject,
   LiveTextData,
+  ReadonlyJson,
   ReadonlyJsonObject,
   ToJson,
 } from "@liveblocks/core";
@@ -350,6 +351,49 @@ describe("ToJson", () => {
     const parent = new LiveObject({ child });
 
     expectTypeOf(parent.toJSON().child.known).toEqualTypeOf<string>();
+  });
+
+  test("an index signature does not erase named keys", () => {
+    const child = new LiveObject({} as { [key: string]: Lson; known: string });
+    const parent = new LiveObject({ child });
+
+    expectTypeOf(parent.toJSON().child.known).toEqualTypeOf<string>();
+  });
+
+  test("an index signature does not erase named keys, on a plain object", () => {
+    expectTypeOf(
+      toJson({} as { [key: string]: Lson; version: number }).version
+    ).toEqualTypeOf<number>();
+
+    expectTypeOf(
+      toJson({} as { [key: string]: Json; version: number }).version
+    ).toEqualTypeOf<number>();
+  });
+
+  test("plain JSON arrays become readonly, like every other container", () => {
+    expectTypeOf(toJson({} as { tags: string[] }).tags).toEqualTypeOf<
+      readonly string[]
+    >();
+
+    expectTypeOf(toJson({} as { pair: [1, 2] }).pair).toEqualTypeOf<
+      readonly [1, 2]
+    >();
+  });
+
+  test("LiveMap with literal keys keeps its keys", () => {
+    const map = new LiveMap<"a" | "b", Lson>();
+
+    expectTypeOf(toJson(map)).toEqualTypeOf<{
+      readonly a: ReadonlyJson;
+      readonly b: ReadonlyJson;
+    }>();
+  });
+
+  test("toJSON() agrees with ToJson of the same structure", () => {
+    const child = new LiveObject({} as Record<string, Json>);
+    const parent = new LiveObject({ child });
+
+    expectTypeOf(child.toJSON()).toEqualTypeOf(parent.toJSON().child);
   });
 
   test("self-referencing LiveObject schema", () => {
