@@ -1,5 +1,13 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/*`
+
+- Fix edge cases in return types of `.toJSON()`, `useStorage()` selectors, and
+  `getStorageDocument(roomId, "json")`:
+  - a `LiveObject` whose properties are all optional no longer loses its keys
+    when nested inside another Live structure.
+  - a value typed as `Record<string, T>` no longer loses `T`.
+
 ### `@liveblocks/chat-sdk-adapter`
 
 - Allow `apiKey` and `webhookSecret` to be resolved per request, and add custom
