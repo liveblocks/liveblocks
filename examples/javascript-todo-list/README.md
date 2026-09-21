@@ -102,5 +102,5 @@ on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a
 ### Tutorial
 
 Follow our
-[step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-to-do-list/javascript)
+[step by step tutorial](https://liveblocks.io/docs/guides/how-to-create-a-collaborative-to-do-list-with-javascript-and-liveblocks)
 to build it from scratch.

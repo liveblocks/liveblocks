@@ -100,5 +100,5 @@ variable as a [public](https://codesandbox.io/docs/secrets).
 ### Tutorial
 
 Follow our
-[step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-online-whiteboard/react-redux)
+[step by step tutorial](https://liveblocks.io/docs/guides/how-to-create-a-collaborative-online-whiteboard-with-react-redux-and-liveblocks)
 to build it from scratch.

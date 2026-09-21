@@ -1127,8 +1127,8 @@ nperez0111, marcbouchenoire, ctnicholas
 ## Zen Router
 
 - Zen Router was released, our open-source HTTP router.
-- [Documentation website for Zen Router](https://zenrouter.liveblocks.io) was
-  published.
+- [Documentation website for Zen Router](https://github.com/liveblocks/zenrouter)
+  was published.
 - [Repo for Zen Router](https://github.com/liveblocks/zenrouter) was published.
 
 ## Website
@@ -4564,7 +4564,7 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 - New
   [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
 - Updated
-  [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-yjs-blocknote-advanced)
+  [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-blocknote)
   and guide to v0.14.1.
 
 ## Documentation
