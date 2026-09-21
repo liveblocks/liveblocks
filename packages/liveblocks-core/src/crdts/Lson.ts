@@ -37,40 +37,6 @@ export type LiveNode =
 export type LsonObject = Record<string, Lson | undefined>;
 
 /**
- * The type of the values stored under an object type's string keys. The
- * `undefined` an optional key carries is not one of them.
- *
- * Examples:
- *
- *   ValueOf<{ a: number, b: string }>   // number | string
- *   ValueOf<{ a: number, b?: string }>  // number | string
- *   ValueOf<LsonObject>                 // Lson
- *
- * The last one is what this is for: `Lson extends ValueOf<O>` asks whether an
- * object's values are as wide as Lson itself, which is the case ToJson has to
- * short-circuit to avoid expanding forever.
- */
-type ValueOf<O> = Exclude<O[Extract<keyof O, string>], undefined>;
-
-/**
- * Whether O carries nothing but a string index signature whose values are as
- * wide as W. Such an object has no key detail worth preserving, so ToJson can
- * collapse it instead of expanding it forever.
- *
- * `LsonObject` is such an object. `{ [key: string]: Lson; id: string }` is not:
- * named keys survive in a mapped type even though `keyof` absorbs them into
- * `string`, so collapsing would silently drop `id`.
- */
-// prettier-ignore
-type IsOpaqueRecord<O, W> =
-  string extends keyof O ?
-    Record<string, ValueOf<O>> extends O ?
-      [W] extends [ValueOf<O>] ? true :
-      false :
-    false :
-  false;
-
-/**
  * The Json object an Lson object serializes to: every value converted with
  * `ToJson`, optional keys staying optional.
  */
@@ -82,11 +48,6 @@ type JsonObjectOf<O extends LsonObject> =
 /**
  * The Json value a plain Lson object serializes to: an opaque record collapses
  * to ReadonlyJsonObject, anything else is mapped key by key.
- *
- * Unlike the LiveObject branch, this asks `L extends Record<string, infer V>`
- * instead of reusing IsOpaqueRecord. Indexing the naked type parameter here
- * (what ValueOf does) defers the whole conditional and destroys ToJson's
- * variance, which breaks unrelated assignments like LiveList<never> to Lson.
  */
 // prettier-ignore
 type JsonOfLsonObject<L extends LsonObject> =
@@ -122,15 +83,10 @@ export type ToJson<L extends Lson | LsonObject> =
     Lson extends I ? readonly ReadonlyJson[] :
     readonly ToJson<I>[] :
 
-  // A LiveObject serializes to an equivalent JSON object
-  // Short-circuit opaque records, on the same threshold the LsonObject branch
-  // uses, so that a LiveObject serializes the same whether it is reached
-  // directly through .toJSON() or nested inside another structure.
-  // Otherwise, expand O here (instead of ToJson<O>) so that
-  // Record<string, LiveObject<...>> doesn't hit the LsonObject branch's guard.
+  // A LiveObject serializes to an equivalent JSON object, by the same rule the
+  // LsonObject branch below uses
   L extends LiveObject<infer O extends LsonObject> ?
-    IsOpaqueRecord<O, Json> extends true ? ReadonlyJsonObject :
-    JsonObjectOf<O> :
+    JsonOfLsonObject<O> :
 
   // A LiveMap serializes to a JSON object with string-V pairs
   // Short-circuit fully opaque LiveMap<string, Lson> to avoid recursive expansion
