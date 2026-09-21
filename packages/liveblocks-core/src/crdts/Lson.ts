@@ -53,6 +53,15 @@ export type LsonObject = Record<string, Lson | undefined>;
 type ValueOf<O> = Exclude<O[Extract<keyof O, string>], undefined>;
 
 /**
+ * The Json object an Lson object serializes to: every value converted with
+ * `ToJson`, optional keys staying optional.
+ */
+// prettier-ignore
+type JsonObjectOf<O extends LsonObject> =
+  { readonly [K in keyof O]: ToJson<Exclude<O[K], undefined>>
+                               | (undefined extends O[K] ? undefined : never) };
+
+/**
  * Helper type to convert any valid Lson type to the equivalent Json type.
  *
  * Examples:
@@ -82,8 +91,7 @@ export type ToJson<L extends Lson | LsonObject> =
   // Record<string, LiveObject<...>> doesn't hit the LsonObject branch's guard.
   L extends LiveObject<infer O extends LsonObject> ?
     Lson extends ValueOf<O> ? ReadonlyJsonObject :
-    { readonly [K in keyof O]: ToJson<Exclude<O[K], undefined>>
-                                 | (undefined extends O[K] ? undefined : never) } :
+    JsonObjectOf<O> :
 
   // A LiveMap serializes to a JSON object with string-V pairs
   // Short-circuit fully opaque LiveMap<string, Lson> to avoid recursive expansion
@@ -100,15 +108,15 @@ export type ToJson<L extends Lson | LsonObject> =
     LiveFileData :
 
   // Any LsonObject recursively becomes a JsonObject
-  // Short-circuit objects whose values are as wide as Json to avoid ugly
-  // recursive expansion (e.g. ToJson<LsonObject> or ToJson<JsonObject>).
+  // Short-circuit index-signature objects whose values are as wide as Json, to
+  // avoid ugly recursive expansion (e.g. ToJson<LsonObject> or ToJson<JsonObject>).
   L extends LsonObject ?
-    L extends Record<string, infer V> ?
-      [Json] extends [V] ? ReadonlyJsonObject :
-      { readonly [K in keyof L]: ToJson<Exclude<L[K], undefined>>
-                                   | (undefined extends L[K] ? undefined : never) } :
-    { readonly [K in keyof L]: ToJson<Exclude<L[K], undefined>>
-                                 | (undefined extends L[K] ? undefined : never) } :
+    string extends keyof L ?
+      L extends Record<string, infer V> ?
+        [Json] extends [V] ? ReadonlyJsonObject :
+        JsonObjectOf<L> :
+      JsonObjectOf<L> :
+    JsonObjectOf<L> :
 
   // Any Json value already is a legal Json value
   L extends Json ? L :

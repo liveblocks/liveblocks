@@ -1,4 +1,5 @@
 import type {
+  Json,
   Lson,
   LsonObject,
   LiveTextData,
@@ -336,5 +337,22 @@ describe("ToJson", () => {
     ).toEqualTypeOf<{
       readonly [key: string]: { readonly prop: string } | undefined;
     }>();
+  });
+
+  test("a Json-typed prop does not erase its siblings", () => {
+    const doc = new LiveObject({} as { title: string; settings: Json });
+
+    expectTypeOf(doc.toJSON().title).toEqualTypeOf<string>();
+  });
+
+  test("self-referencing LiveObject schema", () => {
+    type Node = LiveObject<{
+      id: string;
+      type: string;
+      attrs?: LiveMap<string, Json>;
+      content?: LiveList<Node>;
+    }>;
+
+    expectTypeOf(toJson({} as Node).id).toEqualTypeOf<string>();
   });
 });
