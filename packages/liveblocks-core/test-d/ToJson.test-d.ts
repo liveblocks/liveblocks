@@ -251,4 +251,42 @@ describe("ToJson", () => {
       readonly { readonly [key: string]: { readonly prop: string } }[]
     >();
   });
+
+  test("nested LiveObject whose props are all optional", () => {
+    const child = new LiveObject<{ id?: string; bar?: string }>({ id: "abc" });
+    const parent = new LiveObject({ child });
+
+    expectTypeOf(toJson(parent)).toEqualTypeOf<{
+      readonly child: {
+        readonly id?: string;
+        readonly bar?: string;
+      };
+    }>();
+  });
+
+  test("LiveObject whose props are all optional, inside a LiveList", () => {
+    const item = new LiveObject<{ id?: string; bar?: string }>({ id: "abc" });
+    const list = new LiveList([item]);
+
+    expectTypeOf(toJson(list)).toEqualTypeOf<
+      readonly {
+        readonly id?: string;
+        readonly bar?: string;
+      }[]
+    >();
+  });
+
+  test("LiveObject whose props are all optional, inside a LiveMap", () => {
+    const map = new LiveMap<
+      string,
+      LiveObject<{ id?: string; bar?: string }>
+    >();
+
+    expectTypeOf(toJson(map)).toEqualTypeOf<{
+      readonly [key: string]: {
+        readonly id?: string;
+        readonly bar?: string;
+      };
+    }>();
+  });
 });

@@ -37,6 +37,22 @@ export type LiveNode =
 export type LsonObject = Record<string, Lson | undefined>;
 
 /**
+ * The type of the values stored under an object type's string keys. The
+ * `undefined` an optional key carries is not one of them.
+ *
+ * Examples:
+ *
+ *   ValueOf<{ a: number, b: string }>   // number | string
+ *   ValueOf<{ a: number, b?: string }>  // number | string
+ *   ValueOf<LsonObject>                 // Lson
+ *
+ * The last one is what this is for: `Lson extends ValueOf<O>` asks whether an
+ * object's values are as wide as Lson itself, which is the case ToJson has to
+ * short-circuit to avoid expanding forever.
+ */
+type ValueOf<O> = Exclude<O[Extract<keyof O, string>], undefined>;
+
+/**
  * Helper type to convert any valid Lson type to the equivalent Json type.
  *
  * Examples:
@@ -60,11 +76,12 @@ export type ToJson<L extends Lson | LsonObject> =
     readonly ToJson<I>[] :
 
   // A LiveObject serializes to an equivalent JSON object
-  // Short-circuit fully opaque LiveObject<LsonObject> to avoid recursive expansion
+  // Short-circuit LiveObjects whose values are as wide as Lson to avoid
+  // recursive expansion (e.g. the fully opaque LiveObject<LsonObject>)
   // Otherwise, inline the mapped type here (instead of ToJson<O>) so that
   // Record<string, LiveObject<...>> doesn't hit the LsonObject branch's guard.
   L extends LiveObject<infer O extends LsonObject> ?
-    LsonObject extends O ? ReadonlyJsonObject :
+    Lson extends ValueOf<O> ? ReadonlyJsonObject :
     { readonly [K in keyof O]: ToJson<Exclude<O[K], undefined>>
                                  | (undefined extends O[K] ? undefined : never) } :
 
