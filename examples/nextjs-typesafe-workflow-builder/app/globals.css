@@ -1,15 +1,277 @@
 @import "tailwindcss";
 
-/* Tailwind v4 gates `hover:` behind `@media (hover: hover)`; keep hover
-   styles working with synthetic pointers too. */
+/* Keep hover feedback available for synthetic pointers in example previews. */
 @custom-variant hover (&:hover);
+
+:root {
+  --workspace-background: #f7f7f4;
+  --workspace-border: #e8e7e3;
+  --workspace-accent: #7654cb;
+  --workspace-shadow:
+    0 0 0 1px rgb(35 30 50 / 0.06), 0 2px 4px rgb(35 30 50 / 0.03),
+    0 8px 24px -8px rgb(35 30 50 / 0.1);
+}
 
 html,
 body {
-  @apply h-full w-full bg-neutral-50 antialiased;
+  height: 100%;
+  width: 100%;
+  background: var(--workspace-background);
+  color: #26252b;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
 }
 
-/* React Flow ships default node chrome; our custom nodes bring their own. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--workspace-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: #e8ddff;
+  color: #3b2466;
+}
+
+/* Shared workspace chrome. */
+.workspace-header {
+  z-index: 10;
+  display: flex;
+  height: 56px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--workspace-border);
+  background: #fff;
+  padding: 0 16px;
+}
+
+.brand-mark {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: #28252f;
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.15),
+    0 2px 4px rgb(35 30 50 / 0.1);
+}
+
+.workspace-eyebrow {
+  display: block;
+  color: #77717d;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.workflow-title-field {
+  position: relative;
+  display: inline-flex;
+  min-width: 16px;
+  max-width: 100%;
+  height: 28px;
+  margin-left: -5px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Measure the draft with the same font, leaving room for padding and the caret. */
+.workflow-title-measure {
+  visibility: hidden;
+  overflow: hidden;
+  border: 1px solid transparent;
+  padding: 0 6px;
+  white-space: pre;
+}
+
+.workflow-title {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 4px;
+  background: transparent;
+  color: #26252b;
+  font: inherit;
+  letter-spacing: inherit;
+  text-overflow: ellipsis;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+}
+
+.workflow-title:hover,
+.workflow-title:focus {
+  border-color: var(--workspace-border);
+  background: #fafafa;
+}
+
+.icon-button {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: #85818b;
+  transition:
+    background-color 150ms,
+    color 150ms,
+    transform 150ms;
+}
+
+.icon-button:hover {
+  background: #f3f2f5;
+  color: #302c39;
+}
+
+.icon-button:disabled {
+  opacity: 0.4;
+}
+
+.primary-button {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgb(0 0 0 / 0.08);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: var(--workspace-accent);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 2px 3px rgb(89 57 164 / 0.15);
+  font-size: 12px;
+  font-weight: 500;
+  transition:
+    background-color 150ms,
+    box-shadow 150ms,
+    transform 150ms;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #6643b9;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 3px 8px rgb(89 57 164 / 0.2);
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+}
+
+.primary-button:active:not(:disabled),
+.icon-button:active:not(:disabled),
+.toolbar-button:active {
+  transform: scale(0.96);
+}
+
+/* The canvas is quiet so the workflow carries the visual weight. */
+.workflow-canvas {
+  container-type: inline-size;
+  background: var(--workspace-background);
+  --xy-background-color: var(--workspace-background);
+  --xy-node-boxshadow-hover: none;
+  --xy-node-boxshadow-selected: none;
+  --xy-selection-background-color: rgb(118 84 203 / 0.06);
+  --xy-selection-border: 1px solid rgb(118 84 203 / 0.4);
+}
+
+.workflow-canvas .react-flow__panel {
+  margin: 12px;
+}
+
+.floating-surface {
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--workspace-shadow);
+}
+
+.workflow-canvas .react-flow__panel.run-preview-panel {
+  max-width: calc(100% - 16px);
+}
+
+.run-preview-banner {
+  white-space: nowrap;
+}
+
+/* Keep the preview clear of the add-node toolbar on narrow canvases. */
+@container (max-width: 680px) {
+  .workflow-canvas .run-preview-panel {
+    top: 44px;
+  }
+}
+
+@container (max-width: 520px) {
+  .run-preview-details {
+    display: none;
+  }
+}
+
+.toolbar-button {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  padding: 0 7px;
+  color: #57535e;
+  font-size: 12px;
+  font-weight: 500;
+  transition:
+    background-color 150ms,
+    color 150ms,
+    transform 150ms;
+}
+
+.toolbar-icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+}
+
+/* React Flow nodes bring their own chrome. */
 .react-flow__node {
   background: transparent;
   border: none;
@@ -21,46 +283,129 @@ body {
   text-align: left;
 }
 
+.workflow-node {
+  border: 1px solid #e6e4e9;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow:
+    0 2px 3px rgb(30 23 45 / 0.025),
+    0 6px 16px -6px rgb(30 23 45 / 0.09);
+  transition:
+    opacity 180ms,
+    border-color 180ms,
+    box-shadow 180ms;
+}
+
+.workflow-node:hover {
+  border-color: #ccc7d6;
+  box-shadow:
+    0 3px 5px rgb(30 23 45 / 0.035),
+    0 10px 24px -8px rgb(30 23 45 / 0.14);
+}
+
+.workflow-node[data-selected] {
+  border-color: var(--workspace-accent);
+  box-shadow:
+    0 0 0 3px rgb(118 84 203 / 0.12),
+    0 8px 24px -8px rgb(30 23 45 / 0.15);
+}
+
+.workflow-node[data-status="running"] {
+  border-color: #a78bdb;
+  box-shadow:
+    0 0 0 3px rgb(118 84 203 / 0.09),
+    0 8px 24px -8px rgb(30 23 45 / 0.15);
+}
+
+.workflow-node[data-status="error"] {
+  border-color: #e9a0a0;
+}
+
 .workflow-node-unreachable .workflow-node {
   opacity: 0.55;
 }
 
-/* Handles */
+.workflow-node-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #f0eff2;
+  padding: 8px;
+}
+
+.workflow-node-icon {
+  display: flex;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.035);
+}
+
+.workflow-node-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.workflow-node-ports {
+  border-top: 1px solid #f0eff2;
+  border-radius: 0 0 9px 9px;
+  padding: 3px 0;
+  background: #fcfbfd;
+}
+
+.workflow-node-port[data-fired] {
+  background: #f3eefb;
+}
+
+.workflow-field {
+  transition:
+    border-color 150ms,
+    box-shadow 150ms,
+    background-color 150ms;
+}
+
+.workflow-field:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(118 84 203 / 0.1);
+}
+
 .workflow-handle.react-flow__handle {
-  width: 10px;
-  height: 10px;
-  border: 2px solid #ffffff;
-  background: #a3a3a3;
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08);
+  width: 12px;
+  height: 12px;
+  border: 3px solid #fff;
+  background: #b9b4c2;
+  box-shadow: 0 0 0 1px #dedbe3;
+  transition:
+    background-color 150ms,
+    box-shadow 150ms;
 }
 
 .workflow-handle.react-flow__handle-right {
-  right: -5px;
+  right: -6px;
 }
 
 .workflow-handle.react-flow__handle-left {
-  left: -5px;
+  left: -6px;
 }
 
 .workflow-handle.react-flow__handle:hover,
 .workflow-handle.react-flow__handle.connectingfrom,
-.workflow-handle.react-flow__handle.valid {
-  background: #7c3aed;
-}
-
+.workflow-handle.react-flow__handle.valid,
 .workflow-handle[data-fired] {
-  background: #7c3aed;
-  box-shadow: 0 0 0 3px rgb(124 58 237 / 0.2);
+  background: var(--workspace-accent);
+  box-shadow: 0 0 0 3px rgb(118 84 203 / 0.18);
 }
 
-/* Edges */
 .react-flow__edge-path {
-  stroke: #a3a3a3;
+  stroke: #bbb7c3;
   stroke-width: 1.5;
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: #171717;
+  stroke: #7654cb;
 }
 
 .workflow-edge-fired .react-flow__edge-path {
@@ -69,28 +414,37 @@ body {
 }
 
 .workflow-edge-muted .react-flow__edge-path {
-  stroke: #d4d4d4;
+  stroke: #dedbe2;
 }
 
 .react-flow__connectionline path {
-  stroke: #7c3aed;
+  stroke: var(--workspace-accent);
   stroke-width: 1.5;
   stroke-dasharray: 4 4;
 }
 
-/* Controls */
 .react-flow__controls {
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.08),
-    0 0 0 1px rgb(0 0 0 / 0.05);
+  gap: 2px;
   border-radius: 8px;
-  overflow: hidden;
+  padding: 3px;
+  background: #fff;
+  box-shadow: var(--workspace-shadow);
 }
 
 .react-flow__controls-button {
-  border: none;
   width: 28px;
   height: 28px;
+  border: none;
+  border-radius: 5px;
+  color: #787380;
+  transition:
+    color 150ms,
+    background-color 150ms;
+}
+
+.react-flow__controls-button:hover {
+  background: #f3f1f7;
+  color: #4a3a6c;
 }
 
 .react-flow__controls-button svg {
@@ -98,16 +452,180 @@ body {
   max-height: 14px;
 }
 
-/* React Flow fills control SVGs; Lucide undo/redo icons are strokes. */
+/* React Flow fills control SVGs; Lucide icons are strokes. */
 .react-flow__controls-button svg.lucide {
   fill: none;
 }
 
 .react-flow__controls-button:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
-/* Live cursors from @liveblocks/react-flow */
 .lb-root.lb-cursor {
   pointer-events: none;
+}
+
+/* Test console. */
+.workflow-side-panel {
+  z-index: 5;
+  display: flex;
+  width: 320px;
+  min-height: 0;
+  flex-shrink: 0;
+  flex-direction: column;
+  border-left: 1px solid var(--workspace-border);
+  background: #fff;
+}
+
+.run-composer {
+  flex-shrink: 0;
+}
+
+.run-history {
+  background: #fcfcfb;
+  scrollbar-width: thin;
+  scrollbar-color: #d8d5de transparent;
+}
+
+.panel-empty-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px dashed #e1dee6;
+  border-radius: 8px;
+  padding: 8px;
+  color: #77717d;
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.trace-card {
+  box-shadow:
+    0 0 0 1px rgb(35 30 50 / 0.07),
+    0 2px 3px rgb(35 30 50 / 0.025);
+  overflow-wrap: anywhere;
+}
+
+.run-list-item {
+  transition:
+    background-color 150ms,
+    border-color 150ms;
+}
+
+/* Workflow library and loading state. */
+.workflow-library,
+.workflow-loading {
+  background:
+    radial-gradient(ellipse at 50% 0, #efedf5 0, transparent 65%),
+    var(--workspace-background);
+}
+
+.library-nav {
+  display: flex;
+  height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--workspace-border);
+  background: #fff;
+  padding: 0 20px;
+}
+
+.workflow-list {
+  overflow: hidden;
+  border: 1px solid var(--workspace-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 3px rgb(35 30 50 / 0.02);
+}
+
+.workflow-list-row {
+  transition: background-color 150ms;
+}
+
+.workflow-list-row:hover {
+  background: #faf8fd;
+}
+
+.workflow-list-row:focus-visible {
+  outline-offset: -2px;
+}
+
+@media (max-height: 700px) {
+  .workflow-side-panel .runs-tab {
+    overflow-y: auto;
+  }
+
+  .workflow-side-panel .run-history {
+    flex: none;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 760px) {
+  .workspace-header {
+    height: 52px;
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .workspace-body {
+    flex-direction: column;
+  }
+
+  .workflow-canvas {
+    min-height: 220px;
+  }
+
+  .workflow-side-panel {
+    width: 100%;
+    height: 48%;
+    border-top: 1px solid var(--workspace-border);
+    border-left: 0;
+  }
+
+  .workflow-side-panel .runs-tab {
+    overflow-y: auto;
+  }
+
+  .workflow-side-panel .run-history {
+    flex: none;
+    overflow: visible;
+  }
+
+  .panel-collapsed {
+    width: 100%;
+    height: 28px;
+    border-top: 1px solid var(--workspace-border);
+    border-left: 0;
+  }
+
+  .panel-collapsed svg {
+    transform: rotate(90deg);
+  }
+
+  .workflow-canvas .react-flow__panel {
+    margin: 8px;
+  }
+
+  .library-nav {
+    height: 48px;
+    padding: 0 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .primary-button:active:not(:disabled),
+  .icon-button:active:not(:disabled),
+  .toolbar-button:active {
+    transform: none;
+  }
 }

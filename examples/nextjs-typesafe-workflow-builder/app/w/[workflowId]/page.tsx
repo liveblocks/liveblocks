@@ -1,10 +1,6 @@
 import { notFound } from "next/navigation";
 import { WorkflowApp } from "../../workflow/workflow-app";
-import {
-  getRoomId,
-  getWorkflow,
-  listWorkflows,
-} from "../../workflow/server/liveblocks";
+import { getRoomId, getWorkflow } from "../../workflow/server/liveblocks";
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +23,7 @@ export default async function WorkflowPage({
   // Used when deploying an example on liveblocks.io. Ignore locally.
   const exampleId = getParam(search, "exampleId");
 
-  const [workflow, workflows] = await Promise.all([
-    getWorkflow(workflowId, exampleId),
-    listWorkflows(exampleId),
-  ]);
+  const workflow = await getWorkflow(workflowId, exampleId);
 
   if (!workflow) {
     notFound();
@@ -40,7 +33,6 @@ export default async function WorkflowPage({
     <WorkflowApp
       roomId={getRoomId(workflowId, exampleId)}
       workflow={workflow}
-      workflows={workflows}
       exampleId={exampleId}
     />
   );

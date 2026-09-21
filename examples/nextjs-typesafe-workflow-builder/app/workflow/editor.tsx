@@ -29,7 +29,16 @@ import {
   type IsValidConnection,
   type NodeChange,
 } from "@xyflow/react";
-import { Bot, Eye, FileOutput, Redo2, Sparkles, Undo2, X } from "lucide-react";
+import {
+  Bot,
+  Eye,
+  FileOutput,
+  Plus,
+  Redo2,
+  Sparkles,
+  Undo2,
+  X,
+} from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -83,16 +92,16 @@ function RunPreviewBanner() {
       : "Run preview";
 
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-white py-1 pl-2.5 pr-1 text-xs shadow ring-1 ring-neutral-950/5">
+    <div className="run-preview-banner floating-surface flex items-center gap-2 py-1 pl-3 pr-1 text-xs">
       <Eye className="size-3.5 text-violet-600" />
       <span className="font-medium text-neutral-800">{label}</span>
-      <span className="text-neutral-400">
+      <span className="run-preview-details text-neutral-400">
         {messages.length} node{messages.length === 1 ? "" : "s"} · Esc
       </span>
       <button
         type="button"
         onClick={() => selectRun(null)}
-        className="inline-flex items-center gap-1 rounded-md px-2 py-1 font-medium text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
+        className="inline-flex min-h-7 items-center gap-1 rounded-lg px-2 font-medium text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
       >
         <X className="size-3.5" /> Exit preview
       </button>
@@ -106,7 +115,10 @@ function Toast({ message }: { message: string | null }) {
   }
 
   return (
-    <div className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs text-white shadow">
+    <div
+      role="status"
+      className="rounded-lg bg-neutral-900 px-3 py-2 text-xs text-white shadow-lg"
+    >
       {message}
     </div>
   );
@@ -322,42 +334,73 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
         deleteKeyCode={["Backspace", "Delete"]}
       >
         <Cursors components={{ Cursor: FlowCursor }} />
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={24}
+          size={1}
+          color="#d8d6d1"
+        />
         <Controls
           orientation="horizontal"
           showInteractive={false}
           position="bottom-left"
         >
-          <ControlButton onClick={undo} disabled={!canUndo} title="Undo">
+          <ControlButton
+            onClick={undo}
+            disabled={!canUndo}
+            title="Undo"
+            aria-label="Undo"
+          >
             <Undo2 />
           </ControlButton>
-          <ControlButton onClick={redo} disabled={!canRedo} title="Redo">
+          <ControlButton
+            onClick={redo}
+            disabled={!canRedo}
+            title="Redo"
+            aria-label="Redo"
+          >
             <Redo2 />
           </ControlButton>
         </Controls>
         <Panel position="top-left">
-          <div className="flex gap-1 rounded-lg bg-white p-1 shadow ring-1 ring-neutral-950/5">
+          <div
+            className="node-toolbar floating-surface flex items-center gap-0.5 p-1"
+            role="group"
+            aria-label="Add a node"
+          >
+            <span className="hidden items-center gap-1.5 border-r border-neutral-200 px-2 py-1 text-[11px] font-medium text-neutral-400 xl:flex">
+              <Plus className="size-3.5" aria-hidden /> Add node
+            </span>
             <button
               type="button"
               onClick={() => addNode("jev")}
-              className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-violet-50 hover:text-violet-700"
+              className="toolbar-button hover:bg-violet-50 hover:text-violet-700"
             >
-              <Sparkles className="size-3.5 text-violet-600" /> Jev node
+              <span className="toolbar-icon bg-violet-50 text-violet-600">
+                <Sparkles className="size-4" />
+              </span>{" "}
+              Jev
             </button>
             <button
               type="button"
               onClick={() => addNode("llm")}
-              className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-sky-50 hover:text-sky-700"
+              className="toolbar-button hover:bg-sky-50 hover:text-sky-700"
             >
-              <Bot className="size-3.5 text-sky-600" /> LLM node
+              <span className="toolbar-icon bg-sky-50 text-sky-600">
+                <Bot className="size-4" />
+              </span>{" "}
+              LLM
             </button>
             {nodes.some((node) => node.type === "output") ? null : (
               <button
                 type="button"
                 onClick={() => addNode("output")}
-                className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-emerald-50 hover:text-emerald-700"
+                className="toolbar-button hover:bg-emerald-50 hover:text-emerald-700"
               >
-                <FileOutput className="size-3.5 text-emerald-600" /> Output node
+                <span className="toolbar-icon bg-emerald-50 text-emerald-600">
+                  <FileOutput className="size-4" />
+                </span>{" "}
+                Output
               </button>
             )}
           </div>
@@ -365,7 +408,7 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
         <Panel position="top-center">
           <Toast message={toast} />
         </Panel>
-        <Panel position="top-right">
+        <Panel position="top-right" className="run-preview-panel">
           <RunPreviewBanner />
         </Panel>
       </ReactFlow>

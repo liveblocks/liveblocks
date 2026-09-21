@@ -29,7 +29,7 @@ function useDraft(value: string, onCommit: (value: string) => void) {
 }
 
 const inputClassName =
-  "nodrag nopan w-full rounded border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-900 placeholder:text-neutral-400 focus:border-violet-400 focus:outline-none";
+  "workflow-field nodrag nopan min-w-0 w-full rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-900 placeholder:text-neutral-400 focus:border-violet-400 focus:outline-none";
 
 export function TextField({
   value,
@@ -74,10 +74,7 @@ export function TextField({
   // so its default 20ch width cannot stretch the header.
   return (
     <span className="relative inline-flex h-5 max-w-full shrink-0 items-center text-xs font-medium leading-5">
-      <span
-        aria-hidden
-        className="invisible whitespace-pre pl-1 pr-2.5"
-      >
+      <span aria-hidden className="invisible whitespace-pre pl-1 pr-2.5">
         {draft || " "}
       </span>
       {input}
@@ -120,14 +117,14 @@ export function Select({ className, ...props }: ComponentProps<"select">) {
   return (
     <select
       {...props}
-      className={`nodrag nopan rounded border border-neutral-200 bg-white px-1.5 py-1 text-xs text-neutral-900 focus:border-violet-400 focus:outline-none ${className ?? ""}`}
+      className={`workflow-field nodrag nopan min-h-7 min-w-0 rounded-md border border-neutral-200 bg-white px-1.5 py-1 text-xs text-neutral-900 focus:border-violet-400 focus:outline-none ${className ?? ""}`}
     />
   );
 }
 
 export function FieldLabel({ children }: { children: string }) {
   return (
-    <span className="text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-500">
       {children}
     </span>
   );

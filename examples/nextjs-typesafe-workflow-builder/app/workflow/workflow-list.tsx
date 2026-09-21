@@ -1,9 +1,10 @@
 "use client";
 
-import { Plus, Workflow as WorkflowIcon } from "lucide-react";
+import { ChevronRight, Plus, Workflow as WorkflowIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { HelpButton } from "../../components/help-button";
 import { createWorkflowAction } from "./actions";
 import type { WorkflowSummary } from "./server/liveblocks";
 
@@ -34,49 +35,67 @@ export function WorkflowList({
   const suffix = search ? `?${search}` : "";
 
   return (
-    <main className="min-h-dvh bg-neutral-50 p-6 sm:p-10">
-      <div className="mx-auto w-full max-w-2xl">
-        <header className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-neutral-900">
+    <main className="workflow-library min-h-dvh">
+      <nav className="library-nav" aria-label="Workspace">
+        <div className="flex items-center gap-2">
+          <span className="brand-mark !size-6 !rounded-md">
+            <WorkflowIcon className="size-3.5" aria-hidden />
+          </span>
+          <span className="text-xs font-semibold tracking-tight">
+            Workflows
+          </span>
+        </div>
+        <HelpButton />
+      </nav>
+      <div className="mx-auto w-full max-w-3xl px-4 py-6">
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold tracking-tight text-neutral-900">
               Workflows
             </h1>
-            <p className="text-sm text-neutral-500">
-              Each workflow is a Liveblocks room.
-            </p>
+            <span className="rounded bg-neutral-200/60 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-neutral-500">
+              {workflows.length}
+            </span>
           </div>
           <button
             type="button"
             disabled={isCreating}
             onClick={() => startCreating(() => createWorkflowAction(exampleId))}
-            className="inline-flex items-center gap-1.5 rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
+            className="primary-button shrink-0"
           >
-            <Plus className="size-4" />
+            <Plus className="size-3.5" />
             {isCreating ? "Creating…" : "New workflow"}
           </button>
         </header>
 
-        <ul className="overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
+        <ul className="workflow-list">
           {workflows.map((workflow) => (
             <li
               key={workflow.workflowId}
-              className="border-b border-neutral-100 last:border-b-0"
+              className="min-w-0 border-b border-neutral-100 last:border-b-0"
             >
               <Link
                 href={`/w/${workflow.workflowId}${suffix}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50"
+                className="workflow-list-row group flex items-center gap-2.5 px-3 py-2"
               >
-                <span className="flex size-8 items-center justify-center rounded-md bg-violet-50 text-violet-600">
-                  <WorkflowIcon className="size-4" />
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-600">
+                  <WorkflowIcon className="size-3.5" aria-hidden />
                 </span>
-                <span className="flex-1 truncate text-sm font-medium text-neutral-900">
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-neutral-900">
                   {workflow.name}
                 </span>
-                <span className="text-xs text-neutral-400">
+                <span className="shrink-0 whitespace-nowrap text-[10px] text-neutral-500">
+                  <span className="hidden sm:inline">
+                    {workflow.lastConnectionAt ? "Opened " : "Created "}
+                  </span>
                   {formatRelative(
                     workflow.lastConnectionAt ?? workflow.createdAt
                   )}
                 </span>
+                <ChevronRight
+                  className="size-3 shrink-0 text-neutral-300 transition-colors group-hover:text-violet-600"
+                  aria-hidden
+                />
               </Link>
             </li>
           ))}

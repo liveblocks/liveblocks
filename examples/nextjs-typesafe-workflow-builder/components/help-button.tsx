@@ -3,9 +3,7 @@
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-const EXAMPLE_NAME = "TypeSafe workflow builder";
-const EXAMPLE_URL =
-  "https://liveblocks.io/examples/typesafe-workflow-builder/nextjs-typesafe-workflow-builder";
+const EXAMPLE_NAME = "Workflow builder";
 
 type Feature = {
   icon: ReactNode;
@@ -18,13 +16,13 @@ const FEATURES: Feature[] = [
     icon: <WorkflowIcon />,
     title: "Build a decision workflow",
     description:
-      "Start from the input node, add Jev nodes that ask TypeSafe typed questions (choice, score, yes/no), and connect their answer handles to LLM nodes that only run when that answer fires. Connect finished nodes to the single output node; the REST API returns those texts as an array. To merge several drafts into one string, run them through an LLM node first.",
+      "Start from the input node, add Jev nodes that ask typed questions (choice, score, yes/no), and connect their answer handles to LLM nodes that only run when that answer fires. Connect finished nodes to the single output node; the REST API returns those texts as an array. To merge several drafts into one string, run them through an LLM node first.",
   },
   {
     icon: <PlayIcon />,
-    title: "Test runs, shared live",
+    title: "Test runs",
     description:
-      "Run the workflow from the side panel with sample input. Each run is stored as a Liveblocks feed, so every collaborator sees the trace and streaming LLM output at the same time.",
+      "Run the workflow from the side panel with sample input. Select a run to inspect its trace and output.",
   },
   {
     icon: <TerminalIcon />,
@@ -36,7 +34,7 @@ const FEATURES: Feature[] = [
     icon: <UsersIcon />,
     title: "Realtime collaboration",
     description:
-      "Open the workflow in two tabs to see live cursors, avatars, and every node edit synced through Liveblocks Storage with undo and redo.",
+      "Open the workflow in two tabs to see shared cursors, avatars, and edits. Changes support undo and redo.",
   },
 ];
 
@@ -71,7 +69,6 @@ const styles: Record<string, CSSProperties> = {
     borderBottom: "1px solid #e5e5e5",
   },
   title: { fontSize: 14, fontWeight: 600, color: "#171717", margin: 0 },
-  titleLink: { color: "inherit", textDecoration: "none" },
   desc: { fontSize: 14, color: "#737373", marginTop: 4, marginBottom: 0 },
   close: {
     flexShrink: 0,
@@ -116,7 +113,6 @@ const styles: Record<string, CSSProperties> = {
 };
 
 const HOVER_CSS = `
-.lb-help-title-link:hover { text-decoration: underline !important; }
 .lb-help-close:hover { background:#f5f5f5 !important; color:#171717 !important; }
 .lb-help, .lb-help * { box-sizing: border-box; }
 `;
@@ -144,7 +140,7 @@ export function HelpButton() {
       <style>{HOVER_CSS}</style>
       <button
         type="button"
-        className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+        className="icon-button"
         onClick={() => setIsOpen(true)}
         aria-label="How to use this example"
       >
@@ -168,15 +164,7 @@ export function HelpButton() {
                 <div style={styles.header}>
                   <div>
                     <h2 id="lb-help-title" style={styles.title}>
-                      <a
-                        className="lb-help-title-link"
-                        style={styles.titleLink}
-                        href={EXAMPLE_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {EXAMPLE_NAME}
-                      </a>
+                      {EXAMPLE_NAME}
                     </h2>
                     <p style={styles.desc}>How to use this example</p>
                   </div>

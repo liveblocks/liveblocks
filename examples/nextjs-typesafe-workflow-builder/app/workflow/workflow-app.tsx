@@ -19,12 +19,10 @@ import { SidePanel } from "./side-panel";
 export function WorkflowApp({
   roomId,
   workflow,
-  workflows,
   exampleId,
 }: {
   roomId: string;
   workflow: WorkflowSummary;
-  workflows: WorkflowSummary[];
   exampleId: string | null;
 }) {
   const searchParams = useSearchParams();
@@ -82,13 +80,9 @@ export function WorkflowApp({
         <ClientSideSuspense fallback={<Loading />}>
           <ReactFlowProvider>
             <RunProvider>
-              <div className="flex h-dvh flex-col bg-neutral-50 text-neutral-900">
-                <WorkflowHeader
-                  workflow={workflow}
-                  workflows={workflows}
-                  exampleId={exampleId}
-                />
-                <div className="flex min-h-0 flex-1">
+              <div className="flex h-dvh flex-col overflow-hidden text-neutral-900">
+                <WorkflowHeader workflow={workflow} exampleId={exampleId} />
+                <div className="workspace-body flex min-h-0 flex-1">
                   <WorkflowEditor className="min-w-0 flex-1" />
                   <SidePanel workflow={workflow} exampleId={exampleId} />
                 </div>

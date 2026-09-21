@@ -45,7 +45,7 @@ import {
   type WorkflowNode,
 } from "./shared";
 
-export const NODE_WIDTH = 288;
+export const NODE_WIDTH = 272;
 
 const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   choice: "Choice",
@@ -90,7 +90,7 @@ function ActivationControl({
   return (
     <div className="flex flex-col gap-1">
       <FieldLabel>Runs when</FieldLabel>
-      <div className="flex rounded border border-neutral-200 p-0.5 text-xs">
+      <div className="flex rounded-md bg-neutral-100 p-0.5 text-[11px]">
         {(
           [
             ["any", "Any input fires", "OR"],
@@ -101,9 +101,10 @@ function ActivationControl({
             key={mode}
             type="button"
             onClick={() => updateNodeData(id, { activation: mode })}
-            className={`nodrag flex-1 rounded px-2 py-1 ${
+            aria-pressed={activation === mode}
+            className={`nodrag min-h-7 flex-1 rounded-md px-1.5 py-1 ${
               activation === mode
-                ? "bg-neutral-900 text-white"
+                ? "bg-white font-medium text-neutral-900 shadow-sm"
                 : "text-neutral-600 hover:bg-neutral-100"
             }`}
           >
@@ -126,7 +127,6 @@ function NodeFrame({
   selected,
   icon,
   accent,
-  typeLabel,
   result,
   hasTarget,
   handles,
@@ -138,7 +138,6 @@ function NodeFrame({
   selected: boolean | undefined;
   icon: ReactNode;
   accent: string;
-  typeLabel: string;
   result: NodeResultData | undefined;
   hasTarget: boolean;
   handles: HandleDef[];
@@ -162,7 +161,7 @@ function NodeFrame({
 
   return (
     <div
-      className="workflow-node rounded-lg bg-white shadow-lg ring-1 ring-neutral-950/10 outline-2 outline-offset-0 outline-transparent transition-opacity data-[selected]:outline-violet-500"
+      className="workflow-node"
       style={{ width: NODE_WIDTH, opacity: dimmed ? 0.45 : 1 }}
       data-selected={selected ? "" : undefined}
       data-status={result?.status}
@@ -186,29 +185,28 @@ function NodeFrame({
         </>
       )}
 
-      <div className="flex items-center gap-1.5 border-b border-neutral-100 p-2">
+      <div className="workflow-node-header">
         <span
-          className="flex size-5 shrink-0 items-center justify-center rounded text-white"
-          style={{ background: accent }}
+          className="workflow-node-icon"
+          style={{ color: accent, background: `${accent}12` }}
         >
           {icon}
         </span>
-        <TextField
-          aria-label="Node name"
-          fit
-          value={node.data.label}
-          onCommit={(label) => updateNodeData(id, { label })}
-          className="!border-transparent !bg-transparent !font-medium hover:!border-neutral-200"
-        />
-        <span className="ml-auto shrink-0 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
-          {typeLabel}
-        </span>
+        <div className="flex min-w-0 flex-1 items-center">
+          <TextField
+            aria-label="Node name"
+            fit
+            value={node.data.label}
+            onCommit={(label) => updateNodeData(id, { label })}
+            className="!border-transparent !bg-transparent !font-semibold hover:!border-neutral-200"
+          />
+        </div>
         <StatusIcon status={result?.status} />
       </div>
 
-      <div className="px-3 py-2">
+      <div className="px-2.5 py-2">
         {selected ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {editor}
             {activation !== null ? (
               <ActivationControl
@@ -230,11 +228,12 @@ function NodeFrame({
       )}
 
       {handles.length > 0 ? (
-        <div className="border-t border-neutral-100 py-1">
+        <div className="workflow-node-ports">
           {handles.map((handle) => (
             <div
               key={handle.id}
-              className="relative flex h-6 items-center justify-end pr-3"
+              className="workflow-node-port relative flex h-6 items-center justify-end pr-2.5"
+              data-fired={fired.has(handle.id) ? "" : undefined}
               title={handle.title}
             >
               <span
@@ -283,7 +282,6 @@ const InputNodeView = memo(({ id, data, selected }: NodeProps<InputNode>) => {
       selected={selected}
       icon={<MessageSquareText className="size-3.5" />}
       accent="#171717"
-      typeLabel="Input"
       result={result}
       hasTarget={false}
       handles={getSourceHandles(node)}
@@ -395,7 +393,7 @@ function CriteriaEditor({
             aria-label="Remove"
             disabled={items.length <= 2}
             onClick={() => onChange(items.filter((_, i) => i !== index))}
-            className="nodrag shrink-0 rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-30"
+            className="nodrag icon-button shrink-0 hover:!text-red-600 disabled:opacity-30"
           >
             <Trash2 className="size-3" />
           </button>
@@ -414,7 +412,7 @@ function CriteriaEditor({
             },
           ])
         }
-        className="nodrag inline-flex items-center gap-1 self-start rounded px-1.5 py-0.5 text-xs text-violet-700 hover:bg-violet-50"
+        className="nodrag inline-flex min-h-7 items-center gap-1 self-start rounded-md px-1.5 text-xs text-violet-700 hover:bg-violet-50"
       >
         <Plus className="size-3" /> {addLabel}
       </button>
@@ -432,13 +430,13 @@ function QuestionEditor({
   onRemove: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-neutral-50 p-2">
+    <div className="flex flex-col gap-1.5 rounded-lg border border-neutral-200/70 bg-neutral-50/80 p-2">
       <div className="flex items-center gap-1">
         <TextField
           aria-label="Question id"
           value={question.id}
           placeholder="question_id"
-          className="!w-28 shrink-0 font-mono"
+          className="!w-24 shrink-0 font-mono"
           onCommit={(id) =>
             onChange({ ...question, id: slugify(id) || question.id })
           }
@@ -471,7 +469,7 @@ function QuestionEditor({
           type="button"
           aria-label="Remove question"
           onClick={onRemove}
-          className="nodrag ml-auto rounded p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700"
+          className="nodrag icon-button ml-auto shrink-0 hover:!text-red-600"
         >
           <Trash2 className="size-3" />
         </button>
@@ -556,7 +554,6 @@ const JevNodeView = memo(({ id, data, selected }: NodeProps<JevNode>) => {
       selected={selected}
       icon={<Sparkles className="size-3.5" />}
       accent="#7c3aed"
-      typeLabel="Jev"
       result={result}
       hasTarget
       handles={getSourceHandles(node)}
@@ -566,7 +563,7 @@ const JevNodeView = memo(({ id, data, selected }: NodeProps<JevNode>) => {
             No questions yet. Select the node to add one.
           </p>
         ) : (
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-1.5">
             {data.questions.map((question) => {
               const answer = result?.answers?.[question.id];
 
@@ -618,7 +615,7 @@ const JevNodeView = memo(({ id, data, selected }: NodeProps<JevNode>) => {
                   key={type}
                   type="button"
                   onClick={() => addQuestion(type)}
-                  className="nodrag inline-flex items-center gap-1 rounded border border-dashed border-neutral-300 px-2 py-1 text-xs text-neutral-600 hover:border-violet-400 hover:text-violet-700"
+                  className="nodrag inline-flex min-h-7 items-center gap-1 rounded-lg border border-dashed border-neutral-300 px-2 py-1 text-xs text-neutral-600 hover:border-violet-400 hover:text-violet-700"
                 >
                   <Plus className="size-3" /> {QUESTION_TYPE_LABELS[type]}
                 </button>
@@ -650,7 +647,6 @@ const LlmNodeView = memo(({ id, data, selected }: NodeProps<LlmNode>) => {
       selected={selected}
       icon={<Bot className="size-3.5" />}
       accent="#0ea5e9"
-      typeLabel="LLM"
       result={result}
       hasTarget
       handles={getSourceHandles(node)}
@@ -713,8 +709,8 @@ const LlmNodeView = memo(({ id, data, selected }: NodeProps<LlmNode>) => {
             Use <code>{"{{input}}"}</code>, <code>{"{{answers.<id>}}"}</code>,{" "}
             <code>{"{{answers.<id>.probability}}"}</code> and{" "}
             <code>{"{{answers.<id>.confidence}}"}</code>. When several nodes
-            connect in, <code>{"{{input}}"}</code> is their texts joined — useful
-            for combining drafts before the output node.
+            connect in, <code>{"{{input}}"}</code> is their texts joined —
+            useful for combining drafts before the output node.
           </p>
         </div>
       }
@@ -729,7 +725,12 @@ const LlmNodeView = memo(({ id, data, selected }: NodeProps<LlmNode>) => {
 const OutputNodeView = memo(({ id, data, selected }: NodeProps<OutputNode>) => {
   const { results } = useRun();
   const result = results.get(id);
-  const node: OutputNode = { id, type: "output", position: { x: 0, y: 0 }, data };
+  const node: OutputNode = {
+    id,
+    type: "output",
+    position: { x: 0, y: 0 },
+    data,
+  };
   const texts = result?.outputs ?? [];
 
   return (
@@ -739,7 +740,6 @@ const OutputNodeView = memo(({ id, data, selected }: NodeProps<OutputNode>) => {
       selected={selected}
       icon={<FileOutput className="size-3.5" />}
       accent="#059669"
-      typeLabel="Output"
       result={result}
       hasTarget
       handles={getSourceHandles(node)}
@@ -758,7 +758,9 @@ const OutputNodeView = memo(({ id, data, selected }: NodeProps<OutputNode>) => {
         ) : (
           <p className="text-xs leading-relaxed text-neutral-500">
             Texts that reach this node are returned as{" "}
-            <code className="rounded bg-neutral-100 px-1">output: string[]</code>{" "}
+            <code className="rounded bg-neutral-100 px-1">
+              output: string[]
+            </code>{" "}
             from the REST API.
           </p>
         )

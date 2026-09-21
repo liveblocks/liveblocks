@@ -16,6 +16,9 @@ import {
   CircleDashed,
   ChevronLeft,
   ChevronRight,
+  FlaskConical,
+  History,
+  Route,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRun } from "./run-context";
@@ -206,15 +209,15 @@ function TraceNode({
   onFocus: () => void;
 }) {
   return (
-    <li style={{ paddingLeft: depth * 14 }}>
-      <div className="rounded-md border border-neutral-200 bg-white">
+    <li style={{ paddingLeft: depth * 10 }}>
+      <div className="trace-card overflow-hidden rounded-lg bg-white">
         <button
           type="button"
           onClick={onFocus}
-          className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left hover:bg-neutral-50"
+          className="flex min-h-7 w-full items-center gap-1.5 px-2 py-1 text-left hover:bg-neutral-50"
         >
           <NodeTypeIcon type={message.nodeType} />
-          <span className="flex-1 truncate text-xs font-medium text-neutral-900">
+          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-neutral-900">
             {message.label}
           </span>
           {message.activation === "all" ? (
@@ -267,8 +270,7 @@ function TraceNode({
           </p>
         ) : null}
 
-        {message.nodeType === "output" &&
-        (message.outputs?.length ?? 0) > 0 ? (
+        {message.nodeType === "output" && (message.outputs?.length ?? 0) > 0 ? (
           <ul className="flex flex-col gap-1.5 border-t border-neutral-100 px-2.5 py-1.5">
             {(message.outputs ?? []).map((text, index, list) => (
               <li
@@ -317,9 +319,10 @@ function RunTrace() {
 
   if (!selectedRunId) {
     return (
-      <p className="px-1 text-xs text-neutral-400">
-        Select a run to see its trace.
-      </p>
+      <div className="panel-empty-state">
+        <Route className="size-3.5 shrink-0 text-neutral-400" aria-hidden />
+        <p>Select a run to see its trace.</p>
+      </div>
     );
   }
 
@@ -426,9 +429,10 @@ function RunList() {
 
   if (runs.length === 0) {
     return (
-      <p className="px-1 text-xs text-neutral-400">
-        No runs yet. Press Run, or POST to the API.
-      </p>
+      <div className="panel-empty-state">
+        <History className="size-3.5 shrink-0 text-neutral-400" aria-hidden />
+        <p>No runs yet. Try the sample input above.</p>
+      </div>
     );
   }
 
@@ -444,18 +448,19 @@ function RunList() {
               // Clicking the selected run again exits the preview.
               onClick={() => selectRun(selected ? null : run.feedId)}
               title={selected ? "Exit run preview" : "Preview this run"}
-              className={`flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left ${
+              aria-pressed={selected}
+              className={`run-list-item flex w-full items-center gap-2.5 rounded-md border px-2 py-1 text-left ${
                 selected
-                  ? "border-violet-300 bg-violet-50"
-                  : "border-transparent hover:bg-neutral-100"
+                  ? "border-violet-200 bg-violet-50/70"
+                  : "border-transparent hover:border-neutral-200 hover:bg-white"
               }`}
             >
               <RunStatusIcon status={run.metadata.status} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs text-neutral-800">
+                <span className="block truncate text-[11px] text-neutral-800 font-medium">
                   {run.metadata.input || "(empty input)"}
                 </span>
-                <span className="block text-[11px] text-neutral-400">
+                <span className="mt-px block text-[10px] tabular-nums text-neutral-500">
                   {formatTime(Number(run.metadata.startedAt))} ·{" "}
                   {run.metadata.trigger === "api" ? "API" : "test run"}
                   {run.metadata.completedAt
@@ -532,50 +537,74 @@ function RunsTab({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="border-b border-neutral-200 p-3">
+    <div className="runs-tab flex min-h-0 flex-1 flex-col">
+      <div className="run-composer border-b border-neutral-200/70 p-2.5">
+        <div className="mb-2.5 flex items-center gap-2">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-600">
+            <FlaskConical className="size-3.5" aria-hidden />
+          </span>
+          <div>
+            <h2 className="text-[13px] font-semibold text-neutral-900">
+              Test your workflow
+            </h2>
+            <p className="mt-0.5 text-[11px] text-neutral-500">
+              Run sample input and inspect the results.
+            </p>
+          </div>
+        </div>
+        <label
+          htmlFor="run-input"
+          className="mb-1.5 block text-[11px] font-medium text-neutral-600"
+        >
+          Input message
+        </label>
         <textarea
-          aria-label="Run input"
+          id="run-input"
           value={value}
-          rows={4}
+          rows={3}
           placeholder="Text to send to the input node…"
           onChange={(event) => setInput(event.target.value)}
-          className="w-full resize-none rounded-md border border-neutral-200 px-2.5 py-2 text-xs leading-relaxed text-neutral-900 placeholder:text-neutral-400 focus:border-violet-400 focus:outline-none"
+          className="workflow-field block w-full resize-y rounded-md border border-neutral-200 bg-neutral-50/70 px-2 py-1.5 text-[11px] leading-5 text-neutral-700 placeholder:text-neutral-400 focus:border-violet-400 focus:bg-white focus:outline-none"
         />
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <button
             type="button"
             onClick={() => void run()}
             disabled={isStarting || value.trim() === ""}
-            className="inline-flex items-center gap-1.5 rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+            className="primary-button !min-h-7 !text-[11px]"
           >
             {isStarting ? (
               <Loader2 className="size-3.5 animate-spin" />
             ) : (
               <Play className="size-3.5" />
             )}
-            Run
+            {isStarting ? "Starting…" : "Run"}
           </button>
           {input !== null && input !== sample ? (
             <button
               type="button"
               onClick={() => setInput(null)}
-              className="text-xs text-neutral-500 hover:text-neutral-900"
+              className="min-h-7 rounded-md px-2 text-[11px] text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
             >
               Reset to sample
             </button>
           ) : null}
           {error ? (
-            <span className="truncate text-xs text-red-600">{error}</span>
+            <p
+              role="alert"
+              className="w-full rounded-lg bg-red-50 px-3 py-2 text-xs leading-relaxed text-red-700"
+            >
+              {error}
+            </p>
           ) : null}
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        <Section title="Runs">
+      <div className="run-history min-h-0 flex-1 overflow-y-auto p-2.5">
+        <Section title="Recent runs">
           <RunList />
         </Section>
-        <Section title="Trace">
+        <Section title="Execution trace">
           <RunTrace />
         </Section>
       </div>
@@ -585,8 +614,8 @@ function RunsTab({
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="mb-4">
-      <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+    <section className="mb-3 last:mb-0">
+      <h3 className="mb-1.5 text-[11px] font-medium text-neutral-600">
         {title}
       </h3>
       {children}
@@ -672,24 +701,28 @@ function ApiTab({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 text-xs text-neutral-600">
-      <p className="leading-relaxed">
-        Trigger this workflow from anywhere by POSTing JSON with an{" "}
-        <code className="rounded bg-neutral-100 px-1">input</code> string. With{" "}
-        <code className="rounded bg-neutral-100 px-1">?wait=true</code> the
-        response includes{" "}
-        <code className="rounded bg-neutral-100 px-1">output</code>, always an
-        array of the texts that reached the output node. The run also shows up
-        in the Runs tab for everyone in the room.
-      </p>
-      <div className="overflow-hidden rounded-md bg-neutral-900">
-        <div className="flex items-center gap-0.5 border-b border-neutral-800 px-1.5 py-1">
+      <div className="flex shrink-0 items-center gap-2">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-neutral-100 text-neutral-700">
+          <Terminal className="size-3.5" aria-hidden />
+        </span>
+        <div>
+          <h2 className="text-[13px] font-semibold text-neutral-900">
+            API access
+          </h2>
+          <p className="mt-0.5 text-[11px] text-neutral-500">
+            Send a request to run this workflow.
+          </p>
+        </div>
+      </div>
+      <div className="shrink-0 overflow-hidden rounded-lg bg-[#20212a] shadow-sm">
+        <div className="flex flex-wrap items-center gap-0.5 border-b border-white/10 px-1.5 py-1">
           {SNIPPET_LANGUAGES.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => setLanguage(item.id)}
               aria-pressed={language === item.id}
-              className={`rounded px-2 py-1 text-[11px] font-medium ${
+              className={`min-h-7 rounded-md px-2 py-1 text-[11px] font-medium ${
                 language === item.id
                   ? "bg-neutral-700 text-white"
                   : "text-neutral-400 hover:text-white"
@@ -701,7 +734,7 @@ function ApiTab({
           <button
             type="button"
             onClick={() => void copy()}
-            className="ml-auto inline-flex items-center gap-1 rounded px-1.5 py-1 text-[11px] text-neutral-300 hover:bg-neutral-700 hover:text-white"
+            className="ml-auto inline-flex min-h-7 items-center gap-1 rounded-md px-2 py-1 text-[11px] text-neutral-300 hover:bg-neutral-700 hover:text-white"
           >
             {copied ? (
               <Check className="size-3" />
@@ -711,29 +744,47 @@ function ApiTab({
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
-        <pre className="overflow-x-auto p-3 font-mono text-[11px] leading-relaxed text-neutral-100">
+        <pre className="overflow-x-auto p-3 font-mono text-[11px] leading-5 text-neutral-100">
           {snippet}
         </pre>
       </div>
-      <ul className="flex flex-col gap-1.5 leading-relaxed">
-        <li>
-          <code className="rounded bg-neutral-100 px-1">?wait=true</code> blocks
-          until the run finishes and returns JSON with{" "}
-          <code className="rounded bg-neutral-100 px-1">output: string[]</code>{" "}
-          (one entry per node that fired into the output node) plus the full
-          trace.
-        </li>
-        <li>
-          Without it, the endpoint responds{" "}
-          <code className="rounded bg-neutral-100 px-1">202</code> with{" "}
-          <code className="rounded bg-neutral-100 px-1">{"{ runId }"}</code>{" "}
-          right away while the run streams into the feed.
-        </li>
-        <li>
-          Each Jev node is one TypeSafe request; each LLM node streams through
-          the Vercel AI Gateway. Without API keys, both fall back to mocks.
-        </li>
-      </ul>
+      <details className="shrink-0">
+        <summary className="cursor-pointer rounded py-1 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500">
+          API details
+        </summary>
+        <div className="mt-2 flex flex-col gap-3">
+          <p className="leading-relaxed">
+            Send a POST request with JSON containing an{" "}
+            <code className="rounded bg-neutral-100 px-1">input</code> string.
+            With <code className="rounded bg-neutral-100 px-1">?wait=true</code>{" "}
+            the response includes{" "}
+            <code className="rounded bg-neutral-100 px-1">output</code>, always
+            an array of the texts that reached the output node. The run also
+            shows up in the Runs tab for everyone in the room.
+          </p>
+          <ul className="flex flex-col gap-1.5 leading-relaxed">
+            <li>
+              <code className="rounded bg-neutral-100 px-1">?wait=true</code>{" "}
+              blocks until the run finishes and returns JSON with{" "}
+              <code className="rounded bg-neutral-100 px-1">
+                output: string[]
+              </code>{" "}
+              (one entry per node that fired into the output node) plus the full
+              trace.
+            </li>
+            <li>
+              Without it, the endpoint responds{" "}
+              <code className="rounded bg-neutral-100 px-1">202</code> with{" "}
+              <code className="rounded bg-neutral-100 px-1">{"{ runId }"}</code>{" "}
+              right away while the run streams into the feed.
+            </li>
+            <li>
+              Each Jev node makes one request; each LLM node streams its
+              response. Without API keys, both use mock responses.
+            </li>
+          </ul>
+        </div>
+      </details>
     </div>
   );
 }
@@ -758,7 +809,7 @@ export function SidePanel({
         type="button"
         onClick={() => setCollapsed(false)}
         aria-label="Show side panel"
-        className="flex w-8 shrink-0 items-center justify-center border-l border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50"
+        className="panel-collapsed flex w-7 shrink-0 items-center justify-center border-l border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50"
       >
         <ChevronLeft className="size-4" />
       </button>
@@ -766,11 +817,14 @@ export function SidePanel({
   }
 
   return (
-    <aside className="flex w-[400px] shrink-0 flex-col border-l border-neutral-200 bg-white">
-      <div className="flex h-10 shrink-0 items-center border-b border-neutral-200 px-2">
+    <aside
+      className="workflow-side-panel"
+      aria-label="Workflow testing and API"
+    >
+      <div className="flex h-9 shrink-0 items-center gap-1 border-b border-neutral-200/70 px-1.5">
         {(
           [
-            ["runs", "Runs", <Play key="runs" className="size-3.5" />],
+            ["runs", "Runs", <Play key="runs" className="size-3" />],
             ["api", "API", <Terminal key="api" className="size-3.5" />],
           ] as const
         ).map(([id, label, icon]) => (
@@ -778,9 +832,10 @@ export function SidePanel({
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium ${
+            aria-pressed={tab === id}
+            className={`inline-flex h-6 items-center gap-1.5 rounded-md px-2 text-[11px] font-medium ${
               tab === id
-                ? "bg-neutral-100 text-neutral-900"
+                ? "bg-violet-50 text-violet-700"
                 : "text-neutral-500 hover:text-neutral-900"
             }`}
           >
@@ -792,7 +847,7 @@ export function SidePanel({
           type="button"
           onClick={() => setCollapsed(true)}
           aria-label="Hide side panel"
-          className="ml-auto flex size-7 items-center justify-center rounded-md text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+          className="icon-button ml-auto"
         >
           <ChevronRight className="size-4" />
         </button>
