@@ -1780,8 +1780,8 @@ useErrorListener((err: LiveblocksError) => {
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16) to
-learn how to adapt your code.
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16)
+to learn how to adapt your code.
 
 #### Filtering by absence of metadata
 
@@ -1804,8 +1804,8 @@ useThreads({
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16) to
-learn how to adapt your code.
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16)
+to learn how to adapt your code.
 
 #### Bug fixes
 
@@ -2318,8 +2318,8 @@ you're interested in getting access, please
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
-[threads](https://liveblocks.io/docs/products/comments/concepts#Threads),
-for more information about this change please read our
+[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
+more information about this change please read our
 [Upgrade Guide for 2.2](https://liveblocks.io/docs/api-reference/upgrading/2.2).
 
 ### `@liveblocks/react`
@@ -3392,8 +3392,8 @@ connection with Liveblocks servers.
   - `room.subscribe("lost-connection")`: high-level API to get informed when
     Liveblocks’ automatic reconnection process is taking longer than usual, so
     you can show a toast message on screen. (See this
-    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status) for an
-    illustration.)
+    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status)
+    for an illustration.)
 - New behavior:
   - The client will stop retrying to establish a connection in cases where
     retrying would not help. For example an explicit 403 forbidden response from
@@ -3406,8 +3406,8 @@ connection with Liveblocks servers.
   - `useStatus()` - React hook version of `room.getStatus()`
   - `useLostConnectionListener()` - React hook version of
     `room.subscribe("lost-connection")` (See this
-    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status) for an
-    illustration.)
+    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status)
+    for an illustration.)
 
 ### Bugs fixed
 
@@ -3542,7 +3542,8 @@ Non-existent.
 ## v1.0.0
 
 This major release marks the maturity of Liveblocks. For upgrade instructions,
-see the [1.0 upgrade guide](https://liveblocks.io/docs/api-reference/upgrading/1.0).
+see the
+[1.0 upgrade guide](https://liveblocks.io/docs/api-reference/upgrading/1.0).
 
 ## `@liveblocks/node`
 
