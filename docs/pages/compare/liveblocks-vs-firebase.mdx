@@ -1,0 +1,116 @@
+---
+meta:
+  title: "Liveblocks vs. Firebase for collaborative editing"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks with Cloud Firestore and Firebase Realtime Database for
+    collaborative apps, offline data, presence, and shared-document editing."
+---
+
+Choose Liveblocks for shared editing and the collaboration experience around a
+document or canvas. Choose Firebase's databases when their record model, client
+SDKs, and offline behavior fit your application data. You can keep business
+records in Firebase while adding a separate document layer.
+[Liveblocks Sync](/docs/products/sync) ·
+[Firebase database comparison](https://firebase.google.com/docs/database)
+
+This guide covers Cloud Firestore and Firebase Realtime Database. Firestore uses
+documents and collections; Realtime Database uses a JSON tree. Choose the
+database before evaluating its behavior.
+
+## Compare the selected databases [#compare-the-selected-databases]
+
+| Area | Liveblocks | Cloud Firestore | Realtime Database |
+| --- | --- | --- | --- |
+| Data model | Shared documents with live structures | Documents and collections | JSON tree |
+| Main interaction | Editing a shared product surface | Querying and updating app records | Synchronizing data at paths |
+| Presence | Participant state through [Presence](/docs/products/sync/presence) | Commonly paired with Realtime Database for presence | Native presence support |
+| Editing model | Live structures and supported text integrations | Choose a document-editing layer when the app needs one | Choose a document-editing layer when the app needs one |
+
+Sources: [Storage](/docs/products/sync/storage),
+[Presence](/docs/products/sync/presence),
+[Firebase database comparison](https://firebase.google.com/docs/database),
+[Firestore](https://firebase.google.com/docs/firestore),
+[Realtime Database](https://firebase.google.com/docs/database).
+
+## Add an editor alongside application records [#add-an-editor-alongside-application-records]
+
+For a support app, Firebase can own customer and ticket records while Liveblocks
+powers the response draft that two agents edit together. Supported editor
+integrations provide a starting point for text; presence shows collaborators;
+Comments adds a review conversation.
+[Integrations](/docs/products/sync/integrations) ·
+[Presence](/docs/products/sync/presence) · [Comments](/docs/products/comments)
+
+The ticket stays in Firebase while collaborators edit one shared draft.
+
+## How does offline behavior differ? [#how-does-offline-behavior-differ]
+
+Firestore's supported clients can cache records and queue writes while offline.
+Liveblocks Storage can queue edits in an already-loaded document and send them
+when the connection returns. These capabilities have different persistence
+boundaries.
+[Firestore offline behavior](https://firebase.google.com/docs/firestore/manage-data/enable-offline)
+· [Liveblocks Storage synchronization](/docs/products/sync/storage)
+
+| Situation | Liveblocks Storage | Cloud Firestore |
+| --- | --- | --- |
+| Network interruption in an open session | Local edits queue for reconnect | Local reads and writes use the configured cache |
+| Closing and reopening the browser | Reconnect support covers the loaded session; persistence of unsent edits across restarts requires a separate design | Persistent web caching can survive sessions when enabled on a supported browser |
+| Two users replace the same value | Resolution depends on the live data type; scalar writes can resolve to one value | Offline changes to the same document use documented last-write-wins behavior |
+
+This table covers Storage and Firestore, not every Yjs integration or Firebase
+SDK. Realtime Database has its own platform-specific offline behavior. A text
+editor still needs an editing model beyond a listener on a database record.
+
+## Model the shared interaction [#model-the-shared-interaction]
+
+For an activity dashboard, subscribed database records may be the right
+abstraction. For an editor, a complete document overwrite is different from
+merging the individual edits made by two participants.
+
+Liveblocks gives you a shared-data model for those interactions. You still need
+to choose appropriate structures and define application behavior for competing
+actions. For example, when two people assign different owners to the same task,
+the application needs one final owner.
+
+## Can I use Firebase and Liveblocks together? [#can-i-use-firebase-and-liveblocks-together]
+
+Yes. For a support tool, Firebase can hold customers, tickets, and assignments
+while Liveblocks holds the response draft. Store the room ID with the ticket,
+authorize access on your server, and give the editable text one authoritative
+home. Your application connects the two services; Liveblocks does not
+automatically synchronize Firebase records.
+[Liveblocks authentication](/docs/api-reference/authentication)
+
+When an agent submits the response, your application can copy the submitted text
+into the ticket record. Distinguish that published copy from the live draft;
+otherwise, two independently editable copies need another conflict policy.
+
+## How do Firebase and Liveblocks costs differ? [#how-do-firebase-and-liveblocks-costs-differ]
+
+Firestore charges for document operations, applicable index-entry reads,
+storage, and network usage. Realtime Database primarily charges for stored and
+downloaded data. A read-heavy ticket list therefore needs a different estimate
+from a frequently updated JSON tree.
+[Firestore billing](https://firebase.google.com/docs/firestore/pricing) ·
+[Realtime Database billing](https://firebase.google.com/docs/database/usage/billing)
+
+For a query that returns 20 documents to 50 clients, the initial result
+represents 1,000 document reads before later listener changes, reconnects, or
+applicable index charges. This illustrative count excludes free allowances and
+location-specific rates. Streaming the same logical records from Realtime Database
+instead requires measuring downloaded bytes, including protocol overhead.
+
+If Liveblocks holds the draft, budget its collaboration usage separately.
+Self-hosted Sync is a paid Enterprise add-on.
+[Liveblocks pricing](/docs/pricing/plans) ·
+[Deployment](/docs/platform/data-storage#Self-hosting)
+
+## Get started [#get-started]
+
+Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
+and follow the [setup guide](/docs/get-started) for the shared surface in your
+application.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
