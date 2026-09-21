@@ -7,6 +7,10 @@
   - a `LiveObject` whose properties are all optional no longer loses its keys
     when nested inside another Live structure.
   - a value typed as `Record<string, T>` no longer loses `T`.
+  - an object carrying both a string index signature and named keys no longer
+    loses the named keys.
+  - a `LiveObject` converts to the same type whether you reach it directly or
+    through a parent.
 
 ### `@liveblocks/chat-sdk-adapter`
 
