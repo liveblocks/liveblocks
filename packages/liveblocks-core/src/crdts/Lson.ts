@@ -152,11 +152,6 @@ export type ToJson<L extends Lson | LsonObject> =
   L extends LsonObject ?
     JsonOfLsonObject<L> :
 
-  // Handle tuples before converting arrays
-  L extends readonly (infer I extends Json)[] ?
-    [Json] extends [I] ? readonly ReadonlyJson[] :
-    { readonly [K in keyof L]: ToJson<Extract<L[K], Json>> } :
-
   // Any Json value already is a legal Json value
   L extends Json ? L :
 

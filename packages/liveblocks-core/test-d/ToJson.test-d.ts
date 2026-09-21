@@ -369,16 +369,6 @@ describe("ToJson", () => {
     ).toEqualTypeOf<number>();
   });
 
-  test("plain JSON arrays become readonly, like every other container", () => {
-    expectTypeOf(toJson({} as { tags: string[] }).tags).toEqualTypeOf<
-      readonly string[]
-    >();
-
-    expectTypeOf(toJson({} as { pair: [1, 2] }).pair).toEqualTypeOf<
-      readonly [1, 2]
-    >();
-  });
-
   test("LiveMap with opaque values short-circuits to ReadonlyJsonObject", () => {
     expectTypeOf(
       toJson(new LiveMap<string, Lson>())
