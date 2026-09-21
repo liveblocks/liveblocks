@@ -2,6 +2,29 @@
 
 ## v3.25.0
 
+### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
+
+- **Potentially breaking:** Plain JSON arrays and tuples in the return types of
+  `.toJSON()`, `useStorage()` selectors, and
+  `getStorageDocument(roomId, "json")` are now `readonly`, which is consistent
+  with all other values these APIs return.
+
+  ```ts
+  type Storage = {
+    items: LiveList<string>;
+    tags: string[];
+  };
+
+  const json = root.toJSON();
+
+  json.items;
+  //   ^^^^^ readonly string[]  (✅ was already correct)
+
+  json.tags;
+  //   ^^^^ before: string[]           (❌ not consistent)
+  //        now:    readonly string[]  (✅ consistent)
+  ```
+
 ### `@liveblocks/node`
 
 - Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`.
