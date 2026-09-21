@@ -85,12 +85,14 @@ export type ToJson<L extends Lson | LsonObject> =
     readonly ToJson<I>[] :
 
   // A LiveObject serializes to an equivalent JSON object
-  // Short-circuit LiveObjects whose values are as wide as Lson to avoid
-  // recursive expansion (e.g. the fully opaque LiveObject<LsonObject>)
-  // Otherwise, inline the mapped type here (instead of ToJson<O>) so that
+  // Short-circuit index-signature LiveObjects whose values are as wide as Lson,
+  // to avoid recursive expansion (e.g. the fully opaque LiveObject<LsonObject>)
+  // Otherwise, expand O here (instead of ToJson<O>) so that
   // Record<string, LiveObject<...>> doesn't hit the LsonObject branch's guard.
   L extends LiveObject<infer O extends LsonObject> ?
-    Lson extends ValueOf<O> ? ReadonlyJsonObject :
+    string extends keyof O ?
+      Lson extends ValueOf<O> ? ReadonlyJsonObject :
+      JsonObjectOf<O> :
     JsonObjectOf<O> :
 
   // A LiveMap serializes to a JSON object with string-V pairs

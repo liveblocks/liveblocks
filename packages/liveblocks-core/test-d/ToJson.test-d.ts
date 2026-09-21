@@ -345,6 +345,13 @@ describe("ToJson", () => {
     expectTypeOf(doc.toJSON().title).toEqualTypeOf<string>();
   });
 
+  test("an Lson-typed prop does not erase its siblings", () => {
+    const child = new LiveObject({} as { known: string; payload: Lson });
+    const parent = new LiveObject({ child });
+
+    expectTypeOf(parent.toJSON().child.known).toEqualTypeOf<string>();
+  });
+
   test("self-referencing LiveObject schema", () => {
     type Node = LiveObject<{
       id: string;
