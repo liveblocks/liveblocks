@@ -289,4 +289,52 @@ describe("ToJson", () => {
       };
     }>();
   });
+
+  test("Record<string, specific type> as a LiveObject property", () => {
+    const liveObj = new LiveObject({} as { meta: Record<string, string> });
+
+    expectTypeOf(toJson(liveObj)).toEqualTypeOf<{
+      readonly meta: { readonly [key: string]: string };
+    }>();
+  });
+
+  test("Record<string, specific type> as a LiveMap value", () => {
+    const map = new LiveMap<string, Record<string, string>>();
+
+    expectTypeOf(toJson(map)).toEqualTypeOf<{
+      readonly [key: string]: { readonly [key: string]: string };
+    }>();
+  });
+
+  test("Record<string, specific type> at the top level", () => {
+    expectTypeOf(toJson({} as Record<string, { prop: string }>)).toEqualTypeOf<{
+      readonly [key: string]: { readonly prop: string };
+    }>();
+  });
+
+  test("Partial<Record<string, specific type>> as a LiveObject property", () => {
+    const liveObj = new LiveObject(
+      {} as { meta: Partial<Record<string, string>> }
+    );
+
+    expectTypeOf(toJson(liveObj)).toEqualTypeOf<{
+      readonly meta: { readonly [key: string]: string | undefined };
+    }>();
+  });
+
+  test("Partial<Record<string, specific type>> as a LiveMap value", () => {
+    const map = new LiveMap<string, Partial<Record<string, string>>>();
+
+    expectTypeOf(toJson(map)).toEqualTypeOf<{
+      readonly [key: string]: { readonly [key: string]: string | undefined };
+    }>();
+  });
+
+  test("Partial<Record<string, specific type>> at the top level", () => {
+    expectTypeOf(
+      toJson({} as Partial<Record<string, { prop: string }>>)
+    ).toEqualTypeOf<{
+      readonly [key: string]: { readonly prop: string } | undefined;
+    }>();
+  });
 });

@@ -100,10 +100,13 @@ export type ToJson<L extends Lson | LsonObject> =
     LiveFileData :
 
   // Any LsonObject recursively becomes a JsonObject
-  // Short-circuit generic string-keyed objects to ReadonlyJsonObject to avoid
-  // ugly recursive expansion (e.g. ToJson<LsonObject> or ToJson<JsonObject>)
+  // Short-circuit objects whose values are as wide as Json to avoid ugly
+  // recursive expansion (e.g. ToJson<LsonObject> or ToJson<JsonObject>).
   L extends LsonObject ?
-    string extends keyof L ? ReadonlyJsonObject :
+    L extends Record<string, infer V> ?
+      [Json] extends [V] ? ReadonlyJsonObject :
+      { readonly [K in keyof L]: ToJson<Exclude<L[K], undefined>>
+                                   | (undefined extends L[K] ? undefined : never) } :
     { readonly [K in keyof L]: ToJson<Exclude<L[K], undefined>>
                                  | (undefined extends L[K] ? undefined : never) } :
 
