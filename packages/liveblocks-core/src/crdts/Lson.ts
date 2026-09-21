@@ -133,10 +133,9 @@ export type ToJson<L extends Lson | LsonObject> =
     JsonObjectOf<O> :
 
   // A LiveMap serializes to a JSON object with string-V pairs
-  // Short-circuit fully opaque values to avoid recursive expansion, but keep
-  // mapping the keys: a LiveMap<"a" | "b", Lson> still knows its keys.
+  // Short-circuit fully opaque LiveMap<string, Lson> to avoid recursive expansion
   L extends LiveMap<infer KS extends string, infer V extends Lson> ?
-    Lson extends V ? { readonly [K in KS]: ReadonlyJson } :
+    Lson extends V ? ReadonlyJsonObject :
     { readonly [K in KS]: ToJson<V> } :
 
   // A LiveText serializes to a delta so inline attributes are preserved

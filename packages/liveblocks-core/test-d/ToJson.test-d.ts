@@ -3,7 +3,6 @@ import type {
   Lson,
   LsonObject,
   LiveTextData,
-  ReadonlyJson,
   ReadonlyJsonObject,
   ToJson,
 } from "@liveblocks/core";
@@ -380,13 +379,17 @@ describe("ToJson", () => {
     >();
   });
 
-  test("LiveMap with literal keys keeps its keys", () => {
-    const map = new LiveMap<"a" | "b", Lson>();
+  test("LiveMap with opaque values short-circuits to ReadonlyJsonObject", () => {
+    expectTypeOf(
+      toJson(new LiveMap<string, Lson>())
+    ).toEqualTypeOf<ReadonlyJsonObject>();
 
-    expectTypeOf(toJson(map)).toEqualTypeOf<{
-      readonly a: ReadonlyJson;
-      readonly b: ReadonlyJson;
-    }>();
+    // Deliberate: a constrained key type is dropped along with the value type.
+    // Keeping the key names would have to make them optional, since TKey says
+    // which keys may be inserted and not which ones are present.
+    expectTypeOf(
+      toJson(new LiveMap<"a" | "b", Lson>())
+    ).toEqualTypeOf<ReadonlyJsonObject>();
   });
 
   test("toJSON() agrees with ToJson of the same structure", () => {
