@@ -181,24 +181,28 @@ export function createDemoWorkflow(): {
       source: "rewrite",
       sourceHandle: OUT_HANDLE,
       target: "output",
+      targetHandle: "customer",
     }),
     createWorkflowEdge({
       id: "e-tone-output",
       source: "tone-check",
       sourceHandle: questionHandleId("apologetic", "yes"),
       target: "output",
+      targetHandle: "customer",
     }),
     createWorkflowEdge({
       id: "e-technical-output",
       source: "technical-reply",
       sourceHandle: OUT_HANDLE,
       target: "output",
+      targetHandle: "customer",
     }),
     createWorkflowEdge({
       id: "e-escalation-output",
       source: "escalation",
       sourceHandle: OUT_HANDLE,
       target: "output",
+      targetHandle: "team",
     }),
   ];
 

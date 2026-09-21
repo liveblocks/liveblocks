@@ -5,16 +5,21 @@ import {
   MAX_INPUT_PREVIEW,
   MAX_NODE_EXECUTIONS,
   RUN_TIMEOUT_MS,
+  createEmptyOutput,
+  getRunOutput,
   type Answer,
   type NodeResultData,
   type RunTrace,
   type RunTrigger,
+  type WorkflowOutput,
 } from "../runs";
 import {
   ANY_HANDLE,
   INPUT_NODE_ID,
   OUT_HANDLE,
   getActivation,
+  getOutputProperties,
+  getOutputPropertyId,
   getReachableNodeIds,
   questionHandleId,
   renderTemplate,
@@ -103,7 +108,8 @@ async function runWorkflow(
     );
 
     const outputMessage = [...messages.values()].find(
-      (message) => message.nodeType === "output" && message.status === "complete"
+      (message) =>
+        message.nodeType === "output" && message.status === "complete"
     );
 
     return {
@@ -114,16 +120,28 @@ async function runWorkflow(
       startedAt,
       completedAt,
       ...(finalError ? { error: finalError } : {}),
-      output: outputMessage?.outputs ?? [],
+      output: outputMessage
+        ? getRunOutput(outputMessage.outputs)
+        : createEmptyOutput(outputProperties),
       nodes: [...messages.values()].sort((a, b) => a.startedAt - b.startedAt),
     };
   };
 
   const { nodes, edges } = await readWorkflowGraph(roomId);
+  const outputNode = nodes.find((node) => node.type === "output");
+  const outputProperties = outputNode
+    ? getOutputProperties(outputNode.data)
+    : [];
   const reachable = getReachableNodeIds(nodes, edges);
   const activeNodes = nodes.filter((node) => reachable.has(node.id));
   const activeEdges = edges.filter(
-    (edge) => reachable.has(edge.source) && reachable.has(edge.target)
+    (edge) =>
+      reachable.has(edge.source) &&
+      reachable.has(edge.target) &&
+      (edge.target !== outputNode?.id ||
+        outputProperties.some(
+          (property) => property.id === getOutputPropertyId(edge.targetHandle)
+        ))
   );
 
   if (!activeNodes.some((node) => node.id === INPUT_NODE_ID)) {
@@ -293,13 +311,23 @@ async function runWorkflow(
         });
       }
 
-      const texts = parentNodeIds
-        .map(
-          (id) => fired.find(({ edge }) => edge.source === id)!.state!.output
-        )
-        .filter((text) => text.length > 0);
+      const properties = getOutputProperties(node.data);
+      const outputs = createEmptyOutput(properties);
+      const seen = new Map<string, Set<string>>();
 
-      return await executeOutput(base, messageId, texts, {
+      for (const { edge, state } of fired) {
+        const property = properties.find(
+          ({ id }) => id === getOutputPropertyId(edge.targetHandle)
+        );
+        if (!property || !state?.output) continue;
+        const sources = seen.get(property.id) ?? new Set<string>();
+        if (sources.has(edge.source)) continue;
+        sources.add(edge.source);
+        seen.set(property.id, sources);
+        outputs[property.name].push(state.output);
+      }
+
+      return await executeOutput(base, messageId, outputs, {
         answers,
         rawAnswers,
       });
@@ -452,17 +480,17 @@ async function runWorkflow(
   async function executeOutput(
     base: NodeResultData,
     messageId: string | undefined,
-    texts: string[],
+    outputs: WorkflowOutput,
     context: Pick<NodeState, "answers" | "rawAnswers">
   ): Promise<NodeState> {
-    const joined = texts.join("\n\n");
+    const joined = Object.values(outputs).flat().join("\n\n");
 
     await writeMessage(
       {
         ...base,
         status: "complete",
         output: joined,
-        outputs: texts,
+        outputs,
         firedHandles: [],
         durationMs: Date.now() - base.startedAt,
       },

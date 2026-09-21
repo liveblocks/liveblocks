@@ -17,19 +17,37 @@ import {
   FileOutput,
   Loader2,
   MessageSquareText,
+  Pencil,
   Plus,
   Sparkles,
   Trash2,
 } from "lucide-react";
-import { memo, useCallback, useEffect, type ReactNode } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { FieldLabel, Select, TextArea, TextField } from "./fields";
 import { useRun } from "./run-context";
-import type { Answer, NodeResultData, NodeStatus } from "./runs";
+import {
+  getRunOutput,
+  type Answer,
+  type NodeResultData,
+  type NodeStatus,
+} from "./runs";
 import {
   IN_HANDLE,
+  LLM_MODEL_GROUPS,
   LLM_MODELS,
+  createOutputProperty,
   createQuestion,
   getActivation,
+  getOutputProperties,
+  getOutputPropertyId,
   getSourceHandles,
   slugify,
   truncate,
@@ -40,9 +58,11 @@ import {
   type JevNode,
   type LlmNode,
   type OutputNode,
+  type OutputProperty,
   type QuestionDef,
   type QuestionType,
   type WorkflowNode,
+  type WorkflowEdge,
 } from "./shared";
 
 export const NODE_WIDTH = 272;
@@ -147,13 +167,53 @@ function NodeFrame({
   const { updateNodeData } = useReactFlow<WorkflowNode>();
   const updateNodeInternals = useUpdateNodeInternals();
   const { selectedRunId } = useRun();
+  const [isEditing, setEditing] = useState(false);
+  const editAreaRef = useRef<HTMLDivElement>(null);
+  const bodyId = useId();
   const incoming = useNodeConnections({ id, handleType: "target" });
   const activation = node.type === "input" ? null : getActivation(node.data);
   const handleKey = handles.map((handle) => handle.id).join("|");
 
   useEffect(() => {
     updateNodeInternals(id);
-  }, [id, handleKey, selected, updateNodeInternals]);
+  }, [id, handleKey, isEditing, updateNodeInternals]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+
+    editAreaRef.current
+      ?.querySelector<HTMLElement>("input, textarea, select, button")
+      ?.focus({ preventScroll: true });
+
+    const onPointerDown = (event: PointerEvent) => {
+      const editArea = editAreaRef.current;
+
+      if (
+        !editArea ||
+        !(event.target instanceof Node) ||
+        editArea.contains(event.target)
+      ) {
+        return;
+      }
+
+      // Fields commit on blur, so save the active draft before unmounting it.
+      const activeElement = document.activeElement;
+      if (
+        activeElement instanceof HTMLElement &&
+        editArea.contains(activeElement)
+      ) {
+        activeElement.blur();
+      }
+
+      setEditing(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () =>
+      document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [isEditing]);
 
   const fired = new Set(result?.firedHandles ?? []);
   // Dim nodes that a selected run never reached.
@@ -204,21 +264,42 @@ function NodeFrame({
         <StatusIcon status={result?.status} />
       </div>
 
-      <div className="px-2.5 py-2">
-        {selected ? (
-          <div className="flex flex-col gap-2">
-            {editor}
-            {activation !== null ? (
-              <ActivationControl
-                id={id}
-                activation={activation}
-                incomingCount={incoming.length}
-              />
-            ) : null}
-          </div>
-        ) : (
-          summary
-        )}
+      <div
+        ref={editAreaRef}
+        className={`workflow-node-body px-2.5 py-2 ${isEditing ? "nodrag nopan" : ""}`}
+        data-editing={isEditing ? "" : undefined}
+      >
+        {!isEditing ? (
+          <button
+            type="button"
+            className="workflow-node-edit-button nodrag nopan"
+            aria-label={`Edit ${node.data.label}`}
+            aria-expanded={false}
+            aria-controls={bodyId}
+            onClick={(event) => {
+              event.stopPropagation();
+              setEditing(true);
+            }}
+          >
+            <Pencil className="size-3" /> Edit
+          </button>
+        ) : null}
+        <div id={bodyId}>
+          {isEditing ? (
+            <div className="flex flex-col gap-2">
+              {editor}
+              {activation !== null ? (
+                <ActivationControl
+                  id={id}
+                  activation={activation}
+                  incomingCount={incoming.length}
+                />
+              ) : null}
+            </div>
+          ) : (
+            <div className="workflow-node-summary">{summary}</div>
+          )}
+        </div>
       </div>
 
       {result?.error && (
@@ -560,7 +641,7 @@ const JevNodeView = memo(({ id, data, selected }: NodeProps<JevNode>) => {
       summary={
         data.questions.length === 0 ? (
           <p className="text-xs text-neutral-400">
-            No questions yet. Select the node to add one.
+            No questions yet. Click Edit to add one.
           </p>
         ) : (
           <ul className="flex flex-col gap-1.5">
@@ -680,10 +761,17 @@ const LlmNodeView = memo(({ id, data, selected }: NodeProps<LlmNode>) => {
                 updateNodeData(id, { model: event.target.value })
               }
             >
-              {LLM_MODELS.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.label}
-                </option>
+              {!LLM_MODELS.some((model) => model.id === data.model) ? (
+                <option value={data.model}>{data.model}</option>
+              ) : null}
+              {LLM_MODEL_GROUPS.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.models.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </Select>
           </label>
@@ -722,8 +810,102 @@ const LlmNodeView = memo(({ id, data, selected }: NodeProps<LlmNode>) => {
 /*                                 Output node                                */
 /* -------------------------------------------------------------------------- */
 
+function OutputPropertyEditor({
+  property,
+  properties,
+  onRename,
+  onRemove,
+}: {
+  property: OutputProperty;
+  properties: OutputProperty[];
+  onRename: (name: string) => void;
+  onRemove: () => void;
+}) {
+  const [draft, setDraft] = useState(property.name);
+  const [error, setError] = useState<string | null>(null);
+  const errorId = useId();
+
+  useEffect(() => setDraft(property.name), [property.name]);
+
+  function commit(value: string) {
+    const name = value.trim();
+    if (
+      !name ||
+      properties.some(
+        (entry) => entry.id !== property.id && entry.name === name
+      )
+    ) {
+      setError(
+        name ? "This property already exists." : "Enter a property name."
+      );
+      setDraft(property.name);
+      return;
+    }
+    setError(null);
+    setDraft(name);
+    if (name !== property.name) onRename(name);
+  }
+
+  return (
+    <div className="relative">
+      <Handle
+        type="target"
+        position={Position.Left}
+        id={property.id}
+        className="workflow-handle"
+        style={{ left: -10, top: 14 }}
+        aria-label={`${property.name} input`}
+      />
+      <div className="flex items-center gap-1">
+        <input
+          aria-label={`Property name: ${property.name}`}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            setError(null);
+          }}
+          onBlur={(event) => commit(event.currentTarget.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            } else if (event.key === "Escape") {
+              setDraft(property.name);
+              event.currentTarget.value = property.name;
+              event.currentTarget.blur();
+            }
+          }}
+          spellCheck={false}
+          className="workflow-field nodrag nopan min-w-0 w-full rounded-md border border-neutral-200 bg-white px-2 py-1 font-mono text-xs text-neutral-900 focus:border-violet-400 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={onRemove}
+          className="icon-button nodrag shrink-0 hover:!text-red-600"
+          aria-label={`Remove ${property.name}`}
+          title="Remove property"
+        >
+          <Trash2 className="size-3" />
+        </button>
+      </div>
+      {error ? (
+        <p id={errorId} role="alert" className="mt-1 text-[10px] text-red-600">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 const OutputNodeView = memo(({ id, data, selected }: NodeProps<OutputNode>) => {
+  const { updateNodeData, setEdges } = useReactFlow<
+    WorkflowNode,
+    WorkflowEdge
+  >();
   const { results } = useRun();
+  const updateNodeInternals = useUpdateNodeInternals();
   const result = results.get(id);
   const node: OutputNode = {
     id,
@@ -731,7 +913,77 @@ const OutputNodeView = memo(({ id, data, selected }: NodeProps<OutputNode>) => {
     position: { x: 0, y: 0 },
     data,
   };
-  const texts = result?.outputs ?? [];
+  const outputs = getRunOutput(result?.outputs);
+  const properties = getOutputProperties(data);
+  const propertyKey = properties.map((property) => property.id).join("|");
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [id, propertyKey, result, updateNodeInternals]);
+
+  function setProperties(next: OutputProperty[]) {
+    updateNodeData(id, { properties: next });
+  }
+
+  function removeProperty(property: OutputProperty) {
+    setEdges((edges) =>
+      edges.filter(
+        (edge) =>
+          edge.target !== id ||
+          getOutputPropertyId(edge.targetHandle) !== property.id
+      )
+    );
+    setProperties(properties.filter((entry) => entry.id !== property.id));
+  }
+
+  const inputs = (
+    <div className="flex flex-col gap-2">
+      {properties.length === 0 ? (
+        <p className="text-[11px] text-neutral-400">
+          Click Edit to add an output property.
+        </p>
+      ) : null}
+      {properties.map((property) => {
+        const texts = Object.hasOwn(outputs, property.name)
+          ? outputs[property.name]
+          : [];
+        return (
+          <div key={property.id} className="relative min-h-9">
+            <Handle
+              type="target"
+              position={Position.Left}
+              id={property.id}
+              className="workflow-handle"
+              style={{ left: -10, top: 8 }}
+              title={property.name}
+              aria-label={`${property.name} input`}
+            />
+            <span className="block text-[11px] font-medium text-neutral-700">
+              {property.name}
+            </span>
+            {texts.length > 0 ? (
+              <div className="mt-1 flex flex-col gap-1">
+                {texts.map((text, index) => (
+                  <p
+                    key={index}
+                    className="max-h-24 overflow-hidden whitespace-pre-wrap rounded bg-neutral-50 px-2 py-1 text-xs leading-relaxed text-neutral-700"
+                  >
+                    {truncate(text, 220)}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] leading-relaxed text-neutral-400">
+                {result?.status === "complete"
+                  ? "No message"
+                  : "Connect a message"}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <NodeFrame
@@ -741,36 +993,37 @@ const OutputNodeView = memo(({ id, data, selected }: NodeProps<OutputNode>) => {
       icon={<FileOutput className="size-3.5" />}
       accent="#059669"
       result={result}
-      hasTarget
+      hasTarget={false}
       handles={getSourceHandles(node)}
-      summary={
-        texts.length > 0 ? (
-          <div className="flex flex-col gap-1.5">
-            {texts.map((text, index) => (
-              <p
-                key={index}
-                className="max-h-24 overflow-hidden whitespace-pre-wrap rounded bg-neutral-50 px-2 py-1 text-xs leading-relaxed text-neutral-700"
-              >
-                {truncate(text, 220)}
-              </p>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs leading-relaxed text-neutral-500">
-            Texts that reach this node are returned as{" "}
-            <code className="rounded bg-neutral-100 px-1">
-              output: string[]
-            </code>{" "}
-            from the REST API.
-          </p>
-        )
-      }
+      summary={inputs}
       editor={
-        <p className="text-[11px] leading-relaxed text-neutral-500">
-          Connect one or more nodes here. The API always returns an array of the
-          texts that fired into this node. To merge several drafts into one
-          string, run them through an LLM node first.
-        </p>
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel>Properties</FieldLabel>
+          {properties.map((property) => (
+            <OutputPropertyEditor
+              key={property.id}
+              property={property}
+              properties={properties}
+              onRename={(name) =>
+                setProperties(
+                  properties.map((entry) =>
+                    entry.id === property.id ? { ...entry, name } : entry
+                  )
+                )
+              }
+              onRemove={() => removeProperty(property)}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={() =>
+              setProperties([...properties, createOutputProperty(properties)])
+            }
+            className="nodrag flex min-h-7 items-center justify-center gap-1 rounded-md border border-dashed border-neutral-200 px-2 py-1 text-[11px] text-neutral-500 hover:border-neutral-300 hover:text-neutral-800"
+          >
+            <Plus className="size-3" /> Add property
+          </button>
+        </div>
       }
     />
   );

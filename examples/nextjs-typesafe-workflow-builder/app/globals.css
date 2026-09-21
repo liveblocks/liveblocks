@@ -349,6 +349,72 @@ select:disabled {
   height: 14px;
 }
 
+.workflow-node-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.workflow-node-edit-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #e6e4e9;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: #fff;
+  color: #57535e;
+  box-shadow: 0 2px 6px rgb(30 23 45 / 0.08);
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 150ms,
+    background-color 150ms;
+  z-index: 1;
+}
+
+.workflow-node-body:hover .workflow-node-edit-button,
+.workflow-node-edit-button:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.workflow-node-edit-button:hover {
+  background: #f3f1f7;
+}
+
+.workflow-node-summary {
+  transition: opacity 150ms;
+}
+
+.react-flow__node:not(.dragging)
+  .workflow-node-body:is(:hover, :focus-within)
+  .workflow-node-summary {
+  opacity: 0.4;
+}
+
+@media (hover: none) {
+  .workflow-node-edit-button {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.react-flow__node.dragging
+  .workflow-node-body:not([data-editing])
+  .workflow-node-edit-button {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .workflow-node-ports {
   border-top: 1px solid #f0eff2;
   border-radius: 0 0 9px 9px;
@@ -511,6 +577,32 @@ select:disabled {
   transition:
     background-color 150ms,
     border-color 150ms;
+}
+
+.run-delete-button {
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.run-list-item:hover .run-delete-button,
+.run-list-item:focus-within .run-delete-button,
+.run-delete-button[data-deleting] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.run-delete-button:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+@media (hover: none) {
+  .run-delete-button {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 /* Workflow library and loading state. */

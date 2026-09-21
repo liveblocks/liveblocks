@@ -87,11 +87,17 @@ curl -X POST "http://localhost:3000/api/workflows/<workflowId>/runs?wait=true" \
 
 The workflow id is the last segment of the workflow URL (`/w/<workflowId>`);
 without `wait=true` the endpoint responds `202` with `{ runId }` immediately and
-the run streams into the feed. With `wait=true` the JSON includes `output`,
-always a `string[]` of the texts that reached the output node (one connected
-node that fired yields `["…"]`; several yield `["…", "…"]`; none yields `[]`).
-To merge several drafts into one string, connect them to an LLM node first, then
-to output.
+the run streams into the feed. With `wait=true` the JSON includes an `output`
+object keyed by the properties configured on the output node. It starts with
+`customer` and `team`; click Edit to add, rename, or remove any number of
+properties. Each property has its own input connection. Renaming a property
+keeps its connections, while removing it also removes its connections.
+
+Each value is an array containing one text per parent that fired into that
+input, or `[]` when none fired. A parent connected to several properties appears
+in each of their arrays. With no properties, `output` is `{}`. To merge several
+drafts into one string, connect them to an LLM node first. Connections and saved
+runs from before named properties were added appear under `customer`.
 
 ### Deploy on Vercel
 

@@ -9,19 +9,64 @@ export const WORKFLOW_EDGE_TYPE = "smoothstep" as const;
 export const INPUT_NODE_ID = "input";
 export const OUTPUT_NODE_ID = "output";
 
-// Handle ids. Target handles are always `in`; source handles depend on the node.
+// Most target handles use `in`; the output node has a handle per property.
 export const IN_HANDLE = "in";
 export const OUT_HANDLE = "out";
 // Every Jev node has one "always" handle in addition to its answer handles.
 export const ANY_HANDLE = "any";
 
-export const LLM_MODELS = [
-  { id: "openai/gpt-5.4-nano", label: "GPT-5.4 nano" },
-  { id: "openai/gpt-5.4-mini", label: "GPT-5.4 mini" },
-  { id: "anthropic/claude-haiku-4.5", label: "Claude Haiku 4.5" },
-  { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-] as const;
-export const DEFAULT_LLM_MODEL = LLM_MODELS[0].id;
+// Text models verified against https://ai-gateway.vercel.sh/v1/models.
+export const LLM_MODEL_GROUPS = [
+  {
+    label: "OpenAI",
+    models: [
+      { id: "openai/gpt-6-astra", label: "GPT-6 Astra" },
+      { id: "openai/gpt-5.6-sol", label: "GPT-5.6 Sol" },
+      { id: "openai/gpt-5.6-terra", label: "GPT-5.6 Terra" },
+      { id: "openai/gpt-5.6-luna", label: "GPT-5.6 Luna" },
+      { id: "openai/gpt-5.5", label: "GPT-5.5" },
+      { id: "openai/gpt-5.4-mini", label: "GPT-5.4 mini" },
+      { id: "openai/gpt-5.4-nano", label: "GPT-5.4 nano" },
+    ],
+  },
+  {
+    label: "Anthropic",
+    models: [
+      { id: "anthropic/claude-fable-5.1", label: "Claude Fable 5.1" },
+      { id: "anthropic/claude-opus-5", label: "Claude Opus 5" },
+      { id: "anthropic/claude-sonnet-5", label: "Claude Sonnet 5" },
+      { id: "anthropic/claude-haiku-4.5", label: "Claude Haiku 4.5" },
+    ],
+  },
+  {
+    label: "Google",
+    models: [
+      { id: "google/gemini-3.8-flash", label: "Gemini 3.8 Flash" },
+      { id: "google/gemini-3.5-flash-lite", label: "Gemini 3.5 Flash Lite" },
+      {
+        id: "google/gemini-3.1-pro-preview",
+        label: "Gemini 3.1 Pro (preview)",
+      },
+      { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    ],
+  },
+  {
+    label: "DeepSeek",
+    models: [
+      { id: "deepseek/deepseek-v4-pro", label: "DeepSeek V4 Pro" },
+      { id: "deepseek/deepseek-v4.1-flash", label: "DeepSeek V4.1 Flash" },
+    ],
+  },
+  {
+    label: "Moonshot AI",
+    models: [
+      { id: "moonshotai/kimi-k3", label: "Kimi K3" },
+      { id: "moonshotai/kimi-k3-fast", label: "Kimi K3 Fast" },
+    ],
+  },
+];
+export const LLM_MODELS = LLM_MODEL_GROUPS.flatMap((group) => group.models);
+export const DEFAULT_LLM_MODEL = "openai/gpt-5.4-nano";
 export const DEFAULT_NOUL_THRESHOLD = 0.7;
 
 export type QuestionType = "choice" | "score" | "noul";
@@ -91,14 +136,46 @@ export type LlmNodeData = {
 };
 
 /**
- * Unique sink, like the input node. Collects the text of every parent that
- * fired into it; the REST API returns that list as `output: string[]`.
+ * Unique sink, like the input node. Collects parent texts into named output
+ * properties, according to the connected target handle.
  * To merge several drafts into one string, run them through an LLM node first.
  */
 export type OutputNodeData = {
   label: string;
   activation?: ActivationMode;
+  properties?: OutputProperty[];
 };
+
+export type OutputProperty = {
+  // Stable handle id: renaming a property keeps its connections intact.
+  id: string;
+  name: string;
+};
+
+const DEFAULT_OUTPUT_PROPERTIES: OutputProperty[] = [
+  { id: "customer", name: "customer" },
+  { id: "team", name: "team" },
+];
+
+export function getOutputProperties(data: OutputNodeData): OutputProperty[] {
+  return data.properties ?? DEFAULT_OUTPUT_PROPERTIES;
+}
+
+export function getOutputPropertyId(
+  handleId: string | null | undefined
+): string {
+  // The original single input becomes the default Customer property.
+  return !handleId || handleId === IN_HANDLE ? "customer" : handleId;
+}
+
+export function createOutputProperty(
+  properties: readonly OutputProperty[]
+): OutputProperty {
+  const names = new Set(properties.map((property) => property.name));
+  let index = properties.length + 1;
+  while (names.has(`property_${index}`)) index++;
+  return { id: `property-${nanoid(8)}`, name: `property_${index}` };
+}
 
 export function getActivation(data: {
   activation?: ActivationMode;
@@ -270,6 +347,7 @@ export function createOutputNode(args: {
   label?: string;
   activation?: ActivationMode;
   selected?: boolean;
+  properties?: OutputProperty[];
 }): OutputNode {
   return {
     id: OUTPUT_NODE_ID,
@@ -280,6 +358,9 @@ export function createOutputNode(args: {
     data: {
       label: args.label ?? "Output",
       activation: args.activation ?? "any",
+      properties:
+        args.properties ??
+        DEFAULT_OUTPUT_PROPERTIES.map((property) => ({ ...property })),
     },
   };
 }
@@ -314,6 +395,7 @@ export function createWorkflowEdge(args: {
   source: string;
   sourceHandle: string;
   target: string;
+  targetHandle?: string;
 }): WorkflowEdge {
   return {
     id:
@@ -323,7 +405,7 @@ export function createWorkflowEdge(args: {
     source: args.source,
     sourceHandle: args.sourceHandle,
     target: args.target,
-    targetHandle: IN_HANDLE,
+    targetHandle: args.targetHandle ?? IN_HANDLE,
     data: {},
   };
 }

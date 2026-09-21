@@ -1,6 +1,6 @@
 "use client";
 
-import { useFeeds, useOthers } from "@liveblocks/react";
+import { useDeleteFeed, useFeeds, useOthers } from "@liveblocks/react";
 import { useNodesData, useReactFlow } from "@xyflow/react";
 import {
   AlertCircle,
@@ -19,10 +19,16 @@ import {
   FlaskConical,
   History,
   Route,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRun } from "./run-context";
-import type { Answer, NodeResultData, RunStatus } from "./runs";
+import {
+  getRunOutput,
+  type Answer,
+  type NodeResultData,
+  type RunStatus,
+} from "./runs";
 import type { WorkflowSummary } from "./server/liveblocks";
 import {
   INPUT_NODE_ID,
@@ -208,6 +214,8 @@ function TraceNode({
   depth: number;
   onFocus: () => void;
 }) {
+  const outputs = getRunOutput(message.outputs);
+
   return (
     <li style={{ paddingLeft: depth * 10 }}>
       <div className="trace-card overflow-hidden rounded-lg bg-white">
@@ -270,22 +278,30 @@ function TraceNode({
           </p>
         ) : null}
 
-        {message.nodeType === "output" && (message.outputs?.length ?? 0) > 0 ? (
-          <ul className="flex flex-col gap-1.5 border-t border-neutral-100 px-2.5 py-1.5">
-            {(message.outputs ?? []).map((text, index, list) => (
-              <li
-                key={index}
-                className="whitespace-pre-wrap text-xs leading-relaxed text-neutral-700"
-              >
-                {list.length > 1 ? (
-                  <span className="mr-1 font-mono text-neutral-400">
-                    [{index}]
-                  </span>
-                ) : null}
-                {text}
-              </li>
+        {message.nodeType === "output" && message.outputs ? (
+          <div className="flex flex-col gap-2 border-t border-neutral-100 px-2.5 py-1.5">
+            {Object.entries(outputs).map(([name, texts]) => (
+              <div key={name}>
+                <p className="mb-0.5 text-[10px] font-medium text-neutral-500">
+                  {name}
+                </p>
+                {texts.length > 0 ? (
+                  <ul className="flex flex-col gap-1.5">
+                    {texts.map((text, index) => (
+                      <li
+                        key={index}
+                        className="whitespace-pre-wrap text-xs leading-relaxed text-neutral-700"
+                      >
+                        {text}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-[11px] text-neutral-400">No message</p>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
         ) : null}
 
         {message.status === "skipped" ? (
@@ -396,7 +412,10 @@ function Viewers({ runId }: { runId: string }) {
 
 function RunList() {
   const { feeds, isLoading } = useFeeds();
+  const deleteFeed = useDeleteFeed();
   const { selectedRunId, selectRun } = useRun();
+  const [deletingRunId, setDeletingRunId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const runs = useMemo(
     () =>
@@ -413,11 +432,31 @@ function RunList() {
   const didAutoSelect = useRef(false);
 
   useEffect(() => {
-    if (!didAutoSelect.current && selectedRunId === null && runs.length > 0) {
+    if (!didAutoSelect.current && runs.length > 0) {
       didAutoSelect.current = true;
-      selectRun(runs[0].feedId);
+      if (selectedRunId === null) {
+        selectRun(runs[0].feedId);
+      }
     }
   }, [runs, selectedRunId, selectRun]);
+
+  async function deleteRun(runId: string) {
+    if (deletingRunId !== null) return;
+
+    setDeletingRunId(runId);
+    setDeleteError(null);
+    if (selectedRunId === runId) {
+      selectRun(null);
+    }
+
+    try {
+      await deleteFeed(runId);
+    } catch {
+      setDeleteError("Couldn't delete this run. Try again.");
+    } finally {
+      setDeletingRunId(null);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -427,56 +466,80 @@ function RunList() {
     );
   }
 
-  if (runs.length === 0) {
-    return (
-      <div className="panel-empty-state">
-        <History className="size-3.5 shrink-0 text-neutral-400" aria-hidden />
-        <p>No runs yet. Try the sample input above.</p>
-      </div>
-    );
-  }
-
   return (
-    <ul className="flex flex-col gap-1">
-      {runs.map((run) => {
-        const selected = run.feedId === selectedRunId;
+    <>
+      {runs.length === 0 && (
+        <div className="panel-empty-state">
+          <History className="size-3.5 shrink-0 text-neutral-400" aria-hidden />
+          <p>No runs yet. Try the sample input above.</p>
+        </div>
+      )}
+      <ul className="flex flex-col gap-1">
+        {runs.map((run) => {
+          const selected = run.feedId === selectedRunId;
+          const deleting = run.feedId === deletingRunId;
 
-        return (
-          <li key={run.feedId}>
-            <button
-              type="button"
-              // Clicking the selected run again exits the preview.
-              onClick={() => selectRun(selected ? null : run.feedId)}
-              title={selected ? "Exit run preview" : "Preview this run"}
-              aria-pressed={selected}
-              className={`run-list-item flex w-full items-center gap-2.5 rounded-md border px-2 py-1 text-left ${
+          return (
+            <li
+              key={run.feedId}
+              className={`run-list-item flex items-center rounded-md border ${
                 selected
                   ? "border-violet-200 bg-violet-50/70"
                   : "border-transparent hover:border-neutral-200 hover:bg-white"
               }`}
             >
-              <RunStatusIcon status={run.metadata.status} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[11px] text-neutral-800 font-medium">
-                  {run.metadata.input || "(empty input)"}
+              <button
+                type="button"
+                // Clicking the selected run again exits the preview.
+                onClick={() => selectRun(selected ? null : run.feedId)}
+                title={selected ? "Exit run preview" : "Preview this run"}
+                aria-pressed={selected}
+                disabled={deleting}
+                className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 py-1 text-left"
+              >
+                <RunStatusIcon status={run.metadata.status} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[11px] text-neutral-800 font-medium">
+                    {run.metadata.input || "(empty input)"}
+                  </span>
+                  <span className="mt-px block text-[10px] tabular-nums text-neutral-500">
+                    {formatTime(Number(run.metadata.startedAt))} ·{" "}
+                    {run.metadata.trigger === "api" ? "API" : "test run"}
+                    {run.metadata.completedAt
+                      ? ` · ${formatDuration(
+                          Number(run.metadata.completedAt) -
+                            Number(run.metadata.startedAt)
+                        )}`
+                      : ""}
+                  </span>
                 </span>
-                <span className="mt-px block text-[10px] tabular-nums text-neutral-500">
-                  {formatTime(Number(run.metadata.startedAt))} ·{" "}
-                  {run.metadata.trigger === "api" ? "API" : "test run"}
-                  {run.metadata.completedAt
-                    ? ` · ${formatDuration(
-                        Number(run.metadata.completedAt) -
-                          Number(run.metadata.startedAt)
-                      )}`
-                    : ""}
-                </span>
-              </span>
-              <Viewers runId={run.feedId} />
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+                <Viewers runId={run.feedId} />
+              </button>
+              <button
+                type="button"
+                className="icon-button run-delete-button mr-1 shrink-0"
+                onClick={() => void deleteRun(run.feedId)}
+                disabled={deletingRunId !== null}
+                data-deleting={deleting || undefined}
+                aria-label={`Delete run from ${formatTime(Number(run.metadata.startedAt))}`}
+                title="Delete run"
+              >
+                {deleting ? (
+                  <Loader2 className="size-3 animate-spin" aria-hidden />
+                ) : (
+                  <Trash2 className="size-3" aria-hidden />
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {deleteError && (
+        <p role="alert" className="mt-2 px-1 text-[11px] text-red-600">
+          {deleteError}
+        </p>
+      )}
+    </>
   );
 }
 
@@ -758,18 +821,19 @@ function ApiTab({
             <code className="rounded bg-neutral-100 px-1">input</code> string.
             With <code className="rounded bg-neutral-100 px-1">?wait=true</code>{" "}
             the response includes{" "}
-            <code className="rounded bg-neutral-100 px-1">output</code>, always
-            an array of the texts that reached the output node. The run also
-            shows up in the Runs tab for everyone in the room.
+            <code className="rounded bg-neutral-100 px-1">output</code>, an
+            object with a key for each property configured on the output node.
+            Each value is an array of messages received by that input. The run
+            also shows up in the Runs tab for everyone in the room.
           </p>
           <ul className="flex flex-col gap-1.5 leading-relaxed">
             <li>
               <code className="rounded bg-neutral-100 px-1">?wait=true</code>{" "}
               blocks until the run finishes and returns JSON with{" "}
               <code className="rounded bg-neutral-100 px-1">
-                output: string[]
+                {"output: Record<string, string[]>"}
               </code>{" "}
-              (one entry per node that fired into the output node) plus the full
+              (one entry per node that fired into each input) plus the full
               trace.
             </li>
             <li>

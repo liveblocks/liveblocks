@@ -51,12 +51,14 @@ import { useRun } from "./run-context";
 import {
   ANY_HANDLE,
   FLOW_STORAGE_KEY,
+  IN_HANDLE,
   WORKFLOW_EDGE_TYPE,
   createJevNode,
   createLlmNode,
   createOutputNode,
   createWorkflowEdge,
   getReachableNodeIds,
+  getOutputPropertyId,
   wouldCreateCycle,
   type WorkflowEdge,
   type WorkflowNode,
@@ -191,10 +193,21 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
     [nodes, edges]
   );
 
-  // Decorate edges with the selected run's path. Derived only; never written
-  // back to Storage.
+  // Display older single-input connections on the Customer handle.
+  const resolvedEdges = useMemo<WorkflowEdge[]>(() => {
+    const outputIds = new Set(
+      nodes.filter((node) => node.type === "output").map((node) => node.id)
+    );
+    return edges.map((edge) =>
+      outputIds.has(edge.target)
+        ? { ...edge, targetHandle: getOutputPropertyId(edge.targetHandle) }
+        : edge
+    );
+  }, [nodes, edges]);
+
+  // The selected run's path is derived only, never written back to Storage.
   const decoratedEdges = useMemo<WorkflowEdge[]>(() => {
-    return edges.map((edge) => {
+    return resolvedEdges.map((edge) => {
       const source = results.get(edge.source);
       const target = results.get(edge.target);
       const fired =
@@ -218,7 +231,7 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
         },
       };
     });
-  }, [edges, results, reachable, selectedRunId]);
+  }, [resolvedEdges, results, reachable, selectedRunId]);
 
   const decoratedNodes = useMemo<WorkflowNode[]>(() => {
     return nodes.map((node) =>
@@ -238,15 +251,17 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
         return false;
       }
 
-      // One edge per (source handle, target) pair.
-      return !edges.some(
+      // A source may feed several properties, but each handle pair is unique.
+      return !resolvedEdges.some(
         (edge) =>
           edge.source === connection.source &&
           edge.target === connection.target &&
-          edge.sourceHandle === connection.sourceHandle
+          edge.sourceHandle === connection.sourceHandle &&
+          (edge.targetHandle ?? IN_HANDLE) ===
+            (connection.targetHandle ?? IN_HANDLE)
       );
     },
-    [edges]
+    [edges, resolvedEdges]
   );
 
   const handleConnect = useCallback(
@@ -267,6 +282,7 @@ export function WorkflowEditor({ className, ...props }: ComponentProps<"div">) {
             source: connection.source,
             sourceHandle: connection.sourceHandle ?? ANY_HANDLE,
             target: connection.target,
+            targetHandle: connection.targetHandle ?? IN_HANDLE,
           }),
         },
       ]);

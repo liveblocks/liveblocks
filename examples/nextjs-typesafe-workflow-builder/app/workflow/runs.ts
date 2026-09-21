@@ -1,4 +1,23 @@
-import type { WorkflowNodeType } from "./shared";
+import type { OutputProperty, WorkflowNodeType } from "./shared";
+
+export type WorkflowOutput = Record<string, string[]>;
+
+export function createEmptyOutput(
+  properties: readonly OutputProperty[]
+): WorkflowOutput {
+  return Object.fromEntries(
+    properties.map<[string, string[]]>(({ name }) => [name, []])
+  );
+}
+
+export function getRunOutput(
+  outputs: WorkflowOutput | string[] | undefined
+): WorkflowOutput {
+  // Older saved runs had one list of outputs without property names.
+  return Array.isArray(outputs)
+    ? { customer: outputs, team: [] }
+    : (outputs ?? {});
+}
 
 export type RunStatus = "running" | "complete" | "error";
 export type RunTrigger = "test" | "api";
@@ -46,8 +65,9 @@ export type NodeResultData = {
   input: string;
   // LLM output (streams in) or, for Jev nodes, the input passed through.
   output?: string;
-  // Output node only: the parent texts that reached it, in connection order.
-  outputs?: string[];
+  // Output node only: parent texts per property, in connection order.
+  // The array variant supports runs saved before outputs were separated.
+  outputs?: WorkflowOutput | string[];
   // Jev answers keyed by question id.
   answers?: Record<string, Answer>;
   // Source handles that fired on this node.
@@ -72,9 +92,8 @@ export type RunSummary = {
 
 export type RunTrace = RunSummary & {
   nodes: NodeResultData[];
-  // Texts that reached the output node. Always an array: one connected parent
-  // that fired yields `["…"]`; several yield `["…", "…"]`; none yields `[]`.
-  output: string[];
+  // Texts that reached each output input, with an empty array for unused inputs.
+  output: WorkflowOutput;
 };
 
 export const MAX_INPUT_PREVIEW = 200;
