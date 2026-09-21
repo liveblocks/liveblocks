@@ -1239,7 +1239,7 @@ export class Liveblocks {
    * groups they belong to). What permissions this user will end up having is
    * determined by whatever permissions you assign the user/group in your
    * Liveblocks account, through the Permissions API:
-   * https://liveblocks.io/docs/rooms/permissions
+   * https://liveblocks.io/docs/api-reference/authentication#Default-room-permissions
    *
    * IMPORTANT:
    * Always verify that you trust the user making the request before calling
@@ -1253,7 +1253,7 @@ export class Liveblocks {
    * object form and specify the `groupIds` property. Those `groupIds` should
    * match the groupIds you assigned permissions to via the Liveblocks
    * Permissions API, see
-   * https://liveblocks.io/docs/rooms/permissions#permissions-levels-groups-accesses-example
+   * https://liveblocks.io/docs/api-reference/authentication#permissions-levels-groups-accesses-example
    *
    * @param options.userInfo Custom metadata to attach to this user. Data you
    * add here will be visible to all other clients in the room, through the

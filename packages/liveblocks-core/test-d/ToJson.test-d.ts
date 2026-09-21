@@ -1,4 +1,5 @@
 import type {
+  Json,
   Lson,
   LsonObject,
   LiveTextData,
@@ -250,5 +251,152 @@ describe("ToJson", () => {
     expectTypeOf(toJson(liveList)).toEqualTypeOf<
       readonly { readonly [key: string]: { readonly prop: string } }[]
     >();
+  });
+
+  test("nested LiveObject whose props are all optional", () => {
+    const child = new LiveObject<{ id?: string; bar?: string }>({ id: "abc" });
+    const parent = new LiveObject({ child });
+
+    expectTypeOf(toJson(parent)).toEqualTypeOf<{
+      readonly child: {
+        readonly id?: string;
+        readonly bar?: string;
+      };
+    }>();
+  });
+
+  test("LiveObject whose props are all optional, inside a LiveList", () => {
+    const item = new LiveObject<{ id?: string; bar?: string }>({ id: "abc" });
+    const list = new LiveList([item]);
+
+    expectTypeOf(toJson(list)).toEqualTypeOf<
+      readonly {
+        readonly id?: string;
+        readonly bar?: string;
+      }[]
+    >();
+  });
+
+  test("LiveObject whose props are all optional, inside a LiveMap", () => {
+    const map = new LiveMap<
+      string,
+      LiveObject<{ id?: string; bar?: string }>
+    >();
+
+    expectTypeOf(toJson(map)).toEqualTypeOf<{
+      readonly [key: string]: {
+        readonly id?: string;
+        readonly bar?: string;
+      };
+    }>();
+  });
+
+  test("Record<string, specific type> as a LiveObject property", () => {
+    const liveObj = new LiveObject({} as { meta: Record<string, string> });
+
+    expectTypeOf(toJson(liveObj)).toEqualTypeOf<{
+      readonly meta: { readonly [key: string]: string };
+    }>();
+  });
+
+  test("Record<string, specific type> as a LiveMap value", () => {
+    const map = new LiveMap<string, Record<string, string>>();
+
+    expectTypeOf(toJson(map)).toEqualTypeOf<{
+      readonly [key: string]: { readonly [key: string]: string };
+    }>();
+  });
+
+  test("Record<string, specific type> at the top level", () => {
+    expectTypeOf(toJson({} as Record<string, { prop: string }>)).toEqualTypeOf<{
+      readonly [key: string]: { readonly prop: string };
+    }>();
+  });
+
+  test("Partial<Record<string, specific type>> as a LiveObject property", () => {
+    const liveObj = new LiveObject(
+      {} as { meta: Partial<Record<string, string>> }
+    );
+
+    expectTypeOf(toJson(liveObj)).toEqualTypeOf<{
+      readonly meta: { readonly [key: string]: string | undefined };
+    }>();
+  });
+
+  test("Partial<Record<string, specific type>> as a LiveMap value", () => {
+    const map = new LiveMap<string, Partial<Record<string, string>>>();
+
+    expectTypeOf(toJson(map)).toEqualTypeOf<{
+      readonly [key: string]: { readonly [key: string]: string | undefined };
+    }>();
+  });
+
+  test("Partial<Record<string, specific type>> at the top level", () => {
+    expectTypeOf(
+      toJson({} as Partial<Record<string, { prop: string }>>)
+    ).toEqualTypeOf<{
+      readonly [key: string]: { readonly prop: string } | undefined;
+    }>();
+  });
+
+  test("a Json-typed prop does not erase its siblings", () => {
+    const doc = new LiveObject({} as { title: string; settings: Json });
+
+    expectTypeOf(doc.toJSON().title).toEqualTypeOf<string>();
+  });
+
+  test("an Lson-typed prop does not erase its siblings", () => {
+    const child = new LiveObject({} as { known: string; payload: Lson });
+    const parent = new LiveObject({ child });
+
+    expectTypeOf(parent.toJSON().child.known).toEqualTypeOf<string>();
+  });
+
+  test("an index signature does not erase named keys", () => {
+    const child = new LiveObject({} as { [key: string]: Lson; known: string });
+    const parent = new LiveObject({ child });
+
+    expectTypeOf(parent.toJSON().child.known).toEqualTypeOf<string>();
+  });
+
+  test("an index signature does not erase named keys, on a plain object", () => {
+    expectTypeOf(
+      toJson({} as { [key: string]: Lson; version: number }).version
+    ).toEqualTypeOf<number>();
+
+    expectTypeOf(
+      toJson({} as { [key: string]: Json; version: number }).version
+    ).toEqualTypeOf<number>();
+  });
+
+  test("LiveMap with opaque values short-circuits to ReadonlyJsonObject", () => {
+    expectTypeOf(
+      toJson(new LiveMap<string, Lson>())
+    ).toEqualTypeOf<ReadonlyJsonObject>();
+
+    // Deliberate: a constrained key type is dropped along with the value type.
+    // Keeping the key names would have to make them optional, since TKey says
+    // which keys may be inserted and not which ones are present.
+    expectTypeOf(
+      toJson(new LiveMap<"a" | "b", Lson>())
+    ).toEqualTypeOf<ReadonlyJsonObject>();
+  });
+
+  test("toJSON() agrees with ToJson of the same structure", () => {
+    const child = new LiveObject({} as Record<string, Json>);
+    const parent = new LiveObject({ child });
+
+    expectTypeOf(child.toJSON()).toEqualTypeOf(parent.toJSON().child);
+  });
+
+  test("self-referencing LiveObject schema", () => {
+    type Node = LiveObject<{
+      id: string;
+      type: string;
+      attrs?: LiveMap<string, Json>;
+      content?: LiveList<Node>;
+    }>;
+
+    expectTypeOf(toJson({} as Node).id).toEqualTypeOf<string>();
   });
 });
