@@ -79,7 +79,6 @@ const fetchStorageClientMsg: Decoder<FetchStorageClientMsg> = object({
 const updateStorageClientMsg: Decoder<UpdateStorageClientMsg> = object({
   type: constant(ClientMsgCode.UPDATE_STORAGE),
   ops: array(op),
-  includeTextHistory: optional(constant(true)),
 });
 
 const fetchYDocClientMsg: Decoder<FetchYDocClientMsg> = object({
