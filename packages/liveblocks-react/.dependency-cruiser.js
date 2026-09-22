@@ -156,7 +156,7 @@ export default {
       from: { path: "^src/lib/" },
       to: {
         pathNot:
-          "(^src/lib/|src/types/|liveblocks-.*|node_modules/react(-dom)?/|^module$)",
+          "(^src/lib/|src/types/|liveblocks-.*|node_modules/react(-dom)?/)",
       },
     },
   ],

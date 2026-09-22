@@ -3,15 +3,13 @@ import * as React from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { ClientSideSuspense } from "../ClientSideSuspense";
-import { createLiveblocksContext } from "../liveblocks";
-
 beforeEach(() => {
   vi.resetModules();
 });
 
 afterEach(() => {
   vi.doUnmock("react");
+  vi.doUnmock("react-dom");
   vi.doUnmock("../lib/react-dom");
   vi.unstubAllGlobals();
 });
@@ -37,27 +35,52 @@ describe("useBrowser", () => {
     }
   );
 
-  test("propagates React's suspension without starting a query", async () => {
-    vi.stubGlobal("window", undefined);
-    const suspension = new Error("React suspension");
-    mockBrowserSupport(
-      () => {
-        throw suspension;
-      },
-      () => Object.freeze({})
-    );
-    const { createLiveblocksContext } = await import("../liveblocks");
-    const authEndpoint = vi.fn(async () => ({ token: "unused" }));
-    const fetch = vi.fn();
-    const client = createClient({ authEndpoint, polyfills: { fetch } });
-    const {
-      suspense: { useInboxNotifications },
-    } = createLiveblocksContext(client);
+  test.each(["default", "suspense", "factory"])(
+    "suspends hooks in the %s provider before authentication or fetching",
+    async (provider) => {
+      vi.stubGlobal("window", undefined);
+      const suspension$ = new Promise<never>(() => {});
+      const browserValue = Object.freeze({});
+      const nativeUse = vi.fn(() => {
+        throw suspension$;
+      });
+      mockBrowserSupport(nativeUse, () => browserValue);
+      const { LiveblocksProvider, createLiveblocksContext } =
+        await import("../index");
+      const {
+        LiveblocksProvider: SuspenseLiveblocksProvider,
+        useInboxNotifications,
+      } = await import("../suspense");
+      const authEndpoint = vi.fn(async () => ({ token: "unused" }));
+      const fetch = vi.fn();
+      const options = { authEndpoint, polyfills: { fetch } };
+      const Provider =
+        provider === "factory"
+          ? createLiveblocksContext(createClient(options)).LiveblocksProvider
+          : provider === "suspense"
+            ? SuspenseLiveblocksProvider
+            : LiveblocksProvider;
 
-    expect(useInboxNotifications).toThrow(suspension);
-    expect(authEndpoint).not.toHaveBeenCalled();
-    expect(fetch).not.toHaveBeenCalled();
-  });
+      function Content() {
+        useInboxNotifications();
+        return <div>Notifications</div>;
+      }
+
+      const html = renderToString(
+        <Provider {...options}>
+          <React.Suspense fallback={<div>Loading</div>}>
+            <Content />
+          </React.Suspense>
+        </Provider>
+      );
+
+      expect(html).toContain("<div>Loading</div>");
+      expect(html).not.toContain("<div>Notifications</div>");
+      expect(nativeUse).toHaveBeenCalledExactlyOnceWith(browserValue);
+      expect(authEndpoint).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
+    }
+  );
 
   test.each([
     { name: "React 18", nativeUse: undefined, browser: undefined },
@@ -87,13 +110,53 @@ describe("useBrowser", () => {
   );
 });
 
-test("ClientSideSuspense still renders its fallback on the server", () => {
+test.each(["absent", "installed"])(
+  "the native helper ignores React DOM when it is %s",
+  async (reactDOM) => {
+    const nativeUse = vi.fn();
+    const browser = vi.fn();
+    vi.doMock("react", () => ({ ...React, use: nativeUse }));
+    const loadReactDOM = vi.fn(() => {
+      if (reactDOM === "absent") {
+        throw new Error("React DOM is not installed");
+      }
+      return { browser };
+    });
+    vi.doMock("react-dom", loadReactDOM);
+    vi.doMock("../lib/react-dom", () => import("../lib/react-dom.native"));
+    const { LiveblocksProvider } = await import("../index");
+    const { useInboxNotifications } = await import("../suspense");
+    const { useBrowser } = await import("../lib/use-browser");
+    const authEndpoint = vi.fn(async () => ({ token: "unused" }));
+
+    expect(useBrowser).not.toThrow();
+
+    function Content() {
+      useInboxNotifications();
+      return <div>Notifications</div>;
+    }
+
+    vi.stubGlobal("window", undefined);
+    expect(() =>
+      renderToString(
+        <LiveblocksProvider authEndpoint={authEndpoint}>
+          <Content />
+        </LiveblocksProvider>
+      )
+    ).toThrow("ClientSideSuspense");
+    expect(loadReactDOM).not.toHaveBeenCalled();
+    expect(browser).not.toHaveBeenCalled();
+    expect(nativeUse).not.toHaveBeenCalled();
+    expect(authEndpoint).not.toHaveBeenCalled();
+  }
+);
+
+test("ClientSideSuspense still renders its fallback on the server", async () => {
   vi.stubGlobal("window", undefined);
+  mockBrowserSupport(undefined, undefined);
+  const { LiveblocksProvider, ClientSideSuspense, useInboxNotifications } =
+    await import("../suspense");
   const authEndpoint = vi.fn(async () => ({ token: "unused" }));
-  const client = createClient({ authEndpoint });
-  const {
-    suspense: { useInboxNotifications },
-  } = createLiveblocksContext(client);
   const renderContent = vi.fn();
 
   function Content() {
@@ -102,13 +165,12 @@ test("ClientSideSuspense still renders its fallback on the server", () => {
     return <div>Notifications</div>;
   }
 
-  expect(() => renderToString(<Content />)).toThrow("ClientSideSuspense");
-  renderContent.mockClear();
-
   const html = renderToString(
-    <ClientSideSuspense fallback={<div>Loading</div>}>
-      <Content />
-    </ClientSideSuspense>
+    <LiveblocksProvider authEndpoint={authEndpoint}>
+      <ClientSideSuspense fallback={<div>Loading</div>}>
+        <Content />
+      </ClientSideSuspense>
+    </LiveblocksProvider>
   );
 
   expect(html).toContain("<div>Loading</div>");
@@ -121,5 +183,5 @@ function mockBrowserSupport(
   browser: (() => unknown) | undefined
 ) {
   vi.doMock("react", () => ({ ...React, use: nativeUse }));
-  vi.doMock("../lib/react-dom", () => ({ browser }));
+  vi.doMock("react-dom", () => ({ browser }));
 }

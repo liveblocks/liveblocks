@@ -42,9 +42,6 @@
       }
     }
   },
-  "browser": {
-    "./dist/react-dom.node.js": "./dist/react-dom.cjs"
-  },
   "files": [
     "dist/**",
     "suspense/**",
@@ -129,5 +126,9 @@
     "rooms",
     "documents",
     "conflict resolution"
-  ]
+  ],
+  "react-native": {
+    "./dist/react-dom.js": "./dist/react-dom",
+    "./dist/react-dom.cjs": "./dist/react-dom"
+  }
 }
