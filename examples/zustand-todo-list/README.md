@@ -50,4 +50,4 @@ After forking [this example](https://codesandbox.io/s/github/liveblocks/livebloc
 
 ### Tutorial
 
-Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-to-do-list/react-zustand) to build it from scratch.
+Follow our [step by step tutorial](https://liveblocks.io/docs/guides/how-to-create-a-collaborative-to-do-list-with-react-zustand-and-liveblocks) to build it from scratch.

@@ -15,8 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from "./ClientMsg";
-export * from "./feedMetadata";
-export * from "./jsonYolo";
-export * from "./numbers";
-export * from "./y-types";
+import { positiveInteger } from "decoders";
+
+/**
+ * A livefile's byte count, as it arrives on the wire: from a CREATE_FILE op,
+ * from a whole document being installed at once, or from the upload
+ * notification itself.
+ */
+// TODO Remove this .refine() once isSafeInteger is the default check for positiveInteger
+export const fileSize = positiveInteger.refine(
+  Number.isSafeInteger,
+  "Must be a valid file size"
+);
+
+/**
+ * A LiveText node's version counter.
+ */
+// TODO Remove this .refine() once isSafeInteger is the default check for positiveInteger
+export const liveTextVersion = positiveInteger.refine(
+  Number.isSafeInteger,
+  "Must be a safe integer"
+);

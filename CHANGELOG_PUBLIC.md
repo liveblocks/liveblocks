@@ -18,6 +18,40 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 37 (2026-09-11)
+
+## Dashboard
+
+- Enhanced Projects page with grid and list views, search, filters, and sorting options.
+
+## Contributors
+
+pierrelevaillant
+
+# Week 36 (2026-09-04)
+
+## Documentation
+
+- New [Sync overview](https://liveblocks.io/docs/products/sync) page.
+- Sync overview features 14 new subpages detailed each part of Sync.
+- 16 new use cases pages, including [Agentic users](https://liveblocks.io/docs/use-cases/agentic-users), [Chat](https://liveblocks.io/docs/use-cases/chat), [Text editor](https://liveblocks.io/docs/use-cases/text-editor), and more.
+- New [API reference](https://liveblocks.io/docs/api-reference) homepage.
+- API reference is now in a separate section.
+- New guide: [Get started with a multiplayer AI Elements chat](https://liveblocks.io/docs/get-started/nextjs-ai-elements).
+- New guide: [Get started with a custom canvas](https://liveblocks.io/docs/get-started/nextjs-canvas-custom).
+- More get started guides for new `LiveText` text editor integrations.
+- Broken link checker added to GitHub.
+
+## Website
+
+- New homepage for [Liveblocks Sync](https://liveblocks.io/sync).
+- Updated homepage copy.
+- New use case links in navigation.
+
+## Contributors
+
+ctnicholas, stevenfabre, pierrelevaillant
+
 # Week 34 (2026-08-21)
 
 ## v3.24.1
@@ -1093,8 +1127,8 @@ nperez0111, marcbouchenoire, ctnicholas
 ## Zen Router
 
 - Zen Router was released, our open-source HTTP router.
-- [Documentation website for Zen Router](https://zenrouter.liveblocks.io) was
-  published.
+- [Documentation website for Zen Router](https://zenrouter.liveblocks.io)
+  was published.
 - [Repo for Zen Router](https://github.com/liveblocks/zenrouter) was published.
 
 ## Website
@@ -1104,7 +1138,7 @@ nperez0111, marcbouchenoire, ctnicholas
 
 ## Examples
 
-- [Next.js Starter Kit](https://liveblocks.io/nextjs/starter-kit) was updated to
+- [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) was updated to
   support [new features](https://github.com/liveblocks/liveblocks/pull/3109).
   - Organization switcher powered by tenants/organizations, with separate
     inboxes in each.
@@ -1485,7 +1519,7 @@ jrowny
 ## Examples
 
 - New example:
-  [Comments search](https://liveblocks.io/examples/comments-search).
+  [Comments search](https://liveblocks.io/examples/comments-search/nextjs-comments-search).
 - Add custom “Copy link” comment dropdown item to the
   [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker)
   example.
@@ -1642,8 +1676,8 @@ jrowny, marcbouchenoire, nvie, ctnicholas
 ## Documentation
 
 - New AI Copilots get started guides for
-  [Next.js](https://liveblocks.io/docs/get-started/nextjs-ai-copilots) and
-  [React](https://liveblocks.io/docs/get-started/react-ai-copilots).
+  [Next.js](https://liveblocks.io/docs/get-started/nextjs-ai-chat) and
+  [React](https://liveblocks.io/docs/get-started/react-ai-chat).
 - New AI Copilots overview pages:
   - [Copilots](https://liveblocks.io/docs/products/ai-copilots/copilots).
   - [Default components](https://liveblocks.io/docs/products/ai-copilots/default-components).
@@ -1752,8 +1786,8 @@ pierrelevaillant, ctnicholas
 
 ## Examples
 
-New example: [AI app builder](/examples/ai-app-builder). New example:
-[AI calendar](/examples/ai-calendar).
+New example: [AI app builder](/examples/ai-app-builder/nextjs-ai-app-builder). New example:
+[AI calendar](/examples/ai-calendar/nextjs-ai-calendar).
 
 ## Contributors
 
@@ -2195,8 +2229,8 @@ ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
 
 ## Doocumentation
 
-- Improved [Limits](https://liveblocks.io/docs/platform/limits) page.
-- Improved [Plans](https://liveblocks.io/docs/platform/plans) page.
+- Improved [Limits](https://liveblocks.io/docs/pricing/limits) page.
+- Improved [Plans](https://liveblocks.io/docs/pricing/plans) page.
 
 ## Contributors
 
@@ -2694,7 +2728,7 @@ marcbouchenoire, jrowny
 - Improve notification settings in the
   [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
 - Update
-  [notifications settings example](https://liveblocks.io/examples/notification-settings)
+  [notifications settings example](https://liveblocks.io/examples/notification-settings/nextjs-notification-settings)
   to use the latest APIs.
 
 ## Contributors
@@ -2890,7 +2924,7 @@ ctnicholas, marcbouchenoire, pierrelevaillant
 ## Examples
 
 - New example:
-  [Notification settings example](https://liveblocks.io/examples/notification-settings).
+  [Notification settings example](https://liveblocks.io/examples/notification-settings/nextjs-notification-settings).
 - Improved notification settings panel in the
   [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
 
@@ -3582,7 +3616,7 @@ ctnicholas, pierrelevaillant, marcbouchenoire
 ## Examples
 
 - New example:
-  [Novel AI editor](https://liveblocks.io/examples/novel-ai-editor).
+  [Novel AI editor](https://liveblocks.io/examples/notion-like-ai-editor/nextjs-notion-like-ai-editor).
 
 ## Documentation
 
@@ -4530,7 +4564,7 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 - New
   [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
 - Updated
-  [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-yjs-blocknote-advanced)
+  [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-blocknote)
   and guide to v0.14.1.
 
 ## Documentation
@@ -4695,7 +4729,7 @@ For full upgrade instructions and codemods, see the
 - Updated API references for new type improvements.
 - Updated various guides for new type improvements.
 - Updated images and text on
-  [How Liveblocks works](https://liveblocks.io/docs/concepts/how-liveblocks-works)
+  [How Liveblocks works](https://liveblocks.io/docs/concepts)
   page.
 
 ## Website
@@ -4704,11 +4738,11 @@ For full upgrade instructions and codemods, see the
   accurately. Here are some of the key changes:
   - New homepage with interactive 3D game in the hero.
   - New page product page for
-    [Liveblocks Text Editor](https://liveblocks.io/text-editor)
+    [Liveblocks Text Editor](https://liveblocks.io/sync)
   - New page product page for
     [Liveblocks Notifications](https://liveblocks.io/notifications)
   - New page product page for
-    [Liveblocks Sync Datastore](https://liveblocks.io/sync-datastore)
+    [Liveblocks Sync Datastore](https://liveblocks.io/sync)
   - Improved [pricing page](https://liveblocks.io)
   - New navigation
 - New blog post:
@@ -5660,7 +5694,7 @@ connection with Liveblocks servers.
   - `room.subscribe("lost-connection")`: high-level API to get informed when
     Liveblocks’ automatic reconnection process is taking longer than usual, so
     you can show a toast message on screen. (See this
-    [example](https://liveblocks.io/examples/connection-status) for an
+    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status) for an
     illustration.)
 - New behavior:
   - The client will stop retrying to establish a connection in cases where
@@ -5674,7 +5708,7 @@ connection with Liveblocks servers.
   - `useStatus()` - React hook version of `room.getStatus()`
   - `useLostConnectionListener()` - React hook version of
     `room.subscribe("lost-connection")` (See this
-    [example](https://liveblocks.io/examples/connection-status) for an
+    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status) for an
     illustration.)
 
 ### Bugs fixed
@@ -5842,7 +5876,7 @@ Liveblocks account.
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
     to verify event requests from Liveblock's webhook functionality. It also
     provides fully typed `WebhookEvents`.
-  - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
+  - Check out our [Webhooks guide](https://liveblocks.io/docs/platform/webhooks)
     for more details
 
 # v0.19.8
@@ -6004,7 +6038,7 @@ Internal updates:
 All packages now provide an `isReadOnly` flag on user instances. It is available
 when getting self or others. `isReadOnly` is true when storage is read-only, see
 the
-[room management guide](https://liveblocks.io/docs/guides/managing-rooms-users-permissions#permissions)
+[room management guide](https://liveblocks.io/docs/api-reference/authentication#Default-room-permissions)
 for more information.
 
 ```ts
@@ -6065,7 +6099,7 @@ In **@liveblocks/react**:
   ```
 
   To read more, see
-  https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+  https://liveblocks.io/docs/api-reference/troubleshooting#stale-props-zombie-child
 
 - In **@liveblocks/zustand**:
   - Fix a confusing error message
