@@ -311,7 +311,7 @@ export function Composer({
           disabled && "opacity-60"
         )}
       >
-        <EditorContent editor={editor} className="pt-1" />
+        <EditorContent editor={editor} className="pt-1 px-1" />
 
         <div className="flex items-center gap-1 px-3 pb-3 pt-1">
           <ModelSelect

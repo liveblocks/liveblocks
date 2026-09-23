@@ -241,7 +241,7 @@ export function BranchSelect({
   };
 
   const triggerClassName =
-    "flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-muted";
+    "flex h-7 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-muted";
 
   if (!editable) {
     return (

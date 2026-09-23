@@ -158,9 +158,9 @@ export function NewChat({
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8">
         <div className="w-full max-w-2xl">
-          <div className="mb-8 -mt-8 flex items-center justify-center gap-3">
-            <LiveblocksLogo />
-            <h2 className="text-2xl font-normal tracking-tight">
+          <div className="mb-5 -mt-8 flex items-center justify-start gap-3">
+            <LiveblocksLogo className="h-3.5 w-auto shrink-0 text-foreground opacity-80" />
+            <h2 className="text-xl font-medium tracking-tight">
               Let's get started, {self.info.name.split(" ")[0]}
             </h2>
           </div>
@@ -206,7 +206,7 @@ export function NewChat({
                 />
               </ClientSideSuspense>
 
-              <div className="mt-2 flex flex-wrap justify-center gap-2">
+              {/* <div className="mt-2 flex flex-wrap justify-center gap-2">
                 {suggestions.map((suggestion) => (
                   <button
                     key={suggestion.label}
@@ -220,7 +220,7 @@ export function NewChat({
                     {suggestion.label}
                   </button>
                 ))}
-              </div>
+              </div> */}
             </>
           )}
         </div>
@@ -229,12 +229,12 @@ export function NewChat({
   );
 }
 
-function LiveblocksLogo() {
+function LiveblocksLogo({ className }: { className?: string }) {
   return (
     <svg
       aria-label="Liveblocks"
       viewBox="0 9 20 11"
-      className="h-5 w-auto shrink-0 text-foreground"
+      className={className}
       fill="currentColor"
     >
       <path

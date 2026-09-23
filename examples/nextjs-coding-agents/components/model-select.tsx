@@ -152,7 +152,7 @@ export function ModelSelect({
         aria-expanded={open}
         title={models?.error ? models.error : "Model"}
         className={clsx(
-          "flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-muted transition hover:bg-panel-hover hover:text-foreground disabled:cursor-default disabled:hover:bg-transparent",
+          "flex h-7 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-muted transition hover:bg-panel-hover hover:text-foreground disabled:cursor-default disabled:hover:bg-transparent",
           open && "bg-panel-hover text-foreground"
         )}
       >
