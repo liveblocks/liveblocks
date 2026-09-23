@@ -331,7 +331,7 @@ function StopRunButton({ feedId }: { feedId: string }) {
         disabled={stopping}
         className="hover:cursor-pointer text-danger transition hover:underline disabled:cursor-default disabled:no-underline disabled:opacity-60"
       >
-        {stopping ? "Stopping…" : "Stop run"}
+        {stopping ? "Stopping…" : "Stop"}
       </button>
       {error ? <span className="text-danger">{error}</span> : null}
     </>

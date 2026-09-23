@@ -307,13 +307,13 @@ export function Composer({
     <div className="shrink-0">
       <div
         className={clsx(
-          "rounded-2xl border border-border bg-background shadow-lg/6 transition focus-within:border-subtle",
+          "rounded-3xl border border-border bg-background transition focus-within:border-subtle",
           disabled && "opacity-60"
         )}
       >
         <EditorContent editor={editor} className="pt-1" />
 
-        <div className="flex items-center gap-1 px-2 pb-2 pt-1">
+        <div className="flex items-center gap-1 px-3 pb-3 pt-1">
           <ModelSelect
             value={model}
             onChange={onModelChange}

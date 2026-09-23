@@ -13,7 +13,7 @@ import {
 } from "@/components/side-panel";
 import type { ChatFeed } from "@/lib/types";
 
-const CHANGES_TAB = "changes";
+export const CHANGES_TAB = "changes";
 const NO_DOCUMENTS = {};
 
 /**
