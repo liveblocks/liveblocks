@@ -140,7 +140,7 @@ function HumanMessage({
           ) : null}
           {teamOnly ? (
             <span
-              className="inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100"
               title="Judged as a message for the team rather than a request for the agent"
             >
               <MessageCircleOffIcon className="size-3" />
