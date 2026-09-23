@@ -418,6 +418,30 @@ describe("LiveText reconnect acknowledgements", () => {
     expect(text.toString()).toBe("Remote Hello!");
   });
 
+  test("a historyless replay acknowledgement requests a storage resync", () => {
+    const { text, dispatched } = prepareLostAcknowledgement();
+    text._resyncText([["Hello!"]], 1, { origin: "remote" });
+    const replay = nn(dispatched[0]);
+    text._apply(replay, {
+      origin: "local",
+      via: "edit",
+      optimistic: true,
+    });
+    const historylessAck = { ...replay, version: 1 };
+
+    expect(
+      text._apply(historylessAck, {
+        origin: "local",
+        via: "edit",
+        optimistic: false,
+      })
+    ).toEqual({ modified: false, needsStorageResync: true });
+
+    text._resyncText([["Hello!"]], 1, { origin: "remote" });
+    expect(text.toString()).toBe("Hello!");
+    expect(text.version).toBe(1);
+  });
+
   test("repeated reconnects preserve edits queued behind a stored op", () => {
     const { text, dispatched, acknowledgement } = prepareLostAcknowledgement();
     text.insert(0, "A");

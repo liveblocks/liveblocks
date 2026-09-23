@@ -2418,6 +2418,17 @@ export function createRoom<
 
     const createdNodeIds = new Set<string>();
     for (const op of ops) {
+      if (!isLocal && op.type === OpCode.UPDATE_TEXT && op.opId !== undefined) {
+        const node = context.pool.nodes.get(op.id);
+        if (
+          node !== undefined &&
+          isLiveText(node) &&
+          node._deferAckWithoutHistory(op)
+        ) {
+          continue;
+        }
+      }
+
       let source: OpSource;
 
       if (isLocal) {
@@ -2438,6 +2449,10 @@ export function createRoom<
       }
 
       const applyOpResult = applyOp(op, source);
+      if ("needsStorageResync" in applyOpResult) {
+        refreshStorage();
+        flushNowOrSoon();
+      }
       if (applyOpResult.modified) {
         const nodeId = applyOpResult.modified.node._id;
 

@@ -204,6 +204,7 @@ export class LiveText extends AbstractCrdt {
 
   /** Wait for replay history before applying post-snapshot remote ops. */
   #reconnecting = false;
+  #deferredHistorylessAck = false;
   #bufferedRemoteOps: UpdateTextOp[] = [];
 
   /**
@@ -295,6 +296,23 @@ export class LiveText extends AbstractCrdt {
   /** @internal */
   _detachChild(_crdt: LiveNode): ApplyResult {
     throw new Error("LiveText cannot contain child nodes");
+  }
+
+  /** @internal */
+  _deferAckWithoutHistory(op: UpdateTextOp): boolean {
+    if (
+      this.#reconnecting &&
+      !this.#deferredHistorylessAck &&
+      op.opId !== undefined &&
+      op.opId === this.#inFlightOpId &&
+      op.history === undefined
+    ) {
+      // The original ack can arrive after a snapshot but before the replay
+      // ack. Keep the op pending so the latter can reconcile the timeline.
+      this.#deferredHistorylessAck = true;
+      return true;
+    }
+    return false;
   }
 
   /** @internal */
@@ -668,11 +686,15 @@ export class LiveText extends AbstractCrdt {
 
   /** Recover the missing server timeline, preserving the normal OT invariants. */
   #reconcileAck(op: UpdateTextOp, source: UpdateSource): ApplyResult {
-    const history = nn(
-      op.history,
-      "LiveText replay acknowledgement requires history"
-    );
+    const history = op.history;
+    if (history === undefined) {
+      // A second historyless ack cannot reconcile the timeline. Drop pending
+      // state and request an authoritative snapshot instead of throwing.
+      this._rejectPendingOp(nn(op.opId));
+      return { modified: false, needsStorageResync: true };
+    }
     this.#reconnecting = false;
+    this.#deferredHistorylessAck = false;
     const buffered = this.#bufferedRemoteOps;
     this.#bufferedRemoteOps = [];
     const changes: LiveTextChange[] = [];
@@ -882,6 +904,7 @@ export class LiveText extends AbstractCrdt {
   ): LiveTextUpdates | undefined {
     if (this.#inFlightOpId !== undefined) {
       this.#reconnecting = true;
+      this.#deferredHistorylessAck = false;
       return undefined;
     }
 
@@ -919,6 +942,7 @@ export class LiveText extends AbstractCrdt {
     this.#queuedOps = [];
     this.#bufferedRemoteOps = [];
     this.#reconnecting = false;
+    this.#deferredHistorylessAck = false;
   }
 
   #recordAccepted(
