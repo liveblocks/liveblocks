@@ -64,6 +64,7 @@ export function SidePanel({
   onTabChange,
   collapsed,
   onCollapsedChange,
+  highlight = 0,
   children,
 }: {
   tabs: SidePanelTab[];
@@ -71,6 +72,9 @@ export function SidePanel({
   onTabChange: (tabId: string) => void;
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
+  // Changes each time something outside the panel opens a tab; the panel
+  // flashes so the click has a visible effect even if nothing else moved
+  highlight?: number;
   children: ReactNode;
 }) {
   const [width, setWidth] = useState(() =>
@@ -158,6 +162,15 @@ export function SidePanel({
         onPointerDown={startResize}
         className="absolute inset-y-0 -left-1 z-10 w-2 cursor-col-resize hover:bg-accent/30"
       />
+
+      {/* Remounted on every highlight so the animation replays */}
+      {highlight > 0 ? (
+        <div
+          key={highlight}
+          aria-hidden
+          className="panel-flash pointer-events-none absolute inset-0 z-20"
+        />
+      ) : null}
 
       <header className="flex h-12 shrink-0 items-center gap-1 border-b border-border pr-2 pl-1">
         <div

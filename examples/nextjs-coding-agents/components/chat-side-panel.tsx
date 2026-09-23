@@ -84,10 +84,15 @@ export function useChatSidePanel(feed: ChatFeed) {
       ? selected
       : (tabs[tabs.length - 1]?.id ?? null);
 
+  // Bumped whenever something outside the panel opens a tab, so the panel
+  // can flash: when it's already showing that tab, nothing else would move
+  const [highlight, setHighlight] = useState(0);
+
   const open = useCallback(
     (tabId: string) => {
       setSelected(tabId);
       setCollapsed(false);
+      setHighlight((value) => value + 1);
     },
     [setCollapsed]
   );
@@ -98,6 +103,7 @@ export function useChatSidePanel(feed: ChatFeed) {
     setActiveTab: setSelected,
     collapsed,
     setCollapsed,
+    highlight,
     context: useMemo(() => ({ open }), [open]),
   };
 }
@@ -112,7 +118,8 @@ export function ChatSidePanel({
   panel: ReturnType<typeof useChatSidePanel>;
 }) {
   const { feedId, metadata } = feed;
-  const { tabs, activeTab, setActiveTab, collapsed, setCollapsed } = panel;
+  const { tabs, activeTab, setActiveTab, collapsed, setCollapsed, highlight } =
+    panel;
 
   if (tabs.length === 0 || activeTab === null) {
     return null;
@@ -125,6 +132,7 @@ export function ChatSidePanel({
       onTabChange={setActiveTab}
       collapsed={collapsed}
       onCollapsedChange={setCollapsed}
+      highlight={highlight}
     >
       {activeTab === CHANGES_TAB ? (
         <ChangesView

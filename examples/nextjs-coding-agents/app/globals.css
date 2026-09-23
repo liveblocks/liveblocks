@@ -333,6 +333,28 @@
   }
 }
 
+/* One-shot flash over the side panel when a card in the chat opens a tab */
+.panel-flash {
+  animation: panel-flash 900ms ease-out forwards;
+}
+
+@keyframes panel-flash {
+  from {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+  to {
+    background: transparent;
+    box-shadow: inset 0 0 0 2px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-flash {
+    animation-duration: 1ms;
+  }
+}
+
 /* The Tiptap editor renders bare <pre> blocks, unlike the chat's code cards */
 .document-editor pre {
   border-radius: 0.5rem;
