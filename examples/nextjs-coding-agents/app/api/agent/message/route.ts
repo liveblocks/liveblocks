@@ -132,22 +132,21 @@ async function decide({
     );
   }
 
-  if (!decision.forAgent) {
-    await liveblocks.updateFeedMessage({
-      roomId,
-      feedId,
-      messageId,
-      data: { ...message.data, handled: true, forAgent: false },
-    });
-  } else if (message.data.forAgent === false) {
-    // Sent after all: put it back in the queue
-    await liveblocks.updateFeedMessage({
-      roomId,
-      feedId,
-      messageId,
-      data: { ...message.data, handled: false, forAgent: true },
-    });
-  }
+  // Record the outcome on the message: clients only show "Queued" once the
+  // agent is confirmed to be getting it. A forced message that was handled
+  // as team-only goes back into the queue.
+  await liveblocks.updateFeedMessage({
+    roomId,
+    feedId,
+    messageId,
+    data: decision.forAgent
+      ? {
+          ...message.data,
+          forAgent: true,
+          ...(message.data.forAgent === false ? { handled: false } : {}),
+        }
+      : { ...message.data, handled: true, forAgent: false },
+  });
 
   return decision;
 }

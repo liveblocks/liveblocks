@@ -98,15 +98,19 @@ declare global {
       // Human messages: set by the server once included in an agent run,
       // or once triage decided the agent wasn't needed
       handled?: boolean;
-      // Human messages: false when triage judged it as people talking to
-      // each other, so it was never sent to the agent (lib/server/triage.ts)
+      // Human messages: set by the server once triage decided (true: for
+      // the agent and queued; false: people talking to each other, never
+      // sent to the agent). Unset while triage is still running.
       forAgent?: boolean;
       // Agent messages
       status?: MessageStatus;
       parts?: AgentPart[];
       // Ids of the human messages this agent reply addressed
       repliesTo?: string[];
-      // When the burst of runs ended; with `createdAt` gives "Worked for…"
+      // When the burst of runs began. The reply is re-posted at the bottom
+      // when people post mid-run, so `createdAt` can be later than this.
+      startedAt?: number;
+      // When the burst of runs ended; with `startedAt` gives "Worked for…"
       finishedAt?: number;
       branch?: string;
       prUrl?: string;

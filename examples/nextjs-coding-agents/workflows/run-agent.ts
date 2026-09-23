@@ -61,6 +61,8 @@ type Claim = {
 
 type RunInput = ChatLocation & {
   agentMessageId: string;
+  // Kept on every write, since updates replace the message data wholesale
+  startedAt: number;
   prompt: string;
   parts: AgentPart[];
   cursorAgentId?: string;
@@ -108,7 +110,9 @@ export async function runAgentForChat(location: ChatLocation) {
     return { status: "nothing-to-do" as const };
   }
 
-  const agentMessageId = await createAgentMessage(location);
+  const created = await createAgentMessage(location);
+  let agentMessageId = created.id;
+  const startedAt = created.startedAt;
 
   let parts: AgentPart[] = [];
   const repliesTo: string[] = [];
@@ -139,8 +143,12 @@ export async function runAgentForChat(location: ChatLocation) {
     // visible message (tool calls stay as a record of the work) and hand it
     // to the follow-up run to revise. Only the last run's reply is shown.
     //
-    // This is written before the messages are marked handled: clients hide
-    // the draft while a follow-up is queued, so the order avoids a flash.
+    // The agent message also moves below the new human messages, so the
+    // eventual reply lands at the bottom of the chat, after everything it
+    // answers, rather than above messages that were posted mid-run.
+    //
+    // This happens before the messages are marked handled: clients hide the
+    // draft while a follow-up is queued, so the order avoids a flash.
     const previousReply = runIndex > 0 ? text : undefined;
     if (runIndex > 0) {
       parts = [
@@ -150,7 +158,12 @@ export async function runAgentForChat(location: ChatLocation) {
           text: `Follow-up from ${formatAuthors(pending, users)} — revising before replying`,
         },
       ];
-      await showParts({ ...location, agentMessageId, parts });
+      agentMessageId = await moveAgentMessageToBottom({
+        ...location,
+        agentMessageId,
+        parts,
+        startedAt,
+      });
     }
 
     await markHandled(location, pending);
@@ -162,6 +175,7 @@ export async function runAgentForChat(location: ChatLocation) {
     const outcome = await runCursor({
       ...location,
       agentMessageId,
+      startedAt,
       prompt: buildPrompt({
         messages: pending,
         users,
@@ -230,6 +244,7 @@ export async function runAgentForChat(location: ChatLocation) {
   await finalizeAgentMessage({
     ...location,
     agentMessageId,
+    startedAt,
     parts,
     repliesTo,
     cursorAgentId,
@@ -372,17 +387,43 @@ async function markHandled(
 async function createAgentMessage({ roomId, feedId }: ChatLocation) {
   "use step";
 
+  const startedAt = Date.now();
   const message = await getLiveblocks().createFeedMessage({
     roomId,
     feedId,
-    data: {
-      role: "agent",
-      userId: AI_USER_ID,
-      content: "",
-      status: "running",
-      parts: [],
-    },
+    data: agentMessageData({ status: "running", parts: [], startedAt }),
   });
+
+  return { id: message.id, startedAt };
+}
+
+/**
+ * Re-posts the running agent message as a new one at the bottom of the
+ * chat, keeping its work so far, and removes the old one. Used when people
+ * post while the agent works, so the reply ends up after their messages.
+ */
+async function moveAgentMessageToBottom({
+  roomId,
+  feedId,
+  agentMessageId,
+  parts,
+  startedAt,
+}: ChatLocation & {
+  agentMessageId: string;
+  parts: AgentPart[];
+  startedAt: number;
+}) {
+  "use step";
+
+  const liveblocks = getLiveblocks();
+  const message = await liveblocks.createFeedMessage({
+    roomId,
+    feedId,
+    data: agentMessageData({ status: "running", parts, startedAt }),
+  });
+  await liveblocks
+    .deleteFeedMessage({ roomId, feedId, messageId: agentMessageId })
+    .catch(() => {});
 
   return message.id;
 }
@@ -399,23 +440,6 @@ async function abandonAgentMessage({
     .catch(() => {});
 }
 
-/** Overwrites the running agent message's parts between runs. */
-async function showParts({
-  roomId,
-  feedId,
-  agentMessageId,
-  parts,
-}: ChatLocation & { agentMessageId: string; parts: AgentPart[] }) {
-  "use step";
-
-  await getLiveblocks().updateFeedMessage({
-    roomId,
-    feedId,
-    messageId: agentMessageId,
-    data: agentMessageData({ status: "running", parts }),
-  });
-}
-
 /**
  * One Cursor run. Creates (or resumes) the chat's cloud agent, sends the
  * prompt, and streams tool calls and text into the agent message by
@@ -424,7 +448,7 @@ async function showParts({
 async function runCursor(input: RunInput): Promise<RunOutcome> {
   "use step";
 
-  const { roomId, feedId, agentMessageId, prompt, repo } = input;
+  const { roomId, feedId, agentMessageId, startedAt, prompt, repo } = input;
   const liveblocks = getLiveblocks();
   const apiKey = getCursorApiKey();
   // The stored model may be one this key can't use; run with a fallback
@@ -443,7 +467,7 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
       roomId,
       feedId,
       messageId: agentMessageId,
-      data: agentMessageData({ status: "running", parts }),
+      data: agentMessageData({ status: "running", parts, startedAt }),
     });
   };
 
@@ -834,6 +858,7 @@ async function finalizeAgentMessage({
   roomId,
   feedId,
   agentMessageId,
+  startedAt,
   parts,
   repliesTo,
   cursorAgentId,
@@ -846,6 +871,7 @@ async function finalizeAgentMessage({
   title,
 }: ChatLocation & {
   agentMessageId: string;
+  startedAt: number;
   parts: AgentPart[];
   repliesTo: string[];
   cursorAgentId?: string;
@@ -868,6 +894,7 @@ async function finalizeAgentMessage({
     data: agentMessageData({
       status: error ? "error" : "done",
       parts,
+      startedAt,
       content: text,
       repliesTo,
       finishedAt: Date.now(),

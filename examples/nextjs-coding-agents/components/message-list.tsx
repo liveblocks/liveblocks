@@ -28,6 +28,8 @@ export function MessageList({
   // is still running: it will be handled in a follow-up run. That agent
   // reply, in turn, is "holding" — whatever it has written so far is only a
   // draft, so the UI hides it rather than flashing a reply that gets revised.
+  // Neither applies until the server has confirmed the message is for the
+  // agent (`forAgent`), since it may turn out to be chat between teammates.
   const { queuedIds, holdingIds } = useMemo(() => {
     const queued = new Set<string>();
     const holding = new Set<string>();
@@ -38,6 +40,7 @@ export function MessageList({
       } else if (
         runningAgent !== null &&
         !message.data.handled &&
+        message.data.forAgent === true &&
         message.createdAt > runningAgent.createdAt
       ) {
         queued.add(message.id);

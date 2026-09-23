@@ -202,6 +202,7 @@ function AgentMessage({
     prUrl,
     branch,
     repliesTo,
+    startedAt,
     finishedAt,
     documents = [],
   } = message.data;
@@ -220,7 +221,10 @@ function AgentMessage({
       !(index === parts.length - 1 && part.type === "text" && summary)
   );
   const errorParts = parts.filter((part) => part.type === "error");
-  const durationMs = (finishedAt ?? message.updatedAt) - message.createdAt;
+  // The message may have been re-posted lower down mid-burst, so the burst's
+  // own start time is what counts
+  const durationMs =
+    (finishedAt ?? message.updatedAt) - (startedAt ?? message.createdAt);
 
   return (
     <div className="flex items-start gap-2.5">

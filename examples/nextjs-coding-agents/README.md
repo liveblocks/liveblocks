@@ -33,9 +33,10 @@ requests.
 Several people can talk to the same agent at once. A message posted while the
 agent is busy is shown as queued; when the current run finishes, the queued
 messages are sent as a follow-up run on the same agent, and the whole burst is
-presented as one reply that only completes once everyone has been handled. The
-agent's tool calls and text are streamed into the feed message from a
-[Vercel Workflow](https://workflow.dev/) with
+presented as one reply that only completes once everyone has been handled; it
+moves below the messages it picked up, so the answer always lands at the bottom
+of the chat. The agent's tool calls and text are streamed into the feed message
+from a [Vercel Workflow](https://workflow.dev/) with
 [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node),
 so every client sees the run live. When a run completes, everyone who took part
 in the chat gets an inbox notification, and the agent's changes appear in a diff
