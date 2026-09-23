@@ -197,8 +197,7 @@ export function WorkLog({
               !canExpand && "opacity-40"
             )}
           />
-          {running ? <Loader2Icon className="size-3 animate-spin" /> : null}
-          {label}
+          <span className={running ? "text-shimmer" : undefined}>{label}</span>
         </button>
         {running && action ? (
           <>
@@ -371,7 +370,7 @@ export function PullRequestCard({
       href={prUrl}
       target="_blank"
       rel="noreferrer noopener"
-      className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 transition hover:bg-panel-hover"
+      className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-background px-5 py-4 transition hover:bg-panel-hover"
     >
       {content}
       <span className="flex shrink-0 items-center gap-1 text-xs text-muted">

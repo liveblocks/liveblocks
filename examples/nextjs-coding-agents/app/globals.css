@@ -299,6 +299,40 @@
   font-size: 1rem;
 }
 
+/* A highlight sweeping across text, for "Working…" while the agent runs */
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--muted) 40%,
+    var(--foreground) 50%,
+    var(--muted) 60%,
+    var(--muted) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: text-shimmer 2.2s linear infinite;
+}
+
+@keyframes text-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-shimmer {
+    animation: none;
+    background: none;
+    color: var(--muted);
+  }
+}
+
 /* The Tiptap editor renders bare <pre> blocks, unlike the chat's code cards */
 .document-editor pre {
   border-radius: 0.5rem;
