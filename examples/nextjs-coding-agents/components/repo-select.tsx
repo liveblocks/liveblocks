@@ -236,7 +236,7 @@ export function RepoSelect({
   };
 
   const triggerClassName =
-    "flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted transition hover:bg-panel-hover hover:text-foreground disabled:cursor-default disabled:hover:bg-transparent";
+    "flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-muted";
 
   const showEmptyRepos =
     repos !== null &&
@@ -251,10 +251,7 @@ export function RepoSelect({
   if (!editable) {
     return (
       <span
-        className={clsx(
-          triggerClassName,
-          "cursor-default hover:bg-transparent"
-        )}
+        className={clsx(triggerClassName, "cursor-default")}
         title={
           locked ? "Repository is locked for this deployment" : "Repository"
         }
@@ -278,6 +275,7 @@ export function RepoSelect({
         title="Repository"
         className={clsx(
           triggerClassName,
+          "transition hover:bg-panel-hover hover:text-foreground disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-muted",
           open && "bg-panel-hover text-foreground"
         )}
       >

@@ -157,18 +157,12 @@ export function NewChat({
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8">
-        <div className="w-full max-w-3xl">
-          <div className="mb-8 flex flex-col items-center text-center">
-            <span className="mb-4 flex size-11 items-center justify-center rounded-xl bg-accent-soft text-accent-foreground">
-              <SparklesIcon className="size-5" />
-            </span>
-            <h2 className="text-xl font-semibold tracking-tight">
-              What should the agent work on?
+        <div className="w-full max-w-2xl">
+          <div className="mb-8 -mt-8 flex items-center justify-center gap-3">
+            <LiveblocksLogo />
+            <h2 className="text-2xl font-normal tracking-tight">
+              Let's get started, {self.info.name.split(" ")[0]}
             </h2>
-            <p className="mt-1.5 max-w-md text-sm text-muted">
-              Everyone on the team can join the chat. The agent finishes the
-              current task before picking up follow-ups, then replies once.
-            </p>
           </div>
 
           {!canWrite ? (
@@ -232,5 +226,27 @@ export function NewChat({
         </div>
       </div>
     </div>
+  );
+}
+
+function LiveblocksLogo() {
+  return (
+    <svg
+      aria-label="Liveblocks"
+      viewBox="0 9 20 11"
+      className="h-5 w-auto shrink-0 text-foreground"
+      fill="currentColor"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M13.5 9H0L4 13V18.5L13.5 9Z"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M6.5 20H20L16 16V10.5L6.5 20Z"
+      />
+    </svg>
   );
 }

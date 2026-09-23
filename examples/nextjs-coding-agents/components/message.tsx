@@ -84,7 +84,7 @@ function HumanMessage({
   // Triage judged this as people talking to each other; the author can
   // overrule it
   const teamOnly = message.data.forAgent === false;
-  const canDelete = isOwn && (!message.data.handled || teamOnly);
+  const canDelete = isOwn && !message.data.handled;
 
   return (
     <div

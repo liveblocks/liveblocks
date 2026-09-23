@@ -307,11 +307,11 @@ export function Composer({
     <div className="shrink-0">
       <div
         className={clsx(
-          "rounded-lg border border-border bg-background shadow-lg/6 transition focus-within:border-subtle",
+          "rounded-2xl border border-border bg-background shadow-lg/6 transition focus-within:border-subtle",
           disabled && "opacity-60"
         )}
       >
-        <EditorContent editor={editor} />
+        <EditorContent editor={editor} className="pt-1" />
 
         <div className="flex items-center gap-1 px-2 pb-2 pt-1">
           <ModelSelect
@@ -336,12 +336,7 @@ export function Composer({
               disabled={disabled}
             />
           ) : null}
-
-          <span className="ml-auto hidden text-[11px] text-subtle sm:block">
-            <kbd className="font-sans">@</kbd>AI to ask the agent ·{" "}
-            <kbd className="font-sans">/</kbd> skills
-          </span>
-
+          <div className="grow" />
           <button
             type="button"
             onClick={() => void sendMessage()}

@@ -241,17 +241,11 @@ export function BranchSelect({
   };
 
   const triggerClassName =
-    "flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted transition hover:bg-panel-hover hover:text-foreground disabled:cursor-default disabled:hover:bg-transparent";
+    "flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-muted";
 
   if (!editable) {
     return (
-      <span
-        className={clsx(
-          triggerClassName,
-          "cursor-default hover:bg-transparent"
-        )}
-        title="Branch"
-      >
+      <span className={clsx(triggerClassName, "cursor-default")} title="Branch">
         <GitCommitHorizontalIcon className="size-3.5" />
         <span className="max-w-32 truncate font-mono">{repo.ref}</span>
       </span>
@@ -275,6 +269,7 @@ export function BranchSelect({
         title="Branch"
         className={clsx(
           triggerClassName,
+          "transition hover:bg-panel-hover hover:text-foreground disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-muted",
           open && "bg-panel-hover text-foreground"
         )}
       >
