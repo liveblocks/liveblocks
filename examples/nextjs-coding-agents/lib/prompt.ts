@@ -2,9 +2,9 @@ import { DOCS_ARTIFACT_DIR } from "@/lib/documents";
 import { DIFF_ARTIFACT_DIR, DIFF_ARTIFACT_FILE } from "@/lib/repo";
 import { coAuthorTrailer, type GitHubUser } from "@/lib/server/github";
 import {
-  getSkill,
   getSkillIdsFromContent,
   stripSkillTokens,
+  type Skill,
 } from "@/lib/skills";
 import type { ChatMessage } from "@/lib/types";
 
@@ -94,13 +94,6 @@ const FINAL_MESSAGE_INSTRUCTIONS = [
   "Keep it under 80 words. No headings, no code blocks, no links, no file paths, no list of changed files, no restating the request, no sign-off, and don't mention committing, the diff, or the pull request. If you wrote a document, say so in a few words; the app shows it next to the chat, so don't paste its contents.",
 ].join("\n");
 
-/** Replaces `<@login>` tokens with `@Name` so the model sees readable names. */
-export function resolveMentions(content: string, users?: Participants) {
-  return content.replace(/<@([^>]+)>/g, (_, login: string) => {
-    return `@${users?.get(login)?.name ?? login}`;
-  });
-}
-
 /**
  * Builds the prompt for one run from the human messages that haven't been
  * handled yet. Skills referenced in those messages are expanded into their
@@ -113,12 +106,15 @@ export function resolveMentions(content: string, users?: Participants) {
 export function buildPrompt({
   messages,
   users,
+  skills,
   repoRef,
   documents = [],
   previousReply,
 }: {
   messages: ChatMessage[];
   users: Participants;
+  /** Every skill in the `skills/` directory; only referenced ones are used */
+  skills: Skill[];
   /** Base branch, used for the diff the agent saves; unset without a repo */
   repoRef?: string;
   /** Documents already written in this chat, with their current content */
@@ -134,17 +130,13 @@ export function buildPrompt({
   }
 
   const skillSections = [...skillIds]
-    .map((id) => getSkill(id))
+    .map((id) => skills.find((skill) => skill.id === id))
     .filter((skill) => skill !== undefined)
     .map((skill) => `## Skill: ${skill.name}\n${skill.instructions}`);
 
   const messageSections = messages.map((message) => {
     const author = users.get(message.data.userId)?.name ?? message.data.userId;
-    const content = resolveMentions(
-      stripSkillTokens(message.data.content),
-      users
-    );
-    return `**${author}:** ${content}`;
+    return `**${author}:** ${stripSkillTokens(message.data.content)}`;
   });
 
   return [
@@ -202,8 +194,8 @@ function buildWrapUpInstructions(
 }
 
 /** Chat title derived from the first human message. */
-export function deriveTitle(content: string, users?: Participants) {
-  const plain = resolveMentions(stripSkillTokens(content), users)
+export function deriveTitle(content: string) {
+  const plain = stripSkillTokens(content)
     .replace(/[`*_~#>]/g, "")
     .replace(/\s+/g, " ")
     .trim();

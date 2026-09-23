@@ -11,11 +11,6 @@ import clsx from "clsx";
 import { ArrowUpIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BranchSelect } from "@/components/branch-select";
-import {
-  MentionSuggestions,
-  type MentionItem,
-  type MentionSuggestionsRef,
-} from "@/components/mention-suggestions";
 import { ModelSelect } from "@/components/model-select";
 import { RepoSelect } from "@/components/repo-select";
 import {
@@ -25,7 +20,8 @@ import {
 import { useTypingLabel } from "@/components/typing-indicator";
 import type { Repo } from "@/lib/repo";
 import { isMessageEmpty, serializeMarkdown } from "@/lib/serialize-markdown";
-import { searchSkills, type Skill } from "@/lib/skills";
+import { searchSkills, type SkillSummary } from "@/lib/skills";
+import { fetchSkills } from "@/lib/use-skills";
 import "./composer.css";
 
 function createPlaceholderExtension(placeholder: string) {
@@ -66,26 +62,8 @@ function createPlaceholderExtension(placeholder: string) {
   });
 }
 
-type MentionSuggestion = { id: string; name: string; avatar: string };
-
-async function fetchMentionItems(query: string): Promise<MentionItem[]> {
-  const response = await fetch(
-    `/api/users/search?text=${encodeURIComponent(query)}`
-  );
-  if (!response.ok) {
-    return [];
-  }
-  // Shape is defined by /api/users/search
-  const users = (await response.json()) as MentionSuggestion[];
-  return users.map((user) => ({
-    id: user.id,
-    label: user.name,
-    avatar: user.avatar,
-  }));
-}
-
-// Skills reuse the Mention node under a different name and trigger character,
-// so the `/` popup gets the same keyboard handling as `@` mentions.
+// Skills are Tiptap's Mention node under another name and trigger character:
+// an inline atom with an id and a label, picked from a "/" popup.
 const SkillNode = Mention.extend({ name: "skill" });
 
 export function Composer({
@@ -154,48 +132,6 @@ export function Composer({
         horizontalRule: false,
       }),
       createPlaceholderExtension(placeholder),
-      Mention.configure({
-        HTMLAttributes: { class: "mention" },
-        renderText({ node }) {
-          return `@${node.attrs.label ?? node.attrs.id}`;
-        },
-        suggestion: {
-          char: "@",
-          pluginKey: new PluginKey("mentionSuggestion"),
-          items: ({ query }) => fetchMentionItems(query),
-          render: () => {
-            let component: ReactRenderer<MentionSuggestionsRef> | null = null;
-            let unmount: (() => void) | null = null;
-
-            return {
-              onStart: (props) => {
-                popupOpenRef.current = true;
-                component = new ReactRenderer(MentionSuggestions, {
-                  props,
-                  editor: props.editor,
-                });
-                unmount = props.mount(component.element);
-              },
-              onUpdate: (props) => {
-                component?.updateProps(props);
-              },
-              onKeyDown: (props) => {
-                if (props.event.key === "Escape") {
-                  return true;
-                }
-                return component?.ref?.onKeyDown(props) ?? false;
-              },
-              onExit: () => {
-                popupOpenRef.current = false;
-                unmount?.();
-                component?.destroy();
-                component = null;
-                unmount = null;
-              },
-            };
-          },
-        },
-      }),
       SkillNode.configure({
         HTMLAttributes: { class: "skill" },
         renderText({ node }) {
@@ -208,7 +144,8 @@ export function Composer({
           // and paths don't open the popup.
           allowedPrefixes: [" "],
           startOfLine: false,
-          items: ({ query }): Skill[] => searchSkills(query),
+          items: async ({ query }): Promise<SkillSummary[]> =>
+            searchSkills(await fetchSkills(), query),
           render: () => {
             let component: ReactRenderer<SkillSuggestionsRef> | null = null;
             let unmount: (() => void) | null = null;
@@ -323,7 +260,7 @@ export function Composer({
     <div className="shrink-0">
       <div
         className={clsx(
-          "rounded-2xl border border-border bg-background shadow-lg/6 transition focus-within:border-subtle",
+          "rounded-lg border border-border bg-background shadow-lg/6 transition focus-within:border-subtle",
           disabled && "opacity-60"
         )}
       >
@@ -354,7 +291,6 @@ export function Composer({
           ) : null}
 
           <span className="ml-auto hidden text-[11px] text-subtle sm:block">
-            <kbd className="font-sans">@</kbd> mention ·{" "}
             <kbd className="font-sans">/</kbd> skills
           </span>
 

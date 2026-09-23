@@ -14,9 +14,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     GitHub({
       authorization: {
-        // `read:org` lets us check membership of GITHUB_ALLOWED_ORG and
-        // list its members for @mentions; `user:email` gives us the email
-        // used in `Co-authored-by` trailers.
+        // `read:org` lets us check membership of GITHUB_ALLOWED_ORG;
+        // `user:email` gives us the email used in `Co-authored-by` trailers.
         params: { scope: "read:user user:email read:org" },
       },
     }),

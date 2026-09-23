@@ -29,8 +29,6 @@ function serializeInline(node: JSONContent): string {
   switch (node.type) {
     case "text":
       return serializeMarks(node.text ?? "", node.marks);
-    case "mention":
-      return `<@${String(node.attrs?.id ?? "")}>`;
     case "skill":
       return `<skill:${String(node.attrs?.id ?? "")}>`;
     case "hardBreak":

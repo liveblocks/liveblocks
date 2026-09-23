@@ -53,9 +53,25 @@ Storage tree with `Liveblocks.mutateStorage` (`lib/server/document-patch.ts`).
 It's a three-way merge against the version the agent was shown, block by block:
 paragraphs the agent didn't touch keep whatever people did to them meanwhile,
 and a changed paragraph becomes a single `LiveText` replacement rather than a
-rewrite, so nobody loses their place. The composer is also Tiptap: type `@` to
-mention teammates and `/` to pick a pre-baked skill (`lib/skills.ts`), and
-choose the model per chat from the dropdown.
+rewrite, so nobody loses their place. The composer is also Tiptap: type `/` to
+pick a skill, and choose the model per chat from the dropdown.
+
+Skills are reusable instructions for the agent, loaded from the `skills/`
+directory. Each one is a folder with a `SKILL.md` inside: frontmatter with a
+`name` and `description` for the menu, then the instructions as the body.
+
+```markdown
+---
+name: Fix bug
+description: Reproduce and fix a bug, with a regression test
+---
+
+Treat the message as a bug report. First locate the root cause...
+```
+
+The folder name is the skill's id (`/fix-bug`). Add a folder and it appears in
+the `/` menu; when a message uses it, the instructions are prepended to the
+agent's prompt (`lib/server/skills.ts`, `lib/prompt.ts`).
 
 ### How identity works
 

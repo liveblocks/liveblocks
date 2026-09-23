@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
   // The Cursor SDK ships prebuilt chunks (and native helpers) that must be
   // loaded from node_modules at runtime rather than bundled.
   serverExternalPackages: ["@cursor/sdk"],
+  // Skills are read from `skills/` at runtime (lib/server/skills.ts), so the
+  // folder has to ship with every server function: the API route that lists
+  // them and the workflow steps that build the prompt.
+  outputFileTracingIncludes: {
+    "/**/*": ["./skills/**/*"],
+  },
 };
 
 export default withWorkflow(nextConfig);

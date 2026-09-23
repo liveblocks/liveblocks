@@ -15,13 +15,11 @@ export type GitHubUser = {
 
 const API = "https://api.github.com";
 const USER_TTL_MS = 60 * 60 * 1000;
-const MEMBERS_TTL_MS = 10 * 60 * 1000;
 
 const userCache = new Map<
   string,
   { fetchedAt: number; user: GitHubUser | null }
 >();
-let membersCache: { fetchedAt: number; members: GitHubUser[] } | null = null;
 
 function appAuthorization() {
   const id = process.env.AUTH_GITHUB_ID;
@@ -112,61 +110,6 @@ export async function isOrgMember(org: string, accessToken: string) {
   }
   const membership = (await response.json()) as { state?: string };
   return membership.state === "active";
-}
-
-/**
- * Members of the organization, for @mention suggestions. Listed with a
- * member's token (the org may hide its member list from outsiders).
- */
-export async function listOrgMembers(
-  org: string,
-  accessToken: string
-): Promise<GitHubUser[]> {
-  if (membersCache && Date.now() - membersCache.fetchedAt < MEMBERS_TTL_MS) {
-    return membersCache.members;
-  }
-
-  const members: GitHubUser[] = [];
-  for (let page = 1; page <= 5; page++) {
-    const response = await githubFetch(
-      `/orgs/${encodeURIComponent(org)}/members?per_page=100&page=${page}`,
-      accessToken
-    );
-    if (!response.ok) {
-      break;
-    }
-    const items = (await response.json()) as Omit<
-      ProfileResponse,
-      "name" | "email"
-    >[];
-    members.push(
-      ...items.map((item) => toUser({ ...item, name: null, email: null }))
-    );
-    if (items.length < 100) {
-      break;
-    }
-  }
-
-  membersCache = { fetchedAt: Date.now(), members };
-  return members;
-}
-
-/** Searches all of GitHub, used when no organization is configured. */
-export async function searchGitHubUsers(
-  query: string,
-  accessToken: string
-): Promise<GitHubUser[]> {
-  const response = await githubFetch(
-    `/search/users?q=${encodeURIComponent(query)}&per_page=8`,
-    accessToken
-  );
-  if (!response.ok) {
-    return [];
-  }
-  const { items } = (await response.json()) as {
-    items: Omit<ProfileResponse, "name" | "email">[];
-  };
-  return items.map((item) => toUser({ ...item, name: null, email: null }));
 }
 
 const BRANCHES_TTL_MS = 5 * 60 * 1000;

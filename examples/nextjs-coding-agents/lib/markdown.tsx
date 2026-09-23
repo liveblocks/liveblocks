@@ -13,41 +13,24 @@ import ReactMarkdown, {
   type Components,
   type ExtraProps,
 } from "react-markdown";
-import { useUser } from "@liveblocks/react";
 import remarkGfm from "remark-gfm";
-import { getSkill } from "@/lib/skills";
-
-const MENTION_PATTERN = /<@([^>\s]+)>/g;
-const SKILL_PATTERN = /<skill:([a-z0-9-]+)>/g;
+import { SKILL_TOKEN_PATTERN } from "@/lib/skills";
+import { useSkills } from "@/lib/use-skills";
 
 /**
- * Mentions and skills are stored as `<@userId>` and `<skill:id>` tokens,
- * which Markdown would treat as HTML and drop. Turn them into links with a
- * custom scheme first; the `a` renderer below turns those into chips.
+ * Skills are stored as `<skill:id>` tokens, which Markdown would treat as
+ * HTML and drop. Turn them into links with a custom scheme first; the `a`
+ * renderer below turns those into chips.
  */
 function prepareContent(content: string) {
-  return content
-    .replace(
-      MENTION_PATTERN,
-      (_, userId: string) => `[@${userId}](mention:${userId})`
-    )
-    .replace(
-      SKILL_PATTERN,
-      (_, skillId: string) => `[/${skillId}](skill:${skillId})`
-    );
-}
-
-function Mention({ userId }: { userId: string }) {
-  const { user } = useUser(userId);
-  return (
-    <span className="inline-flex items-center rounded bg-accent-soft px-1 py-0.5 font-medium leading-tight text-accent-foreground">
-      @{user?.name ?? userId}
-    </span>
+  return content.replace(
+    SKILL_TOKEN_PATTERN,
+    (_, skillId: string) => `[/${skillId}](skill:${skillId})`
   );
 }
 
 function SkillChip({ skillId }: { skillId: string }) {
-  const skill = getSkill(skillId);
+  const skill = useSkills().find((candidate) => candidate.id === skillId);
   return (
     <span
       title={skill?.description}
@@ -65,9 +48,6 @@ function Anchor({
   node: _node,
   ...props
 }: ComponentProps<"a"> & ExtraProps) {
-  if (href?.startsWith("mention:")) {
-    return <Mention userId={href.slice("mention:".length)} />;
-  }
   if (href?.startsWith("skill:")) {
     return <SkillChip skillId={href.slice("skill:".length)} />;
   }
@@ -160,10 +140,10 @@ const components: Components = {
   table: Table,
 };
 
-// Let the mention/skill pseudo-schemes through; everything else gets the
-// default http/https/mailto sanitizing.
+// Let the skill pseudo-scheme through; everything else gets the default
+// http/https/mailto sanitizing.
 function urlTransform(url: string) {
-  if (url.startsWith("mention:") || url.startsWith("skill:")) {
+  if (url.startsWith("skill:")) {
     return url;
   }
   return defaultUrlTransform(url);

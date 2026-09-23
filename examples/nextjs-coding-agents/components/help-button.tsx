@@ -28,9 +28,9 @@ const FEATURES: Feature[] = [
   },
   {
     icon: <HashIcon />,
-    title: "Skills and mentions",
+    title: "Skills",
     description:
-      "Type / to pick a reusable skill like Fix bug or Write tests, and @ to mention teammates. Pick a model per chat from the dropdown.",
+      "Type / to pick a reusable skill like Fix bug or Write tests. Each one is a SKILL.md file in the skills folder; add a file to add a skill. Pick a model per chat from the dropdown.",
   },
   {
     icon: <PenIcon />,

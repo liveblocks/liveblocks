@@ -39,6 +39,8 @@ import {
 import { patchDocument } from "@/lib/server/document-patch";
 import { getGitHubUsers, type GitHubUser } from "@/lib/server/github";
 import { getLiveblocks, patchFeedMetadata } from "@/lib/server/liveblocks";
+import { loadSkills } from "@/lib/server/skills";
+import type { Skill } from "@/lib/skills";
 import { normalizeToolName, summarizeToolCall } from "@/lib/tool-calls";
 import type {
   AgentPart,
@@ -163,6 +165,7 @@ export async function runAgentForChat(location: ChatLocation) {
       prompt: buildPrompt({
         messages: pending,
         users,
+        skills: await loadAvailableSkills(),
         repoRef: claim.repo?.ref,
         documents,
         previousReply,
@@ -634,6 +637,12 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
     await flush(true).catch(() => {});
     return { parts, cursorAgentId, error: message };
   }
+}
+
+/** The skills in the `skills/` directory; a step because it reads from disk. */
+async function loadAvailableSkills(): Promise<Skill[]> {
+  "use step";
+  return loadSkills();
 }
 
 /**

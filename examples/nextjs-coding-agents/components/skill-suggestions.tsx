@@ -7,14 +7,14 @@ import type {
 import clsx from "clsx";
 import { SlashIcon } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
-import type { Skill } from "@/lib/skills";
+import type { SkillSummary } from "@/lib/skills";
 
 export type SkillSuggestionsRef = {
   onKeyDown: (props: SuggestionKeyDownProps) => boolean;
 };
 
 type SkillSuggestionsProps = SuggestionProps<
-  Skill,
+  SkillSummary,
   { id: string; label: string }
 >;
 
@@ -29,7 +29,7 @@ export const SkillSuggestions = forwardRef<
     setSelectedIndex(0);
   }, [items]);
 
-  const select = (skill: Skill | undefined) => {
+  const select = (skill: SkillSummary | undefined) => {
     if (skill) {
       props.command({ id: skill.id, label: skill.name });
     }

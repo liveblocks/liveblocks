@@ -93,7 +93,7 @@ declare global {
     FeedMessageData: {
       role: MessageRole;
       userId: string;
-      // Markdown, with mentions as `<@userId>` and skills as `<skill:id>`
+      // Markdown, with skills as `<skill:id>` tokens
       content: string;
       // Human messages: set by the server once included in an agent run
       handled?: boolean;
