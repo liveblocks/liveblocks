@@ -4,13 +4,14 @@ meta:
   parentTitle: "Use cases"
   description:
     "Build a share dialog with user invites, viewer and editor roles, team
-    sharing, public link access, and invite notifications."
+    sharing, public link access, removing users, and invite notifications."
 ---
 
 Build a share dialog like the ones in Notion or Figma with Liveblocks. Invite
 people to a document by email, give them viewer, commenter, or editor roles,
 share with whole teams at once, toggle public link access, list everyone with
-access, and notify people when a document is shared with them.
+access, remove people from the document, and notify people when a document is
+shared with them.
 
 <Figure
   caption={
@@ -34,6 +35,8 @@ access, and notify people when a document is shared with them.
   default, group, and user access.
 - [**Inviting users**](#inviting-users): Grant a person access from your share
   endpoint.
+- [**Disconnecting users**](#disconnecting-users): Reload a removed user’s page
+  so they leave immediately.
 - [**Roles**](#roles): Map viewer, commenter, and editor roles to permission
   scopes.
 - [**Team sharing**](#team-sharing): Share a document with a whole group at
@@ -132,8 +135,65 @@ await liveblocks.updateRoom("document-a", {
 // +++
 ```
 
-Connected users are affected immediately, and someone whose access is removed is
-disconnected from the room.
+Removing access prevents them from joining again, but ID tokens stay valid until
+they expire, so a connected user can keep editing until then. However, you can
+use other Liveblocks APIs to
+[disconnect users immediately](#disconnecting-users).
+
+### Disconnecting users [#disconnecting-users]
+
+When a user’s access is removed, they are not automatically disconnected from
+the room. After updating the room accesses, one way to remove users is to
+broadcast an event with their user ID using
+[`Liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).
+
+```ts
+await liveblocks.updateRoom("document-a", {
+  usersAccesses: {
+    // +++
+    "marc@example.com": null,
+    // +++
+  },
+});
+
+// Tell the removed user to reload
+// +++
+await liveblocks.broadcastEvent("document-a", {
+  type: "USER_REMOVED",
+  userId: "marc@example.com",
+});
+// +++
+```
+
+On the client, you can listen for this event with
+[`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener) and
+compare the event’s user ID to the current user with
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf). If they match, reload
+the page.
+
+```tsx
+import { useEventListener, useSelf } from "@liveblocks/react/suspense";
+
+function Document() {
+  // +++
+  const userId = useSelf((me) => me.id);
+  // +++
+
+  useEventListener(({ event }) => {
+    // +++
+    if (event.type === "USER_REMOVED" && event.userId === userId) {
+      window.location.reload();
+    }
+    // +++
+  });
+
+  // ...
+}
+```
+
+After the reload, authentication runs again, the user no longer has access, and
+they’re kept out of the room. Learn more about broadcasting custom data under
+[Events](/docs/products/sync/events).
 
 ### Roles [#roles]
 

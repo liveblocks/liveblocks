@@ -94,4 +94,4 @@ After forking [this example](https://codesandbox.io/s/github/liveblocks/livebloc
 
 ### Tutorial
 
-Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-to-do-list/react-redux) to build it from scratch.
+Follow our [step by step tutorial](https://liveblocks.io/docs/guides/how-to-create-a-collaborative-to-do-list-with-react-redux-and-liveblocks) to build it from scratch.
