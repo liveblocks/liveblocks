@@ -34,6 +34,15 @@ const PREAMBLE = [
   "Think and plan out loud before you start editing: work through the request, what you found in the code, and how you'll approach it. Everything you write before your final message is folded into a collapsible log the team can open, so put your reasoning there, not in the final message.",
 ].join(" ");
 
+/**
+ * The team watches the run live and reviews the result in the app, so a
+ * fast first version beats a polished one.
+ */
+const SPEED_INSTRUCTIONS = [
+  "## Work fast",
+  "Finish as quickly as you can and hand the result back to the team. Make the change directly rather than exploring more of the codebase than the task needs, and don't write tests, run test suites, lint, typecheck, or build to verify your work unless a person or a skill explicitly asks for it. The team reviews the diff in the app and will come back with follow-ups; a quick first version they can react to is worth more than a thorough one they wait for.",
+].join("\n");
+
 const FOLLOW_UP_PREAMBLE = [
   "New messages arrived while you were working, so your reply was NOT shown to the team yet.",
   "Your draft reply is included below for reference only.",
@@ -147,6 +156,7 @@ export function buildPrompt({
 
   return [
     isFollowUp ? FOLLOW_UP_PREAMBLE : PREAMBLE,
+    SPEED_INSTRUCTIONS,
     repoRef === undefined ? NO_REPOSITORY_NOTE : null,
     ...skillSections,
     DOCUMENT_INSTRUCTIONS,
