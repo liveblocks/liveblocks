@@ -22,10 +22,19 @@
   pointer-events: none;
 }
 
+.composer-editor .mention,
 .composer-editor .skill {
   border-radius: 0.25rem;
   padding: 0 0.25rem;
   font-weight: 500;
+}
+
+.composer-editor .mention {
+  background: var(--accent-soft);
+  color: var(--accent-foreground);
+}
+
+.composer-editor .skill {
   background: var(--code-bg);
   border: 1px solid var(--border);
   color: var(--foreground);

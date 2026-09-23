@@ -41,6 +41,19 @@ so every client sees the run live. When a run completes, everyone who took part
 in the chat gets an inbox notification, and the agent's changes appear in a diff
 panel next to the chat, rendered with [`@pierre/diffs`](https://diffs.com).
 
+People can also just talk to each other in a chat without waking the agent.
+Before a message is queued, the server asks
+[Jev](https://vercel.com/ai-gateway/models/jev), TypeSafe AI's evaluation model,
+whether it's meant for the agent, using the AI SDK's `evaluate` through
+[Vercel AI Gateway](https://vercel.com/ai-gateway) with the recent conversation
+as context (`lib/server/triage.ts`). Jev returns a probability rather than text,
+so "sounds good, thanks" stays between teammates while "sounds good, do it"
+starts a run. A message left to the team is labelled as such, with a "Send
+anyway" link for its author; `@AI` and `/` skills always go through, and so does
+the first message of a chat. Set `AI_GATEWAY_API_KEY` to enable this
+(deployments on Vercel authenticate automatically); without it, every message
+goes to the agent.
+
 The agent can also write Markdown documents instead of code (a plan, a report,
 notes from an investigation). Documents open as tabs in the same side panel as
 multiplayer [Tiptap](https://tiptap.dev/) editors, backed by
@@ -151,9 +164,12 @@ Alternatively, you can set up your project manually:
   talk to the agent. `GITHUB_ALLOWED_USERS` accepts a comma-separated list of
   logins as well. Leave both empty for local development to let anyone who signs
   in take part.
-- Optionally, set `CURSOR_MODEL` to change the default model for new chats,
-  `GITHUB_TOKEN` to list branches of private repositories, or
-  `NEXT_PUBLIC_LOCKED_REPO` to pin every chat to one repository.
+- Optionally, set `AI_GATEWAY_API_KEY` (from
+  [Vercel AI Gateway](https://vercel.com/ai-gateway)) to let people chat among
+  themselves without every message reaching the agent, `CURSOR_MODEL` to change
+  the default model for new chats, `GITHUB_TOKEN` to list branches of private
+  repositories, or `NEXT_PUBLIC_LOCKED_REPO` to pin every chat to one
+  repository.
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To see the multiplayer behavior, sign in as two different GitHub users in two

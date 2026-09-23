@@ -28,9 +28,9 @@ const FEATURES: Feature[] = [
   },
   {
     icon: <HashIcon />,
-    title: "Skills",
+    title: "Chat, skills, and @AI",
     description:
-      "Type / to pick a reusable skill like Fix bug or Write tests. Each one is a SKILL.md file in the skills folder; add a file to add a skill. Pick a model per chat from the dropdown.",
+      "Talk to teammates in the chat freely; only messages meant for the agent start a run. Type @AI to make sure it handles one, and / to pick a reusable skill like Fix bug or Write tests (each is a SKILL.md in the skills folder).",
   },
   {
     icon: <PenIcon />,

@@ -35,6 +35,14 @@ export type DocumentChange = {
   action: "created" | "updated";
 };
 
+/** Body of `POST /api/agent/message` */
+export type AgentMessageResponse = {
+  // False when triage decided the message was for the team, not the agent
+  queued: boolean;
+  reason: string;
+  runId?: string;
+};
+
 export type ChatFeedMetadata = Liveblocks["FeedMetadata"];
 
 export type ChatMessageData = Liveblocks["FeedMessageData"];

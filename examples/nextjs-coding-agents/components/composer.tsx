@@ -6,18 +6,34 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { EditorContent, ReactRenderer, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import type {
+  SuggestionKeyDownProps,
+  SuggestionOptions,
+  SuggestionProps,
+} from "@tiptap/suggestion";
 import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { ArrowUpIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ForwardRefExoticComponent,
+  type RefAttributes,
+  type RefObject,
+} from "react";
+import {
+  AgentMentionSuggestions,
+  type AgentMentionItem,
+} from "@/components/agent-mention-suggestions";
 import { BranchSelect } from "@/components/branch-select";
 import { ModelSelect } from "@/components/model-select";
 import { RepoSelect } from "@/components/repo-select";
-import {
-  SkillSuggestions,
-  type SkillSuggestionsRef,
-} from "@/components/skill-suggestions";
+import { SkillSuggestions } from "@/components/skill-suggestions";
 import { useTypingLabel } from "@/components/typing-indicator";
+import { AI_USER_ID } from "@/lib/agent-user";
+import { AGENT_MENTION_LABEL } from "@/lib/mentions";
 import type { Repo } from "@/lib/repo";
 import { isMessageEmpty, serializeMarkdown } from "@/lib/serialize-markdown";
 import { searchSkills, type SkillSummary } from "@/lib/skills";
@@ -65,6 +81,50 @@ function createPlaceholderExtension(placeholder: string) {
 // Skills are Tiptap's Mention node under another name and trigger character:
 // an inline atom with an id and a label, picked from a "/" popup.
 const SkillNode = Mention.extend({ name: "skill" });
+
+type PopupRef = { onKeyDown: (props: SuggestionKeyDownProps) => boolean };
+
+/**
+ * Mounts a React popup for a Tiptap suggestion (the "@" and "/" menus) and
+ * routes keyboard events to it. `popupOpenRef` tells the editor's Enter
+ * handler to leave Enter to the popup while one is open.
+ */
+function renderPopup<Item, Selected>(
+  Component: ForwardRefExoticComponent<
+    SuggestionProps<Item, Selected> & RefAttributes<PopupRef>
+  >,
+  popupOpenRef: RefObject<boolean>
+): ReturnType<NonNullable<SuggestionOptions<Item, Selected>["render"]>> {
+  let component: ReactRenderer<PopupRef> | null = null;
+  let unmount: (() => void) | null = null;
+
+  return {
+    onStart: (props) => {
+      popupOpenRef.current = true;
+      component = new ReactRenderer(Component, {
+        props,
+        editor: props.editor,
+      });
+      unmount = props.mount(component.element);
+    },
+    onUpdate: (props) => {
+      component?.updateProps(props);
+    },
+    onKeyDown: (props) => {
+      if (props.event.key === "Escape") {
+        return true;
+      }
+      return component?.ref?.onKeyDown(props) ?? false;
+    },
+    onExit: () => {
+      popupOpenRef.current = false;
+      unmount?.();
+      component?.destroy();
+      component = null;
+      unmount = null;
+    },
+  };
+}
 
 export function Composer({
   typingKey,
@@ -132,6 +192,23 @@ export function Composer({
         horizontalRule: false,
       }),
       createPlaceholderExtension(placeholder),
+      // `@AI`: the only mention there is. Guarantees the message reaches
+      // the agent instead of being judged as chat between teammates.
+      Mention.configure({
+        HTMLAttributes: { class: "mention" },
+        renderText({ node }) {
+          return `@${node.attrs.label ?? node.attrs.id}`;
+        },
+        suggestion: {
+          char: "@",
+          pluginKey: new PluginKey("agentMention"),
+          items: ({ query }): AgentMentionItem[] =>
+            AGENT_MENTION_LABEL.toLowerCase().startsWith(query.toLowerCase())
+              ? [{ id: AI_USER_ID, label: AGENT_MENTION_LABEL }]
+              : [],
+          render: () => renderPopup(AgentMentionSuggestions, popupOpenRef),
+        },
+      }),
       SkillNode.configure({
         HTMLAttributes: { class: "skill" },
         renderText({ node }) {
@@ -146,37 +223,7 @@ export function Composer({
           startOfLine: false,
           items: async ({ query }): Promise<SkillSummary[]> =>
             searchSkills(await fetchSkills(), query),
-          render: () => {
-            let component: ReactRenderer<SkillSuggestionsRef> | null = null;
-            let unmount: (() => void) | null = null;
-
-            return {
-              onStart: (props) => {
-                popupOpenRef.current = true;
-                component = new ReactRenderer(SkillSuggestions, {
-                  props,
-                  editor: props.editor,
-                });
-                unmount = props.mount(component.element);
-              },
-              onUpdate: (props) => {
-                component?.updateProps(props);
-              },
-              onKeyDown: (props) => {
-                if (props.event.key === "Escape") {
-                  return true;
-                }
-                return component?.ref?.onKeyDown(props) ?? false;
-              },
-              onExit: () => {
-                popupOpenRef.current = false;
-                unmount?.();
-                component?.destroy();
-                component = null;
-                unmount = null;
-              },
-            };
-          },
+          render: () => renderPopup(SkillSuggestions, popupOpenRef),
         },
       }),
     ],
@@ -291,6 +338,7 @@ export function Composer({
           ) : null}
 
           <span className="ml-auto hidden text-[11px] text-subtle sm:block">
+            <kbd className="font-sans">@</kbd>AI to ask the agent ·{" "}
             <kbd className="font-sans">/</kbd> skills
           </span>
 

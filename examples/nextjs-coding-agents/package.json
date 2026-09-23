@@ -23,6 +23,7 @@
     "@tiptap/react": "^3.13.0",
     "@tiptap/starter-kit": "^3.13.0",
     "@tiptap/suggestion": "^3.13.0",
+    "ai": "^7.0.112",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",
     "nanoid": "^5.1.11",

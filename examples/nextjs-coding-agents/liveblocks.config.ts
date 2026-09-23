@@ -93,10 +93,14 @@ declare global {
     FeedMessageData: {
       role: MessageRole;
       userId: string;
-      // Markdown, with skills as `<skill:id>` tokens
+      // Markdown, with skills as `<skill:id>` and `@AI` as `<@ai-assistant>`
       content: string;
-      // Human messages: set by the server once included in an agent run
+      // Human messages: set by the server once included in an agent run,
+      // or once triage decided the agent wasn't needed
       handled?: boolean;
+      // Human messages: false when triage judged it as people talking to
+      // each other, so it was never sent to the agent (lib/server/triage.ts)
+      forAgent?: boolean;
       // Agent messages
       status?: MessageStatus;
       parts?: AgentPart[];

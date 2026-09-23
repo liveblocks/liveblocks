@@ -7,10 +7,11 @@ import {
   useSelf,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
-import { ClockIcon, Trash2Icon } from "lucide-react";
+import { ClockIcon, MessageCircleOffIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCanWrite } from "@/app/providers";
 import { AI_USER } from "@/lib/agent-user";
+import { useSendToAgent } from "@/lib/use-send-message";
 import {
   AgentParts,
   DocumentCard,
@@ -73,12 +74,17 @@ function HumanMessage({
 }) {
   const self = useSelf();
   const deleteFeedMessage = useDeleteFeedMessage();
+  const sendToAgent = useSendToAgent();
+  const [sending, setSending] = useState(false);
   const { user } = useUser(message.data.userId);
   const displayName = user?.name ?? message.data.userId;
   const avatarUrl =
     user?.avatar ?? `https://github.com/${message.data.userId}.png?size=64`;
   const isOwn = self.id === message.data.userId;
-  const canDelete = isOwn && !message.data.handled;
+  // Triage judged this as people talking to each other; the author can
+  // overrule it
+  const teamOnly = message.data.forAgent === false;
+  const canDelete = isOwn && (!message.data.handled || teamOnly);
 
   return (
     <div
@@ -110,6 +116,11 @@ function HumanMessage({
               : "rounded-bl-md border border-border bg-background"
           )}
         >
+          {!isOwn ? (
+            <div className="mb-1 text-[11px] font-medium leading-none text-muted">
+              {displayName}
+            </div>
+          ) : null}
           <Markdown content={message.data.content} />
         </div>
         <div
@@ -118,9 +129,6 @@ function HumanMessage({
             isOwn && "flex-row-reverse"
           )}
         >
-          {!isOwn ? (
-            <span className="font-medium text-muted">{displayName}</span>
-          ) : null}
           <time dateTime={new Date(message.createdAt).toISOString()}>
             {formatTime(message.createdAt)}
           </time>
@@ -128,6 +136,33 @@ function HumanMessage({
             <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-1.5 py-px font-medium text-warning">
               <ClockIcon className="size-3" />
               Queued
+            </span>
+          ) : null}
+          {teamOnly ? (
+            <span
+              className="inline-flex items-center gap-1"
+              title="Judged as a message for the team rather than a request for the agent"
+            >
+              <MessageCircleOffIcon className="size-3" />
+              Not sent to the agent
+              {isOwn ? (
+                <>
+                  {" · "}
+                  <button
+                    type="button"
+                    disabled={sending}
+                    onClick={() => {
+                      setSending(true);
+                      sendToAgent(feedId, message.id)
+                        .catch(() => {})
+                        .finally(() => setSending(false));
+                    }}
+                    className="font-medium text-foreground underline-offset-2 hover:underline disabled:opacity-60"
+                  >
+                    {sending ? "Sending…" : "Send anyway"}
+                  </button>
+                </>
+              ) : null}
             </span>
           ) : null}
           {canDelete ? (

@@ -14,18 +14,33 @@ import ReactMarkdown, {
   type ExtraProps,
 } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { AI_USER_ID } from "@/lib/agent-user";
+import { AGENT_MENTION_LABEL, MENTION_TOKEN_PATTERN } from "@/lib/mentions";
 import { SKILL_TOKEN_PATTERN } from "@/lib/skills";
 import { useSkills } from "@/lib/use-skills";
 
 /**
- * Skills are stored as `<skill:id>` tokens, which Markdown would treat as
- * HTML and drop. Turn them into links with a custom scheme first; the `a`
- * renderer below turns those into chips.
+ * Skills and the `@AI` mention are stored as `<skill:id>` and `<@id>`
+ * tokens, which Markdown would treat as HTML and drop. Turn them into links
+ * with a custom scheme first; the `a` renderer below turns those into chips.
  */
 function prepareContent(content: string) {
-  return content.replace(
-    SKILL_TOKEN_PATTERN,
-    (_, skillId: string) => `[/${skillId}](skill:${skillId})`
+  return content
+    .replace(
+      SKILL_TOKEN_PATTERN,
+      (_, skillId: string) => `[/${skillId}](skill:${skillId})`
+    )
+    .replace(
+      MENTION_TOKEN_PATTERN,
+      (_, userId: string) => `[@${userId}](mention:${userId})`
+    );
+}
+
+function MentionChip({ userId }: { userId: string }) {
+  return (
+    <span className="inline-flex items-center rounded bg-accent-soft px-1 py-0.5 font-medium leading-tight text-accent-foreground">
+      @{userId === AI_USER_ID ? AGENT_MENTION_LABEL : userId}
+    </span>
   );
 }
 
@@ -50,6 +65,9 @@ function Anchor({
 }: ComponentProps<"a"> & ExtraProps) {
   if (href?.startsWith("skill:")) {
     return <SkillChip skillId={href.slice("skill:".length)} />;
+  }
+  if (href?.startsWith("mention:")) {
+    return <MentionChip userId={href.slice("mention:".length)} />;
   }
   return (
     <a
@@ -140,10 +158,10 @@ const components: Components = {
   table: Table,
 };
 
-// Let the skill pseudo-scheme through; everything else gets the default
-// http/https/mailto sanitizing.
+// Let the skill/mention pseudo-schemes through; everything else gets the
+// default http/https/mailto sanitizing.
 function urlTransform(url: string) {
-  if (url.startsWith("skill:")) {
+  if (url.startsWith("skill:") || url.startsWith("mention:")) {
     return url;
   }
   return defaultUrlTransform(url);

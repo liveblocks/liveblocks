@@ -1,4 +1,5 @@
 import { DOCS_ARTIFACT_DIR } from "@/lib/documents";
+import { stripMentionTokens } from "@/lib/mentions";
 import { DIFF_ARTIFACT_DIR, DIFF_ARTIFACT_FILE } from "@/lib/repo";
 import { coAuthorTrailer, type GitHubUser } from "@/lib/server/github";
 import {
@@ -7,6 +8,11 @@ import {
   type Skill,
 } from "@/lib/skills";
 import type { ChatMessage } from "@/lib/types";
+
+/** Message text without the `<skill:id>` and `<@id>` tokens the UI renders as chips */
+function stripTokens(content: string) {
+  return stripMentionTokens(stripSkillTokens(content));
+}
 
 /** Display names for the people in a chat, keyed by GitHub login. */
 export type Participants = ReadonlyMap<string, GitHubUser>;
@@ -136,7 +142,7 @@ export function buildPrompt({
 
   const messageSections = messages.map((message) => {
     const author = users.get(message.data.userId)?.name ?? message.data.userId;
-    return `**${author}:** ${stripSkillTokens(message.data.content)}`;
+    return `**${author}:** ${stripTokens(message.data.content)}`;
   });
 
   return [
@@ -195,7 +201,7 @@ function buildWrapUpInstructions(
 
 /** Chat title derived from the first human message. */
 export function deriveTitle(content: string) {
-  const plain = stripSkillTokens(content)
+  const plain = stripTokens(content)
     .replace(/[`*_~#>]/g, "")
     .replace(/\s+/g, " ")
     .trim();
