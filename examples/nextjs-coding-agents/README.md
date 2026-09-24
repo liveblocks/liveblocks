@@ -40,7 +40,8 @@ from a [Vercel Workflow](https://workflow.dev/) with
 [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node),
 so every client sees the run live. When a run completes, everyone who took part
 in the chat gets an inbox notification, and the agent's changes appear in a diff
-panel next to the chat, rendered with [`@pierre/diffs`](https://diffs.com).
+panel next to the chat, rendered with [`@pierre/diffs`](https://diffs.com),
+alongside a tab with the pull request's description read from GitHub.
 
 People can also just talk to each other in a chat without waking the agent.
 Before a message is queued, the server asks
@@ -50,10 +51,9 @@ whether it's meant for the agent, using the AI SDK's `evaluate` through
 as context (`lib/server/triage.ts`). Jev returns a probability rather than text,
 so "sounds good, thanks" stays between teammates while "sounds good, do it"
 starts a run. A message left to the team is labelled as such, with a "Send
-anyway" link for its author; `@AI` and `/` skills always go through, and so does
-the first message of a chat. Set `AI_GATEWAY_API_KEY` to enable this
-(deployments on Vercel authenticate automatically); without it, every message
-goes to the agent.
+anyway" link for its author; `@AI` and `/` skills always go through. Set
+`AI_GATEWAY_API_KEY` to enable this (deployments on Vercel authenticate
+automatically); without it, every message goes to the agent.
 
 The agent can also write Markdown documents instead of code (a plan, a report,
 notes from an investigation). Documents open as tabs in the same side panel as

@@ -10,7 +10,7 @@ import type { ChatFeedMetadata, ChatMessage } from "@/lib/types";
  * "sounds good" starting a cloud agent.
  *
  * Clear cases are settled without a model call: `@AI` and skills always go
- * to the agent, and so does the first message of a chat. Everything else is
+ * to the agent. Everything else, including the first message of a chat, is
  * put to Jev (TypeSafe AI's evaluation model) through the AI SDK and Vercel
  * AI Gateway, with the recent conversation as context. Jev returns a
  * probability rather than text, so the cutoff is plain application logic.
@@ -35,13 +35,7 @@ const SKIP_BELOW_PROBABILITY = 0.35;
 export type TriageDecision = {
   forAgent: boolean;
   // How the decision was reached; surfaced in logs and the API response
-  reason:
-    | "mention"
-    | "skill"
-    | "first-message"
-    | "forced"
-    | "model"
-    | "unavailable";
+  reason: "mention" | "skill" | "forced" | "model" | "unavailable";
   probability?: number;
 };
 
@@ -76,9 +70,6 @@ export async function triageMessage({
       (other) => other.id !== message.id && other.createdAt <= message.createdAt
     )
     .sort((a, b) => a.createdAt - b.createdAt);
-  if (earlier.length === 0) {
-    return { forAgent: true, reason: "first-message" };
-  }
 
   if (!hasTriageModel()) {
     return { forAgent: true, reason: "unavailable" };
