@@ -69,7 +69,7 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@liveblocks/core": "3.23.1-exp3",
+    "@liveblocks/core": "3.24.3-livetextreplay",
     "async-mutex": "^0.4.0",
     "decoders": "^2.10.1",
     "itertools": "^2.7.1",
