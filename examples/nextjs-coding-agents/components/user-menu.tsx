@@ -1,14 +1,16 @@
 "use client";
 
 import clsx from "clsx";
-import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react";
+import { CircleHelpIcon, ChevronsUpDownIcon, LogOutIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { useCurrentUser } from "@/app/providers";
+import { HelpDialog } from "@/components/help-button";
 
 export function UserMenu({ collapsed }: { collapsed: boolean }) {
   const user = useCurrentUser();
   const [open, setOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -107,6 +109,18 @@ export function UserMenu({ collapsed }: { collapsed: boolean }) {
             <button
               type="button"
               role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                setHelpOpen(true);
+              }}
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-muted transition hover:bg-panel-hover hover:text-foreground"
+            >
+              <CircleHelpIcon className="size-4 shrink-0" />
+              Help
+            </button>
+            <button
+              type="button"
+              role="menuitem"
               onClick={() => void signOut({ redirectTo: "/" })}
               className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-muted transition hover:bg-panel-hover hover:text-foreground"
             >
@@ -116,6 +130,7 @@ export function UserMenu({ collapsed }: { collapsed: boolean }) {
           </div>
         </div>
       ) : null}
+      <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }

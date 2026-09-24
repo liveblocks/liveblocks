@@ -9,7 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@cursor/sdk": "^1.0.31",
+    "@cursor/sdk": "^1.0.32",
     "@liveblocks/client": "^3.24.1",
     "@liveblocks/node": "^3.24.1",
     "@liveblocks/prosemirror": "^3.24.1",

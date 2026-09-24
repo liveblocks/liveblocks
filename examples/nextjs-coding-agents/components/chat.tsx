@@ -24,7 +24,6 @@ import {
   useChatSidePanel,
 } from "@/components/chat-side-panel";
 import { Composer } from "@/components/composer";
-import { HelpButton } from "@/components/help-button";
 import { MessageList } from "@/components/message-list";
 import { NewChat } from "@/components/new-chat";
 import { PresenceAvatars } from "@/components/presence-avatars";
@@ -121,12 +120,9 @@ function ChatView({
               <StatusPill running={running} />
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <ClientSideSuspense fallback={null}>
-                <PresenceAvatars />
-              </ClientSideSuspense>
-              <HelpButton />
-            </div>
+            <ClientSideSuspense fallback={null}>
+              <PresenceAvatars />
+            </ClientSideSuspense>
           </header>
 
           <ClientSideSuspense

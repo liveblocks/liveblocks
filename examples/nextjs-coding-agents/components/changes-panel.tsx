@@ -12,7 +12,7 @@ import {
   Loader2Icon,
   RefreshCwIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PanelIconButton } from "@/components/side-panel";
 import type { ChangesInfo } from "@/lib/types";
 
@@ -34,6 +34,12 @@ const COLLAPSED_DIFF_OPTIONS: FileDiffOptions<undefined, undefined> = {
   ...DIFF_OPTIONS,
   collapsed: true,
 };
+
+const changesCache = new Map<string, ChangesInfo>();
+
+function changesCacheKey(roomId: string, feedId: string) {
+  return `${roomId}:${feedId}`;
+}
 
 function countChanges(diff: string) {
   let additions = 0;
@@ -71,10 +77,14 @@ export function ChangesView({
   /** Change this to refetch, e.g. when the agent finishes another run */
   refreshKey: string;
 }) {
-  const [changes, setChanges] = useState<ChangesInfo | null>(null);
+  const cacheKey = changesCacheKey(roomId, feedId);
+  const [changes, setChanges] = useState<ChangesInfo | null>(
+    () => changesCache.get(cacheKey) ?? null
+  );
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !changesCache.has(cacheKey));
   const [reloadCount, setReloadCount] = useState(0);
+  const reloadCountRef = useRef(0);
 
   // The diff usually spans many files, but `PatchDiff` only accepts a
   // single-file patch, so split it up and render one `FileDiff` per file.
@@ -99,35 +109,57 @@ export function ChangesView({
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
+    const cached = changesCache.get(cacheKey) ?? null;
+    const manual = reloadCount !== reloadCountRef.current;
+    reloadCountRef.current = reloadCount;
+
+    setChanges(cached);
     setError(null);
+    if (!cached || manual) {
+      setLoading(true);
+    }
 
     const search = new URLSearchParams({ roomId, feedId });
-    fetch(`/api/diff?${search}`, { signal: controller.signal })
-      .then(async (response) => {
-        // Shape is defined by /api/diff
-        const body = (await response.json()) as ChangesInfo | { error: string };
-        if (!response.ok || "error" in body) {
-          throw new Error(
-            "error" in body ? body.error : "Could not load the changes"
-          );
-        }
-        setChanges(body);
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      });
+    // Show the last result immediately, then pick up anything newer.
+    const timeout = window.setTimeout(
+      () => {
+        fetch(`/api/diff?${search}`, { signal: controller.signal })
+          .then(async (response) => {
+            // Shape is defined by /api/diff
+            const body = (await response.json()) as
+              | ChangesInfo
+              | { error: string };
+            if (!response.ok || "error" in body) {
+              throw new Error(
+                "error" in body ? body.error : "Could not load the changes"
+              );
+            }
+            changesCache.set(cacheKey, body);
+            setChanges(body);
+            setError(null);
+          })
+          .catch((err: unknown) => {
+            if (controller.signal.aborted || changesCache.has(cacheKey)) {
+              return;
+            }
+            setError(
+              err instanceof Error ? err.message : "Something went wrong"
+            );
+          })
+          .finally(() => {
+            if (!controller.signal.aborted) {
+              setLoading(false);
+            }
+          });
+      },
+      cached && !manual ? 1000 : 0
+    );
 
-    return () => controller.abort();
-  }, [feedId, roomId, refreshKey, reloadCount]);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [cacheKey, feedId, roomId, refreshKey, reloadCount]);
 
   return (
     <>

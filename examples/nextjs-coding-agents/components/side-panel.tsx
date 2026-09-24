@@ -139,10 +139,7 @@ export function SidePanel({
             }}
             title={tab.label}
             aria-label={tab.label}
-            className={clsx(
-              "flex size-8 items-center justify-center rounded-md transition hover:bg-panel-hover hover:text-foreground",
-              tab.id === activeTab ? "text-foreground" : "text-muted"
-            )}
+            className="flex size-8 items-center justify-center rounded-md text-muted transition hover:bg-panel-hover hover:text-foreground"
           >
             {tab.icon}
           </button>
@@ -172,10 +169,10 @@ export function SidePanel({
         />
       ) : null}
 
-      <header className="flex h-12 shrink-0 items-center gap-1 border-b border-border pr-2 pl-1">
+      <header className="flex h-12 shrink-0 items-center gap-1 border-b border-border px-2">
         <div
           role="tablist"
-          className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
+          className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto"
         >
           {tabs.map((tab) => {
             const selected = tab.id === activeTab;

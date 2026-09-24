@@ -128,9 +128,8 @@ export function AgentParts({
             return (
               <div
                 key={index}
-                className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger"
+                className="font-medium flex items-center justify-start gap-2 rounded-2xl border border-danger/10 bg-danger/5 px-4 py-2 text-sm text-danger"
               >
-                <CircleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
                 <span className="break-words">{part.text}</span>
               </div>
             );

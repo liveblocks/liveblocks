@@ -10,7 +10,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCanWrite } from "@/app/providers";
 import { useDefaultBranch } from "@/components/branch-select";
 import { Composer } from "@/components/composer";
-import { HelpButton } from "@/components/help-button";
 import { useModels } from "@/components/model-select";
 import { PresenceAvatars } from "@/components/presence-avatars";
 import { DEFAULT_REF, LOCKED_REPO, type Repo } from "@/lib/repo";
@@ -153,7 +152,6 @@ export function NewChat({
         <ClientSideSuspense fallback={null}>
           <PresenceAvatars />
         </ClientSideSuspense>
-        <HelpButton />
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8">

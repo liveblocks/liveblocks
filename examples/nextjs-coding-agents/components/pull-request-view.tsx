@@ -11,10 +11,26 @@ import {
   Loader2Icon,
   RefreshCwIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PanelIconButton } from "@/components/side-panel";
 import { Markdown } from "@/lib/markdown";
 import type { PullRequestResponse } from "@/lib/types";
+
+/**
+ * GitHub stores the Cursor agent footer as raw HTML. Markdown leaves those
+ * tags as text, so drop comments and tags and keep the description.
+ */
+const pullRequestCache = new Map<
+  string,
+  NonNullable<PullRequestResponse["pullRequest"]>
+>();
+
+function pullRequestBody(body: string) {
+  return body
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<[^>]*>/g, "")
+    .trim();
+}
 
 /**
  * The pull request's title and description, read from GitHub. Sits next to
@@ -28,46 +44,68 @@ export function PullRequestView({
   prUrl: string;
   refreshKey: string;
 }) {
-  const [pullRequest, setPullRequest] =
-    useState<PullRequestResponse["pullRequest"]>(null);
+  const [pullRequest, setPullRequest] = useState<
+    PullRequestResponse["pullRequest"]
+  >(() => pullRequestCache.get(prUrl) ?? null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !pullRequestCache.has(prUrl));
   const [reloadCount, setReloadCount] = useState(0);
+  const reloadCountRef = useRef(0);
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
+    const cached = pullRequestCache.get(prUrl) ?? null;
+    const manual = reloadCount !== reloadCountRef.current;
+    reloadCountRef.current = reloadCount;
+
+    setPullRequest(cached);
     setError(null);
+    if (!cached || manual) {
+      setLoading(true);
+    }
 
-    fetch(`/api/pull-request?url=${encodeURIComponent(prUrl)}`, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error("Couldn't load the pull request");
-        }
-        // Shape is defined by /api/pull-request
-        return (await response.json()) as PullRequestResponse;
-      })
-      .then((result) => {
-        if (result.error || !result.pullRequest) {
-          throw new Error(result.error ?? "Couldn't load the pull request");
-        }
-        setPullRequest(result.pullRequest);
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      });
+    // Show the last result immediately, then pick up anything newer.
+    const timeout = window.setTimeout(
+      () => {
+        fetch(`/api/pull-request?url=${encodeURIComponent(prUrl)}`, {
+          signal: controller.signal,
+        })
+          .then(async (response) => {
+            if (!response.ok) {
+              throw new Error("Couldn't load the pull request");
+            }
+            // Shape is defined by /api/pull-request
+            return (await response.json()) as PullRequestResponse;
+          })
+          .then((result) => {
+            if (result.error || !result.pullRequest) {
+              throw new Error(result.error ?? "Couldn't load the pull request");
+            }
+            pullRequestCache.set(prUrl, result.pullRequest);
+            setPullRequest(result.pullRequest);
+            setError(null);
+          })
+          .catch((err: unknown) => {
+            if (controller.signal.aborted || pullRequestCache.has(prUrl)) {
+              return;
+            }
+            setError(
+              err instanceof Error ? err.message : "Something went wrong"
+            );
+          })
+          .finally(() => {
+            if (!controller.signal.aborted) {
+              setLoading(false);
+            }
+          });
+      },
+      cached && !manual ? 1000 : 0
+    );
 
-    return () => controller.abort();
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, [prUrl, refreshKey, reloadCount]);
 
   const state = pullRequest
@@ -120,12 +158,12 @@ export function PullRequestView({
           </div>
         ) : pullRequest ? (
           <div className="p-5">
-            <h2 className="text-base font-semibold leading-snug tracking-tight">
+            <h2 className="text-xl font-semibold leading-snug tracking-tight">
               {pullRequest.title}
             </h2>
-            {pullRequest.body.trim() ? (
+            {pullRequestBody(pullRequest.body) ? (
               <Markdown
-                content={pullRequest.body}
+                content={pullRequestBody(pullRequest.body)}
                 className="prose-chat prose-document mt-4 text-sm leading-relaxed"
               />
             ) : (
