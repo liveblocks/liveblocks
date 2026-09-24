@@ -40,6 +40,7 @@ import { patchDocument } from "@/lib/server/document-patch";
 import { getGitHubUsers, type GitHubUser } from "@/lib/server/github";
 import { readDocuments } from "@/lib/server/documents";
 import { getLiveblocks, patchFeedMetadata } from "@/lib/server/liveblocks";
+import { abandonRun, STALE_RUN_MS } from "@/lib/server/runs";
 import { loadSkills } from "@/lib/server/skills";
 import type { Skill } from "@/lib/skills";
 import { normalizeToolName, summarizeToolCall } from "@/lib/tool-calls";
@@ -87,8 +88,6 @@ type RunOutcome = {
   cancelledBy?: string | null;
 };
 
-// A chat goes stale if a workflow died without releasing it
-const STALE_RUN_MS = 15 * 60 * 1000;
 const FLUSH_INTERVAL_MS = 100;
 
 /**
@@ -129,121 +128,130 @@ export async function runAgentForChat(location: ChatLocation) {
   // Documents created or rewritten over the burst, by Storage key
   const documentChanges: Map<string, DocumentChange> = new Map();
 
-  while (pending.length > 0) {
-    const newLogins = pending
-      .map((message) => message.data.userId)
-      .filter((login) => !users.has(login));
-    for (const [login, user] of Object.entries(
-      await resolveParticipants(newLogins)
-    )) {
-      users.set(login, user);
-    }
+  // Anything a step throws that isn't handled inside it (Liveblocks or
+  // Cursor unreachable, an unexpected shape) would otherwise leave the
+  // message spinning and the chat claimed forever
+  try {
+    while (pending.length > 0) {
+      const newLogins = pending
+        .map((message) => message.data.userId)
+        .filter((login) => !users.has(login));
+      for (const [login, user] of Object.entries(
+        await resolveParticipants(newLogins)
+      )) {
+        users.set(login, user);
+      }
 
-    // Messages arrived mid-run: the reply written so far is only a draft,
-    // since it may be wrong given the new messages. The message so far is
-    // closed as a work log without a reply (tool calls stay as a record of
-    // the work), and a new agent message opens at the bottom of the chat,
-    // below the messages that just came in. The draft is handed to the
-    // follow-up run to revise, and only that run's reply is shown, in the
-    // new message.
-    //
-    // This happens before the messages are marked handled: clients hide the
-    // draft while a follow-up is queued, so the order avoids a flash.
-    const previousReply = runIndex > 0 ? text : undefined;
-    if (runIndex > 0) {
-      await closeAgentMessage({
+      // Messages arrived mid-run: the reply written so far is only a draft,
+      // since it may be wrong given the new messages. The message so far is
+      // closed as a work log without a reply (tool calls stay as a record of
+      // the work), and a new agent message opens at the bottom of the chat,
+      // below the messages that just came in. The draft is handed to the
+      // follow-up run to revise, and only that run's reply is shown, in the
+      // new message.
+      //
+      // This happens before the messages are marked handled: clients hide the
+      // draft while a follow-up is queued, so the order avoids a flash.
+      const previousReply = runIndex > 0 ? text : undefined;
+      if (runIndex > 0) {
+        await closeAgentMessage({
+          ...location,
+          agentMessageId,
+          startedAt,
+          parts: [
+            ...parts.filter((part) => part.type !== "text"),
+            {
+              type: "divider",
+              text: `Continued below for ${formatAuthors(pending, users)}'s follow-up`,
+            },
+          ],
+          repliesTo,
+        });
+        const next = await createAgentMessage(location);
+        agentMessageId = next.id;
+        startedAt = next.startedAt;
+        parts = [];
+        repliesTo = [];
+      }
+
+      await markHandled(location, pending);
+      repliesTo.push(...pending.map((message) => message.id));
+
+      // What the agent gets to see; also the base its edits are merged against
+      const documents = await loadDocuments(location);
+
+      const outcome = await runCursor({
         ...location,
         agentMessageId,
         startedAt,
-        parts: [
-          ...parts.filter((part) => part.type !== "text"),
-          {
-            type: "divider",
-            text: `Continued below for ${formatAuthors(pending, users)}'s follow-up`,
-          },
-        ],
-        repliesTo,
-      });
-      const next = await createAgentMessage(location);
-      agentMessageId = next.id;
-      startedAt = next.startedAt;
-      parts = [];
-      repliesTo = [];
-    }
-
-    await markHandled(location, pending);
-    repliesTo.push(...pending.map((message) => message.id));
-
-    // What the agent gets to see; also the base its edits are merged against
-    const documents = await loadDocuments(location);
-
-    const outcome = await runCursor({
-      ...location,
-      agentMessageId,
-      startedAt,
-      prompt: buildPrompt({
-        messages: pending,
-        users,
-        skills: await loadAvailableSkills(),
-        repoRef: claim.repo?.ref,
-        documents,
-        previousReply,
-      }),
-      parts,
-      cursorAgentId,
-      model: claim.model,
-      repo: claim.repo,
-    });
-
-    if (outcome.busy) {
-      await abandonAgentMessage({ ...location, agentMessageId });
-      return { status: "busy" as const };
-    }
-
-    parts = outcome.parts;
-    cursorAgentId = outcome.cursorAgentId ?? cursorAgentId;
-
-    // Merge any documents the agent wrote into Storage, even after a failed
-    // or stopped run, so partial work isn't lost. A document created earlier
-    // in this burst and rewritten by a follow-up still counts as created.
-    if (cursorAgentId) {
-      for (const change of await syncDocuments({
-        ...location,
+        prompt: buildPrompt({
+          messages: pending,
+          users,
+          skills: await loadAvailableSkills(),
+          repoRef: claim.repo?.ref,
+          documents,
+          previousReply,
+        }),
+        parts,
         cursorAgentId,
-        baseDocuments: documents,
-      })) {
-        const earlier = documentChanges.get(change.key);
-        documentChanges.set(
-          change.key,
-          earlier?.action === "created"
-            ? { ...change, action: "created" }
-            : change
-        );
+        model: claim.model,
+        repo: claim.repo,
+      });
+
+      if (outcome.busy) {
+        await abandonAgentMessage({ ...location, agentMessageId });
+        return { status: "busy" as const };
       }
-    }
-    git = outcome.git ?? git;
-    diffUpdatedAt = outcome.diffUpdatedAt ?? diffUpdatedAt;
-    text = outcome.text ?? text;
 
-    if (outcome.error) {
-      error = outcome.error;
-      break;
-    }
+      parts = outcome.parts;
+      cursorAgentId = outcome.cursorAgentId ?? cursorAgentId;
 
-    // Someone stopped the run. Like an error, this ends the whole burst;
-    // messages that were queued behind it are picked up by the next post.
-    if (outcome.cancelledBy !== undefined) {
-      cancelled = true;
-      const login = outcome.cancelledBy;
-      const stopper = login
-        ? ((await resolveParticipants([login]))[login]?.name ?? login)
-        : "someone";
-      parts = [...parts, { type: "divider", text: `Stopped by ${stopper}` }];
-      break;
-    }
+      // Merge any documents the agent wrote into Storage, even after a failed
+      // or stopped run, so partial work isn't lost. A document created earlier
+      // in this burst and rewritten by a follow-up still counts as created.
+      if (cursorAgentId) {
+        for (const change of await syncDocuments({
+          ...location,
+          cursorAgentId,
+          baseDocuments: documents,
+        })) {
+          const earlier = documentChanges.get(change.key);
+          documentChanges.set(
+            change.key,
+            earlier?.action === "created"
+              ? { ...change, action: "created" }
+              : change
+          );
+        }
+      }
+      git = outcome.git ?? git;
+      diffUpdatedAt = outcome.diffUpdatedAt ?? diffUpdatedAt;
+      text = outcome.text ?? text;
 
-    pending = await getPendingMessages(location);
-    runIndex++;
+      if (outcome.error) {
+        error = outcome.error;
+        break;
+      }
+
+      // Someone stopped the run. Like an error, this ends the whole burst;
+      // messages that were queued behind it are picked up by the next post.
+      if (outcome.cancelledBy !== undefined) {
+        cancelled = true;
+        const login = outcome.cancelledBy;
+        const stopper = login
+          ? ((await resolveParticipants([login]))[login]?.name ?? login)
+          : "someone";
+        parts = [...parts, { type: "divider", text: `Stopped by ${stopper}` }];
+        break;
+      }
+
+      pending = await getPendingMessages(location);
+      runIndex++;
+    }
+  } catch (err) {
+    error = describeError(err);
+    settleRunningTools(parts, "error");
+    parts.push({ type: "error", text: error });
   }
 
   await finalizeAgentMessage({
@@ -308,6 +316,16 @@ async function claimChat({
 
   if (metadata.agentStatus === "running" && !isStale) {
     return null;
+  }
+
+  // Taking over from a workflow that died mid-run: close whatever it left
+  // spinning before starting fresh
+  if (metadata.agentStatus === "running") {
+    await abandonRun(
+      liveblocks,
+      { roomId, feedId },
+      "This run stopped unexpectedly and was closed when the next one started."
+    );
   }
 
   let title = metadata.title;

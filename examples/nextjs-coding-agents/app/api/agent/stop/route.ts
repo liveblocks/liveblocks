@@ -1,5 +1,5 @@
 import { Agent } from "@cursor/sdk";
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getCursorApiKey, hasCursorApiKey } from "@/lib/server/cursor";
 import {
@@ -7,11 +7,17 @@ import {
   isExampleRoomId,
   patchFeedMetadata,
 } from "@/lib/server/liveblocks";
+import { abandonRun, STALE_RUN_MS } from "@/lib/server/runs";
+
+/** How long the workflow gets to wrap up after a cancellation */
+const WRAP_UP_GRACE_MS = 20_000;
 
 /**
  * Stops the Cursor run in progress for a chat. The workflow notices the run
  * finishing as "cancelled", wraps up the agent message, and credits whoever
- * pressed the button using the login recorded here.
+ * pressed the button using the login recorded here. If the workflow behind
+ * the run has died (a chat stuck on "Working…" with nothing happening), the
+ * message and chat are closed directly instead.
  */
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -54,7 +60,23 @@ export async function POST(request: NextRequest) {
   }
 
   const { cursorAgentId, cursorRunId } = metadata;
+  const runningSince = metadata.runningSince
+    ? Date.parse(metadata.runningSince)
+    : Number.NaN;
+  const isStale =
+    Number.isNaN(runningSince) || Date.now() - runningSince > STALE_RUN_MS;
+  const stoppedBy = session.user.name ?? session.user.login;
+
   if (!cursorAgentId || !cursorRunId) {
+    if (isStale) {
+      // Claimed long ago and never got as far as a run: the workflow died
+      await abandonRun(
+        liveblocks,
+        { roomId, feedId },
+        abandonReason(stoppedBy)
+      );
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
     // The workflow has claimed the chat but hasn't sent the prompt yet
     return NextResponse.json(
       { error: "The run is still starting. Try again in a moment." },
@@ -71,13 +93,45 @@ export async function POST(request: NextRequest) {
     metadata
   );
 
-  await Agent.cancelRun(cursorRunId, {
-    runtime: "cloud",
-    agentId: cursorAgentId,
-    apiKey: getCursorApiKey(),
+  try {
+    await Agent.cancelRun(cursorRunId, {
+      runtime: "cloud",
+      agentId: cursorAgentId,
+      apiKey: getCursorApiKey(),
+    });
+  } catch (error) {
+    // Nothing left to cancel (the run already ended, or the agent is gone),
+    // yet the chat still says running: the workflow died. Close it directly.
+    console.warn("[agent/stop] cancelRun failed; closing the run", error);
+    await abandonRun(liveblocks, { roomId, feedId }, abandonReason(stoppedBy));
+    return NextResponse.json({ ok: true }, { status: 200 });
+  }
+
+  // Normally the workflow sees the cancellation and wraps up within
+  // seconds. If it doesn't, it's dead, and the chat would spin forever.
+  after(async () => {
+    await new Promise((resolve) => setTimeout(resolve, WRAP_UP_GRACE_MS));
+    const { metadata: latest } = await liveblocks
+      .getFeed({ roomId, feedId })
+      .catch(() => ({ metadata: null }));
+    if (
+      latest?.agentStatus === "running" &&
+      latest.runningSince === metadata.runningSince
+    ) {
+      console.warn("[agent/stop] workflow didn't wrap up; closing the run");
+      await abandonRun(
+        liveblocks,
+        { roomId, feedId },
+        abandonReason(stoppedBy)
+      );
+    }
   });
 
   return NextResponse.json({ ok: true }, { status: 202 });
+}
+
+function abandonReason(stoppedBy: string) {
+  return `The run had stopped responding; ${stoppedBy} closed it.`;
 }
 
 function getString(body: unknown, key: string) {
