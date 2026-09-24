@@ -129,8 +129,16 @@ export async function downloadArtifact(cursorAgentId: string, path: string) {
  * makes agent creation idempotent: if two people post the first message at
  * the same time, only one `Agent.create` succeeds and the other resumes it.
  */
-export function getCursorAgentIdForFeed(roomId: string, feedId: string) {
-  const hash = createHash("sha1").update(`${roomId}/${feedId}`).digest("hex");
+export function getCursorAgentIdForFeed(
+  roomId: string,
+  feedId: string,
+  repoUrl?: string
+) {
+  // A cloud agent's repositories are fixed at creation, so a chat that gets
+  // a repository later needs a different agent than the one it had without
+  const hash = createHash("sha1")
+    .update(`${roomId}/${feedId}${repoUrl ? `#${repoUrl}` : ""}`)
+    .digest("hex");
   // Format the hash as a UUID (version 5 style, name-based)
   const uuid = [
     hash.slice(0, 8),

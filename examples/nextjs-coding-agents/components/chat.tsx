@@ -16,8 +16,9 @@ import {
   Loader2Icon,
   XIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCanWrite } from "@/app/providers";
+import { useDefaultBranch } from "@/components/branch-select";
 import {
   ChatSidePanel,
   SidePanelContext,
@@ -96,6 +97,62 @@ function ChatView({
     [feedId, metadata, updateFeedMetadata]
   );
 
+  // A chat started without a repository can get one later; once it has one
+  // it's fixed, since the agent's work builds on it. The branch can still
+  // change until a run has used the repository. A cloud agent's repositories
+  // are set at creation, so the old repo-less agent is dropped and the next
+  // run creates one with the repository checked out.
+  const canPickRepo = canWrite && !metadata.repoUrl;
+  const canPickBranch =
+    canWrite && Boolean(metadata.repoUrl) && !metadata.cursorAgentId;
+  // Repository attached from this screen whose default branch is still to
+  // be filled in; cleared once it is, or once someone picks a branch
+  const awaitingDefaultBranchFor = useRef<string | null>(null);
+  const handleRepoChange = useCallback(
+    (next: Repo | null) => {
+      if (!next || metadata.repoUrl) {
+        return;
+      }
+      awaitingDefaultBranchFor.current = next.url;
+      const { cursorAgentId: _dropped, ...rest } = metadata;
+      void updateFeedMetadata(feedId, {
+        ...rest,
+        repoUrl: next.url,
+        repoRef: next.ref,
+      });
+    },
+    [feedId, metadata, updateFeedMetadata]
+  );
+  const handleBranchChange = useCallback(
+    (ref: string) => {
+      awaitingDefaultBranchFor.current = null;
+      void updateFeedMetadata(feedId, { ...metadata, repoRef: ref });
+    },
+    [feedId, metadata, updateFeedMetadata]
+  );
+  // The dropdown attaches with a placeholder ref; switch to the repository's
+  // real default branch once it's known
+  const defaultBranch = useDefaultBranch(
+    canPickBranch && awaitingDefaultBranchFor.current === metadata.repoUrl
+      ? (metadata.repoUrl ?? null)
+      : null
+  );
+  useEffect(() => {
+    if (
+      defaultBranch &&
+      canPickBranch &&
+      awaitingDefaultBranchFor.current === metadata.repoUrl
+    ) {
+      awaitingDefaultBranchFor.current = null;
+      if (metadata.repoRef !== defaultBranch) {
+        void updateFeedMetadata(feedId, {
+          ...metadata,
+          repoRef: defaultBranch,
+        });
+      }
+    }
+  }, [canPickBranch, defaultBranch, feedId, metadata, updateFeedMetadata]);
+
   return (
     <SidePanelContext.Provider value={panel.context}>
       <div className="flex h-full min-h-0">
@@ -162,6 +219,10 @@ function ChatView({
                         : "Ask the agent to make a change…"
                     }
                     repo={repo}
+                    onRepoChange={canPickRepo ? handleRepoChange : undefined}
+                    onBranchChange={
+                      canPickBranch ? handleBranchChange : undefined
+                    }
                     model={metadata.model}
                     onModelChange={handleModelChange}
                     onSend={handleSend}

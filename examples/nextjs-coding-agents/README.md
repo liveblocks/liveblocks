@@ -114,10 +114,11 @@ agent's prompt (`lib/server/skills.ts`, `lib/prompt.ts`).
   that; for private ones set `GITHUB_TOKEN` to a read-only fine-grained token,
   otherwise the branch can still be typed. A chat can also be started with no
   repository, in which case the agent can answer questions and write documents
-  but not open pull requests. Nothing else needs GitHub credentials, including
-  the diff panel, which reads a diff the agent saves as a Cursor artifact at the
-  end of every run (falling back to GitHub's public branch diff if the agent
-  skipped that step).
+  but not open pull requests; one can be attached later from the same dropdown,
+  after which it's fixed (the branch stays adjustable until the first run uses
+  it). Nothing else needs GitHub credentials, including the diff panel, which
+  reads a diff the agent saves as a Cursor artifact at the end of every run
+  (falling back to GitHub's public branch diff if the agent skipped that step).
 
 If your team wants commits under people's own names instead of the Cursor GitHub
 App, Cursor's

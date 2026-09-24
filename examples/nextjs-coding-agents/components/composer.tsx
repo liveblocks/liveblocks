@@ -131,6 +131,7 @@ export function Composer({
   placeholder,
   repo,
   onRepoChange,
+  onBranchChange,
   model,
   onModelChange,
   onSend,
@@ -142,8 +143,12 @@ export function Composer({
   placeholder: string;
   // null: no repository; the agent can still chat and write documents
   repo: Repo | null;
-  // Only on the new chat screen; a chat's repository is fixed once created
+  // Set while the repository can still be picked: on the new chat screen,
+  // and in a chat that has none yet. Once a chat has one, it's fixed.
   onRepoChange?: (repo: Repo | null) => void;
+  // Set while the branch can still change; without it, branch changes go
+  // through `onRepoChange` (the new chat screen) or aren't possible
+  onBranchChange?: (ref: string) => void;
   model: string;
   onModelChange: (modelId: string) => void;
   onSend: (content: string) => Promise<void>;
@@ -329,9 +334,10 @@ export function Composer({
             <BranchSelect
               repo={repo}
               onChange={
-                onRepoChange
+                onBranchChange ??
+                (onRepoChange
                   ? (ref) => onRepoChange({ ...repo, ref })
-                  : undefined
+                  : undefined)
               }
               disabled={disabled}
             />

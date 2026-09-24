@@ -57,7 +57,7 @@ const FOLLOW_UP_PREAMBLE = [
  */
 const NO_REPOSITORY_NOTE = [
   "## No repository",
-  "This chat has no repository attached: nothing is checked out and there is no remote to push to. Don't try to clone anything or open a pull request. Answer in chat, or write a document (see below) when the request calls for one. If someone asks for code changes to a repository, explain that they need to start a new chat with that repository selected.",
+  "This chat has no repository attached: nothing is checked out and there is no remote to push to. Don't try to clone anything or open a pull request. Answer in chat, or write a document (see below) when the request calls for one. If someone asks for code changes to a repository, explain that they can attach one with the repository dropdown under the message box, then ask again.",
 ].join("\n");
 
 /**
@@ -250,7 +250,7 @@ export function buildChatReplySystemPrompt({
         ]
           .filter((line) => line !== null)
           .join("\n")
-      : "## Repository\nThis chat has no repository attached.",
+      : "## Repository\nThis chat has no repository attached. One can be attached with the repository dropdown under the message box; after that, questions about its code can be answered.",
     buildDocumentsSection(documents),
   ]
     .filter((section) => section !== null)

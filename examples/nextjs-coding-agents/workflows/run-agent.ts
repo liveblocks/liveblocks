@@ -580,7 +580,7 @@ async function runCursor(input: RunInput): Promise<RunOutcome> {
     }
 
     if (!agent) {
-      const newAgentId = getCursorAgentIdForFeed(roomId, feedId);
+      const newAgentId = getCursorAgentIdForFeed(roomId, feedId, repo?.url);
       agent = await Agent.create({
         apiKey,
         agentId: newAgentId,
