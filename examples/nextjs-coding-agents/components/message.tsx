@@ -197,6 +197,7 @@ function AgentMessage({
   const canWrite = useCanWrite();
   const {
     status,
+    kind,
     parts = [],
     content,
     prUrl,
@@ -207,6 +208,9 @@ function AgentMessage({
     documents = [],
   } = message.data;
   const running = status === "running";
+  // A plain answer from a language model: no coding session, so no work
+  // log or stop button, and the text shows as it streams in
+  const isReply = kind === "reply";
 
   // Once finished, the reply is the agent's closing message, and everything
   // it did along the way (planning, tool calls, interim notes) folds away
@@ -253,15 +257,27 @@ function AgentMessage({
         </div>
 
         <div className="flex flex-col gap-2">
-          <WorkLog
-            parts={running ? parts : logParts}
-            running={running}
-            holding={holding}
-            durationMs={durationMs}
-            status={status === "error" ? "error" : "done"}
-            action={canWrite ? <StopRunButton feedId={feedId} /> : undefined}
-          />
-          {!running && summary ? <Markdown content={summary} /> : null}
+          {isReply ? (
+            summary ? (
+              <Markdown content={summary} />
+            ) : running ? (
+              <span className="text-shimmer text-xs">Thinking…</span>
+            ) : null
+          ) : (
+            <>
+              <WorkLog
+                parts={running ? parts : logParts}
+                running={running}
+                holding={holding}
+                durationMs={durationMs}
+                status={status === "error" ? "error" : "done"}
+                action={
+                  canWrite ? <StopRunButton feedId={feedId} /> : undefined
+                }
+              />
+              {!running && summary ? <Markdown content={summary} /> : null}
+            </>
+          )}
           {!running && errorParts.length > 0 ? (
             <AgentParts parts={errorParts} running={false} />
           ) : null}

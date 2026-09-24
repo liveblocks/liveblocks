@@ -37,8 +37,8 @@ export type DocumentChange = {
 
 /** Body of `POST /api/agent/message` */
 export type AgentMessageResponse = {
-  // False when triage decided the message was for the team, not the agent
-  queued: boolean;
+  // What triage decided the message called for (lib/server/triage.ts)
+  response: "none" | "chat" | "code";
   reason: string;
   runId?: string;
 };

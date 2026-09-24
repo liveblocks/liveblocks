@@ -5,18 +5,19 @@ import { hasCursorApiKey } from "@/lib/server/cursor";
 import { getLiveblocks, isExampleRoomId } from "@/lib/server/liveblocks";
 import { triageMessage, type TriageDecision } from "@/lib/server/triage";
 import type { AgentMessageResponse } from "@/lib/types";
+import { replyInChat } from "@/workflows/reply-in-chat";
 import { runAgentForChat } from "@/workflows/run-agent";
 
 /**
  * Called by the client right after it posts a human message to a chat.
- * First decides whether the message is for the agent at all (people can
- * talk among themselves in a chat); if not, it's marked handled and nothing
- * runs. Otherwise this starts the durable workflow that runs the Cursor
- * cloud agent for the chat. The workflow itself decides whether the chat is
- * already being worked on, in which case the message is picked up as a
- * follow-up run once the current one finishes.
+ * Triage decides what the message calls for: nothing (people talking among
+ * themselves), a reply written straight into the chat by a language model,
+ * or a run of the Cursor cloud agent. The coding workflow itself decides
+ * whether the chat is already being worked on, in which case the message is
+ * picked up as a follow-up run once the current one finishes.
  *
- * `force` skips the check, for a message the author wants sent after all.
+ * `force` rules out "nothing", for a message the author wants answered
+ * after all.
  */
 export async function POST(request: NextRequest) {
   // Every run is billed to the server's Cursor key, so only team members
@@ -64,38 +65,63 @@ export async function POST(request: NextRequest) {
   }
 
   // Older clients don't say which message they posted; treat that as a
-  // request for the agent, as before triage existed
+  // request for the coding agent, as before triage existed
   const decision = messageId
     ? await decide({ roomId, feedId, messageId, force })
-    : { forAgent: true, reason: "unavailable" as const };
+    : { response: "code" as const, reason: "unavailable" as const };
   if (decision === null) {
     return NextResponse.json({ error: "Unknown message" }, { status: 404 });
   }
 
-  if (!decision.forAgent) {
-    return NextResponse.json(
-      { queued: false, reason: decision.reason } satisfies AgentMessageResponse,
-      { status: 200 }
-    );
+  switch (decision.response) {
+    case "none":
+      return NextResponse.json(
+        {
+          response: "none",
+          reason: decision.reason,
+        } satisfies AgentMessageResponse,
+        { status: 200 }
+      );
+    case "chat": {
+      // messageId is set: the fallback decision above is always "code"
+      const run = await start(replyInChat, [
+        { roomId, feedId, messageId: messageId ?? "" },
+      ]);
+      return NextResponse.json(
+        {
+          response: "chat",
+          reason: decision.reason,
+          runId: run.runId,
+        } satisfies AgentMessageResponse,
+        { status: 202 }
+      );
+    }
+    case "code": {
+      const run = await start(runAgentForChat, [{ roomId, feedId }]);
+      return NextResponse.json(
+        {
+          response: "code",
+          reason: decision.reason,
+          runId: run.runId,
+        } satisfies AgentMessageResponse,
+        { status: 202 }
+      );
+    }
   }
-
-  const run = await start(runAgentForChat, [{ roomId, feedId }]);
-
-  return NextResponse.json(
-    {
-      queued: true,
-      reason: decision.reason,
-      runId: run.runId,
-    } satisfies AgentMessageResponse,
-    { status: 202 }
-  );
 }
 
 /**
- * Runs triage on the posted message and records the outcome on it. A
- * message left to the team is marked handled so the workflow never picks it
- * up; a forced one is un-handled again so it does. Null if the message
- * isn't in the chat.
+ * Runs triage on the posted message and records the outcome on it, so the
+ * coding workflow and the UI agree on what happens to it:
+ *
+ * - `none`: handled, `forAgent: false`; nothing picks it up, and clients
+ *   label it as not sent to the agent.
+ * - `chat`: handled, `forAgent: true`; the reply workflow answers it, and
+ *   the coding workflow never sees it.
+ * - `code`: `forAgent: true` and unhandled, so the coding workflow queues
+ *   it; clients only show "Queued" once this is written.
+ *
+ * Null if the message isn't in the chat.
  */
 async function decide({
   roomId,
@@ -118,34 +144,31 @@ async function decide({
     return null;
   }
 
-  const decision: TriageDecision = force
-    ? { forAgent: true, reason: "forced" }
-    : await triageMessage({ message, messages, metadata: feed.metadata });
+  const decision = await triageMessage({
+    message,
+    messages,
+    metadata: feed.metadata,
+    force,
+  });
 
-  if (decision.reason === "model" || force) {
+  if (decision.reason === "model") {
+    const odds = decision.probabilities
+      ? ` none=${decision.probabilities.none.toFixed(2)} chat=${decision.probabilities.chat.toFixed(2)} code=${decision.probabilities.code.toFixed(2)}`
+      : "";
     console.info(
-      `[triage] ${decision.forAgent ? "agent" : "team"} (${decision.reason}${
-        decision.probability !== undefined
-          ? `, p=${decision.probability.toFixed(2)}`
-          : ""
-      }): ${message.data.content.slice(0, 80)}`
+      `[triage] ${decision.response}${odds}: ${message.data.content.slice(0, 80)}`
     );
   }
 
-  // Record the outcome on the message: clients only show "Queued" once the
-  // agent is confirmed to be getting it. A forced message that was handled
-  // as team-only goes back into the queue.
   await liveblocks.updateFeedMessage({
     roomId,
     feedId,
     messageId,
-    data: decision.forAgent
-      ? {
-          ...message.data,
-          forAgent: true,
-          ...(message.data.forAgent === false ? { handled: false } : {}),
-        }
-      : { ...message.data, handled: true, forAgent: false },
+    data: {
+      ...message.data,
+      forAgent: decision.response !== "none",
+      handled: decision.response !== "code",
+    },
   });
 
   return decision;

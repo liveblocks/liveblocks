@@ -209,6 +209,35 @@ function buildWrapUpInstructions(
   ].join("\n");
 }
 
+/**
+ * System prompt for a plain chat reply (no coding session), written by a
+ * language model straight into the chat when triage decides a message only
+ * needs an answer. It sees the same documents as the coding agent.
+ */
+export function buildChatReplySystemPrompt({
+  hasRepository,
+  repoName,
+  documents,
+}: {
+  hasRepository: boolean;
+  repoName?: string;
+  documents: PromptDocument[];
+}) {
+  return [
+    [
+      "You are the AI agent in a team's shared chat. Several people talk in it; each message from a person is prefixed with their name. Answer the latest message, using the earlier ones as context.",
+      "You are replying in the chat only: you can't run code, read files, or change anything right now. If the request actually needs the repository changed, a command run, a pull request, or a document written, say so briefly and tell them to ask for that change directly, which starts a coding session.",
+      hasRepository
+        ? `The chat is about the repository ${repoName ?? ""}; you may know it in general terms but haven't read it in this conversation.`
+        : "This chat has no repository attached.",
+      "Be concise and direct. Use Markdown; keep formatting light. Don't restate the question or sign off.",
+    ].join(" "),
+    buildDocumentsSection(documents),
+  ]
+    .filter((section) => section !== null)
+    .join("\n\n");
+}
+
 /** Chat title derived from the first human message. */
 export function deriveTitle(content: string) {
   const plain = stripTokens(content)

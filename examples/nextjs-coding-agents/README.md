@@ -44,16 +44,22 @@ panel next to the chat, rendered with [`@pierre/diffs`](https://diffs.com),
 alongside a tab with the pull request's description read from GitHub.
 
 People can also just talk to each other in a chat without waking the agent.
-Before a message is queued, the server asks
+Before anything runs, the server asks
 [Jev](https://vercel.com/ai-gateway/models/jev), TypeSafe AI's evaluation model,
-whether it's meant for the agent, using the AI SDK's `evaluate` through
+what each message calls for, using the AI SDK's `evaluate` through
 [Vercel AI Gateway](https://vercel.com/ai-gateway) with the recent conversation
-as context (`lib/server/triage.ts`). Jev returns a probability rather than text,
-so "sounds good, thanks" stays between teammates while "sounds good, do it"
-starts a run. A message left to the team is labelled as such, with a "Send
-anyway" link for its author; `@AI` and `/` skills always go through. Set
-`AI_GATEWAY_API_KEY` to enable this (deployments on Vercel authenticate
-automatically); without it, every message goes to the agent.
+as context (`lib/server/triage.ts`). It's a three-way choice: **nothing**
+(people talking to each other), a **quick answer** (a question the agent can
+answer in the chat, streamed in by a language model with the AI SDK's
+`streamText`, `workflows/reply-in-chat.ts`), or a **coding session** (anything
+that touches the repository or a document, which starts the Cursor agent). Jev
+returns probabilities rather than text, so "sounds good, thanks" stays between
+teammates, "what does this hook do?" gets a reply in seconds, and "sounds good,
+do it" starts a run. A message left to the team is labelled as such, with a
+"Send anyway" link for its author; `@AI` rules out "nothing", and `/` skills
+always start a coding session. Set `AI_GATEWAY_API_KEY` to enable this
+(deployments on Vercel authenticate automatically) and `AI_CHAT_MODEL` to pick
+the answering model; without a key, every message goes to the coding agent.
 
 The agent can also write Markdown documents instead of code (a plan, a report,
 notes from an investigation). Documents open as tabs in the same side panel as

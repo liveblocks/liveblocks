@@ -36,6 +36,10 @@ export function MessageList({
     let runningAgent: ChatMessage | null = null;
     for (const message of sorted) {
       if (message.data.role === "agent") {
+        // Plain replies stream in seconds and don't queue anything
+        if (message.data.kind === "reply") {
+          continue;
+        }
         runningAgent = message.data.status === "running" ? message : null;
       } else if (
         runningAgent !== null &&

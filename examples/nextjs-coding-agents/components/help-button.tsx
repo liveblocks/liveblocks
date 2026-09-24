@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, ReactNode, useEffect, useState } from "react";
+import { CSSProperties, ReactNode, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 const EXAMPLE_NAME = "Coding Agents";
@@ -30,7 +30,7 @@ const FEATURES: Feature[] = [
     icon: <HashIcon />,
     title: "Chat, skills, and @AI",
     description:
-      "Talk to teammates in the chat freely; only messages meant for the agent start a run. Type @AI to make sure it handles one, and / to pick a reusable skill like Fix bug or Write tests (each is a SKILL.md in the skills folder).",
+      "Talk to teammates in the chat freely. The agent decides per message whether to stay out, answer quickly in the chat, or start a coding session. Type @AI to make sure it responds, and / to pick a reusable skill like Fix bug or Write tests (each is a SKILL.md in the skills folder).",
   },
   {
     icon: <PenIcon />,
@@ -41,18 +41,6 @@ const FEATURES: Feature[] = [
 ];
 
 const styles: Record<string, CSSProperties> = {
-  button: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 28,
-    height: 28,
-    background: "transparent",
-    border: "none",
-    borderRadius: 99999,
-    color: "#737373",
-    cursor: "pointer",
-  },
   backdrop: {
     position: "fixed",
     inset: 0,
@@ -65,7 +53,7 @@ const styles: Record<string, CSSProperties> = {
   },
   panel: {
     background: "#ffffff",
-    border: "1px solid #e5e5e5",
+    border: "1px solid #ededed",
     borderRadius: 8,
     boxShadow:
       "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
@@ -80,7 +68,7 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "space-between",
     gap: 16,
     padding: 20,
-    borderBottom: "1px solid #e5e5e5",
+    borderBottom: "1px solid #ededed",
   },
   title: { fontSize: 14, fontWeight: 600, color: "#171717", margin: 0 },
   titleLink: { color: "inherit", textDecoration: "none" },
@@ -128,51 +116,44 @@ const styles: Record<string, CSSProperties> = {
 };
 
 const HOVER_CSS = `
-.lb-help-button:hover { background:#f5f5f5 !important; color:#171717 !important; }
 .lb-help-title-link:hover { text-decoration: underline !important; }
 .lb-help-close:hover { background:#f5f5f5 !important; color:#171717 !important; }
 .lb-help, .lb-help * { box-sizing: border-box; }
 `;
 
-export function HelpButton() {
-  const [isOpen, setIsOpen] = useState(false);
-
+export function HelpDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   useEffect(() => {
-    if (!isOpen) {
+    if (!open) {
       return;
     }
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setIsOpen(false);
+        onClose();
       }
     }
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isOpen]);
+  }, [onClose, open]);
 
   return (
     <>
       <style>{HOVER_CSS}</style>
-      <button
-        type="button"
-        className="lb-help-button"
-        style={styles.button}
-        onClick={() => setIsOpen(true)}
-        aria-label="How to use this example"
-      >
-        <HelpIcon />
-      </button>
-
-      {isOpen && typeof document !== "undefined"
+      {open && typeof document !== "undefined"
         ? createPortal(
             <div
               style={styles.backdrop}
               role="dialog"
               aria-modal="true"
               aria-labelledby="lb-help-title"
-              onClick={() => setIsOpen(false)}
+              onClick={onClose}
             >
               <div
                 className="lb-help"
@@ -199,7 +180,7 @@ export function HelpButton() {
                     className="lb-help-close"
                     style={styles.close}
                     aria-label="Close"
-                    onClick={() => setIsOpen(false)}
+                    onClick={onClose}
                   >
                     <CloseIcon />
                   </button>
@@ -225,26 +206,6 @@ export function HelpButton() {
   );
 }
 
-function HelpIcon() {
-  return (
-    <svg
-      width={20}
-      height={20}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx={12} cy={12} r={10} />
-      <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
-      <path d="M12 17h.01" />
-    </svg>
-  );
-}
-
 function CloseIcon() {
   return (
     <svg
@@ -253,7 +214,7 @@ function CloseIcon() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
@@ -271,7 +232,7 @@ function FeatureIconBase({ children }: { children: ReactNode }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden

@@ -104,6 +104,9 @@ declare global {
       forAgent?: boolean;
       // Agent messages
       status?: MessageStatus;
+      // "reply": a plain answer written by a language model, with no coding
+      // session behind it (workflows/reply-in-chat.ts). Unset for runs.
+      kind?: "reply";
       parts?: AgentPart[];
       // Ids of the human messages this agent reply addressed
       repliesTo?: string[];

@@ -59,7 +59,7 @@ export const AgentMentionSuggestions = forwardRef<
             @{AGENT_MENTION_LABEL}
           </span>
           <span className="block truncate text-xs text-muted">
-            Make sure the agent handles this message
+            Make sure the agent responds to this message
           </span>
         </span>
       </button>
