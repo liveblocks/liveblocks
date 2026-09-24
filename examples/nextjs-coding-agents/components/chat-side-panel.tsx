@@ -84,17 +84,21 @@ export function useChatSidePanel(feed: ChatFeed) {
       ? selected
       : (tabs[tabs.length - 1]?.id ?? null);
 
-  // Bumped whenever something outside the panel opens a tab, so the panel
-  // can flash: when it's already showing that tab, nothing else would move
+  // Bumped when something outside the panel opens a tab while the panel is
+  // already unfolded, so it can flash: nothing else may visibly change.
+  // Unfolding the panel is feedback enough on its own.
   const [highlight, setHighlight] = useState(0);
 
   const open = useCallback(
     (tabId: string) => {
       setSelected(tabId);
-      setCollapsed(false);
-      setHighlight((value) => value + 1);
+      if (collapsed) {
+        setCollapsed(false);
+      } else {
+        setHighlight((value) => value + 1);
+      }
     },
-    [setCollapsed]
+    [collapsed, setCollapsed]
   );
 
   return {

@@ -14,7 +14,7 @@
   --foreground: #171717;
   --muted: #737373;
   --subtle: #a3a3a3;
-  --border: #e5e5e5;
+  --border: #ededed;
   --panel: #fafafa;
   --panel-hover: #f0f0f0;
   --panel-active: #e8e8e8;
@@ -34,7 +34,7 @@
     --foreground: #ededed;
     --muted: #9a9a9a;
     --subtle: #6b6b6b;
-    --border: #262626;
+    --border: #303030;
     --panel: #1a1a1a;
     --panel-hover: #232323;
     --panel-active: #2b2b2b;
@@ -84,6 +84,11 @@
 
   ::selection {
     background: var(--accent-soft);
+  }
+
+  /* Lucide draws icons at 2. Half a pixel lighter. */
+  .lucide {
+    stroke-width: 1.5;
   }
 }
 
@@ -335,17 +340,15 @@
 
 /* One-shot flash over the side panel when a card in the chat opens a tab */
 .panel-flash {
-  animation: panel-flash 900ms ease-out forwards;
+  animation: panel-flash 450ms ease-out forwards;
 }
 
 @keyframes panel-flash {
   from {
-    background: color-mix(in srgb, var(--accent) 14%, transparent);
-    box-shadow: inset 0 0 0 2px var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
   to {
-    background: transparent;
-    box-shadow: inset 0 0 0 2px transparent;
+    box-shadow: inset 0 0 0 1px transparent;
   }
 }
 
