@@ -112,10 +112,10 @@ export async function runAgentForChat(location: ChatLocation) {
 
   const created = await createAgentMessage(location);
   let agentMessageId = created.id;
-  const startedAt = created.startedAt;
+  let startedAt = created.startedAt;
 
   let parts: AgentPart[] = [];
-  const repliesTo: string[] = [];
+  let repliesTo: string[] = [];
   let cursorAgentId = claim.cursorAgentId;
   let git: GitInfo | undefined;
   let diffUpdatedAt: string | undefined;
@@ -139,31 +139,35 @@ export async function runAgentForChat(location: ChatLocation) {
     }
 
     // Messages arrived mid-run: the reply written so far is only a draft,
-    // since it may be wrong given the new messages. Take it out of the
-    // visible message (tool calls stay as a record of the work) and hand it
-    // to the follow-up run to revise. Only the last run's reply is shown.
-    //
-    // The agent message also moves below the new human messages, so the
-    // eventual reply lands at the bottom of the chat, after everything it
-    // answers, rather than above messages that were posted mid-run.
+    // since it may be wrong given the new messages. The message so far is
+    // closed as a work log without a reply (tool calls stay as a record of
+    // the work), and a new agent message opens at the bottom of the chat,
+    // below the messages that just came in. The draft is handed to the
+    // follow-up run to revise, and only that run's reply is shown, in the
+    // new message.
     //
     // This happens before the messages are marked handled: clients hide the
     // draft while a follow-up is queued, so the order avoids a flash.
     const previousReply = runIndex > 0 ? text : undefined;
     if (runIndex > 0) {
-      parts = [
-        ...parts.filter((part) => part.type !== "text"),
-        {
-          type: "divider",
-          text: `Follow-up from ${formatAuthors(pending, users)} — revising before replying`,
-        },
-      ];
-      agentMessageId = await moveAgentMessageToBottom({
+      await closeAgentMessage({
         ...location,
         agentMessageId,
-        parts,
         startedAt,
+        parts: [
+          ...parts.filter((part) => part.type !== "text"),
+          {
+            type: "divider",
+            text: `Continued below for ${formatAuthors(pending, users)}'s follow-up`,
+          },
+        ],
+        repliesTo,
       });
+      const next = await createAgentMessage(location);
+      agentMessageId = next.id;
+      startedAt = next.startedAt;
+      parts = [];
+      repliesTo = [];
     }
 
     await markHandled(location, pending);
@@ -398,34 +402,37 @@ async function createAgentMessage({ roomId, feedId }: ChatLocation) {
 }
 
 /**
- * Re-posts the running agent message as a new one at the bottom of the
- * chat, keeping its work so far, and removes the old one. Used when people
- * post while the agent works, so the reply ends up after their messages.
+ * Closes a running agent message as a work log with no reply: the run's
+ * work stays visible behind "Worked for…", while the reply itself is
+ * written in a new message further down once the follow-up is handled.
  */
-async function moveAgentMessageToBottom({
+async function closeAgentMessage({
   roomId,
   feedId,
   agentMessageId,
-  parts,
   startedAt,
+  parts,
+  repliesTo,
 }: ChatLocation & {
   agentMessageId: string;
-  parts: AgentPart[];
   startedAt: number;
+  parts: AgentPart[];
+  repliesTo: string[];
 }) {
   "use step";
 
-  const liveblocks = getLiveblocks();
-  const message = await liveblocks.createFeedMessage({
+  await getLiveblocks().updateFeedMessage({
     roomId,
     feedId,
-    data: agentMessageData({ status: "running", parts, startedAt }),
+    messageId: agentMessageId,
+    data: agentMessageData({
+      status: "done",
+      parts,
+      startedAt,
+      finishedAt: Date.now(),
+      repliesTo,
+    }),
   });
-  await liveblocks
-    .deleteFeedMessage({ roomId, feedId, messageId: agentMessageId })
-    .catch(() => {});
-
-  return message.id;
 }
 
 async function abandonAgentMessage({

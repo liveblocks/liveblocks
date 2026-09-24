@@ -176,8 +176,15 @@ export function WorkLog({
   action?: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
+  // "Thinking…" until the agent has actually done something (a tool call or
+  // some text); status lines like "Starting cloud agent…" don't count
+  const hasWork = parts.some(
+    (part) => part.type === "tool" || part.type === "text"
+  );
   const label = running
-    ? "Working…"
+    ? hasWork
+      ? "Working…"
+      : "Thinking…"
     : `${status === "error" ? "Stopped after" : "Worked for"} ${formatDuration(durationMs)}`;
   const canExpand = parts.length > 0;
 
