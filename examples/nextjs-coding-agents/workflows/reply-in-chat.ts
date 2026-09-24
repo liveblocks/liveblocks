@@ -63,6 +63,10 @@ async function streamReply({ roomId, feedId, messageId }: ReplyInput) {
   ];
   const users = await getGitHubUsers(logins);
 
+  // Only earlier quick answers are the model's own turns. The coding
+  // agent's messages go in as context from another speaker: presented as
+  // "assistant" turns, the model concludes it edited the code itself and
+  // starts promising changes it can't make.
   const messages: ModelMessage[] = history.flatMap(
     (message): ModelMessage[] => {
       const text = messageText(message);
@@ -70,7 +74,9 @@ async function streamReply({ roomId, feedId, messageId }: ReplyInput) {
         return [];
       }
       if (message.data.role === "agent") {
-        return [{ role: "assistant", content: text }];
+        return message.data.kind === "reply"
+          ? [{ role: "assistant", content: text }]
+          : [{ role: "user", content: `Coding agent: ${text}` }];
       }
       const name = users.get(message.data.userId)?.name ?? message.data.userId;
       return [{ role: "user", content: `${name}: ${text}` }];

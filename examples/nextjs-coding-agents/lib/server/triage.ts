@@ -113,8 +113,8 @@ export async function triageMessage({
             .join(" "),
           criteria: {
             none: "Nothing. People are talking to each other: reactions, acknowledgements, thanks, jokes, coordination between teammates, discussion that doesn't ask the agent for anything, or a message clearly addressed to a named person.",
-            chat: "A reply in the chat is enough: a question, explanation, opinion, comparison, quick answer, or a request to summarise or clarify something, where nothing needs to be changed in the repository and no document needs to be written or edited.",
-            code: "A coding session: changing or adding code, fixing a bug, running or checking something in the repository, opening or updating a pull request, writing or editing a document, or a follow-up that changes, stops, or adds to work the agent is doing.",
+            chat: "A reply in the chat is enough: a question, explanation, opinion, comparison, quick answer, or a request to summarise or clarify something, where nothing needs to be changed in the repository and no document needs to be written or edited. Only when the message asks for information, not for something to be done.",
+            code: "A coding session: changing or adding code, fixing a bug, running or checking something in the repository, opening or updating a pull request, writing or editing a document, or a follow-up that changes, stops, or adds to work the agent is doing. Anything phrased as an instruction to do, make, add, change, fix, remove, run, or write something belongs here, even if it looks small.",
           },
         },
       },

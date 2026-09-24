@@ -35,12 +35,13 @@ export type DocumentChange = {
   action: "created" | "updated";
 };
 
-/** Body of `POST /api/agent/message` */
+/**
+ * Body of `POST /api/agent/message`. Triage and the workflow start happen
+ * after the response, so all it says is that the request was accepted; the
+ * outcome shows up on the message itself (`forAgent`, `handled`).
+ */
 export type AgentMessageResponse = {
-  // What triage decided the message called for (lib/server/triage.ts)
-  response: "none" | "chat" | "code";
-  reason: string;
-  runId?: string;
+  accepted: true;
 };
 
 export type ChatFeedMetadata = Liveblocks["FeedMetadata"];

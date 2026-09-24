@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { start } from "workflow/api";
 import { auth } from "@/auth";
 import { hasCursorApiKey } from "@/lib/server/cursor";
@@ -10,11 +10,12 @@ import { runAgentForChat } from "@/workflows/run-agent";
 
 /**
  * Called by the client right after it posts a human message to a chat.
- * Triage decides what the message calls for: nothing (people talking among
- * themselves), a reply written straight into the chat by a language model,
- * or a run of the Cursor cloud agent. The coding workflow itself decides
- * whether the chat is already being worked on, in which case the message is
- * picked up as a follow-up run once the current one finishes.
+ * Validates the request and returns at once; the rest runs after the
+ * response. Triage decides what the message calls for: nothing (people
+ * talking among themselves), a reply written straight into the chat by a
+ * language model, or a run of the Cursor cloud agent. The coding workflow
+ * itself decides whether the chat is already being worked on, in which case
+ * the message is picked up as a follow-up run once the current one finishes.
  *
  * `force` rules out "nothing", for a message the author wants answered
  * after all.
@@ -64,49 +65,47 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Older clients don't say which message they posted; treat that as a
-  // request for the coding agent, as before triage existed
-  const decision = messageId
-    ? await decide({ roomId, feedId, messageId, force })
-    : { response: "code" as const, reason: "unavailable" as const };
-  if (decision === null) {
-    return NextResponse.json({ error: "Unknown message" }, { status: 404 });
-  }
+  // Everything from here on happens after the response is sent: the client
+  // only needs to know the request was valid. The message is already in the
+  // feed, and the outcome (queued, answered, or left alone) reaches every
+  // client through the feed itself.
+  after(() => dispatch({ roomId, feedId, messageId, force }));
 
-  switch (decision.response) {
-    case "none":
-      return NextResponse.json(
-        {
-          response: "none",
-          reason: decision.reason,
-        } satisfies AgentMessageResponse,
-        { status: 200 }
-      );
-    case "chat": {
-      // messageId is set: the fallback decision above is always "code"
-      const run = await start(replyInChat, [
-        { roomId, feedId, messageId: messageId ?? "" },
-      ]);
-      return NextResponse.json(
-        {
-          response: "chat",
-          reason: decision.reason,
-          runId: run.runId,
-        } satisfies AgentMessageResponse,
-        { status: 202 }
-      );
+  return NextResponse.json({ accepted: true } satisfies AgentMessageResponse, {
+    status: 202,
+  });
+}
+
+/** Triage, then start whichever workflow the message calls for. */
+async function dispatch({
+  roomId,
+  feedId,
+  messageId,
+  force,
+}: {
+  roomId: string;
+  feedId: string;
+  messageId: string | null;
+  force: boolean;
+}) {
+  try {
+    // Older clients don't say which message they posted; treat that as a
+    // request for the coding agent, as before triage existed
+    const decision = messageId
+      ? await decide({ roomId, feedId, messageId, force })
+      : { response: "code" as const, reason: "unavailable" as const };
+
+    if (decision === null) {
+      console.warn(`[triage] message ${messageId} not found in ${feedId}`);
+      return;
     }
-    case "code": {
-      const run = await start(runAgentForChat, [{ roomId, feedId }]);
-      return NextResponse.json(
-        {
-          response: "code",
-          reason: decision.reason,
-          runId: run.runId,
-        } satisfies AgentMessageResponse,
-        { status: 202 }
-      );
+    if (decision.response === "chat" && messageId) {
+      await start(replyInChat, [{ roomId, feedId, messageId }]);
+    } else if (decision.response === "code") {
+      await start(runAgentForChat, [{ roomId, feedId }]);
     }
+  } catch (error) {
+    console.error("[agent/message] failed to dispatch", error);
   }
 }
 
