@@ -55,7 +55,7 @@ export function PresenceAvatars() {
             alt={user.name}
             title={user.name}
             className={clsx(
-              "size-6 rounded-full border-2 border-background bg-panel object-cover",
+              "size-7 rounded-full border-2 border-background bg-panel object-cover",
               index > 0 && "-ml-2"
             )}
           />
