@@ -180,6 +180,85 @@ export async function listBranches(
   return result;
 }
 
+export type PullRequestDetails = {
+  number: number;
+  title: string;
+  // Markdown; empty when the PR has no description
+  body: string;
+  state: "open" | "closed" | "merged";
+  draft: boolean;
+  author: GitHubUser | null;
+  url: string;
+  updatedAt: string;
+};
+
+/** `https://github.com/owner/repo/pull/123` → its parts, or null */
+export function parsePullRequestUrl(url: string) {
+  const match = url.match(
+    /^https:\/\/github\.com\/([^/]+\/[^/]+)\/pull\/(\d+)(?:[/?#].*)?$/
+  );
+  return match ? { repoName: match[1], number: Number(match[2]) } : null;
+}
+
+/**
+ * Title, description, and state of a pull request, for the Description tab
+ * next to a chat. Same credential order as `listBranches`: private
+ * repositories need `GITHUB_TOKEN`.
+ */
+export async function getPullRequest(
+  url: string,
+  accessToken?: string
+): Promise<PullRequestDetails | null> {
+  const parsed = parsePullRequestUrl(url);
+  if (!parsed) {
+    return null;
+  }
+
+  const tokens = [
+    ...(process.env.GITHUB_TOKEN ? [process.env.GITHUB_TOKEN] : []),
+    ...(accessToken ? [accessToken] : []),
+    undefined,
+  ];
+  let response: Response | null = null;
+  for (const token of tokens) {
+    response = await githubFetch(
+      `/repos/${parsed.repoName}/pulls/${parsed.number}`,
+      token
+    );
+    if (response.ok) {
+      break;
+    }
+  }
+  if (!response?.ok) {
+    return null;
+  }
+
+  const pull = (await response.json()) as {
+    number: number;
+    title: string;
+    body: string | null;
+    state: "open" | "closed";
+    merged: boolean;
+    draft: boolean;
+    html_url: string;
+    updated_at: string;
+    user: Omit<ProfileResponse, "name" | "email"> | null;
+  };
+
+  return {
+    number: pull.number,
+    title: pull.title,
+    body: pull.body ?? "",
+    state: pull.merged ? "merged" : pull.state,
+    draft: pull.draft,
+    author: pull.user
+      ? toUser({ ...pull.user, name: null, email: null })
+      : null,
+    url: pull.html_url,
+    updatedAt: pull.updated_at,
+  };
+}
+
 /**
  * Git trailer that credits a person on a commit made by someone else (here,
  * the Cursor GitHub App). GitHub links it to their account via the email.

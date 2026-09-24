@@ -1,10 +1,11 @@
 "use client";
 
 import { useStorage } from "@liveblocks/react/suspense";
-import { FileDiffIcon, FileTextIcon } from "lucide-react";
+import { FileDiffIcon, FileTextIcon, GitPullRequestIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChangesView } from "@/components/changes-panel";
 import { DocumentView } from "@/components/document-view";
+import { PullRequestView } from "@/components/pull-request-view";
 import {
   SidePanel,
   SidePanelContext,
@@ -13,18 +14,22 @@ import {
 } from "@/components/side-panel";
 import type { ChatFeed } from "@/lib/types";
 
+export const DESCRIPTION_TAB = "description";
 export const CHANGES_TAB = "changes";
 const NO_DOCUMENTS = {};
 
 /**
- * Tabs for the chat's side panel: the code changes, when the agent has
- * pushed any, and one tab per document it wrote. Documents come straight
- * from Storage, so a new one shows up for everyone the moment the workflow
- * saves it, and it's brought to the front.
+ * Tabs for the chat's side panel: the pull request's description once one
+ * is open, the code changes when the agent has pushed any, and one tab per
+ * document it wrote. Documents come straight from Storage, so a new one
+ * shows up for everyone the moment the workflow saves it, and it's brought
+ * to the front. Description comes first in the strip, but Changes is what
+ * opens by default.
  */
 export function useChatSidePanel(feed: ChatFeed) {
   const { feedId, metadata } = feed;
   const hasChanges = Boolean(metadata.diffUpdatedAt || metadata.branch);
+  const hasPullRequest = Boolean(metadata.prUrl);
 
   // The map is read as a plain object whose identity only changes when a
   // document does, so deriving from it is cheap. It's missing in rooms from
@@ -42,6 +47,15 @@ export function useChatSidePanel(feed: ChatFeed) {
 
   const tabs = useMemo<SidePanelTab[]>(
     () => [
+      ...(hasPullRequest
+        ? [
+            {
+              id: DESCRIPTION_TAB,
+              label: "Description",
+              icon: <GitPullRequestIcon className="size-4" />,
+            },
+          ]
+        : []),
       ...(hasChanges
         ? [
             {
@@ -57,7 +71,7 @@ export function useChatSidePanel(feed: ChatFeed) {
         icon: <FileTextIcon className="size-4" />,
       })),
     ],
-    [documents, hasChanges]
+    [documents, hasChanges, hasPullRequest]
   );
 
   const [collapsed, setCollapsed] = useSidePanelCollapsed();
@@ -138,7 +152,12 @@ export function ChatSidePanel({
       onCollapsedChange={setCollapsed}
       highlight={highlight}
     >
-      {activeTab === CHANGES_TAB ? (
+      {activeTab === DESCRIPTION_TAB && metadata.prUrl ? (
+        <PullRequestView
+          prUrl={metadata.prUrl}
+          refreshKey={metadata.diffUpdatedAt ?? ""}
+        />
+      ) : activeTab === CHANGES_TAB ? (
         <ChangesView
           roomId={roomId}
           feedId={feedId}

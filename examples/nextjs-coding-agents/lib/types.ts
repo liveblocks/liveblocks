@@ -74,6 +74,21 @@ export type BranchesResponse = {
   error?: string;
 };
 
+/** Shape of `GET /api/pull-request?url=` */
+export type PullRequestResponse = {
+  pullRequest: {
+    number: number;
+    title: string;
+    body: string;
+    state: "open" | "closed" | "merged";
+    draft: boolean;
+    author: { login: string; name: string; avatar: string } | null;
+    url: string;
+    updatedAt: string;
+  } | null;
+  error?: string;
+};
+
 /** What `/api/diff` returns: the agent's changes so far in a chat. */
 export type ChangesInfo = {
   /** Unified diff against the chat's base branch */
