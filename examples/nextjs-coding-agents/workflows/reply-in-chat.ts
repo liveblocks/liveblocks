@@ -2,6 +2,7 @@ import { stepCountIs, streamText, type ModelMessage } from "ai";
 import { AI_USER_ID } from "@/lib/agent-user";
 import { stripMentionTokens } from "@/lib/mentions";
 import { buildChatReplySystemPrompt } from "@/lib/prompt";
+import { resolveGatewayModelId } from "@/lib/server/cursor";
 import { readDocuments } from "@/lib/server/documents";
 import { getGitHubUsers } from "@/lib/server/github";
 import { getLiveblocks } from "@/lib/server/liveblocks";
@@ -15,10 +16,10 @@ import type { AgentPart, ChatMessage, ChatMessageData } from "@/lib/types";
  * agent message like any other, streamed in as it's generated, so it reads
  * the same in the UI, minus a work log.
  *
- * The model is reached through Vercel AI Gateway with the same credentials
- * as Jev; set `AI_CHAT_MODEL` to pick a different one.
+ * It uses the chat's model, the one picked in the composer, reached through
+ * Vercel AI Gateway with the same credentials as Jev (the model list is
+ * limited to models both Cursor and Gateway serve, see lib/server/cursor.ts).
  */
-export const DEFAULT_CHAT_MODEL_ID = "anthropic/claude-haiku-4.5";
 
 /** How much of the chat the model sees */
 const CONTEXT_MESSAGES = 20;
@@ -122,7 +123,7 @@ async function streamReply({ roomId, feedId, messageId }: ReplyInput) {
     // wandering the whole tree before answering.
     const repo = getRepoContext(feed.metadata);
     const result = streamText({
-      model: process.env.AI_CHAT_MODEL || DEFAULT_CHAT_MODEL_ID,
+      model: await resolveGatewayModelId(feed.metadata.model),
       system: buildChatReplySystemPrompt({
         repo,
         agentRunning: feed.metadata.agentStatus === "running",

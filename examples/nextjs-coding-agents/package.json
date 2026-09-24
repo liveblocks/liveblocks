@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^4.0.91",
     "@cursor/sdk": "^1.0.32",
     "@liveblocks/client": "^3.24.1",
     "@liveblocks/node": "^3.24.1",

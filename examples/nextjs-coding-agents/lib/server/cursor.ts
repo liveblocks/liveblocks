@@ -1,3 +1,4 @@
+import { gateway } from "@ai-sdk/gateway";
 import { Agent, Cursor } from "@cursor/sdk";
 import { createHash } from "node:crypto";
 
@@ -5,9 +6,12 @@ export type ModelOption = {
   id: string;
   displayName: string;
   description?: string;
+  // The same model on Vercel AI Gateway, which writes quick answers; set
+  // whenever the Gateway catalog is available
+  gatewayId?: string;
 };
 
-export const DEFAULT_MODEL_ID = process.env.CURSOR_MODEL ?? "composer-2.5";
+export const DEFAULT_MODEL_ID = process.env.CURSOR_MODEL ?? "claude-sonnet-4-6";
 
 export function getCursorApiKey() {
   const apiKey = process.env.CURSOR_API_KEY;
@@ -28,22 +32,103 @@ let modelsCache: { fetchedAt: number; models: ModelOption[] } | null = null;
  * Lists the models available to the configured Cursor API key. The catalog
  * is account-specific and can change, so it's discovered at runtime and
  * cached per server process rather than hard-coded.
+ *
+ * One model drives both the coding sessions (through Cursor) and the quick
+ * answers (through Vercel AI Gateway), so when Gateway is configured the
+ * list is narrowed to models both catalogs serve, matched by id and display
+ * name with punctuation ignored (`claude-opus-5-5` ↔
+ * `anthropic/claude-opus-5.5`). Cursor-only models like Composer drop out.
+ * Without Gateway credentials there are no quick answers, so the full
+ * Cursor list is used.
  */
 export async function listModels(): Promise<ModelOption[]> {
   if (modelsCache && Date.now() - modelsCache.fetchedAt < MODELS_TTL_MS) {
     return modelsCache.models;
   }
 
-  const models = await Cursor.models.list({ apiKey: getCursorApiKey() });
-  const options = models.map((model) => ({
+  const [cursorModels, gatewayModels] = await Promise.all([
+    Cursor.models.list({ apiKey: getCursorApiKey() }),
+    listGatewayModels(),
+  ]);
+
+  let options: ModelOption[] = cursorModels.map((model) => ({
     id: model.id,
     displayName: model.displayName,
     description: model.description,
   }));
 
+  if (gatewayModels) {
+    // Ids are the reliable key; display names only fill gaps (Gateway
+    // names aren't unique, e.g. a "Pro" variant listed as plain "GPT 5.2")
+    const byId = new Map<string, string>();
+    const byName = new Map<string, string>();
+    for (const model of gatewayModels) {
+      byId.set(
+        normalizeModelKey(model.id.split("/").pop() ?? model.id),
+        model.id
+      );
+      const name = normalizeModelKey(model.name);
+      if (!byName.has(name)) {
+        byName.set(name, model.id);
+      }
+    }
+    options = options.flatMap((option) => {
+      const id = normalizeModelKey(option.id);
+      const name = normalizeModelKey(option.displayName);
+      const gatewayId =
+        byId.get(id) ?? byId.get(name) ?? byName.get(id) ?? byName.get(name);
+      return gatewayId ? [{ ...option, gatewayId }] : [];
+    });
+  }
+
   modelsCache = { fetchedAt: Date.now(), models: options };
   return options;
 }
+
+/** `claude-opus-5-5`, `claude-opus-5.5`, `Claude Opus 5.5` → `claudeopus55` */
+function normalizeModelKey(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * Language models on AI Gateway, or null when Gateway isn't configured (no
+ * key locally, no OIDC token on Vercel) or can't be reached.
+ */
+async function listGatewayModels(): Promise<
+  { id: string; name: string }[] | null
+> {
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN) {
+    return null;
+  }
+  try {
+    const { models } = await gateway.getAvailableModels();
+    return models
+      .filter((model) => model.modelType === "language" || !model.modelType)
+      .map((model) => ({ id: model.id, name: model.name }));
+  } catch (error) {
+    console.warn("[models] couldn't list AI Gateway models", error);
+    return null;
+  }
+}
+
+/**
+ * The AI Gateway model for quick answers in a chat that uses `cursorModelId`
+ * for coding: the same model when the catalogs match, else `AI_CHAT_MODEL`.
+ */
+export async function resolveGatewayModelId(cursorModelId: string) {
+  const fallback = process.env.AI_CHAT_MODEL || DEFAULT_GATEWAY_MODEL_ID;
+  try {
+    const models = await listModels();
+    return (
+      models.find((model) => model.id === cursorModelId)?.gatewayId ?? fallback
+    );
+  } catch {
+    return fallback;
+  }
+}
+
+/** Used for quick answers when the chat's model has no Gateway counterpart */
+export const DEFAULT_GATEWAY_MODEL_ID = "anthropic/claude-haiku-4.5";
 
 /**
  * The model to actually run with. A chat's model is stored in feed metadata
