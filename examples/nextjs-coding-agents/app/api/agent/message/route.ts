@@ -152,11 +152,7 @@ async function decide({
 
   if (decision.reason === "model") {
     const odds = decision.probabilities
-      ? ` none=${decision.probabilities.none.toFixed(2)} chat=${decision.probabilities.chat.toFixed(2)} code=${decision.probabilities.code.toFixed(2)}${
-          decision.enoughContext !== undefined
-            ? ` context=${decision.enoughContext.toFixed(2)}`
-            : ""
-        }`
+      ? ` none=${decision.probabilities.none.toFixed(2)} chat=${decision.probabilities.chat.toFixed(2)} code=${decision.probabilities.code.toFixed(2)}`
       : "";
     console.info(
       `[triage] ${decision.response}${odds}: ${message.data.content.slice(0, 80)}`
