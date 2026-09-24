@@ -249,7 +249,9 @@ export async function runAgentForChat(location: ChatLocation) {
       runIndex++;
     }
   } catch (err) {
-    error = describeError(err);
+    // Plain formatting only: this runs in the workflow sandbox, and
+    // `describeError` pulls in the Cursor SDK, which can only be used in steps
+    error = err instanceof Error ? err.message : String(err);
     settleRunningTools(parts, "error");
     parts.push({ type: "error", text: error });
   }
