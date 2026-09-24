@@ -1,11 +1,11 @@
-import { streamText, type ModelMessage } from "ai";
+import { stepCountIs, streamText, type ModelMessage } from "ai";
 import { AI_USER_ID } from "@/lib/agent-user";
 import { stripMentionTokens } from "@/lib/mentions";
 import { buildChatReplySystemPrompt } from "@/lib/prompt";
-import { getRepoName } from "@/lib/repo";
 import { readDocuments } from "@/lib/server/documents";
 import { getGitHubUsers } from "@/lib/server/github";
 import { getLiveblocks } from "@/lib/server/liveblocks";
+import { createRepoTools, getRepoContext } from "@/lib/server/repo-tools";
 import { stripSkillTokens } from "@/lib/skills";
 import type { AgentPart, ChatMessage, ChatMessageData } from "@/lib/types";
 
@@ -22,6 +22,8 @@ export const DEFAULT_CHAT_MODEL_ID = "anthropic/claude-haiku-4.5";
 
 /** How much of the chat the model sees */
 const CONTEXT_MESSAGES = 20;
+/** Model turns per reply, i.e. how many rounds of repository reads */
+const MAX_STEPS = 8;
 const FLUSH_INTERVAL_MS = 100;
 
 type ReplyInput = { roomId: string; feedId: string; messageId: string };
@@ -114,16 +116,22 @@ async function streamReply({ roomId, feedId, messageId }: ReplyInput) {
   };
 
   try {
+    // With a repository attached the model can read it: browse and read
+    // files, search, list commits, and see the coding agent's diff. Each
+    // tool round trip is a step; the cap keeps a curious model from
+    // wandering the whole tree before answering.
+    const repo = getRepoContext(feed.metadata);
     const result = streamText({
       model: process.env.AI_CHAT_MODEL || DEFAULT_CHAT_MODEL_ID,
       system: buildChatReplySystemPrompt({
-        hasRepository: Boolean(feed.metadata.repoUrl),
-        repoName: feed.metadata.repoUrl
-          ? getRepoName(feed.metadata.repoUrl)
-          : undefined,
+        repo,
+        agentRunning: feed.metadata.agentStatus === "running",
         documents,
       }),
       messages,
+      ...(repo
+        ? { tools: createRepoTools(repo), stopWhen: stepCountIs(MAX_STEPS) }
+        : {}),
     });
 
     for await (const delta of result.textStream) {

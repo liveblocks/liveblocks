@@ -34,7 +34,8 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "workflow": "^4.8.5",
-    "yjs": "^13.6.32"
+    "yjs": "^13.6.32",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

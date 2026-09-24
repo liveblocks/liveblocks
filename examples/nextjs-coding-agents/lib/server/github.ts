@@ -30,14 +30,18 @@ function appAuthorization() {
   return `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`;
 }
 
-async function githubFetch(path: string, accessToken?: string) {
+async function githubFetch(
+  path: string,
+  accessToken?: string,
+  accept = "application/vnd.github+json"
+) {
   const authorization = accessToken
     ? `Bearer ${accessToken}`
     : appAuthorization();
 
   return fetch(`${API}${path}`, {
     headers: {
-      Accept: "application/vnd.github+json",
+      Accept: accept,
       "X-GitHub-Api-Version": "2022-11-28",
       "User-Agent": "liveblocks-coding-agents",
       ...(authorization ? { Authorization: authorization } : {}),
@@ -178,6 +182,31 @@ export async function listBranches(
   };
   branchesCache.set(cacheKey, { fetchedAt: Date.now(), result });
   return result;
+}
+
+/**
+ * A GitHub API request with the most capable credential that works:
+ * `GITHUB_TOKEN`, then the signed-in user's token, then the OAuth app's own
+ * (public data only). Returns the first OK response, else the last one.
+ */
+export async function githubGet(
+  path: string,
+  accessToken?: string,
+  accept = "application/vnd.github+json"
+): Promise<Response> {
+  const [first, ...rest] = [
+    ...(process.env.GITHUB_TOKEN ? [process.env.GITHUB_TOKEN] : []),
+    ...(accessToken ? [accessToken] : []),
+    undefined,
+  ];
+  let response = await githubFetch(path, first, accept);
+  for (const token of rest) {
+    if (response.ok) {
+      break;
+    }
+    response = await githubFetch(path, token, accept);
+  }
+  return response;
 }
 
 export type PullRequestDetails = {

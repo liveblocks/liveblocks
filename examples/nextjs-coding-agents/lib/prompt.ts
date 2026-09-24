@@ -215,12 +215,18 @@ function buildWrapUpInstructions(
  * needs an answer. It sees the same documents as the coding agent.
  */
 export function buildChatReplySystemPrompt({
-  hasRepository,
-  repoName,
+  repo,
+  agentRunning,
   documents,
 }: {
-  hasRepository: boolean;
-  repoName?: string;
+  /** The chat's repository and the coding agent's branch, if any */
+  repo: {
+    repoName: string;
+    baseRef: string;
+    branch?: string;
+    prUrl?: string;
+  } | null;
+  agentRunning: boolean;
   documents: PromptDocument[];
 }) {
   return [
@@ -228,11 +234,23 @@ export function buildChatReplySystemPrompt({
       "You answer questions in a team's shared chat. Several people talk in it; each message from a person is prefixed with their name. Answer the latest message, using the earlier ones as context.",
       "The chat also has a coding agent: a separate process that reads and changes the repository, runs commands, opens pull requests, and writes documents. Its earlier messages appear in the conversation prefixed with `Coding agent:`. They were not written by you, and you have none of its abilities.",
       "You are answering in text only. You cannot edit, create, run, test, commit, or check anything, now or after this reply, and nothing you write causes any change. Never say that you will make a change, that you are making one, or that you have made one. If what's being asked needs the repository changed, a command run, a pull request, or a document written or edited, say in one sentence that it needs a coding session and that asking for the change directly will start one; then answer whatever part you can answer with words alone.",
-      hasRepository
-        ? `The chat is about the repository ${repoName ?? ""}; you may know it in general terms but haven't read it in this conversation.`
-        : "This chat has no repository attached.",
       "Be concise and direct. Use Markdown; keep formatting light. Don't restate the question or sign off.",
     ].join(" "),
+    repo
+      ? [
+          "## Repository",
+          `This chat is about \`${repo.repoName}\`, base branch \`${repo.baseRef}\`.`,
+          repo.branch
+            ? `The coding agent works on the branch \`${repo.branch}\`${repo.prUrl ? `, with the pull request ${repo.prUrl}` : ""}.`
+            : "The coding agent hasn't pushed a branch yet.",
+          agentRunning
+            ? "The coding agent is working right now, so its branch may change while you answer."
+            : null,
+          "You can read the repository with the tools you have: list directories, read files, search code, list commits, and get the diff of the coding agent's changes. When a question is about the code, the branch, or what was changed, look before you answer rather than guessing, and mention file paths you relied on. Reading is all these tools do.",
+        ]
+          .filter((line) => line !== null)
+          .join("\n")
+      : "## Repository\nThis chat has no repository attached.",
     buildDocumentsSection(documents),
   ]
     .filter((section) => section !== null)
