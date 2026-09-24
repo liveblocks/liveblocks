@@ -40,6 +40,13 @@ const MAX_TEXT_CHARS = 1_500;
  */
 const NONE_MIN_PROBABILITY = 0.65;
 
+/**
+ * A coding session only starts when Jev thinks the request, read with the
+ * conversation, is clear enough to act on; below this the quick-answer
+ * model asks what exactly is wanted instead.
+ */
+const ENOUGH_CONTEXT_MIN_PROBABILITY = 0.5;
+
 export type TriageResponse = "none" | "chat" | "code";
 
 export type TriageDecision = {
@@ -47,6 +54,8 @@ export type TriageDecision = {
   // How the decision was reached; surfaced in logs and the API response
   reason: "skill" | "model" | "unavailable";
   probabilities?: Record<TriageResponse, number>;
+  // How likely the request is specific enough to start work on
+  enoughContext?: number;
 };
 
 /** Whether Jev can be reached: an AI Gateway key locally, OIDC on Vercel. */
@@ -104,6 +113,7 @@ export async function triageMessage({
           type: "choice",
           instructions: [
             "This is a team chat shared with an AI agent (shown as 'agent'). The agent has no name people use; requests are simply typed into the chat. It can either answer in the chat, or start a coding session that reads and changes the repository, runs commands, opens pull requests, and writes documents.",
+            "Read `recentMessages` first: `newMessage` often only makes sense as a reply to them (a short 'yes, do that' after the agent proposed something is a request; 'do the second option' refers to something said earlier).",
             "What does `newMessage` call for from the agent?",
             mustRespond
               ? "The author addressed the agent explicitly, so `none` is not an option."
@@ -115,6 +125,16 @@ export async function triageMessage({
             none: "Nothing. People are talking to each other: reactions, acknowledgements, thanks, jokes, coordination between teammates, discussion that doesn't ask the agent for anything, or a message clearly addressed to a named person.",
             chat: "A reply in the chat is enough: a question, explanation, opinion, comparison, quick answer, or a request to summarise or clarify something, where nothing needs to be changed in the repository and no document needs to be written or edited. Only when the message asks for information, not for something to be done.",
             code: "A coding session: changing or adding code, fixing a bug, running or checking something in the repository, opening or updating a pull request, writing or editing a document, or a follow-up that changes, stops, or adds to work the agent is doing. Anything phrased as an instruction to do, make, add, change, fix, remove, run, or write something belongs here, even if it looks small.",
+          },
+        },
+        enoughContext: {
+          type: "boolean",
+          instructions:
+            "Suppose `newMessage` asks for something to be done. Taking `newMessage` together with `recentMessages`, is there enough to actually start on it: is it clear what should be changed, written, or checked, and where or for what, without having to ask the author a question first? A coding session costs real time and money, so it should only start when the task is understood. Judge the request as written, not whether it's easy.",
+          criteria: {
+            true: "The task is specific enough to begin: it names or clearly implies what to do and what it applies to, or the conversation before it supplies those details (e.g. 'do that' right after the agent proposed a concrete change).",
+            false:
+              "The request is too vague or incomplete to act on: 'fix it', 'make it better', 'add tests' with nothing that says for what, a reference to something never mentioned in the conversation, or contradictory instructions. A short reply asking what exactly is wanted would be needed first.",
           },
         },
       },
@@ -129,14 +149,20 @@ export async function triageMessage({
       chat: answer.probabilities?.chat ?? (answer.choice === "chat" ? 1 : 0),
       code: answer.probabilities?.code ?? (answer.choice === "code" ? 1 : 0),
     };
+    const enoughContext = result.answers.enoughContext.probability;
 
     let response: TriageResponse;
     if (!mustRespond && probabilities.none >= NONE_MIN_PROBABILITY) {
       response = "none";
+    } else if (probabilities.code >= probabilities.chat) {
+      // A request the agent can't yet act on gets a clarifying reply in the
+      // chat instead of a run that would have to guess
+      response =
+        enoughContext >= ENOUGH_CONTEXT_MIN_PROBABILITY ? "code" : "chat";
     } else {
-      response = probabilities.code >= probabilities.chat ? "code" : "chat";
+      response = "chat";
     }
-    return { response, reason: "model", probabilities };
+    return { response, reason: "model", probabilities, enoughContext };
   } catch (error) {
     console.warn(
       "[triage] Jev call failed; sending to the coding agent",

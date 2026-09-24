@@ -57,13 +57,15 @@ coding agent's diff, `lib/server/repo-tools.ts`), or a **coding session**
 (anything that touches the repository or a document, which starts the Cursor
 agent). Jev returns probabilities rather than text, so "sounds good, thanks"
 stays between teammates, "what does this hook do?" gets a reply in seconds, and
-"sounds good, do it" starts a run. A message left to the team is labelled as
-such, with a "Send anyway" link for its author; `@AI` rules out "nothing", and
-`/` skills always start a coding session. Set `AI_GATEWAY_API_KEY` to enable
-this (deployments on Vercel authenticate automatically); the quick answer uses
-the same model the chat uses for coding, so the model dropdown is limited to
-models both Cursor and Gateway serve. Without a key, every message goes to the
-coding agent.
+"sounds good, do it" starts a run. Jev also judges whether the request, read
+with the conversation, is specific enough to act on; a vague "fix it" gets a
+clarifying question in the chat rather than a session that has to guess. A
+message left to the team is labelled as such, with a "Send anyway" link for its
+author; `@AI` rules out "nothing", and `/` skills always start a coding session.
+Set `AI_GATEWAY_API_KEY` to enable this (deployments on Vercel authenticate
+automatically); the quick answer uses the same model the chat uses for coding,
+so the model dropdown is limited to models both Cursor and Gateway serve.
+Without a key, every message goes to the coding agent.
 
 The agent can also write Markdown documents instead of code (a plan, a report,
 notes from an investigation). Documents open as tabs in the same side panel as
