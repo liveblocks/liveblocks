@@ -44,6 +44,16 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 nvie, bensabic
 
+# Week 38 (2026-09-18)
+
+## Website
+
+- New blog post: [Healthcare is collaborative: how Seen Health coordinates care with Liveblocks](https://liveblocks.io/blog/healthcare-is-collaborative-how-seen-health-coordinates-care-with-liveblocks).
+
+## Contributors
+
+stacyschmitz
+
 # Week 37 (2026-09-11)
 
 ## Dashboard
