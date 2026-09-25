@@ -71,7 +71,7 @@
   "dependencies": {
     "@liveblocks/core": "3.24.3-livetextreplay",
     "async-mutex": "^0.4.0",
-    "decoders": "^2.10.1",
+    "decoders": "^2.12.1",
     "itertools": "^2.7.1",
     "js-base64": "^3.7.5",
     "nanoid": "^3",

@@ -34,23 +34,20 @@ import {
   string,
 } from "decoders";
 
+import { maxKeys } from "./maxKeys";
+
 /** Same cap as createMetadataDecoder in @shared/common */
 const MAX_METADATA_COUNT = 50;
-const MAX_METADATA_VALUE_LIST_LENGTH = 50;
 
 export const feedMetadataIdDecoder = sized(identifier, { min: 1, max: 40 });
 
 const metadataStringValue = sized(string, { max: 256 });
 
 function createRoomMetadataValueDecoder(): Decoder<string | string[]> {
+  const listOfStrings = array(metadataStringValue, { max: 50 });
   return select(
     either(string, poja).describe("Must be string or string[]"),
-    (x) =>
-      typeof x === "string"
-        ? metadataStringValue
-        : sized(array(metadataStringValue), {
-            max: MAX_METADATA_VALUE_LIST_LENGTH,
-          })
+    (x) => (typeof x === "string" ? metadataStringValue : listOfStrings)
   );
 }
 
@@ -61,12 +58,9 @@ const roomMetadataValueDecoder = createRoomMetadataValueDecoder();
  */
 const feedMetadataNullableValueDecoder = nullable(roomMetadataValueDecoder);
 
-const feedMetadataRecordForCreate = record(
-  feedMetadataIdDecoder,
-  roomMetadataValueDecoder
-).refine(
-  (value) => Object.keys(value).length <= MAX_METADATA_COUNT,
-  `Must have at most ${MAX_METADATA_COUNT} items`
+const feedMetadataRecordForCreate = maxKeys(
+  record(feedMetadataIdDecoder, roomMetadataValueDecoder),
+  MAX_METADATA_COUNT
 );
 
 /**
@@ -86,12 +80,9 @@ export const feedMetadataUpdateDecoder = record(
   feedMetadataNullableValueDecoder
 );
 
-const feedMetadataRecordForFilter = record(
-  feedMetadataIdDecoder,
-  feedMetadataNullableValueDecoder
-).refine(
-  (value) => Object.keys(value).length <= MAX_METADATA_COUNT,
-  `Must have at most ${MAX_METADATA_COUNT} items`
+const feedMetadataRecordForFilter = maxKeys(
+  record(feedMetadataIdDecoder, feedMetadataNullableValueDecoder),
+  MAX_METADATA_COUNT
 );
 
 /**

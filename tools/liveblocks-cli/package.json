@@ -49,8 +49,8 @@
     "@liveblocks/core": "3.24.3-livetextreplay",
     "@liveblocks/query-parser": "workspace:^",
     "@liveblocks/server": "workspace:^",
-    "@liveblocks/zenrouter": "^1.2.0",
-    "decoders": "^2.10.1",
+    "@liveblocks/zenrouter": "^1.3.0",
+    "decoders": "^2.12.1",
     "js-base64": "^3.7.5",
     "mime": "^4.0.4",
     "yjs": "^13.6.10"

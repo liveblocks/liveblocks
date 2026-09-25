@@ -15,15 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { positiveInteger } from "decoders";
+import { natural } from "decoders";
 
 /**
  * A livefile's byte count, as it arrives on the wire: from a CREATE_FILE op,
  * from a whole document being installed at once, or from the upload
  * notification itself.
  */
-// TODO Remove this .refine() once isSafeInteger is the default check for positiveInteger
-export const fileSize = positiveInteger.refine(
+// TODO Remove this .refine() once isSafeInteger is the default check for natural
+export const fileSize = natural.refine(
   Number.isSafeInteger,
   "Must be a valid file size"
 );
@@ -31,8 +31,8 @@ export const fileSize = positiveInteger.refine(
 /**
  * A LiveText node's version counter.
  */
-// TODO Remove this .refine() once isSafeInteger is the default check for positiveInteger
-export const liveTextVersion = positiveInteger.refine(
+// TODO Remove this .refine() once isSafeInteger is the default check for natural
+export const liveTextVersion = natural.refine(
   Number.isSafeInteger,
   "Must be a safe integer"
 );
