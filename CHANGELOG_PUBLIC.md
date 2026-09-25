@@ -40,9 +40,13 @@ list and feel free to give them credit at the end of a line, e.g.:
   `webhookVerifier` support for rotated credentials and webhook-forwarding
   infrastructure such as Vercel Connect.
 
+## Documentation
+
+- Info on disconnecting users on the fly in the share dialog use case page.
+
 ## Contributors
 
-nvie, bensabic
+nvie, bensabic, ctnicholas
 
 # Week 38 (2026-09-18)
 
