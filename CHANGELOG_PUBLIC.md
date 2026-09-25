@@ -20,7 +20,29 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 39 (2026-09-25)
 
+## v3.24.2
+
+### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
+
+- Fix edge cases in return types of `.toJSON()`, `useStorage()` selectors, and
+  `getStorageDocument(roomId, "json")`:
+  - a `LiveObject` whose properties are all optional no longer loses its keys
+    when nested inside another Live structure.
+  - a value typed as `Record<string, T>` no longer loses `T`.
+  - an object carrying both a string index signature and named keys no longer
+    loses the named keys.
+  - a `LiveObject` converts to the same type whether you reach it directly or
+    through a parent.
+
+### `@liveblocks/chat-sdk-adapter`
+
+- Allow `apiKey` and `webhookSecret` to be resolved per request, and add custom
+  `webhookVerifier` support for rotated credentials and webhook-forwarding
+  infrastructure such as Vercel Connect.
+
 ## Contributors
+
+nvie, bensabic
 
 # Week 37 (2026-09-11)
 
