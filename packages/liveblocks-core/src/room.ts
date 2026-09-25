@@ -2073,9 +2073,9 @@ export function createRoom<
 
       // LiveText nodes are not covered by the op diff above (their op path
       // carries pending-op transformation semantics that don't apply to
-      // authoritative snapshots). Reconcile them against the snapshot
-      // directly; locally pending text ops are preserved on top and re-sent
-      // by the offline-ops replay.
+      // authoritative snapshots). Reconcile them directly; nodes with pending
+      // text ops retain their pre-snapshot state until the offline replay
+      // returns the missing authoritative history.
       for (const [id, crdt] of nodes) {
         if (crdt.type === CrdtType.TEXT) {
           const node = context.pool.nodes.get(id);
@@ -2418,6 +2418,17 @@ export function createRoom<
 
     const createdNodeIds = new Set<string>();
     for (const op of ops) {
+      if (!isLocal && op.type === OpCode.UPDATE_TEXT && op.opId !== undefined) {
+        const node = context.pool.nodes.get(op.id);
+        if (
+          node !== undefined &&
+          isLiveText(node) &&
+          node._deferAckWithoutHistory(op)
+        ) {
+          continue;
+        }
+      }
+
       let source: OpSource;
 
       if (isLocal) {
@@ -2438,6 +2449,10 @@ export function createRoom<
       }
 
       const applyOpResult = applyOp(op, source);
+      if ("needsStorageResync" in applyOpResult) {
+        refreshStorage();
+        flushNowOrSoon();
+      }
       if (applyOpResult.modified) {
         const nodeId = applyOpResult.modified.node._id;
 
@@ -2733,6 +2748,7 @@ export function createRoom<
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
       ops: result.opsToEmit,
+      includeTextHistory: true,
     });
 
     notify(result.updates);

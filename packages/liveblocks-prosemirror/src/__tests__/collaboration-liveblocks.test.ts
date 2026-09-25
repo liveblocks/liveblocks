@@ -1,6 +1,12 @@
 import type { LsonObject, StorageUpdate } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject, LiveText } from "@liveblocks/client";
-import { kInternal, OpCode } from "@liveblocks/core";
+import {
+  ClientMsgCode,
+  CrdtType,
+  kInternal,
+  OpCode,
+  type StorageNode,
+} from "@liveblocks/core";
 import { Editor, Extension, Mark, Node } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -8,11 +14,17 @@ import Text from "@tiptap/extension-text";
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { Slice } from "prosemirror-model";
 import { Plugin, PluginKey } from "prosemirror-state";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import {
+  createSerializedList,
+  createSerializedMap,
+  createSerializedObject,
   createSerializedRoot,
+  FIRST_POSITION,
+  parseAsClientMsgs,
   prepareIsolatedStorageTest,
+  replaceRemoteStorageAndReconnect,
 } from "../../../liveblocks-core/src/__tests__/_MockWebSocketServer.setup";
 import {
   createLiveblocksCollaborationCaretPlugin,
@@ -912,6 +924,113 @@ describe("collaboration-liveblocks schema", () => {
     expect(editor.state.selection.head).toBe(7);
 
     editor.destroy();
+  });
+
+  test("delivers unseen remote text to the editor after reconnecting with a pending local edit", async () => {
+    const serverSnapshot = (value: string, version: number): StorageNode[] => [
+      createSerializedRoot(),
+      createSerializedMap("documents", "root", LIVEBLOCKS_TIPTAP_DOCUMENTS_KEY),
+      createSerializedObject(
+        "document",
+        { id: "document", type: "doc" },
+        "documents",
+        "default"
+      ),
+      createSerializedList("document-content", "document", "content"),
+      createSerializedObject(
+        "paragraph",
+        { id: "paragraph", type: "paragraph" },
+        "document-content",
+        FIRST_POSITION
+      ),
+      createSerializedList("paragraph-content", "paragraph", "content"),
+      createSerializedObject(
+        "text-node",
+        { id: "text-node", type: "text" },
+        "paragraph-content",
+        FIRST_POSITION
+      ),
+      [
+        "text",
+        {
+          type: CrdtType.TEXT,
+          parentId: "text-node",
+          parentKey: "text",
+          data: [[value]],
+          version,
+        },
+      ],
+    ];
+    const { applyRemoteOperations, room, root, wss } =
+      await prepareIsolatedStorageTest<LsonObject>(serverSnapshot("Hello", 7));
+    onTestFinished(() => room.disconnect());
+    const editor = new Editor({
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        TestLiveblocksCollaboration.configure({ room }),
+      ],
+    });
+    onTestFinished(() => editor.destroy());
+    await flushAsyncWork();
+    expect(editor.getText()).toBe("Hello");
+
+    // Leave the local edit unacknowledged, then reconnect to a snapshot that
+    // includes an unseen peer prepend but not our pending append.
+    editor.commands.insertContentAt(6, "!");
+    expect(editor.getText()).toBe("Hello!");
+    const messagesBeforeReconnect = wss.receivedMessagesRaw.length;
+    replaceRemoteStorageAndReconnect(wss, serverSnapshot("XHello", 8));
+
+    const replay = await vi.waitFor(() => {
+      const op = wss.receivedMessagesRaw
+        .slice(messagesBeforeReconnect)
+        .flatMap(parseAsClientMsgs)
+        .flatMap((message) =>
+          message.type === ClientMsgCode.UPDATE_STORAGE ? message.ops : []
+        )
+        .find((candidate) => candidate.type === OpCode.UPDATE_TEXT);
+      if (op === undefined || op.opId === undefined) {
+        throw new Error("Expected the pending text edit to be replayed");
+      }
+      return op;
+    });
+
+    // The server rebases the append over its accepted history. Deliver this
+    // through the real room subscription and collaboration plugin, not by
+    // manually applying a storage update to the editor.
+    applyRemoteOperations([
+      {
+        type: OpCode.UPDATE_TEXT,
+        id: "text",
+        opId: replay.opId,
+        baseVersion: 8,
+        version: 9,
+        ops: [{ type: "insert", index: 6, text: "!" }],
+        history: [
+          { version: 8, ops: [{ type: "insert", index: 0, text: "X" }] },
+        ],
+      },
+    ]);
+
+    const documentRoot = getLiveblocksProsemirrorDocument(root, "default");
+    if (documentRoot === undefined) {
+      throw new Error("Expected the collaboration document to remain attached");
+    }
+    const textNode = getFirstTextNode(documentRoot);
+    const text = textNode ? getLiveblocksNodeText(textNode) : undefined;
+    expect(text?.toString()).toBe("XHello!");
+    expect(editor.getJSON()).toEqual({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "XHello!" }],
+        },
+      ],
+    });
+    expect(editor.getJSON()).toEqual(liveblocksNodeToJson(documentRoot));
   });
 
   test("ignores storage echoes for local LiveText updates", async () => {
