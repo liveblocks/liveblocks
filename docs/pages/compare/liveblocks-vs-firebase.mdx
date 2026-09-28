@@ -7,110 +7,137 @@ meta:
     collaborative apps, offline data, presence, and shared-document editing."
 ---
 
-Choose Liveblocks for shared editing and the collaboration experience around a
-document or canvas. Choose Firebase's databases when their record model, client
-SDKs, and offline behavior fit your application data. You can keep business
-records in Firebase while adding a separate document layer.
-[Liveblocks Sync](/docs/products/sync) ·
-[Firebase database comparison](https://firebase.google.com/docs/database)
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more.
+Firebase is Google's app platform with two hosted databases, Cloud Firestore and
+Realtime Database, plus auth, hosting, and client SDKs with offline support.
 
-This guide covers Cloud Firestore and Firebase Realtime Database. Firestore uses
-documents and collections; Realtime Database uses a JSON tree. Choose the
-database before evaluating its behavior.
+## Which should you choose? [#which-should-you-choose]
 
-## Compare the selected databases [#compare-the-selected-databases]
+Firebase and Liveblocks solve different problems. Firebase is where your
+application records live and how clients read them, including offline, whereas
+Liveblocks is how people edit artifacts together.
 
-| Area | Liveblocks | Cloud Firestore | Realtime Database |
-| --- | --- | --- | --- |
-| Data model | Shared documents with live structures | Documents and collections | JSON tree |
-| Main interaction | Editing a shared product surface | Querying and updating app records | Synchronizing data at paths |
-| Presence | Participant state through [Presence](/docs/products/sync/presence) | Commonly paired with Realtime Database for presence | Native presence support |
-| Editing model | Live structures and supported text integrations | Choose a document-editing layer when the app needs one | Choose a document-editing layer when the app needs one |
+Choose Liveblocks when several people work on the same document, canvas, or
+board at once, and their edits need to merge without overwriting each other.
+Choose Firebase when your app needs a client-side database with offline support
+and realtime record updates, such as a job list that must keep working without a
+connection or a ticket queue refreshing on a dashboard. Many products
+[use both services together](#can-i-use-firebase-and-liveblocks-together).
 
-Sources: [Storage](/docs/products/sync/storage),
-[Presence](/docs/products/sync/presence),
-[Firebase database comparison](https://firebase.google.com/docs/database),
-[Firestore](https://firebase.google.com/docs/firestore),
-[Realtime Database](https://firebase.google.com/docs/database).
+## Compare the responsibilities [#compare-the-responsibilities]
 
-## Add an editor alongside application records [#add-an-editor-alongside-application-records]
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Cloud Firestore                                                                                                                                                                                                                                                                                                                                          | Realtime Database                                                                                                                                                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Persistence         | Shared documents in Storage. <InfoTooltip>A CRDT-based document store. Concurrent edits merge automatically, and data is kept until you delete it. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                          | Documents and collections. <InfoTooltip>Documents hold fields and are grouped into collections that you query. <a href="https://firebase.google.com/docs/firestore" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                             | One JSON tree. <InfoTooltip>Data is stored as a single JSON tree and read or written by path. <a href="https://firebase.google.com/docs/database" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                         |
+| Realtime updates    | Document changes, presence, and broadcast events. <InfoTooltip>Every change to a document is pushed to everyone in the room. <a href="/docs/products/sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                        | Snapshot listeners on documents and queries.                                                                                                                                                                                                                                                                                                             | Listeners on paths in the tree.                                                                                                                                                                                                                                                    |
+| Presence            | Built in. Who is online, cursors, and selections. <InfoTooltip>Presence is short-lived per-user state such as cursor position or selection. <a href="/docs/products/sync/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                | Not built in. Firebase suggests pairing with Realtime Database. <InfoTooltip>The documented approach uses Realtime Database connection state and Cloud Functions to write online status into Firestore. <a href="https://firebase.google.com/docs/firestore/solutions/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> | Connection state and onDisconnect handlers.                                                                                                                                                                                                                                        |
+| Conflict resolution | CRDT-based. Concurrent edits to objects, lists, maps, and text merge automatically. <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                     | None. Last write wins per field.                                                                                                                                                                                                                                                                                                                         | None. Last write wins per path.                                                                                                                                                                                                                                                    |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more. <InfoTooltip>Official packages for popular editors, plus Yjs guides for others. <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                   | Not built in. Requires a CRDT library and your own sync code.                                                                                                                                                                                                                                                                                            | Not built in. Requires a CRDT library and your own sync code.                                                                                                                                                                                                                      |
+| Offline             | Edits queue while a loaded document is disconnected.                                                                                                                                                                                                                                                                                                                                                                                                                                       | Cached reads and queued writes, kept across restarts. <InfoTooltip>Offline persistence caches documents on the device and can survive closing the app on supported platforms. <a href="https://firebase.google.com/docs/firestore/manage-data/enable-offline" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                   | Queued writes while the app is open. Disk persistence on Android and iOS. <InfoTooltip>Web clients keep data in memory only. <a href="https://firebase.google.com/docs/database/web/offline-capabilities" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications. <InfoTooltip>React components you can drop in, plus hooks for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | None for collaboration.                                                                                                                                                                                                                                                                                                                                  | None for collaboration.                                                                                                                                                                                                                                                            |
+| Authentication      | Your server issues access tokens using your existing auth. <InfoTooltip>Works with any auth provider, including Firebase Auth. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                | Firebase Auth with Security Rules. <InfoTooltip>Rules run on Google's servers and decide what each user can read and write. <a href="https://firebase.google.com/docs/rules" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                    | Firebase Auth with Security Rules. <InfoTooltip>Rules run on Google's servers and decide what each user can read and write. <a href="https://firebase.google.com/docs/rules" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                              |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                       | Which records and business rules belong in Firestore?                                                                                                                                                                                                                                                                                                    | Which data should clients sync as a JSON tree?                                                                                                                                                                                                                                     |
 
-For a support app, Firebase can own customer and ticket records while Liveblocks
-powers the response draft that two agents edit together. Supported editor
-integrations provide a starting point for text; presence shows collaborators;
-Comments adds a review conversation.
-[Integrations](/docs/products/sync/integrations) ·
-[Presence](/docs/products/sync/presence) · [Comments](/docs/products/comments)
+## Ticket records vs. shared drafts [#ticket-records-vs-shared-drafts]
 
-The ticket stays in Firebase while collaborators edit one shared draft.
+For a support app, Firebase can own the customer and ticket records while
+[Liveblocks Sync](/docs/products/sync) powers the response draft that two agents
+edit together. [Editor integrations](/docs/products/sync/integrations) give you
+collaborative text, [Presence](/docs/products/sync/presence) shows who is in the
+draft, and [Comments](/docs/products/comments) adds a review conversation. The
+ticket stays in Firebase while everyone edits one shared draft.
 
 ## How does offline behavior differ? [#how-does-offline-behavior-differ]
 
-Firestore's supported clients can cache records and queue writes while offline.
-Liveblocks Storage can queue edits in an already-loaded document and send them
-when the connection returns. These capabilities have different persistence
-boundaries.
-[Firestore offline behavior](https://firebase.google.com/docs/firestore/manage-data/enable-offline)
-· [Liveblocks Storage synchronization](/docs/products/sync/storage)
+Firestore covers more cases.
+[Firestore's offline persistence](https://firebase.google.com/docs/firestore/manage-data/enable-offline)
+caches records and queues writes on the device, and on supported browsers that
+cache survives closing and reopening the app.
+[Liveblocks Storage](/docs/products/sync/storage) queues edits made in an
+already-loaded document and sends them when the connection returns. Unsent edits
+are not kept across a browser restart unless you build that yourself.
 
-| Situation | Liveblocks Storage | Cloud Firestore |
-| --- | --- | --- |
-| Network interruption in an open session | Local edits queue for reconnect | Local reads and writes use the configured cache |
-| Closing and reopening the browser | Reconnect support covers the loaded session; persistence of unsent edits across restarts requires a separate design | Persistent web caching can survive sessions when enabled on a supported browser |
-| Two users replace the same value | Resolution depends on the live data type; scalar writes can resolve to one value | Offline changes to the same document use documented last-write-wins behavior |
+| Situation                            | Liveblocks Storage                                                                                                                                                                                                                                                                                                         | Cloud Firestore                                                                        |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Network drops during an open session | Local edits queue and send on reconnect.                                                                                                                                                                                                                                                                                   | Reads and writes use the local cache.                                                  |
+| Closing and reopening the browser    | Reconnects to the loaded document. Unsent edits are not kept across restarts.                                                                                                                                                                                                                                              | The persistent cache keeps data and queued writes when enabled on a supported browser. |
+| Two people replace the same value    | Depends on the data type. A single value resolves to one writer. <InfoTooltip>Edits to different fields all survive. Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> | Last write wins once the offline change reaches the server.                            |
 
-This table covers Storage and Firestore, not every Yjs integration or Firebase
-SDK. Realtime Database has its own platform-specific offline behavior. A text
-editor still needs an editing model beyond a listener on a database record.
+This table covers Storage and Firestore, not the Yjs integrations or every
+Firebase SDK. Realtime Database has its own
+[offline behavior](https://firebase.google.com/docs/database/web/offline-capabilities)
+per platform. Either way, a text editor still needs a CRDT, not just a listener
+on a database record.
 
-## Model the shared interaction [#model-the-shared-interaction]
+## Record updates vs. shared documents [#record-updates-vs-shared-documents]
 
-For an activity dashboard, subscribed database records may be the right
-abstraction. For an editor, a complete document overwrite is different from
-merging the individual edits made by two participants.
+For an activity dashboard, a listener on a Firestore query may be enough: a
+record changes, and connected clients show the new value. For an editor, the
+difference is between overwriting a whole document and merging the individual
+edits two people make.
 
-Liveblocks gives you a shared-data model for those interactions. You still need
-to choose appropriate structures and define application behavior for competing
-actions. For example, when two people assign different owners to the same task,
-the application needs one final owner.
+Firestore and Realtime Database do not merge. A write replaces the field or path
+it targets, so the last write wins, and there is no text CRDT. Liveblocks
+Storage merges concurrent edits to objects, lists, maps, and text. How it
+[resolves conflicts](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+depends on the data type: edits to different fields all survive, while
+concurrent writes to the same single value are last-write-wins, ordered by
+arrival at the server. You still need to structure your document and define
+business rules for competing actions. For example, when two people assign
+different owners to the same task, your app needs one final owner.
 
 ## Can I use Firebase and Liveblocks together? [#can-i-use-firebase-and-liveblocks-together]
 
-Yes. For a support tool, Firebase can hold customers, tickets, and assignments
-while Liveblocks holds the response draft. Store the room ID with the ticket,
-authorize access on your server, and give the editable text one authoritative
-home. Your application connects the two services; Liveblocks does not
-automatically synchronize Firebase records.
-[Liveblocks authentication](/docs/api-reference/authentication)
+Yes. For a support tool, Firebase holds customers, tickets, and assignments
+while Liveblocks holds the response draft. Your server signs users in with
+Firebase Auth as usual and issues a Liveblocks
+[access token](/docs/api-reference/authentication) for the ticket's room. There
+is no built-in sync between the two: your application connects them, and
+Liveblocks does not read or write Firebase records.
 
-When an agent submits the response, your application can copy the submitted text
-into the ticket record. Distinguish that published copy from the live draft;
-otherwise, two independently editable copies need another conflict policy.
+When an agent submits the response, your application copies the final text into
+the ticket record. Keep that copy separate from the live draft; if both stay
+editable, you need another conflict policy.
+
+Store the Liveblocks room ID on the ticket record so your server knows which
+room to authorize. Treat the copy in Firebase as read-only.
 
 ## How do Firebase and Liveblocks costs differ? [#how-do-firebase-and-liveblocks-costs-differ]
 
-Firestore charges for document operations, applicable index-entry reads,
-storage, and network usage. Realtime Database primarily charges for stored and
-downloaded data. A read-heavy ticket list therefore needs a different estimate
-from a frequently updated JSON tree.
-[Firestore billing](https://firebase.google.com/docs/firestore/pricing) ·
-[Realtime Database billing](https://firebase.google.com/docs/database/usage/billing)
+Firebase's [Spark plan](https://firebase.google.com/pricing) is free with fixed
+quotas, and the pay-as-you-go [Blaze plan](https://firebase.google.com/pricing)
+includes the same quotas before billing usage.
+[Firestore](https://firebase.google.com/docs/firestore/pricing) charges per
+document read, write, and delete, plus stored data and network egress; the free
+quota is 50K reads, 20K writes, and 20K deletes per day and 1 GiB stored.
+[Realtime Database](https://firebase.google.com/docs/database/usage/billing)
+charges mainly for stored and downloaded data: 1 GB stored and about 10 GB
+downloaded per month are free, then $5 per GB stored and $1 per GB downloaded,
+with 100 simultaneous connections on Spark and 200K per database on Blaze. A
+read-heavy ticket list therefore needs a different estimate from a frequently
+updated JSON tree.
 
-For a query that returns 20 documents to 50 clients, the initial result
-represents 1,000 document reads before later listener changes, reconnects, or
-applicable index charges. This illustrative count excludes free allowances and
-location-specific rates. Streaming the same logical records from Realtime Database
-instead requires measuring downloaded bytes, including protocol overhead.
+As an example, a query that returns 20 documents to 50 clients is 1,000 document
+reads for the first result alone, before later listener updates, reconnects, or
+index charges. That count excludes free quota and location-specific rates.
+Streaming the same records from Realtime Database instead means measuring
+downloaded bytes, including protocol overhead.
 
-If Liveblocks holds the draft, budget its collaboration usage separately.
-Self-hosted Sync is a paid Enterprise add-on.
-[Liveblocks pricing](/docs/pricing/plans) ·
-[Deployment](/docs/platform/data-storage#Self-hosting)
+If Liveblocks holds the draft, budget its collaboration usage separately. Your
+[plan's credits](/docs/pricing/plans) apply once across all Liveblocks usage.
+
+Firebase's databases are managed services and cannot be self-hosted. Liveblocks
+offers [self-hosting](/docs/platform/data-storage#Self-hosting) as a paid add-on
+on the Enterprise plan. If you go that route, your own servers, database,
+backups, and operations are part of the budget.
 
 ## Get started [#get-started]
 
-Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
-and follow the [setup guide](/docs/get-started) for the shared surface in your
-application.
+Explore the
+[editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
+and follow the [setup guide](/docs/get-started) for the part of your app people
+edit together. Keep your ticket records in Firebase.
 
 [Start building with Liveblocks for free](https://liveblocks.io/dashboard).

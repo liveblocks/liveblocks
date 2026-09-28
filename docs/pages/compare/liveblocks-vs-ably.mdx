@@ -7,115 +7,151 @@ meta:
     around shared-data types, collaboration features, and your existing stack."
 ---
 
-Choose Liveblocks for shared documents and the comments, review, and notification
-workflows around them. Choose Ably when its messaging, shared-state, presence,
-or chat products match your realtime architecture. Both provide more than message
-delivery. [Liveblocks docs](/docs/products/sync) ·
-[Ably products](https://ably.com/docs)
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more. Ably
+is a realtime messaging service with Pub/Sub channels, presence, shared maps and
+counters (Ably LiveObjects), a chat API, and a transport for streaming AI
+responses.
 
-This guide compares specific products: Liveblocks Sync, Comments, and
-Notifications with Ably Pub/Sub, Spaces, LiveObjects, Chat, and AI Transport.
-Ably LiveObjects provides persistent shared maps and counters; the distinction
-is which editing model and surrounding experience fit your application.
-[LiveObjects](https://ably.com/docs/products/liveobjects)
+## Which should you choose? [#which-should-you-choose]
+
+Ably and Liveblocks solve different problems. Ably is how messages and state
+move between clients at scale, whereas Liveblocks is how people edit artifacts
+together.
+
+Choose Liveblocks when several people work on the same document, board, or text
+at once, and the product needs comments and notifications around that work, such
+as a design review where teammates annotate a canvas and resolve threads. Choose
+Ably when the job is delivering messages to many clients, such as a live score
+feed, a chat room with thousands of viewers, or streaming an AI response to a
+user's phone and laptop at the same time. Some products use Ably for high-volume
+messaging and Liveblocks for the documents people edit together.
 
 ## Compare the building blocks [#compare-the-building-blocks]
 
-| Area | Liveblocks | Ably |
-| --- | --- | --- |
-| Shared state | [Storage](/docs/products/sync/storage) documents with objects, maps, lists, and text | [LiveObjects](https://ably.com/docs/products/liveobjects) with shared maps and counters |
-| Presence | [Presence](/docs/products/sync/presence) for participant state | Presence and Spaces for shared activity |
-| Document editing | [LiveText](/docs/products/sync/storage#LiveText) and supported Yjs integrations | `LiveMap` and `LiveCounter` are shared-state primitives; text editing needs a compatible editing model alongside them |
-| Product surface | Shared documents, contextual comments, and notifications | Pub/Sub for messaging, LiveObjects for shared state, Spaces for collaborative activity, and Chat for conversations |
-| Interface customization | Default comment components, primitives, and hooks | Product-specific SDKs and components, including a React Chat UI Kit |
-| Persistence | Sync data persists until explicitly deleted | LiveObjects expires after its configured inactivity period, 90 days by default |
-
-Sources: [Storage](/docs/products/sync/storage),
-[integrations](/docs/products/sync/integrations), Spaces,
-[LiveObjects](https://ably.com/docs/products/liveobjects),
-[LiveObjects storage](https://ably.com/docs/products/liveobjects/storage),
-[Liveblocks commenting interfaces](/docs/products/comments/default-components),
-[Ably Chat](https://ably.com/docs/products/chat).
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Ably                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared state        | Objects, maps, lists, text, and files in Storage. <InfoTooltip>A CRDT-based document store. Concurrent edits merge automatically, and data is kept until you delete it. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                       | Maps and counters in Ably LiveObjects. <InfoTooltip>Ably `LiveMap` and `LiveCounter` objects on a channel, synchronized to every attached client. <a href="https://ably.com/docs/liveobjects" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                                                                                                  |
+| Presence            | Presence for who is online and what they are doing. <InfoTooltip>Short-lived per-user state such as cursor position or selection. <a href="/docs/products/sync/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                            | Channel presence, plus Spaces for cursors, locks, and locations. <InfoTooltip>Spaces is a separate SDK for participant state on top of Pub/Sub. <a href="https://ably.com/docs/spaces/avatar" className="font-medium text-product-brand">Avatar stack</a>, <a href="https://ably.com/docs/spaces/cursors" className="font-medium text-product-brand">live cursors</a>, <a href="https://ably.com/docs/spaces/locations" className="font-medium text-product-brand">member locations</a>, <a href="https://ably.com/docs/spaces/locking" className="font-medium text-product-brand">component locking</a>.</InfoTooltip> |
+| Conflict resolution | CRDT-based. Concurrent edits to objects, lists, maps, and text merge automatically. <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                       | LiveObjects merges concurrent map and counter operations on the server. Pub/Sub delivers messages as-is. <InfoTooltip>Map keys are last-write-wins and counter increments add up. Nothing merges text. <a href="https://ably.com/docs/liveobjects/concepts/operations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                         |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more. <InfoTooltip>LiveText plus official packages for popular editors and Yjs guides for others. <a href="/docs/products/sync/storage#LiveText" className="font-medium text-product-brand">LiveText</a>, <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">editor integrations</a>.</InfoTooltip>                                                                                                                                        | Not built in. Requires a CRDT library sent over Pub/Sub.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications. <InfoTooltip>React components you can drop in, plus hooks and primitives for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments/default-components" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | React UI Kit for Chat. <InfoTooltip>The Chat UI Kit has components for rooms, messages, and reactions. <a href="https://ably.com/docs/chat/react-ui-kit" className="font-medium text-product-brand">Chat UI Kit</a></InfoTooltip>                                                                                                                                                                                                                                                                                                                                                                                       |
+| Authentication      | Your server issues access tokens using your existing auth. <InfoTooltip>Works with any auth provider. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                           | Your server issues tokens with channel capabilities. <InfoTooltip>Token auth or API keys, scoped to channels and operations. <a href="https://ably.com/docs/auth" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                                                                                                                              |
+| Persistence         | Permanent. Stored until you delete it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | LiveObjects expires after an inactivity period, 90 days by default. <InfoTooltip>Configurable between 24 hours and 90 days. Messages are kept for two minutes by default. <a href="https://ably.com/docs/liveobjects/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                                                                  |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Which messages, state, and conversations should flow through channels?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## Choose the interface and the infrastructure together [#choose-the-interface-and-the-infrastructure-together]
 
-For a design-review feature, users might annotate an object, mention a teammate,
-resolve a thread, and return through a notification. That workflow needs shared
-canvas data, contextual discussions, and notifications.
+For a design-review feature, users annotate an object, mention a teammate,
+resolve a thread, and come back through a notification. That workflow needs
+shared canvas data, comments attached to the canvas, and notifications.
 
-With Liveblocks Comments, you can style the default components or combine hooks
-and primitives for a custom interface. This lets you choose how much of the
-commenting UI to assemble. Ably also provides ready-made UI for specific use
-cases, including its React Chat UI Kit. Choose the components that support the
-conversation in your app: a discussion attached to a document, a group chat, or
-both. [Liveblocks commenting interfaces](/docs/products/comments/default-components)
-· [Ably Chat](https://ably.com/docs/products/chat)
+With [Liveblocks Comments](/docs/products/comments/default-components), you can
+style the default components or combine hooks and primitives for a custom
+interface, so you decide how much of the commenting UI to build yourself.
+[Ably Chat](https://ably.com/docs/chat) is built for conversations in rooms and
+ships a React UI Kit for that. Pick the one that matches the conversation in
+your app: a discussion attached to a document, a group chat, or both.
 
-## How do Liveblocks documents compare with Ably LiveObjects? [#how-do-liveblocks-documents-compare-with-ably-liveobjects]
+## How does Liveblocks Storage compare with Ably LiveObjects? [#how-does-liveblocks-storage-compare-with-ably-liveobjects]
 
-Liveblocks [Storage](/docs/products/sync/storage) includes objects, maps, ordered
-lists, and text. Ably [LiveObjects](https://ably.com/docs/products/liveobjects)
-supplies shared maps and counters. Both synchronize persistent shared state; the
-useful distinction is the operations your feature needs.
-[Liveblocks Storage](/docs/products/sync/storage) ·
-[Ably LiveObjects](https://ably.com/docs/products/liveobjects)
+Ably LiveObjects is a much smaller toolkit. It has two types, a key-value
+[`LiveMap`](https://ably.com/docs/liveobjects/map) and a
+[`LiveCounter`](https://ably.com/docs/liveobjects/counter), and everything you
+store is built from those. Note the name clash: Liveblocks also has a `LiveMap`,
+and the two are unrelated. Liveblocks [Storage](/docs/products/sync/storage) has
+five: `LiveObject`, `LiveMap`, `LiveList`, `LiveText`, and `LiveFile` for
+uploaded files, and they nest to any depth with every level merging field by
+field. Both keep shared state in sync across clients; the difference is how much
+of your document they can represent without you writing merge logic.
 
-| Feature in a review app | Liveblocks design | Ably design |
-| --- | --- | --- |
-| Votes on a proposal | Store shared values in the document | A `LiveCounter` represents a shared count |
-| Ordered agenda with editable paragraphs | `LiveList` and a supported text integration | Define ordering and choose the text-editing layer around the shared objects |
-| Conversation attached to a shape | Contextual Comments, with application-supplied context | Select Chat or application conversation logic for the required attachment model |
+| Capability     | Liveblocks Storage                                                                                                                                                                                                                                                                                                                                                                                             | Ably LiveObjects                                                                                                                                                                                                                                                                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Key-value data | `LiveObject` for fixed shapes and `LiveMap` for dynamic keys. Both merge per key. <InfoTooltip>Two people changing different fields of the same object both keep their change. <a href="/docs/products/sync/storage#LiveObject" className="font-medium text-product-brand">LiveObject</a>, <a href="/docs/products/sync/storage#LiveMap" className="font-medium text-product-brand">LiveMap</a>.</InfoTooltip> | Ably `LiveMap`, merged per key with last write wins.                                                                                                                                                                                                                                                                                                                                              |
+| Counter        | None. Store one entry per user in a Liveblocks `LiveMap` so concurrent votes don't overwrite each other. <InfoTooltip>Two clients incrementing the same number at once is a write to one value, so the later write wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                      | Ably `LiveCounter`. Concurrent increments add up.                                                                                                                                                                                                                                                                                                                                                 |
+| Ordered list   | `LiveList`. Concurrent insert, move, and delete all merge. <InfoTooltip>Two people reordering the same agenda converge on one order without an application-level protocol. <a href="/docs/products/sync/storage#LiveList" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                             | None. Encode ordering in Ably `LiveMap` keys yourself.                                                                                                                                                                                                                                                                                                                                            |
+| Rich text      | `LiveText`, or a `Y.Doc` through the editor integrations. <InfoTooltip>Character-level merging for Tiptap, BlockNote, Lexical, and others. <a href="/docs/products/sync/text-editing" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                 | None. Add a CRDT library and send its updates over Pub/Sub.                                                                                                                                                                                                                                                                                                                                       |
+| Files          | `LiveFile`. Upload a file and store a reference to it in the document. <InfoTooltip>An immutable leaf pointing at a file uploaded to Liveblocks, such as an image on a canvas. <a href="/docs/products/sync/storage#LiveFile" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                         | None. Store files elsewhere and keep the URL in an Ably `LiveMap`.                                                                                                                                                                                                                                                                                                                                |
+| Deep nesting   | Any depth. A list of objects containing maps of text is one document.                                                                                                                                                                                                                                                                                                                                          | Only by creating separate Ably `LiveMap` and `LiveCounter` objects and referencing them. A plain JSON object stored as a value is replaced whole. <InfoTooltip>Nested JSON is opaque to the merge: two clients editing different fields of the same JSON value conflict. <a href="https://ably.com/docs/liveobjects/map" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> |
+| Size           | Per-room limit set by your plan. Yjs documents are not capped. <InfoTooltip>Pro rooms hold up to <Limits.ProMaxStorageSizePerRoom /> of Storage data. <a href="/docs/pricing/limits" className="font-medium text-product-brand">See limits.</a></InfoTooltip>                                                                                                                                                  | 6.5 MB for all objects on a channel, 64 KiB per operation. <InfoTooltip>Larger channels require an arrangement with Ably. <a href="https://ably.com/docs/liveobjects/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                            |
+| Lifetime       | Permanent. Stored until you delete it, with version history. <InfoTooltip><a href="/docs/products/sync/version-history" className="font-medium text-product-brand">Version history</a> captures Storage and Yjs documents in a room.</InfoTooltip>                                                                                                                                                             | Expires after 24 hours to 90 days without changes.                                                                                                                                                                                                                                                                                                                                                |
+| Audience       | Rooms of collaborators. Simultaneous connections per room are set by your plan.                                                                                                                                                                                                                                                                                                                                | Same fan-out as Pub/Sub channels, built for large audiences.                                                                                                                                                                                                                                                                                                                                      |
 
-Ably fits applications built around messages and shared objects. Liveblocks fits
-applications built around shared documents and their review workflows.
+For a design-review app, that plays out like this. Votes on a proposal are the
+one case Ably LiveObjects handles more directly: an Ably `LiveCounter` sums
+concurrent votes, whereas in Liveblocks you record each person's vote as its own
+entry. An ordered agenda with editable paragraphs is a `LiveList` of
+`LiveObject`s with `LiveText` inside; on Ably you would design the ordering
+scheme and bolt on a text CRDT. A conversation attached to a shape is Comments
+with the shape ID as metadata; on Ably it is a Chat room per shape or your own
+message format.
 
-## What happens when a document is inactive or a client reconnects? [#what-happens-when-a-document-is-inactive-or-a-client-reconnects]
+Ably fits applications built around messages, counters, and flat shared state
+delivered to many clients. Liveblocks fits applications built around structured
+shared documents and the review workflows around them.
 
-Liveblocks stores Sync data until it is explicitly deleted. Ably LiveObjects has
-a configurable inactivity retention period from 24 hours to 90 days, with 90 days
-the default; longer retention requires discussion with Ably. A document that
-must remain untouched for a year needs a retention or archive design that covers
-that lifecycle. [Liveblocks retention](/docs/platform/data-storage) ·
-[Ably object storage](https://ably.com/docs/products/liveobjects/storage)
+## How long is data kept? [#how-long-is-data-kept]
 
-Ably recovers short LiveObjects interruptions by replaying operations and longer
-interruptions by resynchronizing current object state. For long-term archives or
-collaborative text, you still need the corresponding storage policy and editing
-model. [Ably recovery](https://ably.com/docs/products/liveobjects/recovery)
+In Liveblocks, permanently. Storage and Yjs documents are
+[stored until you delete them](/docs/platform/data-storage), with
+[version history](/docs/products/sync/version-history) on top, so a proposal
+nobody opens for two years is still there, unchanged, when someone does.
+
+In Ably LiveObjects, until the data goes unchanged for the
+[retention period](https://ably.com/docs/liveobjects/storage): configurable from
+24 hours to 90 days, 90 days by default, and longer only by arrangement with
+Ably. When it expires, the channel resets to an empty object. Ably's own
+suggestion for a permanent record is to read the objects over its REST API and
+store them in your database, which makes your database, not Ably, the system of
+record for anything long-lived. That is workable for a leaderboard or a live
+poll; it is a second storage layer to build and reconcile for documents people
+come back to.
+
+Reconnection is similar on both sides. Ably replays missed operations if the
+client was away for under two minutes and resends the full object state
+otherwise. Liveblocks clients resync the document on reconnect and send any
+edits queued while offline in the session.
 
 ## How do they support AI features? [#how-do-they-support-ai-features]
 
-Ably AI Transport provides durable sessions for agent conversations, including
-streaming responses, reconnection, and access across devices. It can also use
-LiveObjects for shared session state. Liveblocks Sync lets server-side code edit
-shared documents alongside users. A resumable agent conversation and edits to a
-shared document have different requirements. An application can need both.
-[Ably AI Transport](https://ably.com/docs/products/ai-transport) ·
-[Liveblocks server-side editing](/docs/products/sync/server-side-editing)
+Both do, for different jobs.
+[Ably AI Transport](https://ably.com/docs/ai-transport) gives an agent
+conversation a durable session: streamed responses, reconnection, and access
+from several devices, optionally with Ably LiveObjects for shared session state.
+Liveblocks lets [server-side code](/docs/products/sync/server-side-editing),
+including agents, edit shared documents alongside users. A resumable agent chat
+and an agent editing a shared document are different requirements, and an
+application can need both.
 
 ## How do the billing units compare? [#how-do-the-billing-units-compare]
 
-For LiveObjects, Ably counts inbound operations, outbound deliveries, object
-synchronization, connections, and channels under the applicable pricing model. A
-map set counts as one inbound message; delivering that update counts once per
-connected client. [LiveObjects billing](https://ably.com/docs/pricing/liveobjects)
+They don't map one-to-one. Ably's [Standard package](https://ably.com/pricing)
+starts at $29 per month, with usage billed on top at $2.50 per million messages,
+$1 per million connection minutes, and $1 per million channel minutes. For
+[LiveObjects](https://ably.com/docs/liveobjects/pricing), every operation counts
+as messages: a map set is one inbound message, and delivering that update counts
+as one outbound message per connected client. Initial sync counts one outbound
+message per object.
 
-For example, 100 map-set operations delivered to three connected clients produce
-100 inbound and 300 outbound messages. That excludes initial object sync, other
-operations, connection minutes, and channel charges. It is a usage illustration,
-not an invoice estimate.
+As an example, 100 map-set operations delivered to three connected clients
+produce 100 inbound and 300 outbound messages. That excludes initial sync,
+connection minutes, and channel minutes.
 
-Liveblocks meters collaboration time, data updates, storage, and selected
-collaboration features. Those units do not translate one-for-one into Ably
-message counts. Use the same editing session and feature scope when estimating
-either design. [Liveblocks pricing](/docs/pricing/plans)
+Liveblocks bills collaboration time, data updates, storage, and selected
+collaboration features. Those units do not translate into Ably message counts,
+so estimate both with the same editing session and feature scope. Your
+[plan's credits](/docs/pricing/plans) apply once across all Liveblocks usage.
 
-Self-hosted Liveblocks Sync is a paid Enterprise add-on.
-[Deployment details](/docs/platform/data-storage#Self-hosting)
+Ably is a managed service. Liveblocks offers
+[self-hosting](/docs/platform/data-storage#Self-hosting) as a paid add-on on the
+Enterprise plan. If you self-host, your own servers, database, backups, and
+operations are part of the budget.
 
 ## Get started [#get-started]
 
-Explore the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced),
+Explore the
+[editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced),
 which brings Sync, Comments, and Notifications into one application.
 
 [Start building with Liveblocks for free](https://liveblocks.io/dashboard).

@@ -3,95 +3,127 @@ meta:
   title: "Liveblocks vs. Yjs: hosting and collaboration features"
   parentTitle: "Compare"
   description:
-    "Understand the relationship between Liveblocks and Yjs. Compare data models,
-    hosting choices, and the work around a collaborative editor."
+    "Understand the relationship between Liveblocks and Yjs. Compare data
+    models, hosting choices, and the work around a collaborative editor."
 ---
 
-Choose a Yjs-based stack when you want its shared types and editor bindings with
-your choice of provider. Choose Liveblocks when you want supported editing
-integrations and collaboration products in one platform. You can make both
-choices: Liveblocks supports Yjs. [Yjs](https://docs.yjs.dev/) ·
-[Liveblocks integrations](/docs/products/sync/integrations)
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more. Yjs
+is an open-source CRDT library that merges concurrent edits to shared maps,
+arrays, and text, with bindings for many editors and a choice of network
+providers.
 
-The decision is how much of the system around the editor you want to assemble:
-connections, document persistence, access, comments, and notifications.
+## Which should you choose? [#which-should-you-choose]
+
+This is not an either/or choice. Yjs is a library that merges edits inside a
+document; it does not connect people, store the document, or check who can open
+it. Liveblocks is a platform that does those things, and it
+[provides Yjs](/docs/products/sync/text-editing/yjs) as one of its document
+models: `@liveblocks/yjs` is a Yjs provider, and the Tiptap, BlockNote, and
+Lexical integrations run on Yjs underneath. Liveblocks also has its own CRDT,
+Storage with `LiveText`, for when you don't want a `Y.Doc` at all.
+
+The real decision is where your Yjs document lives. Choose Liveblocks when you
+want a working collaborative editor or board without running a provider,
+persistence, and auth yourself: a team editing the same proposal with comments
+in the margin, or a canvas where text sits inside shapes next to positions and
+colors. Choose Yjs on your own provider when you already run one you are happy
+with, or when you need something only that setup offers, such as peer-to-peer
+sync over WebRTC. Either way you keep Yjs and your editor binding; see
+[alternative or provider?](#is-liveblocks-an-alternative-to-yjs-or-a-yjs-provider)
+for how the pieces fit.
 
 ## Separate the library from the service [#separate-the-library-from-the-service]
 
-| Decision | Liveblocks | A stack built around Yjs |
-| --- | --- | --- |
-| Shared-data model | [Storage](/docs/products/sync/storage) with [LiveText](/docs/products/sync/storage#LiveText), or a supported Yjs integration | Yjs shared types and editor bindings |
-| Hosting | Managed service; self-hosted Sync available on Enterprise | A managed provider or your own deployment |
-| Editor choice | Official Tiptap, BlockNote, and Lexical packages; Yjs guides for Monaco, Quill, and other editors | Choose an editor binding and a provider that carries and persists its Yjs updates |
-| Surrounding features | Comments, Notifications, and room authentication | Select or implement the surrounding features in your stack |
-| Operational responsibility | Liveblocks operates managed hosting; your team operates self-hosted Sync | Depends on the provider and services you select |
-
-Sources: [Yjs](https://docs.yjs.dev/), [Liveblocks docs](/docs/products/sync),
-[LiveText vs Yjs](/docs/guides/livetext-vs-yjs).
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Yjs                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data model          | Storage, with LiveText for text, or a `Y.Doc` through Liveblocks Yjs. <InfoTooltip>Storage is a CRDT-based document store with objects, lists, maps, and text. Liveblocks Yjs connects a room to a `Y.Doc` instead. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Storage</a>, <a href="/docs/products/sync/text-editing/yjs" className="font-medium text-product-brand">Liveblocks Yjs</a>.</InfoTooltip>                                              | A `Y.Doc` holding shared types such as `Y.Map`, `Y.Array`, and `Y.Text`. <InfoTooltip>Shared types are CRDT data structures that merge concurrent changes without conflicts. <a href="https://docs.yjs.dev/api/shared-types" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                |
+| Persistence         | Built in. Documents are kept until you delete them. <InfoTooltip>Both Storage and Yjs documents are stored by Liveblocks, with version history for Yjs. <a href="/docs/platform/data-storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                     | Not included. A provider or database adapter must store the updates. <InfoTooltip>Yjs keeps the document in memory. Persistence comes from a database provider such as y-indexeddb or y-leveldb, or from your provider's server. <a href="https://docs.yjs.dev/ecosystem/database-provider" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> |
+| Hosting             | Managed service. Self-hosting available on the Enterprise plan. <InfoTooltip>Liveblocks runs the sync servers. With self-hosting, your team runs them in your own infrastructure. <a href="/docs/platform/data-storage#Self-hosting" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                              | A provider server you run, such as y-websocket, or a hosted Yjs service. <InfoTooltip>The provider connects clients and relays updates. Liveblocks is one of several providers. <a href="https://docs.yjs.dev/ecosystem/connection-provider" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                |
+| Conflict resolution | CRDT-based. Concurrent edits to objects, lists, maps, and text merge automatically. <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                     | Yjs CRDT, the same as the Liveblocks Yjs integration.                                                                                                                                                                                                                                                                                                                |
+| Presence            | Cursors, selections, and who is online, built in. <InfoTooltip>Presence is short-lived per-user state that Liveblocks syncs alongside the document. <a href="/docs/products/sync/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                        | Awareness, if your provider carries it. <InfoTooltip>Awareness is a separate CRDT for ephemeral state such as cursors. Each provider decides whether to sync it. <a href="https://docs.yjs.dev/api/about-awareness" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                         |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more. <InfoTooltip>Official packages for popular editors, plus Yjs guides for Monaco, Quill, Slate, and others. <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                         | Editor bindings for Tiptap, ProseMirror, CodeMirror, Monaco, Quill, Slate, and more. <InfoTooltip>Each binding maps an editor's document to Yjs shared types. <a href="https://docs.yjs.dev/ecosystem/editor-bindings" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                      |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications. <InfoTooltip>React components you can drop in, plus hooks for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | None. Yjs is a data library.                                                                                                                                                                                                                                                                                                                                         |
+| Authentication      | Your server issues access tokens using your existing auth. <InfoTooltip>Works with any auth provider. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                         | None. Your provider checks credentials when a client connects.                                                                                                                                                                                                                                                                                                       |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                       | Which provider will connect, store, and secure your documents?                                                                                                                                                                                                                                                                                                       |
 
 ## Is Liveblocks an alternative to Yjs or a Yjs provider? [#is-liveblocks-an-alternative-to-yjs-or-a-yjs-provider]
 
-Liveblocks can act as the provider for a Yjs document. The library defines the
-shared data; the provider connects participants and the service persists the
-document. You can keep Yjs and use Liveblocks for hosting and the surrounding
-review workflow. [Liveblocks Yjs](/docs/products/sync/text-editing/yjs)
+Both. [Liveblocks Yjs](/docs/products/sync/text-editing/yjs) is a provider for a
+`Y.Doc`: Yjs defines the shared data, the provider connects people, and
+Liveblocks stores the document. You keep Yjs and your editor binding, and use
+Liveblocks for hosting, authentication, comments, and notifications. Liveblocks
+[Storage](/docs/products/sync/storage) with
+[LiveText](/docs/products/sync/storage#LiveText) is the alternative: a separate
+CRDT document store that does not use Yjs at all.
 
-For a code editor, the architecture is: editor binding → `Y.Doc` → Liveblocks
-Yjs provider → room. Application authentication controls room access. This is
-separate from choosing [LiveText](/docs/products/sync/storage#LiveText) for text
-inside Liveblocks Storage.
+For a code editor with Yjs, the pieces are: editor binding → `Y.Doc` →
+Liveblocks Yjs provider → room. Your own authentication decides who can open the
+room. Both the `Y.Doc` and any Storage data live in the same room, so you can
+mix them.
 
-For the data-model choice between `LiveText` and a separate `Y.Doc`, use the
+Which to pick for a given document is covered in the
 [LiveText vs Yjs](/docs/guides/livetext-vs-yjs) guide.
 
-## Choose the document model before migrating [#choose-the-document-model-before-migrating]
+## Keep Yjs or move to LiveText? [#keep-yjs-or-move-to-livetext]
 
-If your editor already uses Yjs, adding Liveblocks does not automatically
-require converting it to `LiveText`. Check the supported integration and
-migration path before deciding to change formats.
+Keep Yjs if your editor already uses it. Adding Liveblocks does not require
+converting the document to `LiveText`; connect the existing `Y.Doc` through the
+supported integration and check the migration path before changing formats.
 
-For a new canvas with text inside shapes, `LiveText` lets text live within the
-same Storage tree as surrounding structured data. For a large editor or a binding
-that depends on the Yjs ecosystem, Yjs may be the better fit. The existing guide
-covers limits and compatibility in detail.
-[LiveText vs Yjs](/docs/guides/livetext-vs-yjs)
+For a new canvas with text inside shapes, `LiveText` keeps the text in the same
+Storage tree as the surrounding structured data, so positions, properties, and
+words share one document, one history, and one snapshot. For a long-form editor,
+or a binding that depends on the Yjs ecosystem, Yjs is the better fit. The
+[LiveText vs Yjs](/docs/guides/livetext-vs-yjs) guide covers limits and editor
+support in detail.
 
-## What does a production Yjs editor need beyond the library? [#what-does-a-production-yjs-editor-need-beyond-the-library]
+## What does a production Yjs editor need? [#what-does-a-production-yjs-editor-need]
 
-A production editor needs a provider, persistent document storage, authorized
-access, and a lifecycle for backup, export, and deletion. Yjs is compatible with
-several providers, including managed services. Operating your own server is
-optional. [Yjs ecosystem](https://docs.yjs.dev/ecosystem)
+A provider, somewhere to store the document, a way to authorize access, and a
+plan for backup, export, and deletion. Yjs itself covers none of these. The
+[Yjs ecosystem](https://docs.yjs.dev/ecosystem) includes several providers,
+including hosted services, so running your own server is optional.
 
-For a specification editor, separate these responsibilities:
+For a specification editor, the responsibilities split like this:
 
-| Responsibility | Yjs-based stack | With Liveblocks as the provider |
-| --- | --- | --- |
-| Editor content | Yjs document and editor binding | Retain the supported Yjs integration |
-| Hosting and persistence | Chosen provider and storage integration | Liveblocks room and document service |
-| Authorization | Application rules connected to the provider | Application rules connected to [Liveblocks authentication](/docs/api-reference/authentication) |
-| Review workflow | Select commenting and notification services | Integrate Liveblocks Comments and Notifications |
+| Responsibility          | Yjs on its own                                | With Liveblocks as the provider                                                                                                                                                                                                                                                         |
+| ----------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Editor content          | `Y.Doc` and the editor binding.               | The same `Y.Doc` and binding.                                                                                                                                                                                                                                                           |
+| Hosting and persistence | A provider you pick, plus a database adapter. | The Liveblocks room. Documents are stored automatically.                                                                                                                                                                                                                                |
+| Authorization           | Business rules wired into your provider.      | Business rules in your server, which issues room access tokens. <InfoTooltip>Your server checks the user against your own auth, then issues a token for the room. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> |
+| Review workflow         | Pick commenting and notification services.    | Liveblocks Comments and Notifications in the same room.                                                                                                                                                                                                                                 |
 
-A provider change is not automatically a content-format change. Service-specific
-permissions, history, and comments still require their own migration mapping.
-[Integrations](/docs/products/sync/integrations) ·
-[Authentication](/docs/api-reference/authentication)
+Switching provider does not change the document format. Permissions, history,
+and comments from a previous service still need their own migration, because
+they are specific to that service. See the list of
+[integrations](/docs/products/sync/integrations) and the
+[authentication](/docs/api-reference/authentication) reference.
 
 ## Pricing and deployment [#pricing-and-deployment]
 
-Yjs is a library; a production service budget also includes its provider or
-infrastructure and surrounding products. Compare that complete stack with the
-Liveblocks plan and usage required by the editor.
-[Liveblocks pricing](/docs/pricing/plans)
+[Yjs](https://docs.yjs.dev/) is free and open source, so the library itself
+costs nothing. The cost is in what runs around it: a provider server, a database
+for stored documents, authentication in front of the connection, comments and
+notifications if you need them, and the time spent keeping all of that running.
+Compare that complete stack with the [Liveblocks plan](/docs/pricing/plans) and
+usage your editor needs.
 
-Self-hosted Sync is a paid Enterprise add-on.
-[Deployment details](/docs/platform/data-storage#Self-hosting)
+A Yjs provider such as
+[y-websocket](https://docs.yjs.dev/ecosystem/connection-provider/y-websocket)
+runs on your own servers. Liveblocks offers
+[self-hosting](/docs/platform/data-storage#Self-hosting) as a paid add-on on the
+Enterprise plan. Either way, your own servers, database, backups, and operations
+are part of the budget.
 
 ## Get started [#get-started]
 
-Inspect the [editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
-and choose a supported binding from the [integration guide](/docs/products/sync/integrations).
-For a data-model decision, read [LiveText vs Yjs](/docs/guides/livetext-vs-yjs).
+Try the
+[editor example](/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced),
+then pick a supported binding from the
+[integrations](/docs/products/sync/integrations) page. To decide between
+`LiveText` and a `Y.Doc`, read [LiveText vs Yjs](/docs/guides/livetext-vs-yjs).
 
 [Start building with Liveblocks for free](https://liveblocks.io/dashboard).
 Follow the [setup guide](/docs/get-started) for your project.

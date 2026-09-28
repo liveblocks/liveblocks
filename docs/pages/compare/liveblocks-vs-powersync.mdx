@@ -8,104 +8,121 @@ meta:
     architecture."
 ---
 
-Choose PowerSync when users need a local SQLite dataset and offline writes that
-upload to your application back end. Choose Liveblocks when the feature centers
-on concurrent editing of a document, canvas, or workflow.
-[PowerSync architecture](https://docs.powersync.com/architecture/architecture-overview)
-· [Liveblocks Sync](/docs/products/sync)
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more.
+PowerSync is a sync service that keeps a local SQLite database on each device in
+sync with your Postgres, MongoDB, or MySQL database and uploads local writes to
+your back end.
 
-A field technician's offline job list and a design team's shared canvas have
-different requirements. The first needs local records and an upload path. The
-second needs a shared editing model and participant experience.
+## Which should you choose? [#which-should-you-choose]
+
+PowerSync and Liveblocks solve different problems. PowerSync is how each device
+gets an offline copy of your database, whereas Liveblocks is how people edit
+artifacts together.
+
+Choose Liveblocks when several people work on the same document, canvas, or
+board at once, and their edits need to merge without overwriting each other.
+Choose PowerSync when each user needs a local, queryable copy of their own
+records that keeps working offline, such as a field technician's job list, and
+your back end should be the one to apply their writes. Some products use both:
+PowerSync for the records each device carries offline, and Liveblocks for the
+documents people edit together.
 
 ## Compare the data and write paths [#compare-the-data-and-write-paths]
 
-| Area | Liveblocks Sync | PowerSync |
-| --- | --- | --- |
-| Client data model | Shared documents with live structures | Local SQLite tables and queries |
-| Data reaching the client | Synchronized document state | Selected source-database records |
-| Writes | Supported client and server editing APIs | Local SQLite changes queued for upload through your back end |
-| Conflict behavior | Defined by the chosen shared-data type and operation | Your back end applies write validation and conflict-handling rules |
-| Text editing | Supported `LiveText` or Yjs editor integrations | Add an editing model; PowerSync links to a Yjs demo |
-| Self-hosting | Paid Enterprise Sync add-on | Self-hosted service configurations |
-| Main implementation work | Model the document and connect application permissions | Define the local dataset, upload API, and back-end write rules |
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | PowerSync                                                                                                                                                                                                                                                                                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Client data model   | Shared documents in Storage. <InfoTooltip>A CRDT-based document store. Concurrent edits merge automatically, and data is kept until you delete it. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                          | Local SQLite tables. <InfoTooltip>Each device runs its own SQLite database that your app queries directly. <a href="https://docs.powersync.com/architecture/client-architecture" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                               |
+| Data on the client  | The documents in the rooms you open.                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Selected rows from your Postgres, MongoDB, or MySQL database. <InfoTooltip>The PowerSync Service reads your database's replication stream and sends each device the rows your sync rules assign to it. <a href="https://docs.powersync.com/architecture/architecture-overview" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> |
+| Writes              | Client and server APIs edit the document directly. <InfoTooltip>Changes are sent to the Liveblocks server and broadcast to everyone in the room. <a href="/docs/api-reference/liveblocks-client" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                  | Local SQLite changes queued for upload to your back end.                                                                                                                                                                                                                                                                                                |
+| Offline writes      | Queued while disconnected and sent on reconnect, within the same session.                                                                                                                                                                                                                                                                                                                                                                                                                  | Durable. The local database and upload queue survive app restarts.                                                                                                                                                                                                                                                                                      |
+| Conflict resolution | CRDT-based. Concurrent edits to objects, lists, maps, and text merge automatically. <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                     | Your server decides. It applies each uploaded write with your own rules. <InfoTooltip>PowerSync documents several strategies, from last write wins to custom merge logic in your write API. <a href="https://docs.powersync.com/handling-writes/handling-update-conflicts" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>     |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more. <InfoTooltip>Official packages for popular editors, plus Yjs guides for others. <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                   | Not built in. PowerSync publishes a guide for wiring up Yjs yourself. <InfoTooltip>The guide stores Yjs updates as rows and syncs them through PowerSync. <a href="https://docs.powersync.com/client-sdks/advanced/crdts" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                      |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications. <InfoTooltip>React components you can drop in, plus hooks for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | None. PowerSync ships client SDKs, not UI components.                                                                                                                                                                                                                                                                                                   |
+| Authentication      | Your server issues access tokens using your existing auth. <InfoTooltip>Works with any auth provider. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                         | Your auth provider issues JWTs that the PowerSync Service verifies. <InfoTooltip>Sync rules use claims from the token to decide which rows each user receives. <a href="https://docs.powersync.com/configuration/auth/overview" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                |
+| Self-hosting        | Paid add-on on the Enterprise plan. <InfoTooltip>Covers Sync; you run the servers and storage. <a href="/docs/platform/data-storage#Self-hosting" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                 | Free source-available Open Edition, or a paid Enterprise Self-Hosted plan. <InfoTooltip>You run the PowerSync Service next to your source database. <a href="https://docs.powersync.com/intro/self-hosting" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                    |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                       | Which rows does each device need offline, and how does your back end apply its writes?                                                                                                                                                                                                                                                                  |
 
-Sources: [Liveblocks client API](/docs/api-reference/liveblocks-client),
-[conflict resolution](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync),
-[editor integrations](/docs/products/sync/integrations),
-[PowerSync client architecture](https://docs.powersync.com/architecture/client-architecture),
-[update conflicts](https://docs.powersync.com/usage/lifecycle-maintenance/handling-update-conflicts),
-[collaborative text example](https://docs.powersync.com/integration-guides/yjs),
-[Liveblocks deployment](/docs/platform/data-storage#Self-hosting),
-[PowerSync deployment](https://docs.powersync.com/self-hosting/overview).
+## How does offline SQLite differ from a shared document? [#how-does-offline-sqlite-differ-from-a-shared-document]
 
-## How does offline SQLite differ from an open collaborative document? [#how-does-offline-sqlite-differ-from-an-open-collaborative-document]
+They make different guarantees. PowerSync keeps a full SQLite database on the
+device and a durable queue of changes to upload, so the app works after a
+restart with no connection. Liveblocks [Sync](/docs/products/sync) keeps a
+loaded document up to date and, if the connection drops, holds unconfirmed edits
+until it reconnects. That covers a flaky connection during a session, not a
+device that stays offline for a day.
 
-PowerSync keeps a local SQLite database and a durable queue of changes to upload.
-Liveblocks Storage synchronizes a loaded document and queues unconfirmed changes
-for reconnect. A durable offline database and edits buffered within an open
-session are different guarantees.
-[PowerSync client architecture](https://docs.powersync.com/architecture/client-architecture)
-· [Liveblocks synchronization](/docs/products/sync/storage)
+| Requirement                       | PowerSync                                                  | Liveblocks Storage                                                                   |
+| --------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Query assigned jobs while offline | Query the local SQLite database.                           | Read the document that is already loaded.                                            |
+| Queue writes for a later upload   | Durable upload queue. Your back end validates each change. | Edits are queued for the rest of the current session.                                |
+| Reopen after the app has closed   | The local database and queue are still there.              | Reconnecting resumes the loaded session. Keeping edits across restarts is up to you. |
+| Merge edits inside a paragraph    | Add a CRDT yourself, following the Yjs guide.              | Use a built-in text editing integration.                                             |
 
-| Requirement | PowerSync | Liveblocks Storage |
-| --- | --- | --- |
-| Query assigned jobs while offline | Query the synchronized local SQLite dataset | Read the already-loaded document |
-| Queue database writes for a later upload | Persistent upload queue; application back end validates changes | Queue document edits within the active client session |
-| Reopen after the app has closed | Local database and queue persistence are part of the client design | Reconnect support covers the loaded session; persistence across restarts requires a separate design |
-| Merge edits inside a paragraph | Add an editing model, such as the published Yjs example | Use a supported text integration |
+Choose PowerSync when an offline relational dataset is the core requirement.
+Choose Liveblocks when the core of the feature is a shared document with editing
+and review built around it. A product may have both.
 
-Choose PowerSync when the offline relational dataset is the core requirement.
-Choose Liveblocks when the core surface is a shared document with an editing and
-review experience. A product may have both.
+## Offline job lists vs. shared canvases [#offline-job-lists-vs-shared-canvases]
 
-## Example: an offline job list [#example-an-offline-job-list]
+A
+[PowerSync client](https://docs.powersync.com/architecture/client-architecture)
+reads from local SQLite. Writes update the local database and enter an upload
+queue. Your upload code sends those changes to your back end, where you apply
+business rules and authorization. Failed uploads are retried when the connection
+returns.
 
-PowerSync clients read from local SQLite. Writes update the local database and
-enter an upload queue. Your upload implementation sends those changes to the
-application back end, where you apply business rules and authorization. Failed
-uploads can be retried when connectivity returns.
-[PowerSync client architecture](https://docs.powersync.com/architecture/client-architecture)
+Take a field-service app where a technician needs an assigned set of jobs,
+equipment records, and forms while disconnected. What matters is the local
+dataset, the queries, how uploads behave, and what happens to rejected changes
+across the whole visit. That is what PowerSync's database-centered model is
+built for.
 
-Consider a field-service app where a technician needs an assigned set of jobs,
-equipment records, and forms while disconnected. Evaluate the local dataset,
-queries, upload behavior, and rejected changes across the full visit. Those
-requirements make PowerSync's database-centered model relevant.
+For a design tool where people work on the same canvas, what matters is how
+concurrent edits merge and what everyone sees while they work. Liveblocks fits
+that without making a local relational database the app's primary client model.
 
-For a design tool where people work on the same canvas, evaluate the shared
-editing operations and participant experience. Liveblocks may fit that surface
-without making a local relational database the application's primary client model.
+## Does PowerSync merge concurrent edits? [#does-powersync-merge-concurrent-edits]
 
-## Can PowerSync support collaborative text editing? [#can-powersync-support-collaborative-text-editing]
+Not on its own. PowerSync uploads each queued write to your back end, and your
+write API decides how to apply it. Its documentation on
+[handling update conflicts](https://docs.powersync.com/handling-writes/handling-update-conflicts)
+covers several strategies, from last write wins to custom merge logic, but the
+code is yours.
 
-Yes, by combining database synchronization with an editing model. PowerSync
-lets the application back end determine how uploaded changes are applied. Its
-documentation describes conflict-handling choices, including custom strategies.
-Your write API applies the business rules when queued changes reach the server.
-[PowerSync update conflicts](https://docs.powersync.com/usage/lifecycle-maintenance/handling-update-conflicts)
-
-For collaborative text, PowerSync's guide links to a Yjs demo. Compare that
-complete architecture with a Liveblocks editor integration, including document
-storage, uploads, and the behavior of concurrent edits.
-[PowerSync text editing guide](https://docs.powersync.com/integration-guides/yjs)
+For collaborative text, PowerSync's
+[Yjs integration guide](https://docs.powersync.com/client-sdks/advanced/crdts)
+shows how to store Yjs updates as rows and sync them through PowerSync. Compare
+that whole setup, including document storage, uploads, and how concurrent edits
+behave, with a Liveblocks
+[editor integration](/docs/products/sync/integrations), where the CRDT and the
+sync are already connected.
 
 ## Pricing and deployment [#pricing-and-deployment]
 
-For PowerSync, include its service, storage, source database, and write API. For
-Liveblocks, include Sync and the application services around the documents.
-Budget additional editing or review components explicitly.
-[PowerSync deployment](https://docs.powersync.com/self-hosting/overview) ·
-[Liveblocks pricing](/docs/pricing/plans)
+[PowerSync Pro](https://www.powersync.com/pricing) starts at $49 per month and
+includes 30 GB of data synced, 10 GB of data hosted on the PowerSync Service,
+and 1,000 peak concurrent clients. Beyond that, synced and hosted data are $1
+per GB and concurrent clients are $30 per 1,000. A free plan covers small
+projects. On top of that, budget your source database and the write API that
+applies uploads. For Liveblocks, budget Sync usage plus the application services
+around the documents. Comments and Notifications are billed as their own usage.
+Your [plan's credits](/docs/pricing/plans) apply once across all Liveblocks
+usage.
 
-Self-hosted Sync is a paid Enterprise add-on. Deployment options for Comments and
-Notifications are separate.
-[Deployment details](/docs/platform/data-storage#Self-hosting)
+PowerSync can be [self-hosted](https://docs.powersync.com/intro/self-hosting)
+with its source-available Open Edition. Liveblocks offers
+[self-hosting](/docs/platform/data-storage#Self-hosting) as a paid add-on on the
+Enterprise plan. Either way, your own servers, database, backups, and operations
+are part of the budget.
 
 ## Get started [#get-started]
 
-Explore the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage).
-Use the [canvas guide](/docs/use-cases/canvas) to separate the editing surface
-from the records your application needs offline.
+Explore the
+[whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage),
+then use the [canvas guide](/docs/use-cases/canvas) to separate the canvas
+people edit together from the records your app needs offline.
 
-[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
-For self-hosting, [contact sales](/contact/sales).
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard). For
+self-hosting, [contact sales](/contact/sales).

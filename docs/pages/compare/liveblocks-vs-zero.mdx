@@ -7,90 +7,95 @@ meta:
     writes, and self-hosting. Understand the data model and offline boundaries."
 ---
 
-Choose Liveblocks when the product centers on people editing a shared document
-or canvas. Choose Rocicorp Zero when the client centers on reactive queries over
-application records. Both support responsive interfaces; the difference is whether
-the client works primarily with an editable document or a queried dataset.
-[Liveblocks client API](/docs/api-reference/liveblocks-client) ·
-[Zero introduction](https://zero.rocicorp.dev/docs/introduction)
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more.
+Rocicorp Zero is an open-source sync engine that runs queries on the client
+against a local cache of your Postgres data and sends writes through custom
+mutators that run on the client and then on your server.
 
-A task list filtered by assignee and due date fits Zero's query model. A canvas
-containing shapes and editable text fits Liveblocks' shared-document model. Some
-products need both surfaces.
+## Which should you choose? [#which-should-you-choose]
+
+Zero and Liveblocks solve different problems. Zero is how your app reads and
+writes application records, whereas Liveblocks is how people edit artifacts
+together.
+
+Choose Liveblocks when several people edit the same canvas, document, or board
+at once and their edits need to merge without overwriting each other, such as
+shapes and text on a whiteboard. Choose Zero when the client works with filtered
+views of your records, such as a task list filtered by assignee and due date,
+and you want those views to update instantly as rows change. Some products use
+both: Zero for the records and Liveblocks for the content people edit together.
 
 ## Compare the programming model [#compare-the-programming-model]
 
-| Area | Liveblocks Sync | Rocicorp Zero |
-| --- | --- | --- |
-| Main abstraction | Shared documents and live data structures | Queries over a local normalized data store |
-| Data delivered to a client | State for the shared document | Data required by application queries |
-| Writes | Shared-document edits through supported client and server APIs | Mutators with optimistic client behavior and server execution |
-| Disconnected editing | Storage queues edits in an already-loaded session and sends them on reconnect | Reads continue from synced data; writes are rejected in the disconnected state |
-| Server-side application logic | Integrate the shared document with your back end | Implement query and mutation endpoints for the application |
-| Self-hosted system | Enterprise Sync add-on plus your application services | `zero-cache`, Postgres, front end, and API server |
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Rocicorp Zero                                                                                                                                                                                                                                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Main abstraction    | Shared documents in Storage. <InfoTooltip>A CRDT-based document store. Concurrent edits merge automatically, and data is kept until you delete it. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                          | Queries over a local cache of your Postgres data. <InfoTooltip>zero-cache replicates from Postgres and syncs the rows each client's queries need. Query results update as data changes. <a href="https://zero.rocicorp.dev/docs/introduction" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                 |
+| Data on the client  | The shared document a user has opened. <InfoTooltip>The client loads a room's Storage and keeps it in sync while the room is open. <a href="/docs/api-reference/liveblocks-client" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                | The rows your active queries need. <InfoTooltip>Queries are written in ZQL and run against the local cache, so results are instant once the data is synced. <a href="https://zero.rocicorp.dev/docs/queries" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                  |
+| Writes              | Edits to the document from the client or from your server. <InfoTooltip>Your back end can read and modify Storage directly. <a href="/docs/products/sync/server-side-editing" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                     | Custom mutators that run optimistically on the client, then on your server. <InfoTooltip>The client applies the change right away; your API server runs the same mutator and its result is final. <a href="https://zero.rocicorp.dev/docs/mutators" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>           |
+| Conflict resolution | CRDT-based. Concurrent edits to objects, lists, maps, and text merge automatically. <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                     | Your server decides. The server's result of each mutator is final, and the client's optimistic change is replaced by it.                                                                                                                                                                                                               |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more. <InfoTooltip>Official packages for popular editors, plus Yjs guides for others. <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                   | Not built in. Requires a CRDT library.                                                                                                                                                                                                                                                                                                 |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications. <InfoTooltip>React components you can drop in, plus hooks for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | None. Zero provides data bindings for React and SolidJS, not components.                                                                                                                                                                                                                                                               |
+| Authentication      | Your server issues access tokens using your existing auth. <InfoTooltip>Works with any auth provider. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                         | Your server issues a token, such as a JWT, that the client passes to Zero. <InfoTooltip>zero-cache verifies the token and your queries and mutators use its claims to decide what each user can read and write. <a href="https://zero.rocicorp.dev/docs/auth" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> |
+| Offline editing     | Edits to a loaded document are queued and sent on reconnect.                                                                                                                                                                                                                                                                                                                                                                                                                               | Reads work from synced data. Writes are rejected while disconnected. <InfoTooltip>Writes are only queued during the brief connecting state. <a href="https://zero.rocicorp.dev/docs/connection" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                               |
+| Self-hosting        | Paid Enterprise add-on. <InfoTooltip>Run Sync on your own infrastructure. <a href="/docs/platform/data-storage#Self-hosting" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                                      | Always. You run zero-cache, Postgres, and your API server. <InfoTooltip>zero-cache is a Node.js server you deploy alongside your database. <a href="https://zero.rocicorp.dev/docs/deployment" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                       | Which queries and mutators does the client need?                                                                                                                                                                                                                                                                                       |
 
-Sources: [Liveblocks client API](/docs/api-reference/liveblocks-client),
-[server-side editing](/docs/products/sync/server-side-editing),
-[Zero introduction](https://zero.rocicorp.dev/docs/introduction),
-[queries](https://zero.rocicorp.dev/docs/queries),
-[mutators](https://zero.rocicorp.dev/docs/mutators),
-[self-hosting](https://zero.rocicorp.dev/docs/deployment),
-[Storage synchronization](/docs/products/sync/storage),
-[Zero connection behavior](https://zero.rocicorp.dev/docs/connecting).
+## Filtered queries vs. shared documents [#filtered-queries-vs-shared-documents]
 
-## Should the client use filtered queries or a shared document? [#should-the-client-use-filtered-queries-or-a-shared-document]
+Use queries when users work across subsets of your records. Use a shared
+document when people edit the same canvas, document, or workflow. For a
+project-management app, the two sit side by side:
 
-Use a query-oriented model when users work across subsets of application records.
-Use a shared-document model when people edit the same canvas, document, or
-workflow. For a project-management app, those surfaces can coexist:
+| Surface                              | Rocicorp Zero                                                                       | Liveblocks                                                                        |
+| ------------------------------------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| My overdue tasks                     | Query the tasks matching the user and date filter. The list updates as rows change. | Keep this app-wide query in your back end.                                        |
+| Reassign one task                    | A mutator changes the record and every view showing it reacts.                      | Put the field in a document only if it belongs to something people edit together. |
+| Rearrange and edit a planning canvas | Not a fit on its own. You would need to add a CRDT around the records.              | Store shapes in Storage and text through an editor integration.                   |
 
-| Surface | Rocicorp Zero approach | Liveblocks approach |
-| --- | --- | --- |
-| My overdue tasks | Query the records matching the user and date filter | Keep this application-wide query in the back end |
-| Reassign one task | A mutator changes the record and relevant views react | Model the field in a document only if it belongs to the shared document |
-| Rearrange and edit a planning canvas | Add the editing model around the records | Use shared structures and a supported text integration |
+Combining the two is application code. Give each editable field one source of
+truth: records changed through
+[Zero mutators](https://zero.rocicorp.dev/docs/mutators) and read through
+[Zero queries](https://zero.rocicorp.dev/docs/queries), and shared content in
+Liveblocks. The [canvas guide](/docs/use-cases/canvas) shows how to model a
+canvas as a document.
 
-Combining the two requires application code. Give each editable field one
-authoritative home.
-[Zero queries](https://zero.rocicorp.dev/docs/queries) ·
-[Zero mutators](https://zero.rocicorp.dev/docs/mutators) ·
-[Liveblocks canvas](/docs/use-cases/canvas)
+## Does Zero support offline writes? [#does-zero-support-offline-writes]
 
-## Does Rocicorp Zero support writes while disconnected? [#does-rocicorp-zero-support-writes-while-disconnected]
+No, not beyond brief interruptions. Zero's
+[connection docs](https://zero.rocicorp.dev/docs/connection) state that it does
+not support offline writes: reads keep working from synced data, but writes are
+rejected while disconnected. Writes are queued only during the short connecting
+state. Zero's [offline docs](https://zero.rocicorp.dev/docs/offline) explain
+that this is a deliberate design choice, not a missing feature.
 
-Zero's current connection documentation says it does not support offline writes.
-Reads from synced data continue in the disconnected state, but writes are
-rejected. Its connecting state can queue writes through brief interruptions; that
-is not a promise of extended offline editing.
-[Zero connection behavior](https://zero.rocicorp.dev/docs/connecting)
-
-Liveblocks Storage applies local edits immediately, queues unconfirmed changes,
-and sends offline edits when the connection returns. This behavior covers a
-document already loaded in the client. Persistence of unsent edits across browser
-restarts is a separate requirement.
-[Storage synchronization behavior](/docs/products/sync/storage)
-
-For a user editing an open canvas through a network interruption, this is a
-concrete difference from Zero's disconnected state. A product requiring a durable
-offline database across sessions needs a separate persistence assessment.
+Liveblocks [Storage](/docs/products/sync/storage) applies edits locally right
+away, queues the unconfirmed ones, and sends them when the connection returns.
+This covers a document already loaded in the client; unsent edits are not kept
+across a browser restart. For someone editing an open canvas through a network
+drop, that is a concrete difference. If you need a durable offline database
+across sessions, neither product gives you that on its own.
 
 ## Pricing and deployment [#pricing-and-deployment]
 
-For Zero, include `zero-cache`, Postgres, and application query and mutation
-endpoints. For Liveblocks, include Sync and the application services around its
-documents. Compare the complete deployment, including support and upgrades.
-[Zero self-hosting](https://zero.rocicorp.dev/docs/deployment) ·
-[Liveblocks pricing](/docs/pricing/plans)
+Zero is open source and
+[self-hosted](https://zero.rocicorp.dev/docs/deployment). The cost is your own
+infrastructure: zero-cache, Postgres, and the API server that runs your
+mutators, plus support and upgrades. Liveblocks is a hosted service billed by
+usage, and your application services around its documents are separate. Your
+[plan's credits](/docs/pricing/plans) apply once across all Liveblocks usage.
 
-Self-hosted Sync is a paid Enterprise add-on. Deployment options for Comments and
-Notifications are separate.
-[Deployment details](/docs/platform/data-storage#Self-hosting)
+Liveblocks offers [self-hosting](/docs/platform/data-storage#Self-hosting) as a
+paid add-on on the Enterprise plan. Either way, your own servers, database,
+backups, and operations are part of the budget.
 
 ## Get started [#get-started]
 
-Open the [whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+Open the
+[whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
 and use the [canvas guide](/docs/use-cases/canvas) to map your editing
 interactions to a shared document.
 
-[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
-For self-hosting, [contact sales](/contact/sales).
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard). For
+self-hosting, [contact sales](/contact/sales).
