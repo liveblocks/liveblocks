@@ -1,0 +1,182 @@
+---
+meta:
+  title: "Liveblocks vs. Convex for collaborative apps"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Convex for shared editing, reactive queries, and
+    self-hosting. Choose where your documents, data, and business logic belong."
+---
+
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more.
+Convex is a reactive database and back end: you write queries and mutations in
+TypeScript, and subscribed clients update automatically when the data they read
+changes.
+
+## Which should you choose? [#which-should-you-choose]
+
+Convex and Liveblocks solve different problems. Convex is where your records and
+business logic live, whereas Liveblocks is how people edit artifacts together.
+
+Choose Liveblocks when several people work on the same document, canvas, or
+board at once, and their edits need to merge without overwriting each other, and
+when you want comments, notifications, and presence around that document. Choose
+Convex when you want reactive queries and transactional functions at the center
+of your back end, such as a task list that updates for everyone the moment a
+mutation commits. Convex also has a ProseMirror component for collaborative
+text, so if your app already runs on Convex and only needs a small Tiptap or
+BlockNote document, that may be enough. Convex has no built-in
+[cursors or selections](#does-convex-support-presence), no comments or
+notifications, and a
+[1 MiB cap per document](#how-large-can-convex-documents-be), so a shared canvas
+or a long document usually needs more than Convex alone. Many products
+[use both services together](#can-i-use-convex-with-liveblocks).
+
+## Compare the responsibilities [#compare-the-responsibilities]
+
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Convex                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core model          | Rooms and shared documents in Storage. <InfoTooltip>A CRDT-based document store. Concurrent edits merge automatically, and data is kept until you delete it. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                | Database tables with queries and mutations. <InfoTooltip>Functions written in TypeScript run on the Convex back end and read or write the database. <a href="https://docs.convex.dev/realtime" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                       |
+| Realtime updates    | Document changes, presence, and broadcast events. <InfoTooltip>Presence is short-lived per-user state such as cursor position or selection. <a href="/docs/products/sync/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                | Reactive query results that rerun when the data they read changes.                                                                                                                                                                                                                                                                                                                                            |
+| Conflict resolution | CRDT-based. Concurrent edits to objects, lists, maps, and text merge automatically. <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                     | Serializable transactions. Conflicting mutations are retried, and the last one to commit wins. <InfoTooltip>Optimistic concurrency control detects a conflict and reruns the mutation. It does not merge two edits to the same field. <a href="https://docs.convex.dev/database/advanced/optimistic-concurrency-control" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>             |
+| Presence            | Built in. Cursors, selections, and who is online, per room. <InfoTooltip>Presence is short-lived per-user state that is never written to the database. <a href="/docs/products/sync/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                     | Online list only, through a presence component. No cursors or selections. <InfoTooltip>The component tracks who is in a room with heartbeat mutations. Live cursor positions would have to be stored as database writes. <a href="https://github.com/get-convex/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                            |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more. <InfoTooltip>LiveText and official packages for popular editors, plus Yjs guides for others. <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                      | ProseMirror sync component for Tiptap and BlockNote. <InfoTooltip>Provides <code>useTiptapSync</code> and <code>useBlockNoteSync</code> hooks and merges edits with operational transformation. Other editors, presence, and documents over 1 MB are listed as not planned. <a href="https://github.com/get-convex/prosemirror-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> |
+| Document size       | Per-room limit set by your plan for Storage. No size limit for Yjs. <InfoTooltip>Pro rooms hold up to <Limits.ProMaxStorageSizePerRoom /> of Storage data. Yjs documents are not capped. <a href="/docs/pricing/limits" className="font-medium text-product-brand">See limits.</a></InfoTooltip>                                                                                                                                                         | 1 MiB per database document. <InfoTooltip>Also 1,024 fields, 8,192 array elements, and 16 levels of nesting. Larger content has to be split across documents by your code. <a href="https://docs.convex.dev/production/state/limits" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                 |
+| Comments            | Comments and Notifications products with components and hooks. <InfoTooltip>Threads, mentions, reactions, attachments, and the inbox and email notifications that follow from them. <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>, <a href="/docs/products/notifications" className="font-medium text-product-brand">Notifications</a>.</InfoTooltip>                                                                                          | Not included. Model threads and notification delivery yourself.                                                                                                                                                                                                                                                                                                                                               |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications. <InfoTooltip>React components you can drop in, plus hooks for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | A basic face pile in the presence component. Everything else is built on query results.                                                                                                                                                                                                                                                                                                                       |
+| Authentication      | Your server issues access tokens using your existing auth. <InfoTooltip>Works with any auth provider, including Convex Auth. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                  | Convex Auth or a third-party provider, checked inside each function. <InfoTooltip>Functions read the caller's identity and decide what to return or write. <a href="https://docs.convex.dev/auth" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                    |
+| Self-hosting        | Paid add-on on the Enterprise plan. <InfoTooltip>Covers Sync. <a href="/docs/platform/data-storage#Self-hosting" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                                                  | Open source. Run the back end on your own servers. <InfoTooltip>The Convex back end ships as a Docker image you can deploy yourself. <a href="https://docs.convex.dev/production/hosting/self-hosting" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                               |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                       | Which data and business logic belong in your back end?                                                                                                                                                                                                                                                                                                                                                        |
+
+## Can I use Convex with Liveblocks? [#can-i-use-convex-with-liveblocks]
+
+Yes. Keep project records and business rules in Convex and editable documents in
+Liveblocks. There is no built-in connector between the two, so this is an
+architecture decision rather than an integration: each piece of data gets one
+source of truth, and a change to one system is never part of a transaction in
+the other. Use
+[Liveblocks server-side editing](/docs/products/sync/server-side-editing) or
+webhooks when your back end needs to read or write a document.
+
+| User action                | Source of truth                                                                                                                                                                                                                                                                     | What updates                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Reassign a project         | Convex mutation.                                                                                                                                                                                                                                                                    | Every subscribed project query.                  |
+| Edit a paragraph           | Liveblocks editor integration.                                                                                                                                                                                                                                                      | Everyone's copy of the document.                 |
+| Publish a document summary | Copy in Convex. <InfoTooltip>Your own code reads the chosen revision from Liveblocks and writes it to Convex. It has to handle delayed or failed writes. <a href="/docs/products/sync/server-side-editing" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> | Search or reporting views. Expect a short delay. |
+
+Store the Liveblocks room ID and the revision you copied on the Convex record so
+your server knows which room to authorize and which content the copy represents.
+Treat the copy in Convex as read-only.
+
+## When is Convex's editor component enough? [#when-is-convexs-editor-component-enough]
+
+When your app already runs on Convex, the document is small, and collaborative
+text is the only shared editing you need. The
+[ProseMirror sync component](https://www.convex.dev/components/prosemirror-sync)
+ships `useTiptapSync` and `useBlockNoteSync`, so you don't have to build text
+merging yourself for those editors.
+
+Its own [README](https://github.com/get-convex/prosemirror-sync) lists what it
+does not do and is not planned to do: documents larger than 1 MB, presence such
+as other users' names and cursors, offline sync between tabs, and Yjs documents.
+Choose a Liveblocks integration when you need any of those, or when the text
+editor is one part of a larger collaborative surface. Storage holds the other
+shared data, and Comments, Notifications, and room permissions cover the review
+workflow around it.
+
+## Does Convex support presence? [#does-convex-support-presence]
+
+Only as an online list. Convex's
+[presence component](https://github.com/get-convex/presence) keeps a
+live-updating list of who is in a room and when they were last seen, driven by
+heartbeat mutations from each client, and ships a basic face pile. It does not
+carry cursor positions, text selections, or any other state that changes many
+times a second, and the ProseMirror component does not sync presence either.
+
+To show live cursors on Convex you would write each position to the database as
+a mutation. Every write is a function call, every subscribed client reruns its
+query, and the data is persisted even though it is obsolete a moment later.
+Liveblocks [Presence](/docs/products/sync/presence) is built for exactly this
+state: it is broadcast to the room, never stored, and comes with
+[Cursors](/docs/api-reference/liveblocks-react-ui#Cursors) and
+[AvatarStack](/docs/api-reference/liveblocks-react-ui#AvatarStack) components.
+
+## How large can Convex documents be? [#how-large-can-convex-documents-be]
+
+Much smaller than Liveblocks documents. Convex caps every database document at
+[1 MiB](https://docs.convex.dev/production/state/limits), with 1,024 fields,
+8,192 array elements, and 16 levels of nesting. The ProseMirror component stores
+the editor content as a snapshot document, so a long specification, a design
+canvas with many shapes, or a board with rich card content hits that limit. Past
+it, your code has to shard the content across documents and keep the pieces
+consistent yourself.
+
+Liveblocks has two document models, and neither is capped at a megabyte.
+[Storage](/docs/products/sync/storage) treats the whole room as one document
+with a per-room size limit set by your [plan](/docs/pricing/limits); Pro rooms
+hold up to
+{/* prettier-ignore */} <Limits.ProMaxStorageSizePerRoom />, and higher tiers
+raise it. [Yjs](/docs/products/sync/text-editing/yjs)
+documents have no size limit at all, so a long-form document, a codebase, or a
+canvas with years of history can grow to multiple gigabytes in one room. In both
+models, edits sync as individual operations, so a large document does not mean
+re-sending a large document on every change.
+
+## Database transactions vs. text edits [#database-transactions-vs-text-edits]
+
+Convex gives you
+[serializable transactions](https://docs.convex.dev/database/advanced/optimistic-concurrency-control)
+and retries a mutation when it conflicts with another. That keeps your data
+consistent, but it does not merge two edits to the same field: the mutation that
+commits last wins. Merging two people's edits to the same paragraph is a
+different job, and it needs a CRDT. Convex's
+[ProseMirror component](https://www.convex.dev/components/prosemirror-sync)
+supplies that for supported editors; Liveblocks supplies it for every data type
+in Storage and for text through its editor integrations, which includes
+ProseMirror, amongst others.
+
+In a specification tool, a status change is a good fit for a Convex mutation,
+while the paragraphs people type in need a CRDT. Use Convex's component when it
+covers your editor. Use Liveblocks when the document itself, and the review
+features around it, are what you want the service to handle.
+
+## Pricing and deployment [#pricing-and-deployment]
+
+Price the back end and the collaboration features separately. Convex is free for
+personal projects; [Convex Professional](https://www.convex.dev/pricing) costs
+$25 per developer per month and includes 25 million function calls, then $2 per
+additional million. Liveblocks is an additional cost when you keep Convex, and
+[Liveblocks plans](/docs/pricing/plans) bill collaboration usage on top of that.
+Include the shared editing and review features your app needs in each estimate.
+
+Convex can be
+[self-hosted](https://docs.convex.dev/production/hosting/self-hosting).
+Liveblocks offers [self-hosting](/docs/platform/data-storage#Self-hosting) as a
+paid add-on on the Enterprise plan. Either way, your own servers, database,
+backups, and operations are part of the budget.
+
+## What usage should I budget for? [#what-usage-should-i-budget-for]
+
+Two kinds of usage, measured separately.
+[Convex usage](https://docs.convex.dev/production/usage) counts function calls,
+database storage and bandwidth, and action compute. Subscription updates count
+as function calls, so a button click is not a complete proxy for what you are
+billed. Liveblocks adds its own [usage](/docs/pricing/plans) for documents and
+the time people spend collaborating.
+
+For a planning app, measure a task reassignment and a paragraph-editing session
+separately. Record the queries that rerun, the document updates, and the time
+people spend together in a room. That separates database activity from
+collaboration usage.
+
+## Get started [#get-started]
+
+Explore the
+[whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+and the [server-side editing](/docs/products/sync/server-side-editing) guide.
+Use them to map a collaborative document to the business records in your back
+end.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard). For
+self-hosting, [contact sales](/contact/sales).

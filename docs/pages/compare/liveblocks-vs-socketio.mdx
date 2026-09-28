@@ -1,0 +1,118 @@
+---
+meta:
+  title: "Liveblocks vs. Socket.IO for collaborative editing"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Socket.IO for collaborative apps. Understand which
+    parts of messaging, document sync, persistence, and recovery you own."
+---
+
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more.
+Socket.IO is an open-source library for sending events between a server you run
+and its connected clients over WebSockets, with rooms, acknowledgments, and
+automatic reconnection.
+
+## Which should you choose? [#which-should-you-choose]
+
+Socket.IO and Liveblocks solve different problems. Socket.IO is how your server
+and clients exchange events, whereas Liveblocks is how people edit artifacts
+together.
+
+Choose Liveblocks when several people work on the same document, canvas, or
+board at once, and their edits need to merge without overwriting each other.
+Choose Socket.IO when your server already owns the state and only needs to push
+events to clients, such as messages in a chat room, a live score, or a progress
+bar for a background job. Some products use both: Socket.IO for app-specific
+events and Liveblocks for the documents people edit together.
+
+## Compare what you build [#compare-what-you-build]
+
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Socket.IO                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Communication       | Provided by the service. Connection, rooms, and reconnection. <InfoTooltip>Clients connect to Liveblocks rooms over WebSockets. You don't run a server for the connection. <a href="/docs/products/sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                          | Events, acknowledgments, rooms, broadcasting, and automatic reconnection. <InfoTooltip>You define the events and run the server that handles them. <a href="https://socket.io/docs/v4/" className="font-medium text-product-brand">Socket.IO docs</a>, <a href="https://socket.io/docs/v4/rooms/" className="font-medium text-product-brand">rooms</a>.</InfoTooltip> |
+| Persistence         | Shared documents in Storage. <InfoTooltip>A CRDT-based document store. Concurrent edits merge automatically, and data is kept until you delete it. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                          | None. Pick a database and write the save and load logic yourself.                                                                                                                                                                                                                                                                                                     |
+| Conflict resolution | CRDT-based. Concurrent edits to objects, lists, maps, and text merge automatically. <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                     | None. Your server decides what happens when two events conflict.                                                                                                                                                                                                                                                                                                      |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more. <InfoTooltip>Official packages for popular editors, plus Yjs guides for others. <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                   | Not built in. Requires a CRDT library and your own server to relay and store its updates.                                                                                                                                                                                                                                                                             |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications. <InfoTooltip>React components you can drop in, plus hooks for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | None. Build every component yourself.                                                                                                                                                                                                                                                                                                                                 |
+| Authentication      | Your server issues access tokens using your existing auth. <InfoTooltip>Works with any auth provider. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                         | Your server checks credentials in a connection middleware. <InfoTooltip>Middleware runs before each connection is accepted and can reject it. <a href="https://socket.io/docs/v4/middlewares/" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                               |
+| Recovery            | Clients reconnect and resync the document. Edits made while offline in a loaded room are queued and sent. <InfoTooltip>The full document is kept on the server, so a returning client always gets the latest state. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                         | Reconnection is automatic. Connection-state recovery replays only the packets buffered within its window. <InfoTooltip>Recovery is optional, can fail, and depends on adapter support. <a href="https://socket.io/docs/v4/connection-state-recovery" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                         |
+| Operations          | Managed service, or self-hosted on Enterprise. <InfoTooltip>Self-hosting is a paid add-on. <a href="/docs/platform/data-storage#Self-hosting" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                     | You run the servers, the database, and a scaling adapter for multiple nodes. <InfoTooltip>Running more than one server requires an adapter such as Redis so events reach every node. <a href="https://socket.io/docs/v4/using-multiple-nodes/" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                               |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                       | How will your server turn events into a document?                                                                                                                                                                                                                                                                                                                     |
+
+## Is Socket.IO enough for collaborative editing? [#is-socketio-enough-for-collaborative-editing]
+
+Not on its own. [Socket.IO](https://socket.io/docs/v4/) gives you event
+transport, rooms, acknowledgments, and reconnection. A collaborative editor also
+needs a document model, persistence, and rules for concurrent changes. You
+either write those rules yourself or connect a CRDT library and relay its
+updates through your server. Liveblocks provides the document model and the
+service behind it with [Storage](/docs/products/sync/storage).
+
+Consider a card with a title and due date:
+
+| Step                                                 | With Liveblocks Storage                               | With a custom Socket.IO stack                        |
+| ---------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
+| Alice edits the title while Ben changes the due date | Both edits are kept because they are separate fields. | Your update protocol has to preserve both changes.   |
+| Both assign a different due date                     | Last write wins, ordered by arrival at the server.    | Your server decides which value wins.                |
+| Ben reconnects                                       | The client reconnects and syncs the document.         | Your snapshot or replay logic rebuilds the document. |
+
+For a due-date field, one value has to win. How Liveblocks
+[resolves conflicts](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync)
+depends on the data type: edits to different fields all survive, and concurrent
+writes to the same single value are last-write-wins. Use
+[LiveText or a Yjs-based editor integration](/docs/products/sync/text-editing)
+when changes inside a paragraph need to merge.
+
+## Does Socket.IO reconnection restore the document? [#does-socketio-reconnection-restore-the-document]
+
+No. Automatic reconnection restores the connection, not your data. Socket.IO's
+optional
+[connection-state recovery](https://socket.io/docs/v4/connection-state-recovery)
+can also restore a session's rooms, socket data, and missed packets, but only
+within its configured window, only for what the server buffered, and only when
+the adapter supports it. Recovery can fail, so your app still needs its own way
+to reload the document from persistent storage.
+
+By default, Socket.IO
+[delivers each message at most once](https://socket.io/docs/v4/delivery-guarantees);
+stronger guarantees require configuration or application logic. Your document
+store has to handle duplicate operations, missed updates, and concurrent writes.
+Liveblocks keeps the full document on the server, so a returning client syncs to
+the latest state without any of this.
+
+## When a custom system makes sense [#when-a-custom-system-makes-sense]
+
+Socket.IO is a reasonable choice when your team wants control over the event
+protocol and server behavior. For example, a server-authoritative game or
+trading app may already have its own state model and only need a way to deliver
+updates to clients.
+
+Liveblocks is a fit when the requirement is a shared editor, canvas, or workflow
+and you don't want to build the merging, persistence, and recovery yourself. You
+define the document structure and permissions; Sync handles the rest.
+
+## Pricing and deployment [#pricing-and-deployment]
+
+[Socket.IO](https://socket.io/docs/v4/) is free and open source, so its cost is
+the servers you run, the database you pick, the scaling adapter, and the
+engineering time to build and maintain the document layer. Compare that with
+Liveblocks usage plus the time to integrate it. A free transport library and a
+complete hosted feature have different cost boundaries. Your
+[plan's credits](/docs/pricing/plans) apply once across all Liveblocks usage.
+
+Socket.IO always runs on your own servers. Liveblocks offers
+[self-hosting](/docs/platform/data-storage#Self-hosting) as a paid add-on on the
+Enterprise plan. Either way, your own servers, database, backups, and operations
+are part of the budget.
+
+## Get started [#get-started]
+
+Open the
+[whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+and inspect its source to see how little application code sits around the
+document sync.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
+Follow the [setup guide](/docs/get-started) for your project.
