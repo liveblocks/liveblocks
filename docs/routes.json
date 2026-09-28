@@ -901,10 +901,6 @@
         "path": "/compare/liveblocks-vs-pusher"
       },
       {
-        "title": "Build vs buy",
-        "path": "/compare/liveblocks-vs-building-with-ai"
-      },
-      {
         "title": "Liveblocks vs Electric",
         "path": "/compare/liveblocks-vs-electric"
       },
@@ -915,6 +911,10 @@
       {
         "title": "Liveblocks vs PowerSync",
         "path": "/compare/liveblocks-vs-powersync"
+      },
+      {
+        "title": "Build vs buy",
+        "path": "/compare/liveblocks-vs-building-with-ai"
       }
     ]
   },
