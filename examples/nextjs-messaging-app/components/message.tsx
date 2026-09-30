@@ -115,54 +115,49 @@ export function Message({
   };
 
   return (
-    <div
-      className={clsx(
-        "group relative px-5 py-0.5 hover:bg-neutral-50",
-        !showHeader && "pl-[68px]"
-      )}
-    >
-      {showHeader ? (
-        <div className="flex items-start gap-3">
-          <img
-            src={user?.info.avatar}
-            alt={user?.info.name ?? "User"}
-            className="mt-0.5 size-9 shrink-0 rounded-md bg-neutral-200 object-cover"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-2">
-              <span className="font-semibold text-neutral-900">
-                {user?.info.name ?? "Unknown user"}
-              </span>
-              <time
-                className="text-xs text-neutral-500"
-                dateTime={new Date(message.createdAt).toISOString()}
-              >
-                {formatTime(message.createdAt)}
-              </time>
-            </div>
-            <MessageBody message={message} />
+    <div className="group relative flex items-start gap-3 px-5 py-0.5 hover:bg-neutral-50">
+      <div className="w-9 shrink-0">
+        {showHeader ? (
+          <span className="mt-0.5 block size-9 min-h-9 min-w-9 overflow-hidden rounded-md bg-neutral-200">
+            <img
+              src={user?.info.avatar}
+              alt={user?.info.name ?? "User"}
+              className="size-full object-cover"
+            />
+          </span>
+        ) : null}
+      </div>
+      <div className="min-w-0 flex-1">
+        {showHeader ? (
+          <div className="flex items-baseline gap-2">
+            <span className="font-semibold text-neutral-900">
+              {user?.info.name ?? "Unknown user"}
+            </span>
+            <time
+              className="text-xs text-neutral-500"
+              dateTime={new Date(message.createdAt).toISOString()}
+            >
+              {formatTime(message.createdAt)}
+            </time>
           </div>
-        </div>
-      ) : (
+        ) : null}
         <MessageBody message={message} />
-      )}
 
-      {!message.data.streaming && reactionGroups.length > 0 ? (
-        <ReactionChips
-          groups={reactionGroups}
-          indented={showHeader}
-          onToggle={toggleReaction}
-        />
-      ) : null}
+        {!message.data.streaming && reactionGroups.length > 0 ? (
+          <ReactionChips groups={reactionGroups} onToggle={toggleReaction} />
+        ) : null}
 
-      {variant === "channel" && threadFeed && replyCount > 0 && onOpenThread ? (
-        <ThreadPill
-          threadFeed={threadFeed}
-          replyCount={replyCount}
-          indented={showHeader}
-          onOpenThread={onOpenThread}
-        />
-      ) : null}
+        {variant === "channel" &&
+        threadFeed &&
+        replyCount > 0 &&
+        onOpenThread ? (
+          <ThreadPill
+            threadFeed={threadFeed}
+            replyCount={replyCount}
+            onOpenThread={onOpenThread}
+          />
+        ) : null}
+      </div>
 
       {!message.data.streaming ||
       (variant === "channel" && onOpenThread) ||
@@ -250,20 +245,13 @@ function groupReactions(
 
 function ReactionChips({
   groups,
-  indented,
   onToggle,
 }: {
   groups: ReactionGroup[];
-  indented: boolean;
   onToggle: (emoji: string) => void;
 }) {
   return (
-    <div
-      className={clsx(
-        "mt-1 flex flex-wrap items-center gap-1",
-        indented && "ml-12"
-      )}
-    >
+    <div className="mt-1 flex flex-wrap items-center gap-1">
       {groups.map((group) => (
         <button
           key={group.emoji}
@@ -277,7 +265,7 @@ function ReactionChips({
             })
             .join(", ")}
           className={clsx(
-            "rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5",
+            "cursor-pointer rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5",
             group.selfReacted
               ? "border-brand-500/60 bg-brand-50 text-brand-700 font-medium"
               : "border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-700"
@@ -303,12 +291,10 @@ function ReactionChips({
 function ThreadPill({
   threadFeed,
   replyCount,
-  indented,
   onOpenThread,
 }: {
   threadFeed: ThreadFeed;
   replyCount: number;
-  indented: boolean;
   onOpenThread: () => void;
 }) {
   const participants = (threadFeed.metadata.participantIds ?? [])
@@ -320,23 +306,22 @@ function ThreadPill({
     <button
       type="button"
       onClick={onOpenThread}
-      className={clsx(
-        "cursor-pointer flex w-fit items-center gap-2 rounded-md border border-transparent pl-0.75 pr-1.5 py-0.75 text-xs transition hover:border-neutral-200 hover:bg-white",
-        indented && "ml-10.5"
-      )}
+      className="cursor-pointer -ml-0.75 flex w-fit items-center gap-2 rounded-md border border-transparent pl-0.75 pr-1.5 py-0.75 text-xs transition hover:border-neutral-200 hover:bg-white"
     >
       {participants.length > 0 ? (
         <span className="flex items-center gap-0.5">
           {participants.map((participant) => (
-            <img
+            <span
               key={participant.id}
-              src={participant.info.avatar}
-              alt={participant.info.name}
               title={participant.info.name}
-              className={clsx(
-                "size-6.5 rounded border border-white bg-neutral-200 object-cover"
-              )}
-            />
+              className="inline-block size-6.5 min-h-6.5 min-w-6.5 shrink-0 overflow-hidden rounded border border-white bg-neutral-200"
+            >
+              <img
+                src={participant.info.avatar}
+                alt={participant.info.name}
+                className="size-full object-cover"
+              />
+            </span>
           ))}
         </span>
       ) : null}
@@ -362,17 +347,7 @@ function MessageBody({ message }: { message: FeedMessage }) {
     );
   }
 
-  return (
-    <div className="relative">
-      <Markdown content={content} />
-      {streaming ? (
-        <span className="mt-1 inline-flex items-center gap-1 text-xs text-neutral-500">
-          <span className="size-1.5 animate-pulse rounded-full bg-brand-400" />
-          Streaming
-        </span>
-      ) : null}
-    </div>
-  );
+  return <Markdown content={content} />;
 }
 
 export function DayDivider({ label }: { label: string }) {

@@ -10,7 +10,7 @@ import type { Channel } from "@/lib/workspaces";
 import { ChannelComposer } from "@/components/composer";
 import { HelpButton } from "@/components/help-button";
 import { MessageList } from "@/components/message-list";
-import { PresenceAvatars } from "@/components/presence-avatars";
+import { ChannelMembers } from "@/components/channel-members";
 import { ThreadPanel } from "@/components/thread-panel";
 
 export function Chat({ channel }: { channel: Channel }) {
@@ -52,7 +52,7 @@ export function Chat({ channel }: { channel: Channel }) {
           </div>
           <div className="ml-auto flex items-center gap-2">
             <ClientSideSuspense fallback={null}>
-              <PresenceAvatars />
+              <ChannelMembers />
             </ClientSideSuspense>
             <HelpButton />
           </div>

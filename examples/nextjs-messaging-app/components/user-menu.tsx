@@ -54,11 +54,13 @@ export function UserMenu({
         aria-expanded={open}
         aria-haspopup="listbox"
       >
-        <img
-          src={currentUser.info.avatar}
-          alt=""
-          className="size-7 shrink-0 rounded-md object-cover"
-        />
+        <span className="inline-block size-7 min-h-7 min-w-7 shrink-0 overflow-hidden rounded-md">
+          <img
+            src={currentUser.info.avatar}
+            alt=""
+            className="size-full object-cover"
+          />
+        </span>
         <span className="min-w-0 flex-1 truncate text-sm font-medium">
           {currentUser.info.name}
         </span>
@@ -93,11 +95,13 @@ export function UserMenu({
                   selected && "bg-neutral-50"
                 )}
               >
-                <img
-                  src={user.info.avatar}
-                  alt=""
-                  className="size-7 shrink-0 rounded-md object-cover"
-                />
+                <span className="inline-block size-7 min-h-7 min-w-7 shrink-0 overflow-hidden rounded-md">
+                  <img
+                    src={user.info.avatar}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                </span>
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {user.info.name}
                 </span>

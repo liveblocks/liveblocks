@@ -11,7 +11,7 @@ import type {
   SuggestionKeyDownProps,
   SuggestionProps,
 } from "@tiptap/suggestion";
-import { useOthers } from "@liveblocks/react/suspense";
+import { useOthers, useSelf } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { AI_USER_ID } from "@/app/database";
 
@@ -33,11 +33,13 @@ export const MentionSuggestions = forwardRef<
 >(function MentionSuggestions(props, ref) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const items = props.items;
+  const selfId = useSelf((me) => me.id);
   const others = useOthers();
-  const onlineIds = useMemo(
-    () => new Set(others.map((other) => other.id)),
-    [others]
-  );
+  const onlineIds = useMemo(() => {
+    const ids = new Set(others.map((other) => other.id));
+    ids.add(selfId);
+    return ids;
+  }, [others, selfId]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -101,11 +103,13 @@ export const MentionSuggestions = forwardRef<
               props.command(item);
             }}
           >
-            <img
-              src={item.avatar}
-              alt=""
-              className="size-5 rounded bg-neutral-200 object-cover"
-            />
+            <span className="inline-block size-5 min-h-5 min-w-5 shrink-0 overflow-hidden rounded bg-neutral-200">
+              <img
+                src={item.avatar}
+                alt=""
+                className="size-full object-cover"
+              />
+            </span>
             <span className="min-w-0 flex-1 truncate font-semibold gap-2 flex items-center">
               {item.label}
               {isAgent ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useFeedMessages, useFeeds } from "@liveblocks/react/suspense";
 import {
   buildMessageListItems,
@@ -23,7 +23,15 @@ export function MessageList({
     metadata: { type: "thread", channelId },
   });
   const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
+  const ignoreScrollRef = useRef(false);
+  const channelRef = useRef(channelId);
+
+  if (channelRef.current !== channelId) {
+    channelRef.current = channelId;
+    stickToBottomRef.current = true;
+  }
 
   const items = useMemo(
     () => buildMessageListItems(messages ?? []),
@@ -40,35 +48,72 @@ export function MessageList({
     return threads;
   }, [feeds]);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-
-    const handleScroll = () => {
-      const distanceFromBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight;
-      stickToBottomRef.current = distanceFromBottom < 80;
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
+  const pinToBottom = () => {
     const container = containerRef.current;
     if (!container || !stickToBottomRef.current) {
       return;
     }
 
-    container.scrollTop = container.scrollHeight;
-  }, [items]);
+    const top = container.scrollHeight - container.clientHeight;
+    if (Math.abs(container.scrollTop - top) < 1) {
+      return;
+    }
+
+    ignoreScrollRef.current = true;
+    container.scrollTop = top;
+    requestAnimationFrame(() => {
+      ignoreScrollRef.current = false;
+    });
+  };
+
+  useLayoutEffect(() => {
+    pinToBottom();
+    const frame = requestAnimationFrame(pinToBottom);
+    return () => cancelAnimationFrame(frame);
+  }, [channelId, items, hasFetchedAll, threadsByParentMessageId]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) {
+      return;
+    }
+
+    const handleScroll = () => {
+      if (ignoreScrollRef.current) {
+        ignoreScrollRef.current = false;
+        return;
+      }
+
+      const distanceFromBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight;
+      stickToBottomRef.current = distanceFromBottom < 80;
+    };
+
+    // Thread rows and other late layout land after the first pin, which
+    // leaves the view a little short of the latest message.
+    const observer = new ResizeObserver(() => {
+      pinToBottom();
+    });
+    observer.observe(content);
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      observer.disconnect();
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [channelId]);
 
   return (
-    <div ref={containerRef} className="min-h-0 flex-1 overflow-y-auto">
+    <div
+      ref={containerRef}
+      className="min-h-0 flex-1 overflow-y-auto [overflow-anchor:none]"
+    >
       {/* Bottom-anchored like Slack: history grows upward from the composer. */}
-      <div className="flex min-h-full flex-col justify-end pb-4">
+      <div
+        ref={contentRef}
+        className="flex min-h-full flex-col justify-end pb-4"
+      >
         {hasFetchedAll ? <ChannelIntro channelName={channelName} /> : null}
         {items.map((item) =>
           item.type === "divider" ? (
