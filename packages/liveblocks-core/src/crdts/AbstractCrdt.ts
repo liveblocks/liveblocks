@@ -26,7 +26,7 @@ const ORPHANED_NODE_WARNING =
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
-  | { modified: false };
+  | { modified: false; needsStorageResync?: true };
 
 export type DispatchOptions = {
   /**

@@ -1,5 +1,11 @@
 ## vNEXT (not yet released)
 
+### `@liveblocks/client`
+
+- Fix `LiveText` reconnect convergence with pending edits, including lost
+  acknowledgements, repeated reconnects, and queued edits. Recovery updates now
+  reach editor integrations instead of being filtered as local echoes.
+
 ## v3.24.2
 
 ### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
