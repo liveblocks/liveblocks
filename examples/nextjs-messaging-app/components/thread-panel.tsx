@@ -74,7 +74,19 @@ export function ThreadPanel({
       </header>
 
       {threadFeed ? (
-        <ClientSideSuspense fallback={null}>
+        <ClientSideSuspense
+          fallback={
+            <ThreadConversation
+              channelId={channelId}
+              parentMessage={rootMessage}
+              replies={[]}
+              roomId={roomId}
+              threadFeedId={threadFeedId}
+              threadFeed={threadFeed}
+              onClose={onClose}
+            />
+          }
+        >
           <ThreadReplies
             channelId={channelId}
             parentMessage={rootMessage}
@@ -111,12 +123,13 @@ function ThreadReplies({
   onClose: () => void;
 }) {
   const { messages } = useFeedMessages(threadFeed.feedId);
+  const replies = Array.isArray(messages) ? messages : [];
 
   return (
     <ThreadConversation
       channelId={channelId}
       parentMessage={parentMessage}
-      replies={messages}
+      replies={replies}
       roomId={roomId}
       threadFeedId={threadFeed.feedId}
       threadFeed={threadFeed}
@@ -128,7 +141,7 @@ function ThreadReplies({
 function ThreadConversation({
   channelId,
   parentMessage,
-  replies,
+  replies = [],
   roomId,
   threadFeedId,
   threadFeed,
@@ -136,7 +149,7 @@ function ThreadConversation({
 }: {
   channelId: string;
   parentMessage: FeedMessage;
-  replies: FeedMessage[];
+  replies?: FeedMessage[];
   roomId: string;
   threadFeedId: string;
   threadFeed?: ThreadFeed;
@@ -154,7 +167,7 @@ function ThreadConversation({
     `<@${AI_USER_ID}>`
   );
   const sortedReplies = useMemo(
-    () => [...replies].sort((a, b) => a.createdAt - b.createdAt),
+    () => [...(replies ?? [])].sort((a, b) => a.createdAt - b.createdAt),
     [replies]
   );
   const items = useMemo(
@@ -315,9 +328,12 @@ function ThreadConversation({
             <div className="h-px flex-1 bg-neutral-200" />
           </div>
         ) : (
-          <p className="px-5 py-6 text-sm text-neutral-500">
-            No replies yet. Start the thread below.
-          </p>
+          <div className="px-5 pt-4">
+            <div className="h-px bg-neutral-200" />
+            <p className="py-4 text-sm text-neutral-500">
+              No replies yet. Start the thread below.
+            </p>
+          </div>
         )}
 
         {items.map((item) => (
