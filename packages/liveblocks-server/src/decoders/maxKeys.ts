@@ -15,9 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from "./ClientMsg";
-export * from "./feedMetadata";
-export * from "./jsonYolo";
-export * from "./maxKeys";
-export * from "./numbers";
-export * from "./y-types";
+import type { Decoder } from "decoders";
+
+/**
+ * Rejects records with more than `max` keys.
+ *
+ * TODO: We may want to move this into the decoders library eventually (e.g.
+ * as `sized()` support for records), but not now.
+ */
+export function maxKeys<T extends Record<string, unknown>>(
+  decoder: Decoder<T>,
+  max: number
+): Decoder<T> {
+  // Same wording as decoders' sized()
+  return decoder.refine(
+    (value) => Object.keys(value).length <= max,
+    `Must have at most ${max} ${max === 1 ? "item" : "items"}`
+  );
+}

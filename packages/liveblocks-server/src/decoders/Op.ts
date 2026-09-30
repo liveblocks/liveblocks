@@ -53,7 +53,7 @@ import { fileSize, liveTextVersion } from "./numbers";
 
 type HasOpId = { opId: string };
 
-const intent = oneOf(["set", "push"] as const);
+const intent = oneOf(["set", "push"]);
 const storageFileId = sized(startsWith("fl_"), { size: 24 });
 const updateObjectOp: Decoder<UpdateObjectOp & HasOpId> = object({
   type: constant(OpCode.UPDATE_OBJECT),

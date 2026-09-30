@@ -1,0 +1,52 @@
+---
+meta:
+  title: "Compare realtime tools"
+  description:
+    "Compare Liveblocks with Supabase, Ably, Yjs, Convex, and other tools.
+    Understand the tradeoffs for shared editing, realtime events, and
+    application data."
+---
+
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more.
+These guides compare it with the databases, sync engines, messaging services,
+and editor back ends you may already use, and say when to pick one, the other,
+or both.
+
+## Databases [#databases]
+
+| Comparison                                       | Read it when                                                                                  |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| [Supabase](/docs/compare/liveblocks-vs-supabase) | Postgres is your source of truth and you want a shared document, canvas, or board next to it. |
+| [Firebase](/docs/compare/liveblocks-vs-firebase) | You use Firestore or Realtime Database and need collaborative editing, presence, or comments. |
+| [Convex](/docs/compare/liveblocks-vs-convex)     | You run on Convex and are weighing its ProseMirror plugin against a full collaboration layer. |
+
+## Sync engines [#sync-engines]
+
+| Comparison                                            | Read it when                                                                                 |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [Electric Sync](/docs/compare/liveblocks-vs-electric) | You stream Postgres shapes to clients and are deciding where editable documents belong.      |
+| [Rocicorp Zero](/docs/compare/liveblocks-vs-zero)     | You want client-side queries over a synced cache and need to know where shared editing fits. |
+| [PowerSync](/docs/compare/liveblocks-vs-powersync)    | You need a local SQLite database that works offline and also have multiplayer documents.     |
+
+## Messaging infrastructure [#messaging-infrastructure]
+
+| Comparison                                            | Read it when                                                                        |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [Ably](/docs/compare/liveblocks-vs-ably)              | You are evaluating Ably Pub/Sub, Spaces, or LiveObjects for collaboration features. |
+| [Pusher Channels](/docs/compare/liveblocks-vs-pusher) | Your server owns the state and you are deciding whether hosted events are enough.   |
+| [Socket.IO](/docs/compare/liveblocks-vs-socketio)     | You are considering building the sync layer yourself on WebSockets.                 |
+
+## Collaborative editing [#collaborative-editing]
+
+| Comparison                                               | Read it when                                                                                    |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| [Yjs](/docs/compare/liveblocks-vs-yjs)                   | You use Yjs and want to know how Liveblocks relates to it, as a provider and as an alternative. |
+| [Tiptap Cloud](/docs/compare/liveblocks-vs-tiptap-cloud) | You use Tiptap Editor and are choosing the service behind it.                                   |
+
+## Build vs. buy [#build-vs-buy]
+
+| Guide                                                         | Read it when                                                                                 |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [Build vs. buy](/docs/compare/liveblocks-vs-building-with-ai) | You are considering having an AI coding assistant generate a bespoke collaboration back end. |

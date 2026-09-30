@@ -182,10 +182,13 @@ export class Storage {
   /**
    * Applies a batch of Ops.
    */
-  applyOps(ops: ClientWireOp[]): ApplyOpResult[] {
+  applyOps(
+    ops: ClientWireOp[],
+    { includeTextHistory = false }: { includeTextHistory?: boolean } = {}
+  ): ApplyOpResult[] {
     const results: ApplyOpResult[] = [];
     for (const op of ops) {
-      results.push(this.applyOp(op));
+      results.push(this.applyOp(op, includeTextHistory));
     }
     return results;
   }
@@ -197,7 +200,10 @@ export class Storage {
   /**
    * Applies a single Op.
    */
-  private applyOp(op: ClientWireOp): ApplyOpResult {
+  private applyOp(
+    op: ClientWireOp,
+    includeTextHistory: boolean
+  ): ApplyOpResult {
     switch (op.type) {
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
@@ -211,7 +217,7 @@ export class Storage {
         return this.applyUpdateObjectOp(op);
 
       case OpCode.UPDATE_TEXT:
-        return this.applyUpdateTextOp(op);
+        return this.applyUpdateTextOp(op, includeTextHistory);
 
       case OpCode.SET_PARENT_KEY:
         return this.applySetParentKeyOp(op);
@@ -399,7 +405,10 @@ export class Storage {
     return accept(op);
   }
 
-  private applyUpdateTextOp(op: UpdateTextOp & HasOpId): ApplyOpResult {
+  private applyUpdateTextOp(
+    op: UpdateTextOp & HasOpId,
+    includeTextHistory: boolean
+  ): ApplyOpResult {
     const node = this.driver.get_node(op.id);
     if (node?.type !== CrdtType.TEXT) {
       return ignore(op);
@@ -409,7 +418,7 @@ export class Storage {
       op.id,
       op.opId
     );
-    if (duplicate !== undefined) {
+    if (duplicate !== undefined && !includeTextHistory) {
       return rectify({
         ...op,
         baseVersion: duplicate.baseVersion,
@@ -418,7 +427,7 @@ export class Storage {
       });
     }
 
-    if (op.ops.length === 0) {
+    if (op.ops.length === 0 && !includeTextHistory) {
       // Empty updates are pure acknowledgement vehicles (e.g. an undo whose
       // content was queued behind another in-flight op on the client). Ack
       // without applying or bumping the version.
@@ -435,9 +444,27 @@ export class Storage {
         : [];
     if (
       op.baseVersion < node.version &&
-      history.length !== node.version - op.baseVersion
+      (history.length !== node.version - op.baseVersion ||
+        history.some(
+          (entry, index) => entry.version !== op.baseVersion + index + 1
+        ))
     ) {
       return reject(op, LIVE_TEXT_HISTORY_TOO_OLD_REASON);
+    }
+
+    // Replay recovery starts at the request's base version, not at the stored
+    // duplicate's base version. Include the duplicate itself and later edits.
+    const requestedHistory = includeTextHistory
+      ? { history: history.map(({ version, ops }) => ({ version, ops })) }
+      : undefined;
+    if (duplicate !== undefined) {
+      return rectify({
+        ...op,
+        ...requestedHistory,
+        baseVersion: duplicate.baseVersion,
+        version: duplicate.version,
+        ops: [...duplicate.ops],
+      });
     }
 
     const acceptedOps = history.flatMap((entry) => entry.ops);
@@ -470,7 +497,13 @@ export class Storage {
       Math.max(0, version - LIVE_TEXT_HISTORY_LIMIT + 1)
     );
 
-    return accept({ ...op, baseVersion: node.version, version, ops: [...ops] });
+    return accept({
+      ...op,
+      ...requestedHistory,
+      baseVersion: node.version,
+      version,
+      ops: [...ops],
+    });
   }
 
   private applyDeleteCrdtOp(op: DeleteCrdtOp & HasOpId): ApplyOpResult {
