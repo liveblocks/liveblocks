@@ -134,9 +134,9 @@ AI route needs it and the composer needs the AI route).
 
 ### Primitives
 
-`avatar.tsx`, `unread-badge.tsx`, `column-header.tsx`, `preview-row.tsx`
-(`PreviewRow`, `MessagePreview`, `UnreadDot`, `PreviewSkeleton`), `markdown.tsx`
-(`Markdown`, `InlineMarkdown`).
+`avatar.tsx`, `unread-badge.tsx`, `column-header.tsx`, `resize-handle.tsx`
+(`ResizeHandle`), `preview-row.tsx` (`PreviewRow`, `MessagePreview`,
+`UnreadDot`, `PreviewSkeleton`), `markdown.tsx` (`Markdown`, `InlineMarkdown`).
 
 A primitive is promoted from a feature only once a second feature or view needs
 it. Until then it stays in the feature.
@@ -151,6 +151,7 @@ it. Until then it stays in the feature.
 | `lib/threads.ts`                          | `getThreadParticipantIds` (authors + mentioned users of a thread)                                                                                                                         |
 | `lib/channels.ts`                         | `Channel` (the shape stored in Storage's `channels` list)                                                                                                                                 |
 | `lib/navigation.ts`                       | `Selection`, `Conversation`, `MessageHighlight`, `SidebarTab`                                                                                                                             |
+| `lib/panel-width.ts`                      | Resizable panel widths: `SIDEBAR_PANEL`, `THREAD_PANEL` configs, `clampPanelWidth`, `readPanelWidth`/`writePanelWidth` (localStorage), `usePanelWidth` hook                               |
 | `lib/time.ts`                             | `formatTime`, `formatDayLabel`                                                                                                                                                            |
 | `lib/example.ts`, `lib/example.client.ts` | Gallery integration (`exampleId`, `examplePreview`)                                                                                                                                       |
 
@@ -304,8 +305,9 @@ Explanations that used to live in code comments.
   `IS_LOCAL_BACKEND` is true.
 - **`vitest.config.ts`** aliases `@/` to the example root, runs everything in
   jsdom with `tests/setup.ts` (jest-dom matchers, cleanup, stubs for
-  `ResizeObserver`, `scrollIntoView`, `CSS.escape`), and lets API tests opt into
-  node via the pragma. CSS is not processed.
+  `ResizeObserver`, `scrollIntoView`, `CSS.escape`, pointer capture
+  (`setPointerCapture` and friends)), and lets API tests opt into node via the
+  pragma. CSS is not processed.
 - **`tests/helpers/liveblocks-mock.tsx`** is an in-memory stand-in for
   `@liveblocks/react` and `@liveblocks/react/suspense`. Install it in a test
   with

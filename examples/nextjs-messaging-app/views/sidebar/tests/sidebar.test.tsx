@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Sidebar } from "@/views/sidebar";
 import { getActivityFeedId } from "@/lib/feeds";
+import { SIDEBAR_PANEL } from "@/lib/panel-width";
 import {
   mockFeed,
   mockMessage,
@@ -110,5 +111,21 @@ describe("Sidebar", () => {
   it("shows activity empty state", () => {
     renderSidebar("activity");
     expect(screen.getByText("Nothing here yet")).toBeInTheDocument();
+  });
+
+  it("resizes by dragging its right edge and remembers the width", () => {
+    localStorage.removeItem(SIDEBAR_PANEL.storageKey);
+    renderSidebar("home");
+    const aside = screen.getByRole("complementary");
+    const handle = screen.getByRole("separator", { name: "Resize sidebar" });
+    expect(aside).toHaveStyle({ width: `${SIDEBAR_PANEL.defaultWidth}px` });
+
+    fireEvent.pointerDown(handle, { pointerId: 1, button: 0, clientX: 280 });
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 340 });
+    fireEvent.pointerUp(handle, { pointerId: 1 });
+
+    expect(aside).toHaveStyle({ width: "340px" });
+    expect(handle).toHaveAttribute("aria-valuenow", "340");
+    expect(localStorage.getItem(SIDEBAR_PANEL.storageKey)).toBe("340");
   });
 });

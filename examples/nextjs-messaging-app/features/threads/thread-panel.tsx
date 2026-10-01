@@ -32,7 +32,9 @@ import {
 } from "@/lib/feeds";
 import { getMentionedUserIds } from "@/lib/mentions";
 import type { MessageHighlight } from "@/lib/navigation";
+import { THREAD_PANEL, usePanelWidth } from "@/lib/panel-width";
 import { getThreadParticipantIds } from "@/lib/threads";
+import { ResizeHandle } from "@/primitives/resize-handle";
 
 type ThreadPanelProps = {
   channelId: string;
@@ -60,6 +62,7 @@ export function ThreadPanel({
   const threadFeed = feeds.find((feed) => feed.feedId === threadFeedId);
   const highlightedMessageId =
     highlight?.feedId === threadFeedId ? highlight.messageId : null;
+  const [width, setWidth] = usePanelWidth(THREAD_PANEL);
 
   useEffect(() => {
     if (!rootMessage) {
@@ -72,7 +75,18 @@ export function ThreadPanel({
   }
 
   return (
-    <aside className="fixed inset-y-0 right-0 z-20 flex w-full max-w-[420px] flex-col bg-white shadow-xl md:static md:z-auto md:w-[380px] md:shrink-0 md:border-l md:border-neutral-200 md:shadow-none">
+    <aside
+      className="fixed inset-y-0 right-0 z-20 flex max-w-[420px] flex-col bg-white shadow-xl max-md:w-full! md:relative md:z-auto md:max-w-none md:shrink-0 md:border-l md:border-neutral-200 md:shadow-none"
+      style={{ width }}
+    >
+      <ResizeHandle
+        edge="left"
+        width={width}
+        config={THREAD_PANEL}
+        label="Resize thread panel"
+        onWidthChange={setWidth}
+        className="hidden md:block"
+      />
       <header className="flex shrink-0 items-center gap-3 px-4 pt-3">
         <div className="min-w-0">
           <h2 className="font-bold text-neutral-900">Thread</h2>

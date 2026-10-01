@@ -21,12 +21,12 @@ feature and view documents its own behaviour in its folder's `FEATURE.md`.
 
 ## Views
 
-| View         | Docs                                                           | One-line summary                                   |
-| ------------ | -------------------------------------------------------------- | -------------------------------------------------- |
-| app-shell    | [views/app-shell/FEATURE.md](views/app-shell/FEATURE.md)       | Four-region layout and default selection fallbacks |
-| rail         | [views/rail/FEATURE.md](views/rail/FEATURE.md)                 | Home, DMs, Activity tabs with unread badges        |
-| sidebar      | [views/sidebar/FEATURE.md](views/sidebar/FEATURE.md)           | 280px column; content depends on active rail tab   |
-| conversation | [views/conversation/FEATURE.md](views/conversation/FEATURE.md) | Header, message list, composer, lazy feed creation |
+| View         | Docs                                                           | One-line summary                                     |
+| ------------ | -------------------------------------------------------------- | ---------------------------------------------------- |
+| app-shell    | [views/app-shell/FEATURE.md](views/app-shell/FEATURE.md)       | Four-region layout and default selection fallbacks   |
+| rail         | [views/rail/FEATURE.md](views/rail/FEATURE.md)                 | Home, DMs, Activity tabs with unread badges          |
+| sidebar      | [views/sidebar/FEATURE.md](views/sidebar/FEATURE.md)           | Resizable column; content depends on active rail tab |
+| conversation | [views/conversation/FEATURE.md](views/conversation/FEATURE.md) | Header, message list, composer, lazy feed creation   |
 
 ## Presence
 
@@ -83,6 +83,7 @@ string), and `participantIds`.
 | Feed ids, message types and guards | `lib/feeds.ts`                            |
 | Mention tokens                     | `lib/mentions.ts`                         |
 | Navigation types (selection, tabs) | `lib/navigation.ts`                       |
+| Panel widths (resize, persistence) | `lib/panel-width.ts`                      |
 | `Channel` type                     | `lib/channels.ts`                         |
 | Gallery integration                | `lib/example.ts`, `lib/example.client.ts` |
 | Liveblocks types                   | `liveblocks.config.ts`                    |

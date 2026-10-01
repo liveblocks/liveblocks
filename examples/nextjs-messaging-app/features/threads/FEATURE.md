@@ -29,6 +29,13 @@ AI replies inline there.
 - **What:** up to five participant avatars, "N replies", and "Last reply at
   <time>". Click it to open the thread.
 
+## Resize the panel
+
+- **How:** drag the handle on the panel's left edge, or focus it and use arrow
+  keys; double-click resets to the default width.
+- **Details:** resizable between 300px and 640px on desktop only; width is
+  remembered across threads and reloads.
+
 ## Close a thread
 
 - **How:** click × in the panel header, or select a different conversation. The
@@ -42,5 +49,7 @@ AI replies inline there.
 ## Files
 
 - `features/threads/thread-panel.tsx`
+- `primitives/resize-handle.tsx`
+- `lib/panel-width.ts`
 - `lib/threads.ts`
 - Tests: `tests/`

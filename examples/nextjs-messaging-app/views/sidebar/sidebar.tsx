@@ -6,9 +6,11 @@ import type { ReactNode } from "react";
 import { ActivityPanel, type ActivityTarget } from "@/features/activity";
 import { ChannelList } from "@/features/channels";
 import { ColumnHeader } from "@/primitives/column-header";
+import { ResizeHandle } from "@/primitives/resize-handle";
 import { DirectMessageList } from "@/features/direct-messages";
 import type { SidebarTab } from "@/lib/navigation";
 import type { Selection } from "@/lib/navigation";
+import { SIDEBAR_PANEL, usePanelWidth } from "@/lib/panel-width";
 
 export function Sidebar({
   workspaceName,
@@ -28,9 +30,20 @@ export function Sidebar({
   const activeChannelId =
     selection?.type === "channel" ? selection.channelId : null;
   const activeDmUserId = selection?.type === "dm" ? selection.userId : null;
+  const [width, setWidth] = usePanelWidth(SIDEBAR_PANEL);
 
   return (
-    <aside className="flex w-[280px] shrink-0 flex-col bg-white text-neutral-900">
+    <aside
+      className="relative flex shrink-0 flex-col bg-white text-neutral-900"
+      style={{ width }}
+    >
+      <ResizeHandle
+        edge="right"
+        width={width}
+        config={SIDEBAR_PANEL}
+        label="Resize sidebar"
+        onWidthChange={setWidth}
+      />
       {view === "activity" ? (
         <ClientSideSuspense fallback={<ColumnHeader title="Activity" />}>
           <ActivityPanel
