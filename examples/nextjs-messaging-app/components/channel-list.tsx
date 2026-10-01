@@ -22,12 +22,7 @@ import {
   useStorage,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
-import {
-  GripVerticalIcon,
-  PencilIcon,
-  PlusIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useMemo, useState } from "react";
 import { UnreadBadge } from "@/components/unread-badge";
@@ -301,15 +296,8 @@ function SortableChannelItem({
   onCancelRename: () => void;
   onDelete: () => void;
 }) {
-  const {
-    attributes,
-    isDragging,
-    listeners,
-    setActivatorNodeRef,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: channel.id });
+  const { attributes, isDragging, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: channel.id });
 
   return (
     <li
@@ -320,30 +308,19 @@ function SortableChannelItem({
       }}
       className={clsx("group relative", isDragging && "z-10 opacity-70")}
     >
+      {/* The whole row is the drag handle; the sensor's distance threshold
+          keeps plain clicks on the buttons working. Disabled while renaming
+          so text selection in the input isn't hijacked. */}
       <div
         className={clsx(
-          "flex items-center gap-0.5 rounded-md pr-1 transition",
+          "flex items-center gap-0.5 rounded-md pl-1 pr-1 transition",
+          isDragging && "cursor-grabbing",
           active
             ? "bg-neutral-800 text-white"
             : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
         )}
+        {...(editing ? undefined : listeners)}
       >
-        <button
-          type="button"
-          ref={setActivatorNodeRef}
-          className={clsx(
-            "cursor-grab px-1 py-2 opacity-0 transition group-hover:opacity-100 active:cursor-grabbing",
-            active
-              ? "text-white/40 hover:text-white/80"
-              : "text-neutral-300 hover:text-neutral-500"
-          )}
-          aria-label={`Reorder ${channel.name}`}
-          {...attributes}
-          {...listeners}
-        >
-          <GripVerticalIcon className="size-3.5" aria-hidden />
-        </button>
-
         {editing ? (
           <input
             type="text"
@@ -369,6 +346,7 @@ function SortableChannelItem({
               "min-w-0 flex-1 truncate py-2 pl-1 pr-1 text-left text-sm",
               unreadCount > 0 && !active && "font-semibold text-neutral-900"
             )}
+            {...attributes}
           >
             <span className="mr-1.5 text-base leading-none opacity-60">#</span>
             {channel.name}
