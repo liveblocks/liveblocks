@@ -12,7 +12,6 @@ if (backend === "local" && !devServerPort) {
 }
 
 const serverEnv: Record<string, string> = {
-  AI_GATEWAY_API_KEY: "",
   NEXT_DIST_DIR: ".next-e2e",
 };
 

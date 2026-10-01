@@ -66,9 +66,9 @@ Alternatively, you can set up your project manually:
   [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **secret** key as the
   `LIVEBLOCKS_SECRET_KEY` environment variable
-- Optionally, add an `AI_GATEWAY_API_KEY` from the
-  [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to get real AI replies
-  when you mention the AI teammate (a mock reply is streamed otherwise)
+- Add an `AI_GATEWAY_API_KEY` from the
+  [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) so the AI teammate can
+  reply when you mention or DM it
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To see realtime sync, open the page in two browser tabs and pick two different
@@ -104,8 +104,9 @@ npm run test:e2e:cloud                # e2e against the keys in .env.local
 
 The e2e suite starts its own `next dev` on port 3111 (build output in
 `.next-e2e`, so it can run alongside your regular dev server). The AI tests in
-`features/ai/tests/ai.spec.ts` need the real Liveblocks backend and are skipped
-on the local dev server; run them with `npm run test:e2e:cloud`.
+`features/ai/tests/ai.spec.ts` need the real Liveblocks backend and an
+`AI_GATEWAY_API_KEY` in `.env.local`; they are skipped on the local dev server.
+Run them with `npm run test:e2e:cloud`.
 
 </details>
 
@@ -135,8 +136,7 @@ you to deploy to Vercel.
 
 After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-messaging-app)
-on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
-[secret](https://codesandbox.io/docs/secrets). Add `AI_GATEWAY_API_KEY` if you
-want real AI replies instead of the mock ones.
+on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` and `AI_GATEWAY_API_KEY`
+environment variables as [secrets](https://codesandbox.io/docs/secrets).
 
 </details>

@@ -234,8 +234,8 @@ or `curl` the API routes while developing.
 - `npx playwright install chromium` once.
 - `npm run test:e2e` needs no keys: `liveblocks dev -P` starts a local server
   and injects `LIVEBLOCKS_SECRET_KEY` and `NEXT_PUBLIC_LIVEBLOCKS_BASE_URL`.
-- `npm run test:e2e:cloud` and real AI replies need `LIVEBLOCKS_SECRET_KEY` (and
-  optionally `AI_GATEWAY_API_KEY`) in `.env.local`. See `.env.example`.
+- `npm run test:e2e:cloud` needs `LIVEBLOCKS_SECRET_KEY` in `.env.local`; the AI
+  flows in `ai.spec.ts` also need `AI_GATEWAY_API_KEY`. See `.env.example`.
 - The e2e suite starts `next dev` on port 3111 with `NEXT_DIST_DIR=.next-e2e` so
   it can run next to a dev server you already have on 3000.
 
@@ -298,10 +298,10 @@ Explanations that used to live in code comments.
   swallows clicks.
 - **`playwright.config.ts`** picks the backend from `LIVEBLOCKS_DEV_SERVER_PORT`
   (set by `liveblocks dev -P`) or `E2E_BACKEND=cloud`, and throws if neither is
-  present. It blanks `AI_GATEWAY_API_KEY` so AI replies are the deterministic
-  mock. The local dev server stubs REST feed endpoints, so flows through
-  `/api/ai-reply` only pass against the cloud backend; `ai.spec.ts` skips itself
-  when `IS_LOCAL_BACKEND` is true.
+  present. The local dev server stubs REST feed endpoints, so flows through
+  `/api/ai-reply` only pass against the cloud backend (with an
+  `AI_GATEWAY_API_KEY` in `.env.local`); `ai.spec.ts` skips itself when
+  `IS_LOCAL_BACKEND` is true.
 - **`vitest.config.ts`** aliases `@/` to the example root, runs everything in
   jsdom with `tests/setup.ts` (jest-dom matchers, cleanup, stubs for
   `ResizeObserver`, `scrollIntoView`, `CSS.escape`), and lets API tests opt into

@@ -26,13 +26,12 @@ always shown online. It posts through `@liveblocks/node` from the
   fills in as text streams. While streaming, the message has no reaction or
   delete controls. Previews in the DMs tab and Activity update live.
 
-## Real vs. mock replies
+## Generation
 
-- With an `AI_GATEWAY_API_KEY` environment variable set, replies come from
-  `openai/gpt-5.4-mini` via the Vercel AI Gateway, with a short system prompt
-  that lists the known users so the model can @mention them.
-- Without the key, a mock reply is streamed word by word explaining that the key
-  is missing and echoing what you said.
+- Replies come from `openai/gpt-5.4-mini` via the Vercel AI Gateway, with a
+  short system prompt that lists the known users so the model can @mention them.
+- `AI_GATEWAY_API_KEY` is required: without it the route responds `403` before
+  touching Liveblocks, so no AI message is created.
 - If generation fails, the message is finalised with an error note.
 
 ## Files

@@ -15,7 +15,7 @@ feature and view documents its own behaviour in its folder's `FEATURE.md`.
 | composer        | [features/composer/FEATURE.md](features/composer/FEATURE.md)               | Tiptap composer, @mentions, and presence typing indicators     |
 | messages        | [features/messages/FEATURE.md](features/messages/FEATURE.md)               | Rendering, grouping, scrolling, reactions, delete, persistence |
 | threads         | [features/threads/FEATURE.md](features/threads/FEATURE.md)                 | Thread panel, replies, pills, and AI thread behaviour          |
-| ai              | [features/ai/FEATURE.md](features/ai/FEATURE.md)                           | Liveblocks AI DMs, mentions, streaming, gateway or mock        |
+| ai              | [features/ai/FEATURE.md](features/ai/FEATURE.md)                           | Liveblocks AI DMs, mentions, streaming via the AI Gateway      |
 | activity        | [features/activity/FEATURE.md](features/activity/FEATURE.md)               | Activity feed, panel, jump-to, read state, and badges          |
 | help            | [features/help/FEATURE.md](features/help/FEATURE.md)                       | Help modal with example feature cards                          |
 
@@ -70,7 +70,8 @@ string), and `participantIds`.
 ### Environment variables
 
 - `LIVEBLOCKS_SECRET_KEY` — required.
-- `AI_GATEWAY_API_KEY` — optional; enables real model replies.
+- `AI_GATEWAY_API_KEY` — required for AI replies; `/api/ai-reply` returns `403`
+  without it.
 - `NEXT_PUBLIC_LIVEBLOCKS_BASE_URL` — optional; points the client and server at
   a self-hosted dev server (used by the e2e tests).
 

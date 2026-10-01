@@ -17,7 +17,7 @@ import {
 test.describe("AI teammate", () => {
   test.skip(
     IS_LOCAL_BACKEND,
-    "needs the cloud backend: the local dev server stubs REST feed endpoints"
+    "needs the cloud backend and an AI_GATEWAY_API_KEY in .env.local: the local dev server stubs REST feed endpoints"
   );
 
   test("replies inline in its DM", async ({ page }) => {
@@ -31,9 +31,10 @@ test.describe("AI teammate", () => {
     const reply = page
       .locator("[data-message-id]")
       .filter({ hasText: AI_NAME })
-      .filter({ hasText: "mock reply" });
+      .filter({ hasNotText: text });
     await expect(reply).toBeVisible({ timeout: 30_000 });
-    await expect(reply).toContainText(text);
+    await expect(reply).not.toContainText("Thinking…", { timeout: 60_000 });
+    await expect(reply).not.toContainText("something went wrong");
     await reply.hover();
     await expect(
       reply.getByRole("button", { name: "Reply in thread" })
@@ -54,10 +55,13 @@ test.describe("AI teammate", () => {
     const panel = threadPanel(page);
     await expect(panel).toBeVisible();
     await expect(panel).toContainText(tail);
-    await expect(panel.getByText("mock reply")).toBeVisible({
-      timeout: 30_000,
-    });
-    await expect(panel).toContainText(tail);
+    const reply = panel
+      .locator("[data-message-id]")
+      .filter({ hasText: AI_NAME })
+      .filter({ hasNotText: tail });
+    await expect(reply).toBeVisible({ timeout: 30_000 });
+    await expect(reply).not.toContainText("Thinking…", { timeout: 60_000 });
+    await expect(reply).not.toContainText("something went wrong");
     await expect(
       messageByText(page, tail).getByRole("button", { name: /1 reply/ })
     ).toBeVisible();

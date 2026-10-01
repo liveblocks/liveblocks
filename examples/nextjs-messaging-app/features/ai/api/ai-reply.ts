@@ -1,4 +1,5 @@
 import { Liveblocks } from "@liveblocks/node";
+import { streamText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 import { AI_USER_ID, AI_USER_NAME, getUser, getUsers } from "@/lib/database";
 import { getThreadParticipantIds } from "@/lib/threads";
@@ -29,6 +30,10 @@ const SYSTEM_PROMPT = [
 export async function POST(request: NextRequest) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
+  }
+
+  if (!process.env.AI_GATEWAY_API_KEY) {
+    return new NextResponse("Missing AI_GATEWAY_API_KEY", { status: 403 });
   }
 
   const liveblocks = new Liveblocks({
@@ -128,11 +133,7 @@ export async function POST(request: NextRequest) {
     });
 
   try {
-    if (process.env.AI_GATEWAY_API_KEY) {
-      await streamRealReply(messages, update);
-    } else {
-      await streamMockReply(messages, update);
-    }
+    await streamReply(messages, update);
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
     await update({
@@ -176,9 +177,7 @@ async function notifyThreadParticipants(
   );
 }
 
-async function streamRealReply(messages: FeedMessage[], update: UpdateFn) {
-  const { streamText } = await import("ai");
-
+async function streamReply(messages: FeedMessage[], update: UpdateFn) {
   const result = streamText({
     model: "openai/gpt-5.4-mini",
     system: SYSTEM_PROMPT,
@@ -202,29 +201,6 @@ async function streamRealReply(messages: FeedMessage[], update: UpdateFn) {
       content += part.text;
       await flush();
     }
-  }
-
-  await update({ content, streaming: false });
-}
-
-async function streamMockReply(messages: FeedMessage[], update: UpdateFn) {
-  const lastUserMessage =
-    [...messages].reverse().find((message) => message.userId !== AI_USER_ID)
-      ?.content ?? "your message";
-
-  const mockReply = [
-    "This is a **mock reply** because `AI_GATEWAY_API_KEY` is not set.",
-    "",
-    `You mentioned me about: "${replaceMentions(lastUserMessage)}".`,
-    "",
-    "Add an AI Gateway key to get real responses from the model.",
-  ].join("\n");
-
-  let content = "";
-  for (const word of chunkText(mockReply)) {
-    content += word;
-    await update({ content, streaming: true });
-    await sleep(40);
   }
 
   await update({ content, streaming: false });
@@ -288,12 +264,4 @@ function isStringArray(value: unknown): value is string[] {
   return (
     Array.isArray(value) && value.every((item) => typeof item === "string")
   );
-}
-
-function chunkText(text: string) {
-  return text.match(/\S+\s*/g) ?? [text];
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

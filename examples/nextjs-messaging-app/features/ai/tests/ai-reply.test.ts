@@ -43,6 +43,17 @@ import { POST } from "@/features/ai/api/ai-reply";
 
 const ROOM_ID = "liveblocks:examples:nextjs-messaging-app:demo";
 
+function streamOf(...deltas: string[]) {
+  return {
+    fullStream: (async function* () {
+      for (const text of deltas) {
+        yield { type: "text-delta", text };
+      }
+      yield { type: "finish" };
+    })(),
+  };
+}
+
 function aiReplyRequest(body: unknown) {
   return POST(
     new NextRequest("http://localhost/api/ai-reply", {
@@ -63,7 +74,9 @@ describe("POST /api/ai-reply", () => {
     getFeed.mockResolvedValue({ metadata: {} });
     updateFeed.mockResolvedValue({});
     updateFeedMessage.mockResolvedValue({});
+    streamText.mockImplementation(() => streamOf("Hello ", "there"));
     vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
+    vi.stubEnv("AI_GATEWAY_API_KEY", "gw_test");
   });
 
   afterEach(() => {
@@ -82,6 +95,19 @@ describe("POST /api/ai-reply", () => {
       "Missing LIVEBLOCKS_SECRET_KEY"
     );
     expect(LiveblocksMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when AI_GATEWAY_API_KEY is missing", async () => {
+    vi.stubEnv("AI_GATEWAY_API_KEY", "");
+    const response = await aiReplyRequest({
+      roomId: ROOM_ID,
+      feedId: "general",
+      messages: [],
+    });
+    expect(response.status).toBe(403);
+    await expect(response.text()).resolves.toBe("Missing AI_GATEWAY_API_KEY");
+    expect(LiveblocksMock).not.toHaveBeenCalled();
+    expect(streamText).not.toHaveBeenCalled();
   });
 
   it("returns 400 for a non-object body", async () => {
@@ -113,7 +139,7 @@ describe("POST /api/ai-reply", () => {
     await expect(response.text()).resolves.toBe("Invalid room or feed");
   });
 
-  it("streams a mock channel reply and updates the message", async () => {
+  it("streams the model reply into the message", async () => {
     const response = await aiReplyRequest({
       roomId: ROOM_ID,
       feedId: "general",
@@ -144,6 +170,15 @@ describe("POST /api/ai-reply", () => {
     });
     expect(getFeed).not.toHaveBeenCalled();
 
+    expect(streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: expect.stringContaining("Liveblocks AI"),
+        messages: [
+          { role: "user", content: "Charlie Layne: hi @Liveblocks AI" },
+        ],
+      })
+    );
+
     expect(updateFeedMessage.mock.calls.length).toBeGreaterThanOrEqual(2);
     for (const call of updateFeedMessage.mock.calls.slice(0, -1)) {
       expect(call[0]).toMatchObject({
@@ -159,9 +194,8 @@ describe("POST /api/ai-reply", () => {
       messageId: "ai-msg-1",
       data: expect.objectContaining({ streaming: false }),
     });
-    expect(lastCall.data.content).toMatch(/mock reply/i);
-    expect(lastCall.data.content).toContain("hi @Liveblocks AI");
-  }, 10_000);
+    expect(lastCall.data.content).toBe("Hello there");
+  });
 
   it("still succeeds when createFeed rejects because the feed exists", async () => {
     createFeed.mockRejectedValueOnce(new Error("exists"));
