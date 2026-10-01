@@ -1,15 +1,3 @@
-// An in-memory stand-in for the Liveblocks React hooks the app uses, so
-// components can be rendered and driven without a server. Install it in a
-// test file with:
-//
-//   vi.mock("@liveblocks/react/suspense", () => import("../helpers/liveblocks-mock"));
-//   vi.mock("@liveblocks/react", () => import("../helpers/liveblocks-mock"));
-//
-// then shape the world with `resetMockState({...})` / `setMockState(...)`
-// and assert on `liveblocksMocks.*` or on the state itself. Mutation hooks
-// both record their calls and apply them to the state, so the UI reacts as
-// it would against a real room.
-
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { vi } from "vitest";
 import {
@@ -18,7 +6,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { getUser } from "@/app/database";
+import { getUser } from "@/lib/database";
 
 type FeedMetadata = Liveblocks["FeedMetadata"];
 type FeedMessageData = Liveblocks["FeedMessageData"];
@@ -52,9 +40,7 @@ export type MockState = {
   channels: { id: string; name: string }[];
   feeds: Record<string, MockFeed>;
   messages: Record<string, MockFeedMessage[]>;
-  // Per feed; defaults to true when unset
   hasFetchedAll: Record<string, boolean>;
-  // Per feed; defaults to false when unset
   isLoading: Record<string, boolean>;
   errors: Record<string, Error>;
 };
@@ -110,7 +96,6 @@ export function nextMockId(prefix = "msg") {
   return `${prefix}_${idCounter}`;
 }
 
-// Small builders so tests read well
 export function mockFeed(
   feedId: string,
   metadata: FeedMetadata,
@@ -146,7 +131,11 @@ function subscribe(listener: () => void) {
 }
 
 function useMockState(): MockState {
-  return useSyncExternalStore(subscribe, () => state, () => state);
+  return useSyncExternalStore(
+    subscribe,
+    () => state,
+    () => state
+  );
 }
 
 function matchesMetadata(
@@ -160,9 +149,6 @@ function matchesMetadata(
     ([key, value]) => metadata[key as keyof FeedMetadata] === value
   );
 }
-
-// ---------------------------------------------------------------------------
-// Recorded mutations
 
 export const liveblocksMocks = {
   createFeed: vi.fn(),
@@ -271,9 +257,6 @@ async function deleteFeedMessageImpl(feedId: string, messageId: string) {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Hooks (shared by the suspense and non-suspense entry points)
-
 export function ClientSideSuspense({
   children,
   fallback,
@@ -347,9 +330,7 @@ export function useOthers<T>(selector?: (others: Other[]) => T) {
   return selector ? selector(others) : others;
 }
 
-export function useOthersMapped<T>(
-  mapper: (other: Other) => T
-): [number, T][] {
+export function useOthersMapped<T>(mapper: (other: Other) => T): [number, T][] {
   const current = useMockState();
   return buildOthers(current).map((other) => [
     other.connectionId,
@@ -376,8 +357,6 @@ type LiveStorage = {
   get(key: "channels"): LiveList<LiveObject<{ id: string; name: string }>>;
 };
 
-// Runs the mutation against a detached LiveList built from the current
-// channels, then writes the result back as plain objects.
 export function useMutation<Args extends unknown[], R>(
   callback: (context: { storage: LiveStorage }, ...args: Args) => R,
   _deps: unknown[]

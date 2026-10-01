@@ -7,11 +7,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint:structure": "node scripts/check-structure.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "liveblocks dev -P --no-check -c \"playwright test\"",
     "test:e2e:cloud": "E2E_BACKEND=cloud playwright test",
-    "test:all": "npm run test && npm run test:e2e"
+    "check": "npm run typecheck && npm run lint:structure && npm run format:check && npm run test",
+    "check:all": "npm run check && npm run test:e2e"
   },
   "dependencies": {
     "@dnd-kit/core": "^6",
@@ -48,6 +53,7 @@
     "@vitejs/plugin-react": "^5.2.0",
     "jsdom": "^29.1.1",
     "liveblocks": "^1.9.0",
+    "prettier": "^3.8.3",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^7.3.6",

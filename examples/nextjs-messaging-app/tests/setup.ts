@@ -6,7 +6,6 @@ afterEach(() => {
   cleanup();
 });
 
-// jsdom lacks a few browser APIs the components rely on
 if (typeof window !== "undefined") {
   if (!("ResizeObserver" in window)) {
     class ResizeObserverStub {

@@ -67,9 +67,8 @@ Alternatively, you can set up your project manually:
 - Create an `.env.local` file and add your **secret** key as the
   `LIVEBLOCKS_SECRET_KEY` environment variable
 - Optionally, add an `AI_GATEWAY_API_KEY` from the
-  [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to get real AI
-  replies when you mention the AI teammate (a mock reply is streamed
-  otherwise)
+  [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to get real AI replies
+  when you mention the AI teammate (a mock reply is streamed otherwise)
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To see realtime sync, open the page in two browser tabs and pick two different
@@ -84,18 +83,19 @@ across both tabs.
 
 <p></p>
 
-The example ships with a layered test suite under `tests/`:
+The code is organised by feature (`features/`, `views/`, `primitives/`, `lib/`;
+see `AGENTS.md`), and each feature folder carries its own tests in `tests/`:
 
-- `tests/unit` — pure helpers in `lib/` (activity feeds, DM ids, markdown
-  serialisation, workspaces, …)
-- `tests/api` — the route handlers in `app/api/*` with `@liveblocks/node` mocked
-- `tests/components` — React components rendered against an in-memory mock of
-  `@liveblocks/react` (`tests/helpers/liveblocks-mock.tsx`)
-- `tests/e2e` — Playwright flows against the real app, backed by the local
+- `*.test.ts(x)` — vitest: pure helpers, API route handlers with
+  `@liveblocks/node` mocked, and React components rendered against an in-memory
+  mock of `@liveblocks/react` (`tests/helpers/liveblocks-mock.tsx`)
+- `*.spec.ts` — Playwright flows against the real app, backed by the local
   Liveblocks dev server (multi-user: mentions, DMs, threads, badges, presence)
 
 ```bash
-npm test                              # unit + api + component tests (vitest)
+npm run check                         # typecheck + structure check + vitest
+npm test                              # vitest only
+npx vitest run features/channels      # one feature
 npx playwright install chromium       # once
 npm run test:e2e                      # e2e against a local Liveblocks dev server
 npm run test:e2e:cloud                # e2e against the keys in .env.local
@@ -103,8 +103,8 @@ npm run test:e2e:cloud                # e2e against the keys in .env.local
 
 The e2e suite starts its own `next dev` on port 3111 (build output in
 `.next-e2e`, so it can run alongside your regular dev server). The AI tests in
-`tests/e2e/ai.spec.ts` need the real Liveblocks backend and are skipped on the
-local dev server; run them with `npm run test:e2e:cloud`.
+`features/ai/tests/ai.spec.ts` need the real Liveblocks backend and are skipped
+on the local dev server; run them with `npm run test:e2e:cloud`.
 
 </details>
 

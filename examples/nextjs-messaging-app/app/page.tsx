@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { App, AppLoadingFallback } from "./app";
+import { AppLoadingFallback, AppShell } from "@/views/app-shell";
 
 export default function Page() {
   return (
     <Suspense fallback={<AppLoadingFallback />}>
-      <App />
+      <AppShell />
     </Suspense>
   );
 }

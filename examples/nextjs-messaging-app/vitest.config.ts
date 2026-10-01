@@ -13,13 +13,7 @@ export default defineConfig({
     },
   },
   test: {
-    // Playwright owns tests/e2e
-    include: [
-      "tests/unit/**/*.test.{ts,tsx}",
-      "tests/api/**/*.test.ts",
-      "tests/components/**/*.test.tsx",
-    ],
-    // API route tests opt into node with a `// @vitest-environment node` header
+    include: ["{features,views,primitives,lib}/**/*.test.{ts,tsx}"],
     environment: "jsdom",
     setupFiles: ["tests/setup.ts"],
     css: false,

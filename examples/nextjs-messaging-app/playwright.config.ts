@@ -1,16 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// The suite runs against the local Liveblocks dev server by default:
-//
-//   npm run test:e2e
-//
-// That wraps Playwright in `liveblocks dev -c`, which starts a throwaway
-// server and injects LIVEBLOCKS_SECRET_KEY / NEXT_PUBLIC_LIVEBLOCKS_BASE_URL
-// for the Next.js dev server (env vars win over .env.local).
-//
-// To run against your real Liveblocks project instead (needed for the AI
-// reply flows, which use REST endpoints the dev server only stubs), use
-// `npm run test:e2e:cloud` with LIVEBLOCKS_SECRET_KEY in .env.local.
 const devServerPort = process.env.LIVEBLOCKS_DEV_SERVER_PORT;
 const backend = process.env.E2E_BACKEND ?? (devServerPort ? "local" : "cloud");
 const appPort = Number(process.env.E2E_APP_PORT ?? 3111);
@@ -23,14 +12,13 @@ if (backend === "local" && !devServerPort) {
 }
 
 const serverEnv: Record<string, string> = {
-  // Never hit a real model from the test suite: the mock reply is deterministic
   AI_GATEWAY_API_KEY: "",
-  // Keep clear of a `next dev` you may already have running (see next.config.ts)
   NEXT_DIST_DIR: ".next-e2e",
 };
 
 export default defineConfig({
-  testDir: "./tests/e2e",
+  testDir: ".",
+  testMatch: "{features,views}/**/tests/*.spec.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
