@@ -176,7 +176,7 @@ export function Message({
             >
               <button
                 type="button"
-                className="p-1 text-neutral-500 hover:text-brand-600"
+                className="icon-grow p-1 text-neutral-500 transition-colors hover:text-brand-600"
                 aria-label="Add reaction"
               >
                 <SmilePlus className="size-4" />
@@ -187,7 +187,7 @@ export function Message({
             <button
               type="button"
               onClick={onOpenThread}
-              className="p-1 text-neutral-500 hover:text-brand-600"
+              className="icon-grow p-1 text-neutral-500 transition-colors hover:text-brand-600"
               aria-label="Reply in thread"
             >
               <MessageSquareText className="size-4" />
@@ -197,7 +197,7 @@ export function Message({
             <button
               type="button"
               onClick={() => void handleDelete()}
-              className="p-1 text-neutral-500 hover:text-red-600"
+              className="icon-grow p-1 text-neutral-500 transition-colors hover:text-red-600"
               aria-label="Delete message"
             >
               <Trash2 className="size-4" />
@@ -266,20 +266,20 @@ function ReactionChips({
             })
             .join(", ")}
           className={clsx(
-            "cursor-pointer rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5",
+            "icon-grow cursor-pointer rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5 transition-colors",
             group.selfReacted
               ? "border-brand-500/60 bg-brand-50 text-brand-700 font-medium"
               : "border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-700"
           )}
         >
-          {group.emoji}{" "}
+          <span data-icon>{group.emoji}</span>{" "}
           <span className="text-xs tabular-nums">{group.reactions.length}</span>
         </button>
       ))}
       <EmojiPickerPopover onSelect={onToggle}>
         <button
           type="button"
-          className="rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5 border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-700"
+          className="icon-grow rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5 border-transparent bg-neutral-200/50 transition-colors hover:border-neutral-200 hover:bg-white text-neutral-700"
           aria-label="Add reaction"
         >
           <SmilePlus className="size-4" />

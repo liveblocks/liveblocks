@@ -83,7 +83,7 @@ export function ThreadPanel({
         <button
           type="button"
           onClick={onClose}
-          className="ml-auto rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+          className="icon-grow ml-auto rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
           aria-label="Close thread"
         >
           <XIcon className="size-5" />

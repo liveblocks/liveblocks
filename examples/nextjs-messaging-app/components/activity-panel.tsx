@@ -109,7 +109,7 @@ export function ActivityPanel({
           <button
             type="button"
             onClick={() => void markActivityRead(unreadItems)}
-            className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+            className="icon-grow rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
             aria-label="Mark all as read"
             title="Mark all as read"
           >
@@ -243,7 +243,7 @@ function ActivityRow({
           <button
             type="button"
             onClick={onMarkRead}
-            className="flex size-5 items-center justify-center rounded-md text-neutral-400 transition hover:bg-neutral-200/70 hover:text-neutral-700"
+            className="icon-grow flex size-5 items-center justify-center rounded-md text-neutral-400 transition hover:bg-neutral-200/70 hover:text-neutral-700"
             aria-label="Mark as read"
             title="Mark as read"
           >

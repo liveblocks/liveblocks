@@ -307,7 +307,7 @@ export function Composer({
             "absolute bottom-1.5 right-1.5 rounded-md p-1.5 transition",
             isEmpty
               ? "cursor-not-allowed bg-neutral-100 text-neutral-400"
-              : "bg-brand-600 text-white hover:bg-brand-700"
+              : "icon-grow bg-brand-600 text-white hover:bg-brand-700"
           )}
           aria-label="Send message"
         >

@@ -157,7 +157,7 @@ export function HelpButton() {
       <style>{HOVER_CSS}</style>
       <button
         type="button"
-        className="lb-help-button"
+        className="lb-help-button icon-grow"
         style={styles.button}
         onClick={() => setIsOpen(true)}
         aria-label="How to use this example"
@@ -196,7 +196,7 @@ export function HelpButton() {
                   </div>
                   <button
                     type="button"
-                    className="lb-help-close"
+                    className="lb-help-close icon-grow"
                     style={styles.close}
                     aria-label="Close"
                     onClick={() => setIsOpen(false)}
@@ -233,7 +233,7 @@ function HelpIcon() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.75}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
@@ -253,7 +253,7 @@ function CloseIcon() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.75}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
@@ -271,7 +271,7 @@ function FeatureIconBase({ children }: { children: ReactNode }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.75}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden

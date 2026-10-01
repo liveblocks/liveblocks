@@ -59,4 +59,24 @@
     background: var(--chat-bg);
     color: #1a1d21;
   }
+
+  /* Lucide icons default to a stroke width of 2; slightly lighter reads
+     better at the small sizes used here. CSS wins over the SVG attribute. */
+  svg.lucide {
+    stroke-width: 1.75;
+  }
+}
+
+/* Icon buttons: the icon (an svg, or anything marked `data-icon`, e.g. an
+   emoji) grows a little on hover, on the same timing as colour transitions. */
+@utility icon-grow {
+  & svg,
+  & [data-icon] {
+    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &:hover svg,
+  &:hover [data-icon] {
+    transform: scale(1.15);
+  }
 }

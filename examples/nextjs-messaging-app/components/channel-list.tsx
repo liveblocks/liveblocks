@@ -262,7 +262,7 @@ export function ChannelList({
       <button
         type="button"
         onClick={() => setCreating(true)}
-        className="h-9 mt-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900"
+        className="icon-grow h-9 mt-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900"
       >
         <PlusIcon className="size-4" aria-hidden />
         Add channel
@@ -343,7 +343,7 @@ function SortableChannelItem({
             type="button"
             onClick={onSelect}
             className={clsx(
-              "min-w-0 flex-1 truncate py-2 pl-1 pr-1 text-left text-sm",
+              "min-w-0 flex-1 truncate py-1.5 pl-1 pr-1 text-left text-sm",
               unreadCount > 0 && !active && "font-semibold text-neutral-900"
             )}
             {...attributes}
@@ -368,7 +368,7 @@ function SortableChannelItem({
                 onStartRename();
               }}
               className={clsx(
-                "rounded p-1",
+                "icon-grow rounded p-1 transition-colors",
                 active
                   ? "text-white/60 hover:bg-white/15 hover:text-white"
                   : "text-neutral-400 hover:bg-neutral-200 hover:text-neutral-900"
@@ -384,7 +384,7 @@ function SortableChannelItem({
                 onDelete();
               }}
               className={clsx(
-                "rounded p-1",
+                "icon-grow rounded p-1 transition-colors",
                 active
                   ? "text-white/60 hover:bg-red-500/30 hover:text-red-100"
                   : "text-neutral-400 hover:bg-red-50 hover:text-red-600"
