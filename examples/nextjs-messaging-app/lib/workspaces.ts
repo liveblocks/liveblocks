@@ -34,7 +34,13 @@ export const WORKSPACES: Workspace[] = [
   },
 ];
 
-export const DEFAULT_CHANNELS = ["general", "random"];
+export const DEFAULT_CHANNELS = [
+  "general",
+  "random",
+  "engineering",
+  "design",
+  "marketing",
+];
 
 export function getWorkspace(workspaceId: string): Workspace {
   return (

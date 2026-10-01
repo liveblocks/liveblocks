@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
+import { CheckIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { WORKSPACES } from "@/lib/workspaces";
 
@@ -47,30 +47,23 @@ export function WorkspaceSwitcher({
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} className="relative flex justify-center">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-sidebar-hover"
+        className="flex size-10 items-center justify-center rounded-lg bg-white/15 text-base font-bold text-white transition hover:bg-white/25"
         aria-expanded={open}
         aria-haspopup="listbox"
+        aria-label={`Workspace: ${activeWorkspace.name}`}
+        title={activeWorkspace.name}
       >
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-white/15 text-sm font-bold">
-          {activeWorkspace.name.slice(0, 1)}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-bold">
-          {activeWorkspace.name}
-        </span>
-        <ChevronsUpDownIcon
-          className="size-4 shrink-0 text-sidebar-muted"
-          aria-hidden
-        />
+        {activeWorkspace.name.slice(0, 1)}
       </button>
 
       {open ? (
         <div
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 overflow-hidden rounded-md border border-black/10 bg-white text-neutral-900 shadow-xl"
+          className="absolute left-[calc(100%+8px)] top-0 z-50 w-56 overflow-hidden rounded-md border border-black/10 bg-white text-neutral-900 shadow-xl"
         >
           <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             Switch workspace

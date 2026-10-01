@@ -50,13 +50,13 @@ export function DirectMessageList({
               type="button"
               onClick={() => onSelectUser(user.id)}
               className={clsx(
-                "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition",
+                "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition",
                 active
-                  ? "bg-sidebar-active text-white"
-                  : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
+                  ? "bg-neutral-800 text-white"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
               )}
             >
-              <span className="relative inline-block size-5 min-h-5 min-w-5 shrink-0 overflow-visible rounded bg-white/10">
+              <span className="relative inline-block size-5 min-h-5 min-w-5 shrink-0 overflow-visible rounded bg-neutral-200">
                 <img
                   src={user.info.avatar}
                   alt=""
@@ -64,7 +64,8 @@ export function DirectMessageList({
                 />
                 <span
                   className={clsx(
-                    "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-sidebar",
+                    "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2",
+                    active ? "border-neutral-800" : "border-white",
                     isOnline ? "bg-green-500" : "bg-neutral-400"
                   )}
                   aria-label={isOnline ? "Online" : "Offline"}
@@ -73,14 +74,21 @@ export function DirectMessageList({
               <span
                 className={clsx(
                   "min-w-0 flex-1 truncate",
-                  unreadCount > 0 && "font-semibold text-white"
+                  unreadCount > 0 && !active && "font-semibold text-neutral-900"
                 )}
               >
                 {user.info.name}
               </span>
               <UnreadBadge count={unreadCount} />
               {isAgent ? (
-                <span className="shrink-0 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                <span
+                  className={clsx(
+                    "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                    active
+                      ? "bg-white/20 text-white"
+                      : "bg-brand-100 text-brand-600"
+                  )}
+                >
                   Agent
                 </span>
               ) : null}

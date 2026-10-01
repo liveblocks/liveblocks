@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { getUser, getUsers } from "@/app/database";
 
@@ -46,34 +46,27 @@ export function UserMenu({
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative flex justify-center">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition hover:bg-sidebar-hover"
+        className="block size-9 overflow-hidden rounded-lg ring-2 ring-transparent transition hover:ring-white/40"
         aria-expanded={open}
         aria-haspopup="listbox"
+        aria-label={`Signed in as ${currentUser.info.name}. Switch user`}
+        title={currentUser.info.name}
       >
-        <span className="inline-block size-7 min-h-7 min-w-7 shrink-0 overflow-hidden rounded-md">
-          <img
-            src={currentUser.info.avatar}
-            alt=""
-            className="size-full object-cover"
-          />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">
-          {currentUser.info.name}
-        </span>
-        <ChevronDownIcon
-          className="size-4 shrink-0 text-sidebar-muted"
-          aria-hidden
+        <img
+          src={currentUser.info.avatar}
+          alt=""
+          className="size-full object-cover"
         />
       </button>
 
       {open ? (
         <div
           role="listbox"
-          className="absolute bottom-[calc(100%+4px)] left-0 right-0 z-50 overflow-hidden rounded-lg border border-black/10 bg-white text-neutral-900 shadow-xl"
+          className="absolute bottom-0 left-[calc(100%+8px)] z-50 w-60 overflow-hidden rounded-lg border border-black/10 bg-white text-neutral-900 shadow-xl"
         >
           <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             Switch user

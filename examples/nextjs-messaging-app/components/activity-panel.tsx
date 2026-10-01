@@ -3,10 +3,11 @@
 import { useFeedMessages } from "@liveblocks/react";
 import { useFeeds, useSelf, useStorage } from "@liveblocks/react/suspense";
 import clsx from "clsx";
-import { CheckCheckIcon, CheckIcon, LoaderCircle, XIcon } from "lucide-react";
+import { CheckCheckIcon, CheckIcon, LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getUser } from "@/app/database";
 import { formatTime } from "@/components/message";
+import { ColumnHeader } from "@/components/column-header";
 import {
   getActivityRootFeedId,
   isChatMessage,
@@ -39,11 +40,9 @@ export type ActivityTarget = {
 export function ActivityPanel({
   activeItemId,
   onNavigate,
-  onClose,
 }: {
   activeItemId: string | null;
   onNavigate: (target: ActivityTarget) => void;
-  onClose: () => void;
 }) {
   const selfId = useSelf((me) => me.id);
   const { items, unreadItems, hasFetchedAll, fetchMore, isFetchingMore } =
@@ -100,31 +99,20 @@ export function ActivityPanel({
   );
 
   return (
-    <aside className="flex h-full w-[360px] min-h-0 shrink-0 flex-col border-r border-neutral-200">
-      <header className="flex h-[57px] shrink-0 items-center gap-2 border-b border-neutral-200 px-4">
-        <h2 className="text-lg font-bold text-neutral-900">Activity</h2>
-        <div className="ml-auto flex items-center gap-1">
-          {unreadItems.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => void markActivityRead(unreadItems)}
-              className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
-              aria-label="Mark all as read"
-              title="Mark all as read"
-            >
-              <CheckCheckIcon className="size-4" aria-hidden />
-            </button>
-          ) : null}
+    <>
+      <ColumnHeader title="Activity">
+        {unreadItems.length > 0 ? (
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => void markActivityRead(unreadItems)}
             className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
-            aria-label="Close activity"
+            aria-label="Mark all as read"
+            title="Mark all as read"
           >
-            <XIcon className="size-4" aria-hidden />
+            <CheckCheckIcon className="size-4" aria-hidden />
           </button>
-        </div>
-      </header>
+        ) : null}
+      </ColumnHeader>
 
       {items.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 px-5 text-center">
@@ -165,7 +153,7 @@ export function ActivityPanel({
           ) : null}
         </div>
       )}
-    </aside>
+    </>
   );
 }
 
@@ -242,7 +230,7 @@ function ActivityRow({
         onClick={onOpen}
         aria-current={active ? "true" : undefined}
         className={clsx(
-          "flex w-full items-start gap-3 py-3 pl-3 pr-5 text-left transition",
+          "flex w-full items-start gap-2.5 py-3 pl-3 pr-4 text-left transition",
           active
             ? "hover:bg-neutral-100"
             : unread

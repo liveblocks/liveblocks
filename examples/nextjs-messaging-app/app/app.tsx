@@ -11,8 +11,9 @@ import { Loader2Icon } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getUser, getUsers } from "@/app/database";
-import { ActivityPanel, type ActivityTarget } from "@/components/activity-panel";
+import type { ActivityTarget } from "@/components/activity-panel";
 import { Chat } from "@/components/chat";
+import { Rail, type View } from "@/components/rail";
 import { Sidebar } from "@/components/sidebar";
 import {
   getDmFeedId,
@@ -176,7 +177,7 @@ function MessagingShell({
   const [openThreadMessageId, setOpenThreadMessageId] = useState<
     string | null
   >(null);
-  const [activityOpen, setActivityOpen] = useState(false);
+  const [view, setView] = useState<View>("home");
   const [activeActivityItemId, setActiveActivityItemId] = useState<
     string | null
   >(null);
@@ -267,38 +268,31 @@ function MessagingShell({
 
   return (
     <div className="flex h-dvh w-full overflow-hidden">
-      <Sidebar
+      <Rail
         workspaceId={workspaceId}
         userId={userId}
-        selection={
-          conversation?.type === "dm"
-            ? { type: "dm", userId: conversation.user.id }
-            : conversation
-              ? { type: "channel", channelId: conversation.channel.id }
-              : null
-        }
-        activityOpen={activityOpen}
-        onSelect={handleSelect}
-        onToggleActivity={() => setActivityOpen((open) => !open)}
+        view={view}
+        onViewChange={setView}
         onUserChange={onUserChange}
         onWorkspaceChange={onWorkspaceChange}
       />
 
       <main className="flex min-w-0 flex-1 flex-col bg-sidebar p-1 pl-0">
-        <div className="flex min-w-0 flex-1 bg-white rounded-sm overflow-hidden">
-          {activityOpen ? (
-            <ClientSideSuspense
-              fallback={
-                <div className="w-[360px] shrink-0 border-r border-neutral-200" />
-              }
-            >
-              <ActivityPanel
-                activeItemId={activeActivityItemId}
-                onNavigate={handleActivityNavigate}
-                onClose={() => setActivityOpen(false)}
-              />
-            </ClientSideSuspense>
-          ) : null}
+        <div className="flex min-w-0 flex-1 overflow-hidden rounded-sm bg-white">
+          <Sidebar
+            workspaceName={workspace.name}
+            view={view}
+            selection={
+              conversation?.type === "dm"
+                ? { type: "dm", userId: conversation.user.id }
+                : conversation
+                  ? { type: "channel", channelId: conversation.channel.id }
+                  : null
+            }
+            activeActivityItemId={activeActivityItemId}
+            onSelect={handleSelect}
+            onActivityNavigate={handleActivityNavigate}
+          />
 
           <div className="flex min-w-0 flex-1 flex-col">
             <ClientSideSuspense fallback={null}>

@@ -258,7 +258,7 @@ export function ChannelList({
               }}
               placeholder="channel-name"
               autoFocus
-              className="w-full rounded-md border border-white/20 bg-white/10 px-2 py-1.5 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+              className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none"
             />
           </div>
         ) : null}
@@ -267,7 +267,7 @@ export function ChannelList({
       <button
         type="button"
         onClick={() => setCreating(true)}
-        className="h-9 mt-0.5 flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-sidebar-muted transition hover:bg-sidebar-hover hover:text-sidebar-foreground"
+        className="h-9 mt-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900"
       >
         <PlusIcon className="size-4" aria-hidden />
         Add channel
@@ -322,16 +322,21 @@ function SortableChannelItem({
     >
       <div
         className={clsx(
-          "flex items-center gap-0.5 rounded-sm pr-1 transition",
+          "flex items-center gap-0.5 rounded-md pr-1 transition",
           active
-            ? "bg-sidebar-active text-white"
-            : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
+            ? "bg-neutral-800 text-white"
+            : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
         )}
       >
         <button
           type="button"
           ref={setActivatorNodeRef}
-          className="cursor-grab px-1 py-2 text-white/30 opacity-0 transition hover:text-white/70 group-hover:opacity-100 active:cursor-grabbing"
+          className={clsx(
+            "cursor-grab px-1 py-2 opacity-0 transition group-hover:opacity-100 active:cursor-grabbing",
+            active
+              ? "text-white/40 hover:text-white/80"
+              : "text-neutral-300 hover:text-neutral-500"
+          )}
           aria-label={`Reorder ${channel.name}`}
           {...attributes}
           {...listeners}
@@ -354,7 +359,7 @@ function SortableChannelItem({
             }}
             onClick={(event) => event.stopPropagation()}
             autoFocus
-            className="min-w-0 flex-1 rounded border border-white/20 bg-white/10 px-2 py-1 text-sm text-white focus:border-white/40 focus:outline-none"
+            className="min-w-0 flex-1 rounded border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
           />
         ) : (
           <button
@@ -362,10 +367,10 @@ function SortableChannelItem({
             onClick={onSelect}
             className={clsx(
               "min-w-0 flex-1 truncate py-2 pl-1 pr-1 text-left text-sm",
-              unreadCount > 0 && "font-semibold text-white"
+              unreadCount > 0 && !active && "font-semibold text-neutral-900"
             )}
           >
-            <span className="opacity-70">#</span>
+            <span className="mr-1.5 opacity-60">#</span>
             {channel.name}
           </button>
         )}
@@ -384,7 +389,12 @@ function SortableChannelItem({
                 event.stopPropagation();
                 onStartRename();
               }}
-              className="rounded p-1 text-white/50 hover:bg-white/10 hover:text-white"
+              className={clsx(
+                "rounded p-1",
+                active
+                  ? "text-white/60 hover:bg-white/15 hover:text-white"
+                  : "text-neutral-400 hover:bg-neutral-200 hover:text-neutral-900"
+              )}
               aria-label={`Rename ${channel.name}`}
             >
               <PencilIcon className="size-3.5" aria-hidden />
@@ -395,7 +405,12 @@ function SortableChannelItem({
                 event.stopPropagation();
                 onDelete();
               }}
-              className="rounded p-1 text-white/50 hover:bg-red-500/20 hover:text-red-200"
+              className={clsx(
+                "rounded p-1",
+                active
+                  ? "text-white/60 hover:bg-red-500/30 hover:text-red-100"
+                  : "text-neutral-400 hover:bg-red-50 hover:text-red-600"
+              )}
               aria-label={`Delete ${channel.name}`}
             >
               <Trash2Icon className="size-3.5" aria-hidden />
