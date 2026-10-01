@@ -7,6 +7,7 @@ node_modules
 .vercel
 .next
 .next-e2e
+.next-local
 out
 # Playwright
 test-results

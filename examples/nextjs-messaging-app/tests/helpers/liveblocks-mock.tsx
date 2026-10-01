@@ -376,7 +376,6 @@ export function useMutation<Args extends unknown[], R>(
       });
       return result;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [callback]
   );
 }

@@ -1,9 +1,9 @@
 # Agent guide: nextjs-messaging-app
 
 This file is the contract for anyone (human or agent) changing this example.
-Read it before touching code. `FEATURE_MAP.md` describes _what the app does_;
-this file describes _how the code is organised_ and _how to prove a change is
-correct_.
+Read it before touching code. Each feature and view describes _what it does_ in
+its own `FEATURE.md`, indexed from `FEATURE_MAP.md`; this file describes _how
+the code is organised_ and _how to prove a change is correct_.
 
 The example is standalone: it is not part of the monorepo workspace, uses `npm`,
 and depends on the _published_ Liveblocks packages. Nothing here needs the
@@ -18,15 +18,17 @@ app/              Next.js routing only. No logic lives here.
   globals.css
   api/**/route.ts one line each: re-export a handler from features/*/api/
 features/         One folder per product feature. Owns its UI, model, API
-                  handlers and tests.
+                  handlers, tests and behaviour doc (FEATURE.md).
 views/            The screen regions that compose features into the page.
+                  Same anatomy as a feature, minus api/.
 primitives/       Small presentational building blocks reused by more than one
                   feature or view. Tests in primitives/tests/.
 lib/              Shared domain model and helpers with no UI and no feature
                   dependencies. Tests in lib/tests/.
 tests/            Shared test infrastructure only (setup, mocks, e2e helpers).
                   No test files live here.
-scripts/          Repo tooling (structure check).
+scripts/          Repo tooling (structure check, test baseline, scaffolding).
+FEATURE_MAP.md    Index of every FEATURE.md plus cross-cutting notes.
 liveblocks.config.ts   Global Liveblocks type declarations (stays at the root).
 ```
 
@@ -69,6 +71,7 @@ Additional rules:
 ```
 features/<name>/
   index.ts            public surface (components, hooks, pure helpers, types)
+  FEATURE.md          user-observable behaviour of this feature + its file list
   <name>.ts           pure model code for the feature (ids, guards, helpers)
   <component>.tsx     one exported component per file, kebab-case file names
   api/<handler>.ts    Next.js route handlers (GET/POST), server-only
@@ -78,13 +81,19 @@ features/<name>/
 ```
 
 - `tests/` is mandatory and must contain at least one test file.
+- `FEATURE.md` is mandatory and must be linked from the table in
+  `FEATURE_MAP.md`. It is the only place behaviour is documented, so parallel
+  work on different features never edits the same doc file.
+- Scaffold all of this with `npm run new:feature -- <kebab-name>` (also
+  `new:view`, `new:primitive`). It refuses to overwrite existing files and
+  prints the remaining manual steps.
 - A test file is named after the module it covers (`channel-list.test.tsx`
   covers `channel-list.tsx`). E2E specs are named after the feature.
 - `.test.` is vitest, `.spec.` is Playwright. Never mix.
 - API tests start with the `// @vitest-environment node` pragma; everything else
   runs in jsdom.
-- Views follow the same anatomy (`views/<name>/index.ts`, `tests/`) minus
-  `api/`.
+- Views follow the same anatomy (`views/<name>/index.ts`, `FEATURE.md`,
+  `tests/`) minus `api/`.
 - Primitives and `lib/` modules are single files; their tests live in a shared
   `tests/` folder beside them, one test file per module:
   `primitives/unread-badge.tsx` → `primitives/tests/unread-badge.test.tsx`,
@@ -154,12 +163,13 @@ files. The only permitted comment lines are tool directives:
 
 - `// @vitest-environment node`
 - `// @ts-expect-error …`, `// @ts-ignore …`
-- `// eslint-disable…` variants
+- `// eslint-disable-next-line <rule>` for a deliberate, single-line exception
+  (see [Linting](#linting)); never a file-wide `eslint-disable`
 - `/* … */` license headers in third-party-derived files (none today)
 
 Anything that would need a comment goes somewhere discoverable instead:
 
-- behaviour a user can observe → `FEATURE_MAP.md`
+- behaviour a user can observe → the owning `FEATURE.md`
 - structure, tooling, non-obvious config (why `.next-e2e` exists, why the AI key
   is blanked in e2e) → this file, under [Tooling notes](#tooling-notes)
 - a tricky invariant → a test whose name states the invariant
@@ -177,10 +187,12 @@ relevant set is green.
 | Command                  | What it proves                                                               | When                                          |
 | ------------------------ | ---------------------------------------------------------------------------- | --------------------------------------------- |
 | `npm run typecheck`      | `tsc --noEmit` passes                                                        | after every series of edits                   |
+| `npm run lint`           | ESLint (Next + hooks + TypeScript rules), zero warnings allowed              | after every series of edits                   |
 | `npm run lint:structure` | layers, barrel-only imports, no cycles, anatomy, test placement, no comments | after moving or adding files                  |
 | `npm run format:check`   | every file is Prettier-formatted (`.prettierrc`)                             | before declaring any task done                |
 | `npm test`               | all vitest suites (unit, component, API)                                     | after every series of edits                   |
-| `npm run check`          | the four above, in order                                                     | before declaring any task done                |
+| `npm run test:baseline`  | `npm test` + no tests were lost versus `tests/baseline.json`                 | before declaring any task done                |
+| `npm run check`          | typecheck, lint, lint:structure, format:check, test:baseline, in order       | before declaring any task done                |
 | `npm run test:e2e`       | Playwright against a throwaway local Liveblocks dev server                   | after touching UI flows, before finishing     |
 | `npm run check:all`      | `check` + `test:e2e`                                                         | restructures, multi-feature changes           |
 | `npm run build`          | production `next build` succeeds                                             | after changing `app/`, config or dependencies |
@@ -194,16 +206,28 @@ npx vitest run primitives                        # all primitive tests
 npx liveblocks dev -P --no-check -c "playwright test features/channels"
 ```
 
-### Expected test counts
+### Test baseline
 
-Changes must not lose tests. Current baseline:
+`tests/baseline.json` records how many vitest and Playwright files and tests
+exist. `npm run test:baseline` (part of `check`) compares the current counts
+against it:
 
-- vitest: 30 files, 161 tests
-- Playwright: 7 spec files, 34 tests (2 in `features/ai/tests/ai.spec.ts` skip
-  on the local dev server)
+- fewer files or tests than the baseline → fails. Tests may only be removed
+  deliberately; say so in the PR and lower the numbers in `baseline.json` by
+  hand.
+- more → the script rewrites `baseline.json` with the new counts. Commit it.
 
-These numbers may only go up. If a test is deliberately deleted, say so in the
-PR description and update this section.
+The Playwright numbers come from `playwright test --list`, so they need no
+browser or server. Two tests in `features/ai/tests/ai.spec.ts` skip themselves
+on the local dev server; they still count.
+
+### Running the app without keys
+
+`npm run dev:local` starts a throwaway Liveblocks dev server and `next dev` on
+port 3100 (dist dir `.next-local`, so it can run next to your normal
+`npm run dev` on 3000). No `.env.local` is needed; the session endpoint and the
+client are pointed at the local server automatically. Use it to poke at the UI
+or `curl` the API routes while developing.
 
 ### Environment
 
@@ -217,19 +241,39 @@ PR description and update this section.
 
 ## Adding or changing a feature
 
-1. Read the relevant section of `FEATURE_MAP.md` and the feature's `index.ts`.
-2. Put new code in the owning feature. If no feature owns it, create
-   `features/<name>/` with `index.ts` and `tests/`.
-3. Shared across features? Pure code goes to `lib/`, UI goes to `primitives/`.
+1. Read the feature's `FEATURE.md` and `index.ts`.
+2. Put new code in the owning feature. If no feature owns it, run
+   `npm run new:feature -- <name>` and follow the printed steps.
+3. Shared across features? Pure code goes to `lib/`, UI goes to `primitives/`
+   (`npm run new:primitive -- <name>`).
 4. Export new public pieces from `index.ts`; keep internals unexported.
 5. Add or update tests in the feature's `tests/`: unit for pure helpers,
    component tests against `tests/helpers/liveblocks-mock.tsx`, e2e for
    user-visible flows.
-6. Update `FEATURE_MAP.md` (behaviour and the feature → file index) and, if a
-   route or script changed, this file.
+6. Update the feature's `FEATURE.md` (behaviour and its file list). Touch
+   `FEATURE_MAP.md` only to add a row for a new feature or view, and this file
+   only if a route, script or rule changed.
 7. Run Prettier on every file you edited (`npx prettier --write <files>`, or
    `npm run format` for everything). Never hand-format.
-8. Run `npm run check`, then `npm run test:e2e` if any UI flow changed.
+8. Run `npm run check`, then `npm run test:e2e` if any UI flow changed. Commit
+   `tests/baseline.json` if it changed.
+
+## Linting
+
+`npm run lint` runs ESLint with `eslint-config-next` (core web vitals +
+TypeScript) and `--max-warnings 0`, so warnings block too. Config is
+`eslint.config.mjs`. Deliberate deviations:
+
+- `@next/next/no-img-element` is off: avatars are external URLs and `next/image`
+  would add nothing but config.
+- Unused variables and arguments prefixed with `_` are allowed.
+- The React Compiler rules `react-hooks/set-state-in-effect` and
+  `react-hooks/refs` stay on. Four effects in the codebase intentionally set
+  state (page-until-found loops in `message-list.tsx` and `activity-panel.tsx`,
+  identity and selection normalisation in `app-shell.tsx`) and carry a
+  `// eslint-disable-next-line react-hooks/set-state-in-effect`. Prefer
+  restructuring over adding a fifth; if you must, the disable goes on exactly
+  that line.
 
 ## Formatting
 
@@ -277,3 +321,8 @@ Explanations that used to live in code comments.
   `FeedMessageData` globally. Chat messages have no `kind`; activity items have
   `kind: "activity"`.
 - **`liveblocks` (CLI)** is a devDependency only for `liveblocks dev`.
+- **`scripts/`**: `check-structure.mjs` (architecture rules),
+  `check-test-baseline.mjs` (test counts), `scaffold.mjs` (`new:*` commands).
+  All plain Node, no dependencies.
+- **`.next-local`** is the dist dir for `npm run dev:local`, for the same reason
+  `.next-e2e` exists: Next refuses two dev servers sharing one dist dir.

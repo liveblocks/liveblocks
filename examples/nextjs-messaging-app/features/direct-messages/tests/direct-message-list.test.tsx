@@ -19,7 +19,6 @@ vi.mock("@liveblocks/react", () => import("@/tests/helpers/liveblocks-mock"));
 const SELF = "charlie.layne@example.com";
 const MISLAV = "mislav.abha@example.com";
 const TATUM = "tatum.paolo@example.com";
-const AI = "ai-assistant";
 const ACTIVITY = getActivityFeedId(SELF);
 const MISLAV_DM = getDmFeedId(SELF, MISLAV);
 

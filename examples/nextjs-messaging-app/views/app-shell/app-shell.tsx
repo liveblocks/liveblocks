@@ -71,6 +71,7 @@ export function AppShell() {
   useEffect(() => {
     if (previewIndex !== null) {
       const users = getUsers();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUserId(users[previewIndex % users.length].id);
     }
   }, [previewIndex]);
@@ -102,6 +103,7 @@ export function AppShell() {
     setWorkspaceId(nextWorkspaceId);
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const initialStorage = useMemo(() => createInitialStorage(), [roomId]);
 
   return (
@@ -219,6 +221,7 @@ function MessagingShell({
     if (selection?.type === "dm") {
       const user = getUser(selection.userId);
       if (!user || user.id === userId) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelection(null);
       }
       return;

@@ -32,11 +32,6 @@ export function MessageList({
   const ignoreScrollRef = useRef(false);
   const channelRef = useRef(channelId);
 
-  if (channelRef.current !== channelId) {
-    channelRef.current = channelId;
-    stickToBottomRef.current = true;
-  }
-
   const items = useMemo(
     () => buildMessageListItems(messages.filter(isChatMessage)),
     [messages]
@@ -71,6 +66,10 @@ export function MessageList({
   };
 
   useLayoutEffect(() => {
+    if (channelRef.current !== channelId) {
+      channelRef.current = channelId;
+      stickToBottomRef.current = true;
+    }
     pinToBottom();
     const frame = requestAnimationFrame(pinToBottom);
     return () => cancelAnimationFrame(frame);
@@ -106,6 +105,7 @@ export function MessageList({
     ) {
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExtraPages((pages) => pages + 1);
     fetchMore();
   }, [

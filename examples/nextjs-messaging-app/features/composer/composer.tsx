@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import clsx from "clsx";
 import Mention from "@tiptap/extension-mention";
 import { Extension } from "@tiptap/core";
@@ -275,7 +282,9 @@ export function Composer({
     self.id,
   ]);
 
-  sendMessageRef.current = sendMessage;
+  useLayoutEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [sendMessage]);
 
   useEffect(() => {
     return () => {

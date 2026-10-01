@@ -93,8 +93,9 @@ see `AGENTS.md`), and each feature folder carries its own tests in `tests/`:
   Liveblocks dev server (multi-user: mentions, DMs, threads, badges, presence)
 
 ```bash
-npm run check                         # typecheck + structure check + vitest
+npm run check                         # typecheck + eslint + structure + prettier + vitest
 npm test                              # vitest only
+npm run dev:local                     # run the app on :3100 against a local Liveblocks dev server, no keys
 npx vitest run features/channels      # one feature
 npx playwright install chromium       # once
 npm run test:e2e                      # e2e against a local Liveblocks dev server

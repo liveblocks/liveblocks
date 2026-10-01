@@ -186,6 +186,11 @@ function checkImports(file, source) {
 }
 
 function checkAnatomy() {
+  const featureMapFile = path.join(root, "FEATURE_MAP.md");
+  const featureMap = exists(featureMapFile)
+    ? readFileSync(featureMapFile, "utf8")
+    : "";
+
   for (const kind of ["features", "views"]) {
     const dir = path.join(root, kind);
     if (!exists(dir)) continue;
@@ -194,6 +199,14 @@ function checkAnatomy() {
       if (!statSync(folder).isDirectory()) continue;
       if (!exists(path.join(folder, "index.ts"))) {
         fail(folder, "missing index.ts");
+      }
+      const doc = path.join(folder, "FEATURE.md");
+      if (!exists(doc) || readFileSync(doc, "utf8").trim() === "") {
+        fail(folder, "missing FEATURE.md (behaviour doc)");
+      } else if (
+        !new RegExp(`${kind}/${name}/FEATURE\\.md(?![\\w.])`).test(featureMap)
+      ) {
+        fail(doc, "not linked from FEATURE_MAP.md");
       }
       const tests = path.join(folder, "tests");
       const testFiles = exists(tests)

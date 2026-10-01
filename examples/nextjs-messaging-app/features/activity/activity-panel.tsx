@@ -190,6 +190,7 @@ function ActivityRow({
     }
 
     if (!hasFetchedAll && extraPages < MAX_EXTRA_PAGES) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setExtraPages((pages) => pages + 1);
       fetchMore?.();
       return;
