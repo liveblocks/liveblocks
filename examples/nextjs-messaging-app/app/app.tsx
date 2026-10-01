@@ -174,9 +174,9 @@ function MessagingShell({
 }) {
   const channels = useStorage((root) => root.channels);
   const [selection, setSelection] = useState<Selection | null>(null);
-  const [openThreadMessageId, setOpenThreadMessageId] = useState<
-    string | null
-  >(null);
+  const [openThreadMessageId, setOpenThreadMessageId] = useState<string | null>(
+    null
+  );
   const [view, setView] = useState<View>("home");
   const [activeActivityItemId, setActiveActivityItemId] = useState<
     string | null
@@ -277,8 +277,8 @@ function MessagingShell({
         onWorkspaceChange={onWorkspaceChange}
       />
 
-      <main className="flex min-w-0 flex-1 flex-col bg-sidebar p-1 pl-0">
-        <div className="flex min-w-0 flex-1 overflow-hidden rounded-sm bg-white">
+      <main className="flex min-w-0 flex-1 flex-col bg-sidebar p-1.5 pl-0">
+        <div className="flex min-w-0 flex-1 overflow-hidden rounded-sm bg-white shadow-[-12px_0_28px_-6px_rgba(0,0,0,0.14)]">
           <Sidebar
             workspaceName={workspace.name}
             view={view}
@@ -294,7 +294,7 @@ function MessagingShell({
             onActivityNavigate={handleActivityNavigate}
           />
 
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-white shadow-[-12px_0_28px_-6px_rgba(0,0,0,0.14)]">
             <ClientSideSuspense fallback={null}>
               {conversation ? (
                 <Chat

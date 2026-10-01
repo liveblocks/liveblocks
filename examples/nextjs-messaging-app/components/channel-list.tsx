@@ -262,7 +262,7 @@ export function ChannelList({
       <button
         type="button"
         onClick={() => setCreating(true)}
-        className="icon-grow h-9 mt-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900"
+        className="h-9 mt-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900"
       >
         <PlusIcon className="size-4" aria-hidden />
         Add channel

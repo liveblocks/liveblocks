@@ -30,7 +30,7 @@ export function Sidebar({
   const activeDmUserId = selection?.type === "dm" ? selection.userId : null;
 
   return (
-    <aside className="flex w-[280px] shrink-0 flex-col border-r border-neutral-200 bg-white text-neutral-900">
+    <aside className="flex w-[280px] shrink-0 flex-col bg-white text-neutral-900">
       {view === "activity" ? (
         <ClientSideSuspense fallback={<ColumnHeader title="Activity" />}>
           <ActivityPanel
@@ -81,7 +81,7 @@ export function Sidebar({
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <div className="px-4 pb-1 pt-4 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+    <div className="px-4 pb-1 pt-4 text-sm text-neutral-700 first:pt-1">
       {children}
     </div>
   );

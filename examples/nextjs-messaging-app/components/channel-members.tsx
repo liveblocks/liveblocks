@@ -41,7 +41,7 @@ export function ChannelMembers() {
           type="button"
           title="View members of this channel"
           aria-label="View members of this channel"
-          className="icon-grow flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
         >
           <UsersIcon className="size-4" aria-hidden />
           <span className="tabular-nums">{MEMBERS.length}</span>
