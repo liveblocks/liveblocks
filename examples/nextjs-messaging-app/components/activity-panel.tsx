@@ -3,11 +3,16 @@
 import { useFeedMessages } from "@liveblocks/react";
 import { useFeeds, useSelf, useStorage } from "@liveblocks/react/suspense";
 import clsx from "clsx";
-import { CheckCheckIcon, CheckIcon, LoaderCircle } from "lucide-react";
+import { CheckCheckIcon, CheckIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getUser } from "@/app/database";
-import { formatTime } from "@/components/message";
 import { ColumnHeader } from "@/components/column-header";
+import {
+  MessagePreview,
+  PreviewRow,
+  PreviewSkeleton,
+  UnreadDot,
+} from "@/components/preview-row";
 import {
   getActivityRootFeedId,
   isChatMessage,
@@ -19,7 +24,6 @@ import {
   type MessageHighlight,
   type Selection,
 } from "@/lib/conversations";
-import { Markdown } from "@/lib/markdown";
 import {
   useActivity,
   useDismissActivity,
@@ -215,114 +219,52 @@ function ActivityRow({
   ]);
 
   return (
-    <li
-      className={clsx(
-        "group relative",
-        active
-          ? "bg-neutral-100"
-          : unread
-            ? "bg-brand-50/60"
-            : undefined
-      )}
-    >
-      <button
-        type="button"
-        onClick={onOpen}
-        aria-current={active ? "true" : undefined}
-        className={clsx(
-          "flex w-full items-start gap-2.5 py-3 pl-3 pr-4 text-left transition",
-          active
-            ? "hover:bg-neutral-100"
-            : unread
-              ? "hover:bg-brand-50"
-              : "hover:bg-neutral-50"
-        )}
-      >
-        <span
-          className={clsx(
-            "mt-3.5 size-2 shrink-0 rounded-full",
-            unread ? "bg-brand-500" : "bg-transparent"
-          )}
-          aria-hidden
-        />
-        <span
-          className={clsx(
-            "mt-0.5 block size-9 min-h-9 min-w-9 overflow-hidden rounded-md bg-neutral-200",
-            !unread && "opacity-75"
-          )}
-        >
-          <img
-            src={from?.info.avatar}
-            alt=""
-            className="size-full object-cover"
-          />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-baseline gap-2 pr-8">
-            <span
-              className={clsx(
-                "min-w-0 truncate text-sm",
-                unread ? "text-neutral-700" : "text-neutral-500"
-              )}
-            >
-              <span
-                className={clsx(
-                  "font-semibold",
-                  unread ? "text-neutral-900" : "text-neutral-700"
-                )}
-              >
-                {from?.info.name ?? "Someone"}
-              </span>{" "}
-              {describeActivity(item, location)}
-            </span>
-            <time
-              className="shrink-0 text-xs text-neutral-500"
-              dateTime={new Date(item.createdAt).toISOString()}
-            >
-              {formatTime(item.createdAt)}
-            </time>
-          </span>
+    <PreviewRow
+      active={active}
+      unread={unread}
+      user={from}
+      title={
+        <span className="min-w-0 truncate">
           <span
             className={clsx(
-              "mt-0.5 block text-sm",
-              unread ? "text-neutral-800" : "text-neutral-600"
+              "font-semibold",
+              unread ? "text-neutral-900" : "text-neutral-700"
             )}
           >
-            {message ? (
-              message.data.streaming && !message.data.content ? (
-                <span className="flex items-center gap-2 text-neutral-500">
-                  <LoaderCircle className="size-4 animate-spin" />
-                  Thinking…
-                </span>
-              ) : (
-                <span className="line-clamp-3">
-                  <Markdown content={message.data.content} />
-                </span>
-              )
-            ) : error ? (
-              <span className="text-neutral-500">Message unavailable</span>
-            ) : exhausted ? (
-              <span className="text-neutral-500">
-                Message is further back in the history
-              </span>
-            ) : (
-              <span className="inline-block h-4 w-2/3 animate-pulse rounded bg-neutral-100" />
-            )}
-          </span>
+            {from?.info.name ?? "Someone"}
+          </span>{" "}
+          {describeActivity(item, location)}
         </span>
-      </button>
-      {unread ? (
-        <button
-          type="button"
-          onClick={onMarkRead}
-          className="absolute right-4 top-3 rounded-md p-1 text-neutral-400 opacity-0 transition hover:bg-neutral-100 hover:text-neutral-700 group-hover:opacity-100 focus:opacity-100"
-          aria-label="Mark as read"
-          title="Mark as read"
-        >
-          <CheckIcon className="size-4" />
-        </button>
-      ) : null}
-    </li>
+      }
+      time={item.createdAt}
+      indicator={<UnreadDot />}
+      actions={
+        unread ? (
+          <button
+            type="button"
+            onClick={onMarkRead}
+            className="flex size-5 items-center justify-center rounded-md text-neutral-400 transition hover:bg-neutral-200/70 hover:text-neutral-700"
+            aria-label="Mark as read"
+            title="Mark as read"
+          >
+            <CheckIcon className="size-4" />
+          </button>
+        ) : undefined
+      }
+      onOpen={onOpen}
+    >
+      {message ? (
+        <MessagePreview message={message} />
+      ) : error ? (
+        <span className="text-neutral-500">Message unavailable</span>
+      ) : exhausted ? (
+        <span className="text-neutral-500">
+          Message is further back in the history
+        </span>
+      ) : (
+        <PreviewSkeleton />
+      )}
+    </PreviewRow>
   );
 }
 

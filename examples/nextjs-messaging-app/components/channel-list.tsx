@@ -370,7 +370,7 @@ function SortableChannelItem({
               unreadCount > 0 && !active && "font-semibold text-neutral-900"
             )}
           >
-            <span className="mr-1.5 opacity-60">#</span>
+            <span className="mr-1.5 text-base leading-none opacity-60">#</span>
             {channel.name}
           </button>
         )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
+import clsx from "clsx";
 import type { ReactNode } from "react";
 import { ActivityPanel, type ActivityTarget } from "@/components/activity-panel";
 import { ChannelList } from "@/components/channel-list";
@@ -43,7 +44,12 @@ export function Sidebar({
             title={view === "dms" ? "Direct messages" : workspaceName}
           />
 
-          <div className="min-h-0 flex-1 overflow-y-auto pb-2">
+          <div
+            className={clsx(
+              "min-h-0 flex-1 overflow-y-auto",
+              view === "home" && "pb-2"
+            )}
+          >
             {view === "home" ? (
               <>
                 <SectionTitle>Channels</SectionTitle>
@@ -63,6 +69,7 @@ export function Sidebar({
               <DirectMessageList
                 activeUserId={activeDmUserId}
                 onSelectUser={(userId) => onSelect({ type: "dm", userId })}
+                variant={view === "dms" ? "detailed" : "compact"}
               />
             </ClientSideSuspense>
           </div>

@@ -243,6 +243,38 @@ function parseBlocks(content: string) {
   return blocks;
 }
 
+// Single-line-friendly rendering for previews: blocks are flattened into one
+// run of inline text, code blocks are shown as inline code, and colour and
+// weight are inherited from the parent so it can sit beside a prefix.
+export function InlineMarkdown({ content }: { content: string }) {
+  const blocks = parseBlocks(content);
+
+  return (
+    <span className="break-words">
+      {blocks.map((block, index) => {
+        const separator = index > 0 ? " " : null;
+        if (block.type === "code") {
+          return (
+            <span key={index}>
+              {separator}
+              <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[0.85em] text-neutral-800">
+                {block.text.trim().split("\n")[0]}
+              </code>
+            </span>
+          );
+        }
+
+        return (
+          <span key={index}>
+            {separator}
+            {parseInline(block.text.replace(/\s*\n\s*/g, " "), `i-${index}`)}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 export function Markdown({ content }: { content: string }) {
   const blocks = parseBlocks(content);
 
