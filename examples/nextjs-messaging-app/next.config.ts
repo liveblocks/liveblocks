@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(configDir, "../.."),
   },
+  // The e2e suite starts its own dev server beside the one you may already
+  // have running, so it needs a separate build directory.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  // In that server, the dev tools badge would sit over the rail's user menu
+  // and swallow clicks.
+  devIndicators: process.env.NEXT_DIST_DIR ? false : undefined,
 };
 
 export default nextConfig;

@@ -6,7 +6,11 @@ node_modules
 *.tsbuildinfo
 .vercel
 .next
+.next-e2e
 out
+# Playwright
+test-results
+playwright-report
 next-env.d.ts
 # Turborepo
 .turbo

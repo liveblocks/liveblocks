@@ -78,6 +78,36 @@ across both tabs.
 
 </details>
 
+### Running the tests
+
+<details><summary>Read more</summary>
+
+<p></p>
+
+The example ships with a layered test suite under `tests/`:
+
+- `tests/unit` — pure helpers in `lib/` (activity feeds, DM ids, markdown
+  serialisation, workspaces, …)
+- `tests/api` — the route handlers in `app/api/*` with `@liveblocks/node` mocked
+- `tests/components` — React components rendered against an in-memory mock of
+  `@liveblocks/react` (`tests/helpers/liveblocks-mock.tsx`)
+- `tests/e2e` — Playwright flows against the real app, backed by the local
+  Liveblocks dev server (multi-user: mentions, DMs, threads, badges, presence)
+
+```bash
+npm test                              # unit + api + component tests (vitest)
+npx playwright install chromium       # once
+npm run test:e2e                      # e2e against a local Liveblocks dev server
+npm run test:e2e:cloud                # e2e against the keys in .env.local
+```
+
+The e2e suite starts its own `next dev` on port 3111 (build output in
+`.next-e2e`, so it can run alongside your regular dev server). The AI tests in
+`tests/e2e/ai.spec.ts` need the real Liveblocks backend and are skipped on the
+local dev server; run them with `npm run test:e2e:cloud`.
+
+</details>
+
 ### Deploy on Vercel
 
 <details><summary>Read more</summary>
