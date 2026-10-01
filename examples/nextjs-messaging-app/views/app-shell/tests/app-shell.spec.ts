@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
-  AI_NAME,
+  AI_USER,
   CHARLIE,
   DEFAULT_CHANNELS,
   MISLAV,
@@ -74,12 +74,10 @@ test.describe("app shell", () => {
     ).toBeVisible();
     await expect(channelRow(page, "general")).toHaveCount(0);
     for (const user of USERS.filter((u) => u.id !== CHARLIE.id)) {
-      await expect(dmRow(page, user.name)).toBeVisible();
+      await expect(dmRow(page, user)).toBeVisible();
     }
-    await expect(dmRow(page, AI_NAME)).toBeVisible();
-    await expect(
-      sidebar(page).getByText("No messages yet").first()
-    ).toBeVisible();
+    await expect(dmRow(page, AI_USER)).toBeVisible();
+    await expect(sidebar(page).getByText("No messages yet")).not.toHaveCount(0);
 
     await openView(page, "Activity");
     await expect(
@@ -98,9 +96,9 @@ test.describe("app shell", () => {
     await expect(
       sidebar(page).getByText("Direct messages", { exact: true })
     ).toBeVisible();
-    await expect(dmRow(page, MISLAV.name)).toBeVisible();
-    await expect(dmRow(page, CHARLIE.name)).toHaveCount(0);
-    await expect(dmRow(page, AI_NAME)).toContainText("Agent");
+    await expect(dmRow(page, MISLAV)).toBeVisible();
+    await expect(dmRow(page, CHARLIE)).toHaveCount(0);
+    await expect(dmRow(page, AI_USER)).toContainText("Agent");
   });
 
   test("switches the signed-in user from the rail", async ({ page }) => {
@@ -118,8 +116,8 @@ test.describe("app shell", () => {
         name: `Signed in as ${MISLAV.name}. Switch user`,
       })
     ).toBeVisible();
-    await expect(dmRow(page, CHARLIE.name)).toBeVisible();
-    await expect(dmRow(page, MISLAV.name)).toHaveCount(0);
+    await expect(dmRow(page, CHARLIE)).toBeVisible();
+    await expect(dmRow(page, MISLAV)).toHaveCount(0);
   });
 
   test("sidebar and thread panel resize by dragging and remember their width", async ({
@@ -166,9 +164,9 @@ test.describe("app shell", () => {
     const exampleId = uniqueExampleId();
     await openApp(page, { exampleId, user: CHARLIE });
 
-    await openDm(page, MISLAV.name);
+    await openDm(page, MISLAV);
     await page.reload();
-    await expect(dmHeading(page, MISLAV.name)).toBeVisible({
+    await expect(dmHeading(page, MISLAV)).toBeVisible({
       timeout: 30_000,
     });
     await expect(channelHeading(page, "general")).toHaveCount(0);
@@ -197,21 +195,21 @@ test.describe("app shell", () => {
   }) => {
     const exampleId = uniqueExampleId();
     await openApp(page, { exampleId, user: CHARLIE });
-    await openDm(page, MISLAV.name);
+    await openDm(page, MISLAV);
 
     const second = await context.newPage();
     await second.goto(
       `/?${new URLSearchParams({ exampleId, examplePreview: String(CHARLIE.index) })}`
     );
-    await expect(dmHeading(second, MISLAV.name)).toBeVisible({
+    await expect(dmHeading(second, MISLAV)).toBeVisible({
       timeout: 30_000,
     });
 
     await selectChannel(second, "random");
-    await expect(dmHeading(page, MISLAV.name)).toBeVisible();
+    await expect(dmHeading(page, MISLAV)).toBeVisible();
 
     await page.reload();
-    await expect(dmHeading(page, MISLAV.name)).toBeVisible({
+    await expect(dmHeading(page, MISLAV)).toBeVisible({
       timeout: 30_000,
     });
     await expect(channelHeading(second, "random")).toBeVisible();

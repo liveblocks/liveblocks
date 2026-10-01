@@ -28,21 +28,21 @@ test.describe("direct messages", () => {
     const exampleId = uniqueExampleId();
     await openApp(page, { exampleId, user: CHARLIE });
 
-    await openDm(page, MISLAV.name);
+    await openDm(page, MISLAV);
     await expect(
       page.getByText(
         `This is the very beginning of your direct message history with ${MISLAV.name}`
       )
     ).toBeVisible();
-    await expect(dmHeaderStatus(page, MISLAV.name)).toContainText("Offline");
+    await expect(dmHeaderStatus(page, MISLAV)).toContainText("Offline");
 
     const other = await openAppAs(browser, { exampleId, user: MISLAV });
     try {
-      await expect(dmHeaderStatus(page, MISLAV.name)).toContainText("Online");
+      await expect(dmHeaderStatus(page, MISLAV)).toContainText("Online");
     } finally {
       await other.context.close();
     }
-    await expect(dmHeaderStatus(page, MISLAV.name)).toContainText("Offline");
+    await expect(dmHeaderStatus(page, MISLAV)).toContainText("Offline");
   });
 
   test("a DM is delivered to the other user with a badge and activity", async ({
@@ -55,16 +55,16 @@ test.describe("direct messages", () => {
     const text = uniqueText("dm");
 
     try {
-      await openDm(page, MISLAV.name);
+      await openDm(page, MISLAV);
       await sendMessage(page, text);
 
       await expectUnread(railItem(other.page, "DMs"), 1);
       await expectUnread(railItem(other.page, "Activity"), 1);
       await expectUnread(railItem(other.page, "Home"), 0);
-      await expectUnread(dmRow(other.page, CHARLIE.name), 1);
+      await expectUnread(dmRow(other.page, CHARLIE), 1);
 
       await openView(other.page, "DMs");
-      const detailedRow = dmRow(other.page, CHARLIE.name);
+      const detailedRow = dmRow(other.page, CHARLIE);
       await expect(detailedRow).toContainText(text);
 
       await openView(other.page, "Activity");
@@ -75,7 +75,7 @@ test.describe("direct messages", () => {
       await expect(item).toContainText(text);
 
       await item.click();
-      await expect(dmHeading(other.page, CHARLIE.name)).toBeVisible();
+      await expect(dmHeading(other.page, CHARLIE)).toBeVisible();
       await expect(messageByText(other.page, text)).toBeVisible();
       await expectUnread(railItem(other.page, "DMs"), 0);
       await expectUnread(railItem(other.page, "Activity"), 0);
@@ -101,12 +101,12 @@ test.describe("direct messages", () => {
     const text = uniqueText("secret");
 
     try {
-      await openDm(page, MISLAV.name);
+      await openDm(page, MISLAV);
       await sendMessage(page, text);
 
-      await openDm(bystander.page, CHARLIE.name);
+      await openDm(bystander.page, CHARLIE);
       await expect(messageByText(bystander.page, text)).toHaveCount(0);
-      await openDm(bystander.page, MISLAV.name);
+      await openDm(bystander.page, MISLAV);
       await expect(messageByText(bystander.page, text)).toHaveCount(0);
       await expectUnread(railItem(bystander.page, "DMs"), 0);
     } finally {
@@ -120,15 +120,13 @@ test.describe("direct messages", () => {
     await openApp(page, { exampleId: uniqueExampleId(), user: CHARLIE });
     const text = uniqueText("preview");
 
-    await openDm(page, MISLAV.name);
+    await openDm(page, MISLAV);
     await sendMessage(page, text);
 
     await openView(page, "DMs");
-    const row = dmRow(page, MISLAV.name);
+    const row = dmRow(page, MISLAV);
     await expect(row).toContainText(`You: ${text}`);
     await expect(row).toHaveAttribute("aria-current", "true");
-    await expect(
-      sidebar(page).getByText("No messages yet").first()
-    ).toBeVisible();
+    await expect(sidebar(page).getByText("No messages yet")).not.toHaveCount(0);
   });
 });

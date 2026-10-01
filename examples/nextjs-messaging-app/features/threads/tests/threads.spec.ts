@@ -3,6 +3,7 @@ import {
   CHARLIE,
   MISLAV,
   TATUM,
+  activeRowButton,
   activityRows,
   expectHighlighted,
   expectUnread,
@@ -98,10 +99,7 @@ test.describe("threads", () => {
       await item.click();
       await expect(threadPanel(page)).toBeVisible();
       await expectHighlighted(messageByText(page, reply, threadPanel(page)));
-      await expect(item.getByRole("button").first()).toHaveAttribute(
-        "aria-current",
-        "true"
-      );
+      await expect(activeRowButton(item)).toBeVisible();
     } finally {
       await other.context.close();
       await bystander.context.close();

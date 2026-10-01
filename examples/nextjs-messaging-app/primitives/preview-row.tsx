@@ -17,6 +17,7 @@ export function PreviewRow({
   time,
   indicator,
   actions,
+  dataAttributes,
   onOpen,
   children,
 }: {
@@ -28,11 +29,13 @@ export function PreviewRow({
   time?: number;
   indicator?: ReactNode;
   actions?: ReactNode;
+  dataAttributes?: Record<`data-${string}`, string>;
   onOpen: () => void;
   children: ReactNode;
 }) {
   return (
     <li
+      {...dataAttributes}
       className={clsx(
         "group relative",
         active ? "bg-neutral-100" : unread ? "bg-brand-50/60" : undefined

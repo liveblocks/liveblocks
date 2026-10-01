@@ -241,6 +241,46 @@ or `curl` the API routes while developing.
 - The e2e suite starts `next dev` on port 3111 with `NEXT_DIST_DIR=.next-e2e` so
   it can run next to a dev server you already have on 3000.
 
+### Locating elements in e2e specs
+
+Follow Playwright's locator priority, and never pick an element by its position
+in the DOM.
+
+1. **Role and accessible name first.**
+   `getByRole("button", { name: "#general", exact: true })`,
+   `getByRole("heading", { name, level: 2 })`, `getByLabel("3 unread")`. This is
+   what keeps the tests asserting that the UI is accessible; a row that stops
+   being a button, or a heading that loses its level, must fail the test.
+2. **Scope by landmark, not by order.** Regions that appear more than once get
+   an `aria-label` and are selected by name:
+   `getByRole("complementary", { name: "Sidebar" })`,
+   `getByRole("complementary", { name: "Thread" })`,
+   `getByRole("region", { name: "Conversation" })`. The helpers `sidebar()`,
+   `threadPanel()` and `conversation()` wrap these; `composer()` and
+   `messageByText()` default to the conversation region so the thread panel's
+   copies never collide with them.
+3. **Rows in repeating lists carry a domain id.** When a row's accessible name
+   is not unique (DM rows include the latest message preview, which can mention
+   any user), the `<li>` gets a `data-*` attribute with the id the UI already
+   has: `data-user-id` on DM rows, `data-message-id` on messages. Helpers take
+   the object, not the display name (`dmRow(page, MISLAV)`, not
+   `dmRow(page, "Mislav Abha")`). Prefer a domain id over `data-testid`; the
+   attribute is part of the DOM contract, not a test hook, and reads the same in
+   DevTools.
+4. **Unique test data over filters.** Message text in specs comes from
+   `uniqueText()`, so `messageByText()` matches exactly one element. Do not
+   filter on a substring that another message could contain.
+5. **`.first()`, `.last()` and `.nth()` are not disambiguators.** They hide
+   strict-mode failures and make a test pass by accident of ordering. The one
+   accepted use is when order _is_ the behaviour under test
+   (`activityRows(page).first()` means "the newest item" because the Activity
+   panel sorts newest first). If a locator matches more than one element, fix
+   the locator with a name, a scope or a domain id instead.
+
+Adding a new list? Give its rows a `data-<entity>-id`, add a helper to
+`tests/helpers/e2e.ts` that takes the entity object, and keep role queries for
+everything inside the row.
+
 ## Adding or changing a feature
 
 1. Read the feature's `FEATURE.md` and `index.ts`.
@@ -318,7 +358,8 @@ Explanations that used to live in code comments.
   the state. Mutation hooks both record calls and apply them to the state.
 - **`tests/helpers/e2e.ts`** opens the app as a given demo user inside an
   isolated set of rooms (`exampleId` suffix) and exposes locators for the
-  composer, channel headings, messages, rail tabs and so on.
+  composer, channel headings, messages, rail tabs and so on. Locator rules are
+  in [Locating elements in e2e specs](#locating-elements-in-e2e-specs).
 - **`liveblocks.config.ts`** declares `Presence` (`typingIn`), `Storage`
   (`channels: LiveList<LiveObject<Channel>>`), `UserMeta`, `FeedMetadata` and
   `FeedMessageData` globally. Chat messages have no `kind`; activity items have

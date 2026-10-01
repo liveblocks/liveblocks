@@ -49,6 +49,28 @@ describe("PreviewRow", () => {
     expect(document.querySelector("time")).toBeInTheDocument();
   });
 
+  it("puts data attributes on the list item so rows can be found by id", () => {
+    const user = getUser("charlie.layne@example.com");
+    if (!user) throw new Error("expected fixture user");
+
+    render(
+      <PreviewRow
+        active={false}
+        unread={false}
+        user={user}
+        title="Charlie Layne"
+        dataAttributes={{ "data-user-id": user.id }}
+        onOpen={vi.fn()}
+      >
+        Latest message
+      </PreviewRow>
+    );
+
+    const row = screen.getByRole("listitem");
+    expect(row).toHaveAttribute("data-user-id", user.id);
+    expect(row.querySelector("button")).not.toHaveAttribute("data-user-id");
+  });
+
   it("calls onOpen when clicked", async () => {
     const user = getUser("charlie.layne@example.com");
     if (!user) throw new Error("expected fixture user");

@@ -1,7 +1,7 @@
 {
   "vitest": {
     "files": 33,
-    "tests": 191
+    "tests": 192
   },
   "playwright": {
     "files": 7,

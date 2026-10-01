@@ -81,7 +81,10 @@ export function ConversationView({
 
   return (
     <div className="flex h-full min-h-0">
-      <div className="flex min-w-0 flex-1 flex-col">
+      <section
+        aria-label="Conversation"
+        className="flex min-w-0 flex-1 flex-col"
+      >
         <header className="flex shrink-0 items-center gap-3 border-b border-neutral-200 px-4 py-3">
           {conversation.type === "channel" ? (
             <div className="min-w-0">
@@ -118,7 +121,7 @@ export function ConversationView({
             onOpenThread={isAiDm ? undefined : onOpenThread}
           />
         </ClientSideSuspense>
-      </div>
+      </section>
 
       {openThreadMessageId ? (
         <ClientSideSuspense fallback={null}>

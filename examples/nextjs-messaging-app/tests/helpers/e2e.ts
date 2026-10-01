@@ -16,7 +16,10 @@ export const USERS = [
 export type DemoUser = (typeof USERS)[number];
 export const [CHARLIE, MISLAV, TATUM] = USERS;
 
-export const AI_NAME = "Liveblocks AI";
+export const AI_USER = { id: "ai-assistant", name: "Liveblocks AI" } as const;
+export const AI_NAME = AI_USER.name;
+
+export type DmTarget = Pick<DemoUser | typeof AI_USER, "id" | "name">;
 export const DEFAULT_CHANNELS = [
   "general",
   "random",
@@ -71,51 +74,65 @@ export function railItem(page: Page, label: "Home" | "DMs" | "Activity") {
 }
 
 export function sidebar(page: Page) {
-  return page.getByRole("complementary").first();
+  return page.getByRole("complementary", { name: "Sidebar" });
+}
+
+export function conversation(page: Page) {
+  return page.getByRole("region", { name: "Conversation" });
+}
+
+export function threadPanel(page: Page) {
+  return page.getByRole("complementary", { name: "Thread" });
 }
 
 export function channelHeading(page: Page, name: string) {
-  return page.getByRole("heading", { name: `#${name}`, exact: true });
+  return conversation(page).getByRole("heading", {
+    name: `#${name}`,
+    exact: true,
+    level: 2,
+  });
 }
 
-export function dmHeading(page: Page, userName: string) {
-  return page.getByRole("heading", { name: userName, exact: true }).first();
+export function dmHeading(page: Page, user: DmTarget) {
+  return conversation(page).getByRole("heading", {
+    name: user.name,
+    exact: true,
+    level: 2,
+  });
 }
 
-export function dmHeaderStatus(page: Page, userName: string) {
-  return dmHeading(page, userName).locator("..");
+export function dmHeaderStatus(page: Page, user: DmTarget) {
+  return dmHeading(page, user).locator("..");
 }
 
 export function channelRow(page: Page, name: string) {
   return sidebar(page).getByRole("button", { name: `#${name}`, exact: true });
 }
 
-export function dmRow(page: Page, userName: string) {
+export function dmRow(page: Page, user: DmTarget) {
   return sidebar(page)
-    .getByRole("button", { name: new RegExp(userName) })
-    .first();
+    .locator(`[data-user-id="${user.id}"]`)
+    .getByRole("button");
 }
 
-export function composer(page: Page, scope: Locator | Page = page) {
-  return scope.locator(".composer-editor[contenteditable='true']").last();
-}
-
-export function threadPanel(page: Page) {
-  return page.getByRole("complementary").filter({
-    has: page.getByRole("heading", { name: "Thread", exact: true }),
-  });
+export function composer(page: Page, scope: Locator = conversation(page)) {
+  return scope.locator(".composer-editor[contenteditable='true']");
 }
 
 export function messageByText(
   page: Page,
   text: string,
-  scope: Locator | Page = page
+  scope: Locator = conversation(page)
 ) {
-  return scope.locator("[data-message-id]").filter({ hasText: text }).first();
+  return scope.locator("[data-message-id]").filter({ hasText: text });
 }
 
 export function activityRows(page: Page) {
   return sidebar(page).getByRole("listitem");
+}
+
+export function activeRowButton(row: Locator) {
+  return row.locator("button[aria-current='true']");
 }
 
 export async function openView(page: Page, label: "Home" | "DMs" | "Activity") {
@@ -129,16 +146,16 @@ export async function selectChannel(page: Page, name: string) {
   await expect(channelHeading(page, name)).toBeVisible();
 }
 
-export async function openDm(page: Page, userName: string) {
+export async function openDm(page: Page, user: DmTarget) {
   await openView(page, "Home");
-  await dmRow(page, userName).click();
-  await expect(dmHeading(page, userName)).toBeVisible();
+  await dmRow(page, user).click();
+  await expect(dmHeading(page, user)).toBeVisible();
 }
 
 export async function sendMessage(
   page: Page,
   text: string,
-  scope: Locator | Page = page
+  scope: Locator = conversation(page)
 ) {
   const editor = composer(page, scope);
   await editor.click();
@@ -154,7 +171,7 @@ export async function sendMessageWithMention(
     mention,
     after = "",
   }: { before?: string; mention: string; after?: string },
-  scope: Locator | Page = page
+  scope: Locator = conversation(page)
 ) {
   const editor = composer(page, scope);
   await editor.click();
@@ -188,15 +205,6 @@ export async function openThreadFor(page: Page, messageText: string) {
     ).toBeVisible();
   }
   return panel;
-}
-
-export async function unreadCount(locator: Locator) {
-  const badge = locator.getByLabel(/unread$/);
-  if ((await badge.count()) === 0) {
-    return 0;
-  }
-  const text = (await badge.first().textContent()) ?? "0";
-  return Number.parseInt(text, 10);
 }
 
 export async function expectUnread(locator: Locator, count: number) {

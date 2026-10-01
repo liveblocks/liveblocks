@@ -79,7 +79,7 @@ export function DirectMessageList({
   return (
     <ul className="space-y-0.5 px-2 pb-2">
       {users.map(({ user, isAgent, isOnline, active, unreadCount }) => (
-        <li key={user.id}>
+        <li key={user.id} data-user-id={user.id}>
           <button
             type="button"
             onClick={() => onSelectUser(user.id)}
@@ -154,6 +154,7 @@ function DetailedList({
             user={entry.user}
             online={entry.isOnline}
             title={<DmTitle entry={entry} />}
+            dataAttributes={{ "data-user-id": entry.user.id }}
             onOpen={() => onSelectUser(entry.user.id)}
           >
             <span className="text-neutral-500">No messages yet</span>
@@ -214,6 +215,7 @@ function DetailedRow({
       title={<DmTitle entry={entry} />}
       time={latest?.createdAt}
       indicator={<UnreadBadge count={entry.unreadCount} color="brand" />}
+      dataAttributes={{ "data-user-id": entry.user.id }}
       onOpen={onOpen}
     >
       {latest ? (

@@ -34,6 +34,7 @@ export function Sidebar({
 
   return (
     <aside
+      aria-label="Sidebar"
       className="relative flex shrink-0 flex-col bg-white text-neutral-900"
       style={{ width }}
     >

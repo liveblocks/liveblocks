@@ -76,6 +76,7 @@ export function ThreadPanel({
 
   return (
     <aside
+      aria-label="Thread"
       className="fixed inset-y-0 right-0 z-20 flex max-w-[420px] flex-col bg-white shadow-xl max-md:w-full! md:relative md:z-auto md:max-w-none md:shrink-0 md:border-l md:border-neutral-200 md:shadow-none"
       style={{ width }}
     >

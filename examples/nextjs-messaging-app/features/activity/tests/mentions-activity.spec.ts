@@ -3,6 +3,7 @@ import {
   CHARLIE,
   MISLAV,
   TATUM,
+  activeRowButton,
   activityRows,
   channelHeading,
   channelRow,
@@ -76,10 +77,7 @@ test.describe("mentions and activity", () => {
       await expectHighlighted(messageByText(other.page, tail));
       await expectUnread(railItem(other.page, "Home"), 0);
       await expectUnread(railItem(other.page, "Activity"), 0);
-      await expect(item.getByRole("button").first()).toHaveAttribute(
-        "aria-current",
-        "true"
-      );
+      await expect(activeRowButton(item)).toBeVisible();
 
       await selectChannel(other.page, "random");
       await expect(messageByText(other.page, tail)).not.toHaveClass(
@@ -193,9 +191,13 @@ test.describe("mentions and activity", () => {
   test("you are not notified about your own mentions", async ({ page }) => {
     await openApp(page, { exampleId: uniqueExampleId(), user: CHARLIE });
 
-    await sendMessageWithMention(page, { mention: "Charlie", after: " me" });
+    const tail = uniqueText("self");
+    await sendMessageWithMention(page, {
+      mention: "Charlie",
+      after: ` ${tail}`,
+    });
 
-    await expect(messageByText(page, "me")).toContainText(`@${CHARLIE.name}`);
+    await expect(messageByText(page, tail)).toContainText(`@${CHARLIE.name}`);
     await expectUnread(railItem(page, "Activity"), 0);
     await openView(page, "Activity");
     await expect(sidebar(page).getByText("Nothing here yet")).toBeVisible();

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   AI_NAME,
+  AI_USER,
   CHARLIE,
   IS_LOCAL_BACKEND,
   dmHeaderStatus,
@@ -24,8 +25,8 @@ test.describe("AI teammate", () => {
     await openApp(page, { exampleId: uniqueExampleId(), user: CHARLIE });
     const text = uniqueText("question");
 
-    await openDm(page, AI_NAME);
-    await expect(dmHeaderStatus(page, AI_NAME)).toContainText("Agent");
+    await openDm(page, AI_USER);
+    await expect(dmHeaderStatus(page, AI_USER)).toContainText("Agent");
     await sendMessage(page, text);
 
     const reply = page
