@@ -294,7 +294,7 @@ function MessagingShell({
             onActivityNavigate={handleActivityNavigate}
           />
 
-          <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-white shadow-[-12px_0_28px_-6px_rgba(0,0,0,0.14)]">
+          <div className="relative flex min-w-0 flex-1 flex-col bg-white shadow-[-12px_0_28px_-6px_rgba(0,0,0,0.14)]">
             <ClientSideSuspense fallback={null}>
               {conversation ? (
                 <Chat

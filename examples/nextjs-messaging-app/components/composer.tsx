@@ -184,6 +184,7 @@ export function Composer({
                   props,
                   editor: props.editor,
                 });
+                component.element.style.zIndex = "50";
                 unmount = props.mount(component.element);
               },
               onUpdate: (props) => {
@@ -340,8 +341,6 @@ export function ConversationComposer({
   const createFeed = useCreateFeed();
   const createFeedMessage = useCreateFeedMessage();
   const { feedId } = conversation;
-  // In a DM with the AI teammate, every message gets an inline reply.
-  // Everywhere else, @mentioning the AI opens a thread and it replies there.
   const isAiDm =
     conversation.type === "dm" && conversation.user.id === AI_USER_ID;
   const notifyActivity = useNotifyActivity();
