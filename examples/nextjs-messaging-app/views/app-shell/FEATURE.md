@@ -25,10 +25,26 @@ sidebar and conversation sit on a white card.
   `liveblocks-messaging-app:thread-panel-width`) and are clamped on reload if
   out of range.
 
+## Remembered view
+
+- The active rail tab, the open channel or DM, and the open thread are saved per
+  room as you navigate (`liveblocks-messaging-app:view:<roomId>`), so reopening
+  or reloading the app shows what you were last looking at.
+- The state is written to both `sessionStorage` and `localStorage`. On load the
+  tab's own `sessionStorage` wins, so reloading a tab restores _that_ tab's
+  view; a brand-new tab falls back to `localStorage`, i.e. the last view used
+  anywhere.
+- Tabs never react to each other's navigation: nothing listens for storage
+  changes, so two open tabs can show different conversations without
+  interfering.
+- Transient state (jump-to highlight, active activity row) is not remembered.
+
 ## Default selection and fallbacks
 
-- On first load of a workspace the first channel (`#general` by default) is
-  opened.
+- On first load of a workspace, with nothing remembered, the first channel
+  (`#general` by default) is opened.
+- A remembered thread whose root message is no longer in the channel closes
+  itself.
 - If the selected channel is deleted, or the selected DM user no longer exists,
   the app falls back to the first channel.
 - If every channel has been deleted the conversation area shows "Create a

@@ -152,6 +152,7 @@ it. Until then it stays in the feature.
 | `lib/channels.ts`                         | `Channel` (the shape stored in Storage's `channels` list)                                                                                                                                 |
 | `lib/navigation.ts`                       | `Selection`, `Conversation`, `MessageHighlight`, `SidebarTab`                                                                                                                             |
 | `lib/panel-width.ts`                      | Resizable panel widths: `SIDEBAR_PANEL`, `THREAD_PANEL` configs, `clampPanelWidth`, `readPanelWidth`/`writePanelWidth` (localStorage), `usePanelWidth` hook                               |
+| `lib/view-state.ts`                       | Remembered view per room: `ViewState`, `parseViewState`, `readViewState`/`writeViewState` (sessionStorage first, then localStorage)                                                       |
 | `lib/time.ts`                             | `formatTime`, `formatDayLabel`                                                                                                                                                            |
 | `lib/example.ts`, `lib/example.client.ts` | Gallery integration (`exampleId`, `examplePreview`)                                                                                                                                       |
 

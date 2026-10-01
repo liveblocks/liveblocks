@@ -7,14 +7,18 @@ import {
   USERS,
   channelHeading,
   channelRow,
+  dmHeading,
   dmRow,
   openApp,
+  openDm,
   openThreadFor,
   openView,
   rail,
   railItem,
+  selectChannel,
   sendMessage,
   sidebar,
+  threadPanel,
   uniqueExampleId,
   uniqueText,
 } from "@/tests/helpers/e2e";
@@ -154,6 +158,64 @@ test.describe("app shell", () => {
     await expect
       .poll(async () => (await sidebar(page).boundingBox())?.width)
       .toBe(360);
+  });
+
+  test("reopens the same DM, thread and rail tab after a reload", async ({
+    page,
+  }) => {
+    const exampleId = uniqueExampleId();
+    await openApp(page, { exampleId, user: CHARLIE });
+
+    await openDm(page, MISLAV.name);
+    await page.reload();
+    await expect(dmHeading(page, MISLAV.name)).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(channelHeading(page, "general")).toHaveCount(0);
+
+    await selectChannel(page, "random");
+    const text = uniqueText("remember this thread");
+    await sendMessage(page, text);
+    await openThreadFor(page, text);
+    await openView(page, "Activity");
+
+    await page.reload();
+    await expect(channelHeading(page, "random")).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(threadPanel(page)).toBeVisible();
+    await expect(threadPanel(page).getByText(text)).toBeVisible();
+    await expect(railItem(page, "Activity")).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  test("a second tab starts from the last view but never changes the first tab", async ({
+    page,
+    context,
+  }) => {
+    const exampleId = uniqueExampleId();
+    await openApp(page, { exampleId, user: CHARLIE });
+    await openDm(page, MISLAV.name);
+
+    const second = await context.newPage();
+    await second.goto(
+      `/?${new URLSearchParams({ exampleId, examplePreview: String(CHARLIE.index) })}`
+    );
+    await expect(dmHeading(second, MISLAV.name)).toBeVisible({
+      timeout: 30_000,
+    });
+
+    await selectChannel(second, "random");
+    await expect(dmHeading(page, MISLAV.name)).toBeVisible();
+
+    await page.reload();
+    await expect(dmHeading(page, MISLAV.name)).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(channelHeading(second, "random")).toBeVisible();
+    await second.close();
   });
 
   test("switches workspace from the rail", async ({ page }) => {

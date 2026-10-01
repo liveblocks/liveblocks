@@ -84,6 +84,7 @@ string), and `participantIds`.
 | Mention tokens                     | `lib/mentions.ts`                         |
 | Navigation types (selection, tabs) | `lib/navigation.ts`                       |
 | Panel widths (resize, persistence) | `lib/panel-width.ts`                      |
+| Remembered view (tab, DM, thread)  | `lib/view-state.ts`                       |
 | `Channel` type                     | `lib/channels.ts`                         |
 | Gallery integration                | `lib/example.ts`, `lib/example.client.ts` |
 | Liveblocks types                   | `liveblocks.config.ts`                    |

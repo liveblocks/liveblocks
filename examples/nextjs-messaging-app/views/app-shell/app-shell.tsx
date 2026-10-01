@@ -4,6 +4,7 @@ import {
   ClientSideSuspense,
   LiveblocksProvider,
   RoomProvider,
+  useRoom,
   useStorage,
 } from "@liveblocks/react/suspense";
 import { Loader2Icon } from "lucide-react";
@@ -20,6 +21,7 @@ import type {
   Selection,
   SidebarTab,
 } from "@/lib/navigation";
+import { readViewState, writeViewState } from "@/lib/view-state";
 import { ConversationView } from "@/views/conversation";
 import { Rail } from "@/views/rail";
 import { Sidebar } from "@/views/sidebar";
@@ -163,15 +165,27 @@ function MessagingShell({
   onWorkspaceChange: (workspaceId: string) => void;
 }) {
   const channels = useStorage((root) => root.channels);
-  const [selection, setSelection] = useState<Selection | null>(null);
-  const [openThreadMessageId, setOpenThreadMessageId] = useState<string | null>(
-    null
+  const room = useRoom();
+  const [initialViewState] = useState(() => readViewState(room.id));
+  const [selection, setSelection] = useState<Selection | null>(
+    initialViewState.selection
   );
-  const [view, setView] = useState<SidebarTab>("home");
+  const [openThreadMessageId, setOpenThreadMessageId] = useState<string | null>(
+    initialViewState.threadMessageId
+  );
+  const [view, setView] = useState<SidebarTab>(initialViewState.view);
   const [activeActivityItemId, setActiveActivityItemId] = useState<
     string | null
   >(null);
   const [highlight, setHighlight] = useState<MessageHighlight | null>(null);
+
+  useEffect(() => {
+    writeViewState(room.id, {
+      view,
+      selection,
+      threadMessageId: openThreadMessageId,
+    });
+  }, [openThreadMessageId, room.id, selection, view]);
 
   const handleSelect = useCallback((nextSelection: Selection) => {
     setSelection(nextSelection);
