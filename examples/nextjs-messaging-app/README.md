@@ -33,8 +33,12 @@ composer, and mentioning the AI teammate streams a reply into a thread by
 updating a feed message with
 [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
 and the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway). DM the AI
-directly and it replies inline. The login is fake: pick any demo user from the
-dropdown, and your last choice is remembered in `localStorage`.
+directly and it replies inline. Each user also has a personal activity feed:
+DMs, @mentions, and replies in threads they're part of are written there as
+references to the original message and stamped as read once seen, which powers
+the Activity view and the unread badges in the sidebar. The login is fake: pick
+any demo user from the dropdown, and your last choice is remembered in
+`localStorage`.
 
 ## Getting started
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useFeedMessages, useFeeds } from "@liveblocks/react/suspense";
 import {
   buildMessageListItems,
@@ -8,18 +8,26 @@ import {
   Message,
 } from "@/components/message";
 import { AI_USER_ID } from "@/app/database";
+import { isChatMessage } from "@/lib/activity";
 import type { Conversation } from "@/lib/conversations";
 import type { ThreadFeed } from "@/lib/threads";
 
+// How many extra pages to load while looking for a highlighted message
+const MAX_EXTRA_PAGES = 4;
+
 export function MessageList({
   conversation,
+  highlightedMessageId = null,
   onOpenThread,
 }: {
   conversation: Conversation;
+  highlightedMessageId?: string | null;
   onOpenThread?: (messageId: string) => void;
 }) {
   const channelId = conversation.feedId;
-  const { messages, hasFetchedAll } = useFeedMessages(channelId);
+  const { messages, hasFetchedAll, fetchMore, isFetchingMore } =
+    useFeedMessages(channelId);
+  const [extraPages, setExtraPages] = useState(0);
   const { feeds } = useFeeds({
     metadata: { type: "thread", channelId },
   });
@@ -35,7 +43,7 @@ export function MessageList({
   }
 
   const items = useMemo(
-    () => buildMessageListItems(messages ?? []),
+    () => buildMessageListItems(messages.filter(isChatMessage)),
     [messages]
   );
   const threadsByParentMessageId = useMemo(() => {
@@ -72,6 +80,48 @@ export function MessageList({
     const frame = requestAnimationFrame(pinToBottom);
     return () => cancelAnimationFrame(frame);
   }, [channelId, items, hasFetchedAll, threadsByParentMessageId]);
+
+  // Jumping to a message (from Activity) wins over sticking to the bottom.
+  // If it isn't loaded yet, page back through the history to find it.
+  const highlightedLoaded =
+    highlightedMessageId !== null &&
+    items.some(
+      (item) => item.type === "message" && item.message.id === highlightedMessageId
+    );
+
+  useLayoutEffect(() => {
+    if (!highlightedLoaded || !highlightedMessageId) {
+      return;
+    }
+    const element = containerRef.current?.querySelector(
+      `[data-message-id="${CSS.escape(highlightedMessageId)}"]`
+    );
+    if (element) {
+      stickToBottomRef.current = false;
+      element.scrollIntoView({ block: "center" });
+    }
+  }, [highlightedLoaded, highlightedMessageId]);
+
+  useEffect(() => {
+    if (
+      highlightedMessageId === null ||
+      highlightedLoaded ||
+      hasFetchedAll ||
+      isFetchingMore ||
+      extraPages >= MAX_EXTRA_PAGES
+    ) {
+      return;
+    }
+    setExtraPages((pages) => pages + 1);
+    fetchMore();
+  }, [
+    extraPages,
+    fetchMore,
+    hasFetchedAll,
+    highlightedLoaded,
+    highlightedMessageId,
+    isFetchingMore,
+  ]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -126,6 +176,7 @@ export function MessageList({
               feedId={channelId}
               showHeader={item.showHeader}
               threadFeed={threadsByParentMessageId.get(item.message.id)}
+              highlighted={item.message.id === highlightedMessageId}
               onOpenThread={
                 onOpenThread ? () => onOpenThread(item.message.id) : undefined
               }

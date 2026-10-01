@@ -11,11 +11,13 @@ import { Loader2Icon } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getUser, getUsers } from "@/app/database";
+import { ActivityPanel, type ActivityTarget } from "@/components/activity-panel";
 import { Chat } from "@/components/chat";
 import { Sidebar } from "@/components/sidebar";
 import {
   getDmFeedId,
   type Conversation,
+  type MessageHighlight,
   type Selection,
 } from "@/lib/conversations";
 import { useExamplePreviewIndex, useExampleRoomId } from "@/lib/example.client";
@@ -171,6 +173,37 @@ function MessagingShell({
 }) {
   const channels = useStorage((root) => root.channels);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [openThreadMessageId, setOpenThreadMessageId] = useState<
+    string | null
+  >(null);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [activeActivityItemId, setActiveActivityItemId] = useState<
+    string | null
+  >(null);
+  const [highlight, setHighlight] = useState<MessageHighlight | null>(null);
+
+  const handleSelect = useCallback((nextSelection: Selection) => {
+    setSelection(nextSelection);
+    setOpenThreadMessageId(null);
+    setHighlight(null);
+    setActiveActivityItemId(null);
+  }, []);
+
+  // Jumping to an activity item lands in a conversation, opens its thread if
+  // there is one, and highlights the message it points at.
+  const handleActivityNavigate = useCallback((target: ActivityTarget) => {
+    setSelection(target.selection);
+    setOpenThreadMessageId(target.threadMessageId);
+    setHighlight(target.highlight);
+    setActiveActivityItemId(target.itemId);
+  }, []);
+
+  const handleOpenThread = useCallback((messageId: string | null) => {
+    setOpenThreadMessageId(messageId);
+    // Opening or closing a thread by hand is a fresh start.
+    setHighlight(null);
+    setActiveActivityItemId(null);
+  }, []);
 
   // Resolve the sidebar selection into something renderable, falling back to
   // the first channel when the selected channel or user no longer exists.
@@ -244,22 +277,46 @@ function MessagingShell({
               ? { type: "channel", channelId: conversation.channel.id }
               : null
         }
-        onSelect={setSelection}
+        activityOpen={activityOpen}
+        onSelect={handleSelect}
+        onToggleActivity={() => setActivityOpen((open) => !open)}
         onUserChange={onUserChange}
         onWorkspaceChange={onWorkspaceChange}
       />
 
       <main className="flex min-w-0 flex-1 flex-col bg-sidebar p-1 pl-0">
-        <div className="flex min-w-0 flex-1 flex-col bg-white rounded-sm overflow-hidden">
-          <ClientSideSuspense fallback={null}>
-            {conversation ? (
-              <Chat key={conversation.feedId} conversation={conversation} />
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-                Create a channel to start messaging
-              </div>
-            )}
-          </ClientSideSuspense>
+        <div className="flex min-w-0 flex-1 bg-white rounded-sm overflow-hidden">
+          {activityOpen ? (
+            <ClientSideSuspense
+              fallback={
+                <div className="w-[360px] shrink-0 border-r border-neutral-200" />
+              }
+            >
+              <ActivityPanel
+                activeItemId={activeActivityItemId}
+                onNavigate={handleActivityNavigate}
+                onClose={() => setActivityOpen(false)}
+              />
+            </ClientSideSuspense>
+          ) : null}
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            <ClientSideSuspense fallback={null}>
+              {conversation ? (
+                <Chat
+                  key={conversation.feedId}
+                  conversation={conversation}
+                  openThreadMessageId={openThreadMessageId}
+                  highlight={highlight}
+                  onOpenThread={handleOpenThread}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+                  Create a channel to start messaging
+                </div>
+              )}
+            </ClientSideSuspense>
+          </div>
         </div>
       </main>
     </div>

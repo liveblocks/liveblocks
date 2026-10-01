@@ -4,6 +4,10 @@ import { useOthersMapped, useSelf } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { useMemo } from "react";
 import { AI_USER, AI_USER_ID, getUsers } from "@/app/database";
+import { UnreadBadge } from "@/components/unread-badge";
+import { getActivityRootFeedId } from "@/lib/activity";
+import { getDmFeedId } from "@/lib/conversations";
+import { useUnreadActivity } from "@/lib/use-activity";
 
 export function DirectMessageList({
   activeUserId,
@@ -15,6 +19,16 @@ export function DirectMessageList({
   const selfId = useSelf((me) => me.id);
   const otherIds = useOthersMapped((other) => other.id);
   const onlineIds = useMemo(() => new Set(otherIds.map(([, id]) => id)), [otherIds]);
+  const unreadActivity = useUnreadActivity();
+  // Everything that happened in a DM counts towards its badge.
+  const unreadCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of unreadActivity) {
+      const rootFeedId = getActivityRootFeedId(item);
+      counts.set(rootFeedId, (counts.get(rootFeedId) ?? 0) + 1);
+    }
+    return counts;
+  }, [unreadActivity]);
 
   // Every other demo user, plus the AI teammate, can be messaged directly.
   const users = useMemo(
@@ -28,6 +42,7 @@ export function DirectMessageList({
         const isAgent = user.id === AI_USER_ID;
         const isOnline = isAgent || onlineIds.has(user.id);
         const active = user.id === activeUserId;
+        const unreadCount = unreadCounts.get(getDmFeedId(selfId, user.id)) ?? 0;
 
         return (
           <li key={user.id}>
@@ -55,7 +70,15 @@ export function DirectMessageList({
                   aria-label={isOnline ? "Online" : "Offline"}
                 />
               </span>
-              <span className="min-w-0 flex-1 truncate">{user.info.name}</span>
+              <span
+                className={clsx(
+                  "min-w-0 flex-1 truncate",
+                  unreadCount > 0 && "font-semibold text-white"
+                )}
+              >
+                {user.info.name}
+              </span>
+              <UnreadBadge count={unreadCount} />
               {isAgent ? (
                 <span className="shrink-0 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                   Agent

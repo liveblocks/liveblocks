@@ -7,6 +7,12 @@ export type Selection =
   | { type: "channel"; channelId: string }
   | { type: "dm"; userId: string };
 
+// A message to draw attention to, e.g. after jumping to it from Activity
+export type MessageHighlight = {
+  feedId: string;
+  messageId: string;
+};
+
 // A resolved selection, ready to render. `feedId` is the id of the feed
 // holding the conversation's messages.
 export type Conversation =

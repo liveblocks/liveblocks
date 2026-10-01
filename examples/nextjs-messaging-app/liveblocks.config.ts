@@ -26,24 +26,48 @@ declare global {
       channels: LiveList<LiveObject<{ id: string; name: string }>>;
     };
 
-    // The shape of every message stored in a channel's feed. `content` is
-    // markdown, with mentions stored as `<@userId>` tokens.
-    FeedMessageData: {
-      userId: string;
-      content: string;
-      // True while an AI reply is still being streamed in via
-      // `updateFeedMessage`. Cleared on the final update.
-      streaming?: boolean;
-      // Each entry records who reacted and when.
-      reactions?: { emoji: string; userId: string; createdAt: number }[];
-    };
+    // Two kinds of feed message live in this app, distinguished by `kind`:
+    //
+    // - Chat messages (no `kind`), stored in channel, DM, and thread feeds.
+    //   `content` is markdown, with mentions stored as `<@userId>` tokens.
+    // - Activity items (`kind: "activity"`), stored in each user's personal
+    //   `activity_<userId>` feed. They point at a chat message elsewhere and
+    //   get a `readAt` timestamp once the user has seen it, so the feed is
+    //   their activity history and the unread ones are their badges. See
+    //   `lib/activity.ts`.
+    FeedMessageData:
+      | {
+          kind?: undefined;
+          userId: string;
+          content: string;
+          // True while an AI reply is still being streamed in via
+          // `updateFeedMessage`. Cleared on the final update.
+          streaming?: boolean;
+          // Each entry records who reacted and when.
+          reactions?: { emoji: string; userId: string; createdAt: number }[];
+        }
+      | {
+          kind: "activity";
+          type: "mention" | "thread_reply" | "dm";
+          fromUserId: string;
+          // The feed and message being pointed at
+          feedId: string;
+          messageId: string;
+          // Set when `feedId` is a thread: the channel or DM feed it belongs
+          // to, and the message the thread hangs off.
+          parentFeedId?: string;
+          parentMessageId?: string;
+          // When the user saw it. Unset means unread.
+          readAt?: number;
+        };
 
     // Custom metadata attached to a feed. Channels and direct messages are
     // top-level feeds; threads are feeds attached to a message in one of
-    // them, with `channelId` pointing at the parent feed.
+    // them, with `channelId` pointing at the parent feed. Activity feeds are
+    // per-user unread lists.
     FeedMetadata: {
       name?: string;
-      type?: "channel" | "dm" | "thread";
+      type?: "channel" | "dm" | "thread" | "activity";
       channelId?: string;
       parentMessageId?: string;
       replyCount?: string;

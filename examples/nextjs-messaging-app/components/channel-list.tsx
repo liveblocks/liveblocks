@@ -29,7 +29,10 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { UnreadBadge } from "@/components/unread-badge";
+import { getActivityRootFeedId } from "@/lib/activity";
+import { useUnreadActivity } from "@/lib/use-activity";
 import type { Channel } from "@/lib/workspaces";
 
 export function ChannelList({
@@ -43,6 +46,19 @@ export function ChannelList({
   const { feeds: threadFeeds } = useFeeds({
     metadata: { type: "thread" },
   });
+  const unreadActivity = useUnreadActivity();
+  // Channels badge mentions only; plain thread replies stay in Activity.
+  const mentionCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of unreadActivity) {
+      if (item.data.type !== "mention") {
+        continue;
+      }
+      const rootFeedId = getActivityRootFeedId(item);
+      counts.set(rootFeedId, (counts.get(rootFeedId) ?? 0) + 1);
+    }
+    return counts;
+  }, [unreadActivity]);
   const deleteFeed = useDeleteFeed();
   const [creating, setCreating] = useState(false);
   const [newChannelName, setNewChannelName] = useState("");
@@ -202,6 +218,7 @@ export function ChannelList({
                   key={channel.id}
                   channel={channel}
                   active={channel.id === activeChannelId}
+                  unreadCount={mentionCounts.get(channel.id) ?? 0}
                   editing={editingChannelId === channel.id}
                   editingName={editingName}
                   onSelect={() => {
@@ -262,6 +279,7 @@ export function ChannelList({
 function SortableChannelItem({
   channel,
   active,
+  unreadCount,
   editing,
   editingName,
   onSelect,
@@ -273,6 +291,7 @@ function SortableChannelItem({
 }: {
   channel: Channel;
   active: boolean;
+  unreadCount: number;
   editing: boolean;
   editingName: string;
   onSelect: () => void;
@@ -341,12 +360,21 @@ function SortableChannelItem({
           <button
             type="button"
             onClick={onSelect}
-            className="min-w-0 flex-1 truncate py-2 pl-1 pr-1 text-left text-sm"
+            className={clsx(
+              "min-w-0 flex-1 truncate py-2 pl-1 pr-1 text-left text-sm",
+              unreadCount > 0 && "font-semibold text-white"
+            )}
           >
             <span className="opacity-70">#</span>
             {channel.name}
           </button>
         )}
+
+        {!editing && unreadCount > 0 ? (
+          <div className="mr-1 group-hover:hidden">
+            <UnreadBadge count={unreadCount} />
+          </div>
+        ) : null}
 
         {!editing ? (
           <div className="flex items-center opacity-0 transition group-hover:opacity-100">

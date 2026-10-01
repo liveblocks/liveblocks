@@ -18,7 +18,9 @@ import {
 import { SendHorizontal } from "lucide-react";
 import { nanoid } from "nanoid";
 import { AI_USER, AI_USER_ID, getUsers } from "@/app/database";
+import { getMentionedUserIds, isChatMessage } from "@/lib/activity";
 import type { Conversation } from "@/lib/conversations";
+import { useNotifyActivity } from "@/lib/use-activity";
 import { getThreadFeedId } from "@/lib/threads";
 import { isMessageEmpty, serializeMarkdown } from "@/lib/serialize-markdown";
 import {
@@ -342,10 +344,12 @@ export function ConversationComposer({
   // Everywhere else, @mentioning the AI opens a thread and it replies there.
   const isAiDm =
     conversation.type === "dm" && conversation.user.id === AI_USER_ID;
+  const notifyActivity = useNotifyActivity();
   const { messages } = useFeedMessages(feedId);
   const history = useMemo(
     () =>
-      [...(messages ?? [])]
+      messages
+        .filter(isChatMessage)
         .sort((a, b) => a.createdAt - b.createdAt)
         .map((message) => ({
           userId: message.data.userId,
@@ -364,6 +368,22 @@ export function ConversationComposer({
         },
         { id: messageId }
       );
+
+      // Let the other side know: every DM lands in the recipient's activity,
+      // while channel messages only notify the people tagged in them.
+      if (conversation.type === "dm") {
+        void notifyActivity([conversation.user.id], {
+          type: "dm",
+          feedId,
+          messageId,
+        });
+      } else {
+        void notifyActivity(getMentionedUserIds(content), {
+          type: "mention",
+          feedId,
+          messageId,
+        });
+      }
 
       // The AI DM reply is handled by <Composer> itself (`forceAiReply`).
       // Elsewhere, @AI opens a thread and replies there, not in the feed.
@@ -399,10 +419,12 @@ export function ConversationComposer({
       });
     },
     [
+      conversation,
       createFeed,
       createFeedMessage,
       feedId,
       isAiDm,
+      notifyActivity,
       onOpenThread,
       roomId,
       self.id,

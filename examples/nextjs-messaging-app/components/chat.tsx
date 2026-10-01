@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   ClientSideSuspense,
   useCreateFeed,
@@ -15,21 +15,46 @@ import { HelpButton } from "@/components/help-button";
 import { MessageList } from "@/components/message-list";
 import { ChannelMembers } from "@/components/channel-members";
 import { ThreadPanel } from "@/components/thread-panel";
-import type { Conversation } from "@/lib/conversations";
+import { getActivityRootFeedId } from "@/lib/activity";
+import type { Conversation, MessageHighlight } from "@/lib/conversations";
+import { useMarkActivityRead, useUnreadActivity } from "@/lib/use-activity";
 
-export function Chat({ conversation }: { conversation: Conversation }) {
+export function Chat({
+  conversation,
+  openThreadMessageId,
+  highlight = null,
+  onOpenThread,
+}: {
+  conversation: Conversation;
+  openThreadMessageId: string | null;
+  highlight?: MessageHighlight | null;
+  onOpenThread: (messageId: string | null) => void;
+}) {
   const createFeed = useCreateFeed();
   const room = useRoom();
   const self = useSelf();
   const ensuredFeedsRef = useRef(new Set<string>());
-  const [openThreadMessageId, setOpenThreadMessageId] = useState<string | null>(
-    null
-  );
+  const unreadActivity = useUnreadActivity();
+  const markActivityRead = useMarkActivityRead();
   const { feedId } = conversation;
 
   // DMs with the AI teammate get inline replies instead of threads.
   const isAiDm =
     conversation.type === "dm" && conversation.user.id === AI_USER_ID;
+
+  // Seeing a message marks its activity item read: top-level items as soon
+  // as the conversation is open, thread items once that thread panel is open.
+  useEffect(() => {
+    const seen = unreadActivity.filter(
+      (item) =>
+        getActivityRootFeedId(item) === feedId &&
+        (item.data.parentMessageId === undefined ||
+          item.data.parentMessageId === openThreadMessageId)
+    );
+    if (seen.length > 0) {
+      void markActivityRead(seen);
+    }
+  }, [feedId, markActivityRead, openThreadMessageId, unreadActivity]);
 
   useEffect(() => {
     if (ensuredFeedsRef.current.has(feedId)) {
@@ -85,14 +110,17 @@ export function Chat({ conversation }: { conversation: Conversation }) {
         <ClientSideSuspense fallback={null}>
           <MessageList
             conversation={conversation}
-            onOpenThread={isAiDm ? undefined : setOpenThreadMessageId}
+            highlightedMessageId={
+              highlight?.feedId === feedId ? highlight.messageId : null
+            }
+            onOpenThread={isAiDm ? undefined : onOpenThread}
           />
         </ClientSideSuspense>
         <ClientSideSuspense fallback={null}>
           <ConversationComposer
             conversation={conversation}
             roomId={room.id}
-            onOpenThread={isAiDm ? undefined : setOpenThreadMessageId}
+            onOpenThread={isAiDm ? undefined : onOpenThread}
           />
         </ClientSideSuspense>
       </div>
@@ -103,7 +131,8 @@ export function Chat({ conversation }: { conversation: Conversation }) {
             channelId={feedId}
             parentMessageId={openThreadMessageId}
             roomId={room.id}
-            onClose={() => setOpenThreadMessageId(null)}
+            highlight={highlight}
+            onClose={() => onOpenThread(null)}
           />
         </ClientSideSuspense>
       ) : null}

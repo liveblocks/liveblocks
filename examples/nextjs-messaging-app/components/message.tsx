@@ -2,6 +2,7 @@
 
 import { getUser } from "@/app/database";
 import { EmojiPickerPopover } from "@/components/emoji-picker-popover";
+import type { ChatMessage, ChatMessageData } from "@/lib/activity";
 import { Markdown } from "@/lib/markdown";
 import type { ThreadFeed } from "@/lib/threads";
 import {
@@ -19,22 +20,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-export type MessageReaction = {
-  emoji: string;
-  userId: string;
-  createdAt: number;
-};
+export type MessageReaction = NonNullable<
+  ChatMessageData["reactions"]
+>[number];
 
-export type FeedMessage = {
-  id: string;
-  createdAt: number;
-  data: {
-    userId: string;
-    content: string;
-    streaming?: boolean;
-    reactions?: MessageReaction[];
-  };
-};
+export type FeedMessage = ChatMessage;
 
 export function formatTime(timestamp: number) {
   return new Intl.DateTimeFormat(undefined, {
@@ -50,6 +40,7 @@ export function Message({
   threadFeed,
   onOpenThread,
   variant = "channel",
+  highlighted = false,
   onDelete,
 }: {
   message: FeedMessage;
@@ -58,6 +49,8 @@ export function Message({
   threadFeed?: ThreadFeed;
   onOpenThread?: () => void;
   variant?: "channel" | "thread";
+  // Drawn with a faint yellow background, e.g. when jumped to from Activity
+  highlighted?: boolean;
   onDelete?: () => void | Promise<void>;
 }) {
   const self = useSelf();
@@ -115,7 +108,15 @@ export function Message({
   };
 
   return (
-    <div className="group relative flex items-start gap-3 px-5 py-0.5 hover:bg-neutral-50">
+    <div
+      data-message-id={message.id}
+      className={clsx(
+        "group relative flex items-start gap-3 px-5 py-0.5 transition-colors",
+        highlighted
+          ? "bg-yellow-50 hover:bg-yellow-100/60"
+          : "hover:bg-neutral-50"
+      )}
+    >
       <div className="w-9 shrink-0">
         {showHeader ? (
           <span className="mt-0.5 block size-9 min-h-9 min-w-9 overflow-hidden rounded-md bg-neutral-200">

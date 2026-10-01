@@ -6,6 +6,11 @@ import {
   getUser,
   getUsers,
 } from "@/app/database";
+import {
+  getActivityFeedId,
+  getThreadParticipantIds,
+  type ActivityItemData,
+} from "@/lib/activity";
 import { isDmFeedId } from "@/lib/conversations";
 import { THREAD_FEED_PREFIX } from "@/lib/threads";
 
@@ -105,6 +110,25 @@ export async function POST(request: NextRequest) {
           ],
         },
       });
+
+      // Tell everyone in the thread that the AI replied. Items point at the
+      // streaming message, so the activity panel fills in as the reply lands.
+      const parentFeedId = metadata.channelId;
+      const parentMessageId = metadata.parentMessageId;
+      if (
+        typeof parentFeedId === "string" &&
+        typeof parentMessageId === "string"
+      ) {
+        await notifyThreadParticipants(liveblocks, roomId, messages, {
+          kind: "activity",
+          type: "thread_reply",
+          fromUserId: AI_USER_ID,
+          feedId,
+          messageId,
+          parentFeedId,
+          parentMessageId,
+        });
+      }
     } catch {
       // Thread metadata is best-effort.
     }
@@ -142,6 +166,33 @@ export async function POST(request: NextRequest) {
 }
 
 type UpdateFn = (data: { content: string; streaming: boolean }) => Promise<unknown>;
+
+async function notifyThreadParticipants(
+  liveblocks: Liveblocks,
+  roomId: string,
+  history: FeedMessage[],
+  item: ActivityItemData
+) {
+  const recipients = getThreadParticipantIds(history).filter(
+    (userId) => userId !== AI_USER_ID && getUser(userId) !== undefined
+  );
+
+  await Promise.all(
+    recipients.map(async (userId) => {
+      const feedId = getActivityFeedId(userId);
+      try {
+        await liveblocks.createFeed({
+          roomId,
+          feedId,
+          metadata: { type: "activity" },
+        });
+      } catch {
+        // The recipient's activity feed already exists.
+      }
+      await liveblocks.createFeedMessage({ roomId, feedId, data: item });
+    })
+  );
+}
 
 async function streamRealReply(messages: FeedMessage[], update: UpdateFn) {
   const { streamText } = await import("ai");

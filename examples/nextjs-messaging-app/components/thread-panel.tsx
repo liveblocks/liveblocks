@@ -12,20 +12,36 @@ import {
   useUpdateFeedMetadata,
 } from "@liveblocks/react/suspense";
 import { XIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { nanoid } from "nanoid";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { AI_USER_ID } from "@/app/database";
+import {
+  getMentionedUserIds,
+  getThreadParticipantIds,
+  isChatMessage,
+} from "@/lib/activity";
+import { useNotifyActivity } from "@/lib/use-activity";
 import { Composer } from "@/components/composer";
 import {
   buildMessageListItems,
   type FeedMessage,
   Message,
 } from "@/components/message";
+import type { MessageHighlight } from "@/lib/conversations";
 import { getThreadFeedId, type ThreadFeed } from "@/lib/threads";
 
 type ThreadPanelProps = {
   channelId: string;
   parentMessageId: string;
   roomId: string;
+  // A reply to draw attention to, if it lives in this thread
+  highlight?: MessageHighlight | null;
   onClose: () => void;
 };
 
@@ -33,17 +49,20 @@ export function ThreadPanel({
   channelId,
   parentMessageId,
   roomId,
+  highlight = null,
   onClose,
 }: ThreadPanelProps) {
   const { messages } = useFeedMessages(channelId);
   const { feeds } = useFeeds({
     metadata: { type: "thread", channelId },
   });
-  const rootMessage = messages.find(
-    (message) => message.id === parentMessageId
-  );
+  const rootMessage = messages
+    .filter(isChatMessage)
+    .find((message) => message.id === parentMessageId);
   const threadFeedId = getThreadFeedId(parentMessageId);
   const threadFeed = feeds.find((feed) => feed.feedId === threadFeedId);
+  const highlightedMessageId =
+    highlight?.feedId === threadFeedId ? highlight.messageId : null;
 
   useEffect(() => {
     if (!rootMessage) {
@@ -90,6 +109,7 @@ export function ThreadPanel({
             parentMessage={rootMessage}
             roomId={roomId}
             threadFeed={threadFeed}
+            highlightedMessageId={highlightedMessageId}
             onClose={onClose}
           />
         </ClientSideSuspense>
@@ -112,16 +132,18 @@ function ThreadReplies({
   parentMessage,
   roomId,
   threadFeed,
+  highlightedMessageId,
   onClose,
 }: {
   channelId: string;
   parentMessage: FeedMessage;
   roomId: string;
   threadFeed: ThreadFeed;
+  highlightedMessageId: string | null;
   onClose: () => void;
 }) {
   const { messages } = useFeedMessages(threadFeed.feedId);
-  const replies = Array.isArray(messages) ? messages : [];
+  const replies = useMemo(() => messages.filter(isChatMessage), [messages]);
 
   return (
     <ThreadConversation
@@ -131,6 +153,7 @@ function ThreadReplies({
       roomId={roomId}
       threadFeedId={threadFeed.feedId}
       threadFeed={threadFeed}
+      highlightedMessageId={highlightedMessageId}
       onClose={onClose}
     />
   );
@@ -143,6 +166,7 @@ function ThreadConversation({
   roomId,
   threadFeedId,
   threadFeed,
+  highlightedMessageId = null,
   onClose,
 }: {
   channelId: string;
@@ -151,6 +175,7 @@ function ThreadConversation({
   roomId: string;
   threadFeedId: string;
   threadFeed?: ThreadFeed;
+  highlightedMessageId?: string | null;
   onClose: () => void;
 }) {
   const self = useSelf();
@@ -159,6 +184,7 @@ function ThreadConversation({
   const deleteFeed = useDeleteFeed();
   const deleteFeedMessage = useDeleteFeedMessage();
   const updateFeedMetadata = useUpdateFeedMetadata();
+  const notifyActivity = useNotifyActivity();
   const containerRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
   const rootMentionsAi = parentMessage.data.content.includes(
@@ -207,6 +233,24 @@ function ThreadConversation({
     }
   }, [items]);
 
+  // Jumping to a reply (from Activity) wins over sticking to the bottom.
+  const highlightedLoaded =
+    highlightedMessageId !== null &&
+    sortedReplies.some((reply) => reply.id === highlightedMessageId);
+
+  useLayoutEffect(() => {
+    if (!highlightedLoaded || !highlightedMessageId) {
+      return;
+    }
+    const element = containerRef.current?.querySelector(
+      `[data-message-id="${CSS.escape(highlightedMessageId)}"]`
+    );
+    if (element) {
+      stickToBottomRef.current = false;
+      element.scrollIntoView({ block: "center" });
+    }
+  }, [highlightedLoaded, highlightedMessageId]);
+
   const handleSend = useCallback(
     async (content: string) => {
       if (!threadFeed) {
@@ -225,9 +269,32 @@ function ThreadConversation({
         }
       }
 
-      await createFeedMessage(threadFeedId, {
-        userId: self.id,
-        content,
+      const messageId = nanoid();
+      await createFeedMessage(
+        threadFeedId,
+        {
+          userId: self.id,
+          content,
+        },
+        { id: messageId }
+      );
+
+      // Everyone already in the thread hears about the reply; anyone newly
+      // tagged in it gets a mention instead.
+      const mentionedIds = getMentionedUserIds(content);
+      const participantIdsToNotify = getThreadParticipantIds(history).filter(
+        (userId) => !mentionedIds.includes(userId)
+      );
+      const location = {
+        feedId: threadFeedId,
+        messageId,
+        parentFeedId: channelId,
+        parentMessageId: parentMessage.id,
+      };
+      void notifyActivity(mentionedIds, { type: "mention", ...location });
+      void notifyActivity(participantIdsToNotify, {
+        type: "thread_reply",
+        ...location,
       });
 
       const parsedReplyCount = Number.parseInt(
@@ -255,6 +322,8 @@ function ThreadConversation({
       channelId,
       createFeed,
       createFeedMessage,
+      history,
+      notifyActivity,
       parentMessage.id,
       self.id,
       sortedReplies.length,
@@ -341,6 +410,7 @@ function ThreadConversation({
             feedId={threadFeedId}
             showHeader={item.showHeader}
             variant="thread"
+            highlighted={item.message.id === highlightedMessageId}
             onDelete={() => handleDelete(item.message)}
           />
         ))}
