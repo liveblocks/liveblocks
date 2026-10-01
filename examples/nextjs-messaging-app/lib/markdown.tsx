@@ -1,9 +1,12 @@
 import { getUser } from "@/app/database";
 import clsx from "clsx";
+import { LinkIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+// No `g` flag: `match()` only reports `index` for non-global patterns, and
+// the tokenizer relies on it to know the URL starts at the current position.
 const URL_PATTERN =
-  /https?:\/\/[^\s<]+[^<.,:;"')\]\s]|\bwww\.[^\s<]+[^<.,:;"')\]\s]/gi;
+  /https?:\/\/[^\s<]+[^<.,:;"')\]\s]|\bwww\.[^\s<]+[^<.,:;"')\]\s]/i;
 const LINK_PATTERN = /\[([^\]]+)\]\(([^)]+)\)/;
 const MENTION_PATTERN = /<@([^>]+)>/;
 const CODE_PATTERN = /`([^`]+)`/;
@@ -108,6 +111,65 @@ function nextInlineToken(
   };
 }
 
+const MAX_URL_LABEL_LENGTH = 48;
+
+// Shortens from the middle so both the domain and the end of the path
+// (usually the most recognisable bit) stay visible.
+function truncateMiddle(text: string, max: number): string {
+  if (text.length <= max) {
+    return text;
+  }
+  const tail = Math.floor((max - 1) / 3);
+  const head = max - 1 - tail;
+  return `${text.slice(0, head)}…${text.slice(-tail)}`;
+}
+
+// A tidier display form of a URL: no scheme, no `www.`, no trailing slash,
+// and long URLs are truncated in the middle.
+function formatUrlLabel(href: string): string {
+  let label: string;
+  try {
+    const url = new URL(href);
+    const host = url.hostname.replace(/^www\./, "");
+    const path = url.pathname.replace(/\/+$/, "");
+    label = host + path + url.search + url.hash;
+    try {
+      label = decodeURI(label);
+    } catch {
+      // Leave percent-encoded; the URL is malformed
+    }
+  } catch {
+    label = href
+      .replace(/^https?:\/\/(www\.)?/, "")
+      .replace(/\/+(?=[?#]|$)/, "");
+  }
+  return truncateMiddle(label, MAX_URL_LABEL_LENGTH);
+}
+
+// Links render as chips with a small link icon, matching mentions and code
+function Link({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="inline-flex max-w-full items-center gap-1 rounded bg-sky-50 px-1 py-0.5 align-baseline text-sky-700 leading-tight transition hover:bg-sky-100 hover:text-sky-900"
+    >
+      <LinkIcon className="size-3 shrink-0" aria-hidden />
+      <span className="truncate">{children}</span>
+    </a>
+  );
+}
+
+// Matches youtube.com/watch?v=…, youtu.be/…, youtube.com/shorts/… and
+// youtube.com/embed/…; captures the 11-character video id.
+const YOUTUBE_PATTERN =
+  /https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:[^\s&]*&)*v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/g;
+
+export function getYouTubeVideoIds(content: string): string[] {
+  return [...new Set([...content.matchAll(YOUTUBE_PATTERN)].map((m) => m[1]))];
+}
+
 function parseInline(text: string, keyPrefix: string) {
   const nodes: ReactNode[] = [];
   let index = 0;
@@ -151,28 +213,16 @@ function parseInline(text: string, keyPrefix: string) {
         break;
       case "link":
         nodes.push(
-          <a
-            key={key}
-            href={parsed.token.href}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-sky-700 underline underline-offset-2 hover:text-sky-900"
-          >
+          <Link key={key} href={parsed.token.href}>
             {parseInline(parsed.token.label, key)}
-          </a>
+          </Link>
         );
         break;
       case "url":
         nodes.push(
-          <a
-            key={key}
-            href={parsed.token.href}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-sky-700 underline underline-offset-2 hover:text-sky-900"
-          >
-            {parsed.token.href.replace(/^https?:\/\//, "")}
-          </a>
+          <Link key={key} href={parsed.token.href}>
+            {formatUrlLabel(parsed.token.href)}
+          </Link>
         );
         break;
       case "mention": {
@@ -275,8 +325,12 @@ export function InlineMarkdown({ content }: { content: string }) {
   );
 }
 
+// Cap on inline video embeds per message
+const MAX_YOUTUBE_EMBEDS = 2;
+
 export function Markdown({ content }: { content: string }) {
   const blocks = parseBlocks(content);
+  const videoIds = getYouTubeVideoIds(content).slice(0, MAX_YOUTUBE_EMBEDS);
 
   return (
     <div className="space-y-2 text-sm leading-relaxed text-neutral-800">
@@ -304,6 +358,18 @@ export function Markdown({ content }: { content: string }) {
           </p>
         );
       })}
+      {videoIds.map((videoId) => (
+        <iframe
+          key={videoId}
+          src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+          title="YouTube video"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          className="aspect-video w-full max-w-[480px] rounded-lg border border-neutral-200 bg-neutral-100"
+        />
+      ))}
     </div>
   );
 }

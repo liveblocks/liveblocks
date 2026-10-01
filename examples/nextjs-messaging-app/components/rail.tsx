@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useMemo } from "react";
+import { UnreadBadge } from "@/components/unread-badge";
 import { UserMenu } from "@/components/user-menu";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { getActivityRootFeedId } from "@/lib/activity";
@@ -59,30 +60,32 @@ function RailItemsWithUnread({
   onViewChange: (view: View) => void;
 }) {
   const unread = useUnreadActivity();
-  const dots = useMemo(() => {
-    let home = false;
-    let dms = false;
+  // Home only counts channel mentions, DMs count everything in a DM, and
+  // Activity counts it all.
+  const counts = useMemo(() => {
+    let home = 0;
+    let dms = 0;
     for (const item of unread) {
       if (isDmFeedId(getActivityRootFeedId(item))) {
-        dms = true;
+        dms++;
       } else if (item.data.type === "mention") {
-        home = true;
+        home++;
       }
     }
-    return { home, dms, activity: unread.length > 0 };
+    return { home, dms, activity: unread.length };
   }, [unread]);
 
-  return <RailItems view={view} onViewChange={onViewChange} dots={dots} />;
+  return <RailItems view={view} onViewChange={onViewChange} counts={counts} />;
 }
 
 function RailItems({
   view,
   onViewChange,
-  dots,
+  counts,
 }: {
   view: View;
   onViewChange: (view: View) => void;
-  dots?: Record<View, boolean>;
+  counts?: Record<View, number>;
 }) {
   return (
     <div className="mt-4 flex flex-col items-center gap-1">
@@ -90,21 +93,21 @@ function RailItems({
         icon={HomeIcon}
         label="Home"
         active={view === "home"}
-        dot={dots?.home ?? false}
+        count={counts?.home ?? 0}
         onClick={() => onViewChange("home")}
       />
       <RailItem
         icon={MessageCircleIcon}
         label="DMs"
         active={view === "dms"}
-        dot={dots?.dms ?? false}
+        count={counts?.dms ?? 0}
         onClick={() => onViewChange("dms")}
       />
       <RailItem
         icon={BellIcon}
         label="Activity"
         active={view === "activity"}
-        dot={dots?.activity ?? false}
+        count={counts?.activity ?? 0}
         onClick={() => onViewChange("activity")}
       />
     </div>
@@ -115,13 +118,13 @@ function RailItem({
   icon: Icon,
   label,
   active,
-  dot,
+  count,
   onClick,
 }: {
   icon: LucideIcon;
   label: string;
   active: boolean;
-  dot: boolean;
+  count: number;
   onClick: () => void;
 }) {
   return (
@@ -140,12 +143,10 @@ function RailItem({
         )}
       >
         <Icon className="size-5" aria-hidden />
-        {dot ? (
-          <span
-            className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-sidebar bg-red-500"
-            aria-label="Unread"
-          />
-        ) : null}
+        <UnreadBadge
+          count={count}
+          className="absolute -right-1.5 -top-1.5 box-content border-2 border-sidebar"
+        />
       </span>
       <span className={active ? "text-white" : "text-sidebar-muted"}>
         {label}
