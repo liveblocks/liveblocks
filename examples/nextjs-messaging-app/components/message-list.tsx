@@ -7,17 +7,18 @@ import {
   DayDivider,
   Message,
 } from "@/components/message";
+import { AI_USER_ID } from "@/app/database";
+import type { Conversation } from "@/lib/conversations";
 import type { ThreadFeed } from "@/lib/threads";
 
 export function MessageList({
-  channelId,
-  channelName,
+  conversation,
   onOpenThread,
 }: {
-  channelId: string;
-  channelName: string;
-  onOpenThread: (messageId: string) => void;
+  conversation: Conversation;
+  onOpenThread?: (messageId: string) => void;
 }) {
+  const channelId = conversation.feedId;
   const { messages, hasFetchedAll } = useFeedMessages(channelId);
   const { feeds } = useFeeds({
     metadata: { type: "thread", channelId },
@@ -114,7 +115,7 @@ export function MessageList({
         ref={contentRef}
         className="flex min-h-full flex-col justify-end pb-4"
       >
-        {hasFetchedAll ? <ChannelIntro channelName={channelName} /> : null}
+        {hasFetchedAll ? <ConversationIntro conversation={conversation} /> : null}
         {items.map((item) =>
           item.type === "divider" ? (
             <DayDivider key={item.key} label={item.label} />
@@ -125,11 +126,56 @@ export function MessageList({
               feedId={channelId}
               showHeader={item.showHeader}
               threadFeed={threadsByParentMessageId.get(item.message.id)}
-              onOpenThread={() => onOpenThread(item.message.id)}
+              onOpenThread={
+                onOpenThread ? () => onOpenThread(item.message.id) : undefined
+              }
             />
           )
         )}
       </div>
+    </div>
+  );
+}
+
+function ConversationIntro({ conversation }: { conversation: Conversation }) {
+  if (conversation.type === "dm") {
+    return <DmIntro user={conversation.user} />;
+  }
+  return <ChannelIntro channelName={conversation.channel.name} />;
+}
+
+function DmIntro({ user }: { user: Liveblocks["UserMeta"] }) {
+  const isAgent = user.id === AI_USER_ID;
+
+  return (
+    <div className="px-5 pb-6 pt-8">
+      <span className="mb-2 block size-12 overflow-hidden rounded-xl bg-neutral-200">
+        <img
+          src={user.info.avatar}
+          alt=""
+          className="size-full object-cover"
+        />
+      </span>
+      <h3 className="text-xl font-bold text-neutral-900">{user.info.name}</h3>
+      <p className="mt-1 text-sm text-neutral-500">
+        {isAgent ? (
+          <>
+            This is your conversation with{" "}
+            <span className="font-medium text-neutral-700">
+              {user.info.name}
+            </span>
+            . Ask anything, and it will reply right here.
+          </>
+        ) : (
+          <>
+            This is the very beginning of your direct message history with{" "}
+            <span className="font-medium text-neutral-700">
+              {user.info.name}
+            </span>
+            . Say hi, or @mention the AI to start a thread.
+          </>
+        )}
+      </p>
     </div>
   );
 }

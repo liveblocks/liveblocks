@@ -18,7 +18,7 @@ import {
 import { SendHorizontal } from "lucide-react";
 import { nanoid } from "nanoid";
 import { AI_USER, AI_USER_ID, getUsers } from "@/app/database";
-import type { Channel } from "@/lib/workspaces";
+import type { Conversation } from "@/lib/conversations";
 import { getThreadFeedId } from "@/lib/threads";
 import { isMessageEmpty, serializeMarkdown } from "@/lib/serialize-markdown";
 import {
@@ -325,19 +325,24 @@ export function Composer({
   );
 }
 
-export function ChannelComposer({
-  channel,
+export function ConversationComposer({
+  conversation,
   roomId,
   onOpenThread,
 }: {
-  channel: Channel;
+  conversation: Conversation;
   roomId: string;
   onOpenThread?: (parentMessageId: string) => void;
 }) {
   const self = useSelf();
   const createFeed = useCreateFeed();
   const createFeedMessage = useCreateFeedMessage();
-  const { messages } = useFeedMessages(channel.id);
+  const { feedId } = conversation;
+  // In a DM with the AI teammate, every message gets an inline reply.
+  // Everywhere else, @mentioning the AI opens a thread and it replies there.
+  const isAiDm =
+    conversation.type === "dm" && conversation.user.id === AI_USER_ID;
+  const { messages } = useFeedMessages(feedId);
   const history = useMemo(
     () =>
       [...(messages ?? [])]
@@ -352,7 +357,7 @@ export function ChannelComposer({
     async (content: string) => {
       const messageId = nanoid();
       await createFeedMessage(
-        channel.id,
+        feedId,
         {
           userId: self.id,
           content,
@@ -360,8 +365,9 @@ export function ChannelComposer({
         { id: messageId }
       );
 
-      // @AI in a channel opens a thread and replies there, not in the feed.
-      if (!content.includes(`<@${AI_USER_ID}>`)) {
+      // The AI DM reply is handled by <Composer> itself (`forceAiReply`).
+      // Elsewhere, @AI opens a thread and replies there, not in the feed.
+      if (isAiDm || !content.includes(`<@${AI_USER_ID}>`)) {
         return;
       }
 
@@ -370,7 +376,7 @@ export function ChannelComposer({
         await createFeed(threadFeedId, {
           metadata: {
             type: "thread",
-            channelId: channel.id,
+            channelId: feedId,
             parentMessageId: messageId,
             replyCount: "0",
             participantIds: [],
@@ -393,23 +399,30 @@ export function ChannelComposer({
       });
     },
     [
-      channel.id,
       createFeed,
       createFeedMessage,
+      feedId,
+      isAiDm,
       onOpenThread,
       roomId,
       self.id,
     ]
   );
 
+  const placeholder =
+    conversation.type === "channel"
+      ? `Message #${conversation.channel.name}`
+      : `Message ${conversation.user.info.name}`;
+
   return (
     <Composer
-      feedId={channel.id}
+      feedId={feedId}
       roomId={roomId}
-      placeholder={`Message #${channel.name}`}
+      placeholder={placeholder}
       history={history}
       onSend={handleSend}
-      enableAiReply={false}
+      enableAiReply={isAiDm}
+      forceAiReply={isAiDm}
     />
   );
 }

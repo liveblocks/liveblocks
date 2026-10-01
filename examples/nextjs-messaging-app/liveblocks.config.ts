@@ -38,10 +38,12 @@ declare global {
       reactions?: { emoji: string; userId: string; createdAt: number }[];
     };
 
-    // Custom metadata attached to a feed
+    // Custom metadata attached to a feed. Channels and direct messages are
+    // top-level feeds; threads are feeds attached to a message in one of
+    // them, with `channelId` pointing at the parent feed.
     FeedMetadata: {
       name?: string;
-      type?: "channel" | "thread";
+      type?: "channel" | "dm" | "thread";
       channelId?: string;
       parentMessageId?: string;
       replyCount?: string;

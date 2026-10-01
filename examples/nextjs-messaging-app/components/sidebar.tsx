@@ -2,21 +2,23 @@
 
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { ChannelList } from "@/components/channel-list";
+import { DirectMessageList } from "@/components/direct-message-list";
 import { UserMenu } from "@/components/user-menu";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
+import type { Selection } from "@/lib/conversations";
 
 export function Sidebar({
   workspaceId,
   userId,
-  activeChannelId,
-  onSelectChannel,
+  selection,
+  onSelect,
   onUserChange,
   onWorkspaceChange,
 }: {
   workspaceId: string;
   userId: string;
-  activeChannelId: string | null;
-  onSelectChannel: (channelId: string) => void;
+  selection: Selection | null;
+  onSelect: (selection: Selection) => void;
   onUserChange: (userId: string) => void;
   onWorkspaceChange: (workspaceId: string) => void;
 }) {
@@ -38,8 +40,25 @@ export function Sidebar({
 
         <ClientSideSuspense fallback={null}>
           <ChannelList
-            activeChannelId={activeChannelId}
-            onSelectChannel={onSelectChannel}
+            activeChannelId={
+              selection?.type === "channel" ? selection.channelId : null
+            }
+            onSelectChannel={(channelId) =>
+              onSelect({ type: "channel", channelId })
+            }
+          />
+        </ClientSideSuspense>
+
+        <div className="flex items-center justify-between px-4 pb-1 pt-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-sidebar-muted">
+            Direct messages
+          </div>
+        </div>
+
+        <ClientSideSuspense fallback={null}>
+          <DirectMessageList
+            activeUserId={selection?.type === "dm" ? selection.userId : null}
+            onSelectUser={(userId) => onSelect({ type: "dm", userId })}
           />
         </ClientSideSuspense>
       </div>

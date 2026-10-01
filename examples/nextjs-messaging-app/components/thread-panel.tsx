@@ -24,7 +24,6 @@ import { getThreadFeedId, type ThreadFeed } from "@/lib/threads";
 
 type ThreadPanelProps = {
   channelId: string;
-  channelName: string;
   parentMessageId: string;
   roomId: string;
   onClose: () => void;
@@ -32,7 +31,6 @@ type ThreadPanelProps = {
 
 export function ThreadPanel({
   channelId,
-  channelName,
   parentMessageId,
   roomId,
   onClose,

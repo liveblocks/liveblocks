@@ -6,6 +6,7 @@ import {
   getUser,
   getUsers,
 } from "@/app/database";
+import { isDmFeedId } from "@/lib/conversations";
 import { THREAD_FEED_PREFIX } from "@/lib/threads";
 
 type FeedMessage = { userId: string; content: string };
@@ -15,6 +16,7 @@ const ROOM_ID_PREFIX = "liveblocks:examples:nextjs-messaging-app";
 
 const SYSTEM_PROMPT = [
   "You are a helpful AI teammate in a Slack-like team chat.",
+  "You may be replying in a public channel, a thread, or a direct message.",
   "Keep replies SHORT and conversational.",
   "Use only basic markdown: **bold**, *italic*, `inline code`, and fenced code blocks.",
   "You may mention users with `<@userId>` tokens when relevant.",
@@ -48,13 +50,16 @@ export async function POST(request: NextRequest) {
   }
 
   const isThreadFeed = feedId.startsWith(THREAD_FEED_PREFIX);
+  const isDmFeed = isDmFeedId(feedId);
 
   if (!isThreadFeed) {
     try {
       await liveblocks.createFeed({
         roomId,
         feedId,
-        metadata: { name: feedId, type: "channel" },
+        metadata: isDmFeed
+          ? { type: "dm" }
+          : { name: feedId, type: "channel" },
       });
     } catch {
       // Feed already exists.

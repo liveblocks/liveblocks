@@ -26,13 +26,15 @@ This example shows how to build a Slack-like messaging app with
 and [Next.js](https://nextjs.org/) — no database needed, Liveblocks stores
 everything. Each workspace is a Liveblocks room: the channel list lives in
 Storage (create, rename, delete, and drag-and-drop to reorder channels), and
-each channel's messages live in a feed. Messages support basic rich text and
-@-mentions via a [Tiptap](https://tiptap.dev/) composer, and mentioning the AI
-teammate streams a reply into the channel by updating a feed message with
+each channel's messages live in a feed. Direct messages are feeds too, with an
+id derived from the two participants, so no lookup table is needed. Messages
+support basic rich text and @-mentions via a [Tiptap](https://tiptap.dev/)
+composer, and mentioning the AI teammate streams a reply into a thread by
+updating a feed message with
 [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
-and the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway). The login is
-fake: pick any demo user from the dropdown, and your last choice is remembered
-in `localStorage`.
+and the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway). DM the AI
+directly and it replies inline. The login is fake: pick any demo user from the
+dropdown, and your last choice is remembered in `localStorage`.
 
 ## Getting started
 
@@ -67,7 +69,8 @@ Alternatively, you can set up your project manually:
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To see realtime sync, open the page in two browser tabs and pick two different
-users. Messages, typing indicators, and channel edits sync across both tabs.
+users. Messages, direct messages, typing indicators, and channel edits sync
+across both tabs.
 
 </details>
 

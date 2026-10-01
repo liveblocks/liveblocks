@@ -13,13 +13,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getUser, getUsers } from "@/app/database";
 import { Chat } from "@/components/chat";
 import { Sidebar } from "@/components/sidebar";
-import { useExamplePreviewIndex, useExampleRoomId } from "@/lib/example.client";
 import {
-  DEFAULT_CHANNELS,
-  getWorkspace,
-  WORKSPACES,
-  type Channel,
-} from "@/lib/workspaces";
+  getDmFeedId,
+  type Conversation,
+  type Selection,
+} from "@/lib/conversations";
+import { useExamplePreviewIndex, useExampleRoomId } from "@/lib/example.client";
+import { DEFAULT_CHANNELS, getWorkspace, WORKSPACES } from "@/lib/workspaces";
 
 const STORAGE_USER_KEY = "liveblocks-messaging-app:user";
 const STORAGE_WORKSPACE_KEY = "liveblocks-messaging-app:workspace";
@@ -170,31 +170,55 @@ function MessagingShell({
   onWorkspaceChange: (workspaceId: string) => void;
 }) {
   const channels = useStorage((root) => root.channels);
-  const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
 
-  const activeChannel = useMemo<Channel | undefined>(() => {
+  // Resolve the sidebar selection into something renderable, falling back to
+  // the first channel when the selected channel or user no longer exists.
+  const conversation = useMemo<Conversation | undefined>(() => {
+    if (selection?.type === "dm") {
+      const user = getUser(selection.userId);
+      if (user && user.id !== userId) {
+        return {
+          type: "dm",
+          feedId: getDmFeedId(userId, user.id),
+          user,
+        };
+      }
+    }
+
     if (!channels.length) {
       return undefined;
     }
 
-    return (
-      channels.find((channel) => channel.id === activeChannelId) ?? channels[0]
-    );
-  }, [activeChannelId, channels]);
+    const channel =
+      (selection?.type === "channel"
+        ? channels.find((channel) => channel.id === selection.channelId)
+        : undefined) ?? channels[0];
+
+    return { type: "channel", feedId: channel.id, channel };
+  }, [channels, selection, userId]);
 
   useEffect(() => {
+    if (selection?.type === "dm") {
+      const user = getUser(selection.userId);
+      if (!user || user.id === userId) {
+        setSelection(null);
+      }
+      return;
+    }
+
     if (!channels.length) {
-      setActiveChannelId(null);
+      setSelection(null);
       return;
     }
 
     if (
-      activeChannelId === null ||
-      !channels.some((channel) => channel.id === activeChannelId)
+      selection === null ||
+      !channels.some((channel) => channel.id === selection.channelId)
     ) {
-      setActiveChannelId(channels[0].id);
+      setSelection({ type: "channel", channelId: channels[0].id });
     }
-  }, [activeChannelId, channels]);
+  }, [channels, selection, userId]);
 
   const workspace = getWorkspace(workspaceId);
 
@@ -213,8 +237,14 @@ function MessagingShell({
       <Sidebar
         workspaceId={workspaceId}
         userId={userId}
-        activeChannelId={activeChannel?.id ?? null}
-        onSelectChannel={setActiveChannelId}
+        selection={
+          conversation?.type === "dm"
+            ? { type: "dm", userId: conversation.user.id }
+            : conversation
+              ? { type: "channel", channelId: conversation.channel.id }
+              : null
+        }
+        onSelect={setSelection}
         onUserChange={onUserChange}
         onWorkspaceChange={onWorkspaceChange}
       />
@@ -222,8 +252,8 @@ function MessagingShell({
       <main className="flex min-w-0 flex-1 flex-col bg-sidebar p-1 pl-0">
         <div className="flex min-w-0 flex-1 flex-col bg-white rounded-sm overflow-hidden">
           <ClientSideSuspense fallback={null}>
-            {activeChannel ? (
-              <Chat key={activeChannel.id} channel={activeChannel} />
+            {conversation ? (
+              <Chat key={conversation.feedId} conversation={conversation} />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-neutral-500">
                 Create a channel to start messaging
