@@ -1,6 +1,7 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import { AI_USER_ID, getRandomUser, getUser } from "@/lib/database";
+import { auth } from "./auth";
+import { getDemoUser, getPreviewUser } from "./demo-login";
 
 export async function POST(request: NextRequest) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
@@ -12,23 +13,25 @@ export async function POST(request: NextRequest) {
     baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
-  const { userId } = (await request.json().catch(() => ({}))) as {
-    userId?: string;
-  };
-
-  const user =
-    userId && userId !== AI_USER_ID ? getUser(userId) : getRandomUser();
+  const body: unknown = await request.json().catch(() => undefined);
+  const previewUser = getPreviewUser(body);
+  const user = previewUser ?? (await getSessionUser(request));
 
   if (!user) {
-    return new NextResponse("User not found", { status: 403 });
+    return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  const session = liveblocks.prepareSession(`${user.id}`, {
+  const session = liveblocks.prepareSession(user.id, {
     userInfo: user.info,
   });
 
   session.allow(`liveblocks:examples:*`, ["*:write"]);
 
-  const { status, body } = await session.authorize();
-  return new NextResponse(body, { status });
+  const { status, body: token } = await session.authorize();
+  return new NextResponse(token, { status });
+}
+
+async function getSessionUser(request: NextRequest) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  return session ? getDemoUser(session.user.id) : undefined;
 }

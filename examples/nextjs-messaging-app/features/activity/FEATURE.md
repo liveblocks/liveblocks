@@ -21,9 +21,9 @@ activity.
 
 - **Where:** Activity tab in the rail.
 - **What:** newest-first rows, each with the sender's avatar, a title such as
-  "Charlie Layne mentioned you in #general", "… mentioned you in a thread in
-  #design", "… replied in a thread in your conversation", or "… sent you a
-  direct message", the time, and a two-line preview of the referenced message.
+  "<name> mentioned you in #<channel>", "… mentioned you in a thread
+  in #<channel>", "… replied in a thread in your conversation", or "… sent you a
+  direct message", the time, and a clamped preview of the referenced message.
   Unread rows are bold on a tinted background with a dot indicator; read rows
   are muted. If the channel has since been deleted the location reads "a deleted
   channel". When there is nothing yet, the panel explains what will show up

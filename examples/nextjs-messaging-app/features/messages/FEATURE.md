@@ -15,7 +15,7 @@ Messages render a small markdown subset:
 
 ## Message grouping and day dividers
 
-- Consecutive messages from the same author within five minutes are grouped:
+- Consecutive messages from the same author within a short window are grouped:
   only the first shows the avatar, name, and time.
 - A "Today" / "Yesterday" / weekday-and-date divider is inserted whenever the
   day changes. Thread panels show no dividers.
@@ -23,8 +23,8 @@ Messages render a small markdown subset:
 ## Scrolling behaviour
 
 - The list is bottom-anchored like Slack: history grows upward from the composer
-  and the view stays pinned to the newest message while you are within ~80px of
-  the bottom. Scroll up and it stops following.
+  and the view stays pinned to the newest message while you are near the bottom.
+  Scroll up and it stops following.
 - Jumping to a message from Activity scrolls it into the centre and takes
   priority over sticking to the bottom.
 - While a conversation's messages are still loading, a flexible spacer stands in

@@ -8,7 +8,7 @@ feature and view documents its own behaviour in its folder's `FEATURE.md`.
 
 | Feature         | Docs                                                                       | One-line summary                                               |
 | --------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| users           | [features/users/FEATURE.md](features/users/FEATURE.md)                     | Fake login and user switcher for five demo users               |
+| users           | [features/users/FEATURE.md](features/users/FEATURE.md)                     | Better Auth sign-in, user switcher and sign-out for demo users |
 | workspaces      | [features/workspaces/FEATURE.md](features/workspaces/FEATURE.md)           | Switch Acme and Initech workspaces with sidebar theming        |
 | channels        | [features/channels/FEATURE.md](features/channels/FEATURE.md)               | Channel CRUD, reorder, members, intros synced in Storage       |
 | direct-messages | [features/direct-messages/FEATURE.md](features/direct-messages/FEATURE.md) | Compact and detailed DM lists and lazy feed ids                |
@@ -62,7 +62,8 @@ string), and `participantIds`.
 
 | Route                      | Method | Purpose                                                                                                                                  |
 | -------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `/api/liveblocks-auth`     | POST   | Fake login: issues a session for the requested demo user with write access to `liveblocks:examples:*`                                    |
+| `/api/auth/*`              | \*     | Better Auth (stateless, no database): `sign-in/demo`, `get-session`, `sign-out`, …                                                       |
+| `/api/liveblocks-auth`     | POST   | Issues a Liveblocks token for the user in the Better Auth cookie (or `previewUserId` in gallery preview mode); `401` without a session   |
 | `/api/users?userIds=…`     | GET    | Resolves user ids to name/avatar/colour (`resolveUsers`)                                                                                 |
 | `/api/users/search?text=…` | GET    | Searches users by name or id (`resolveMentionSuggestions`; the composer also filters a local list client-side)                           |
 | `/api/ai-reply`            | POST   | Creates a streaming AI message in the given feed, updates it as text arrives, and (for threads) bumps metadata and notifies participants |
@@ -70,6 +71,11 @@ string), and `participantIds`.
 ### Environment variables
 
 - `LIVEBLOCKS_SECRET_KEY` — required.
+- `BETTER_AUTH_SECRET` — required in production (Better Auth refuses to start
+  with its default secret there); optional in development. Signs and encrypts
+  the session cookie. Generate one with `openssl rand -base64 32`.
+- `BETTER_AUTH_URL` — optional; the public origin of the app. Without it Better
+  Auth derives it from each request, which is fine for this example.
 - `AI_GATEWAY_API_KEY` — required for AI replies; `/api/ai-reply` returns `403`
   without it.
 - `NEXT_PUBLIC_LIVEBLOCKS_BASE_URL` — optional; points the client and server at

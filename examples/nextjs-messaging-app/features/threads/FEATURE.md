@@ -26,15 +26,16 @@ AI replies inline there.
 ## Reply pill
 
 - **Where:** under a channel/DM message that has at least one reply.
-- **What:** up to five participant avatars, "N replies", and "Last reply at
+- **What:** a capped row of participant avatars, "N replies", and "Last reply at
   <time>". Click it to open the thread.
 
 ## Resize the panel
 
 - **How:** drag the handle on the panel's left edge, or focus it and use arrow
   keys; double-click resets to the default width.
-- **Details:** resizable between 300px and 640px on desktop only; width is
-  remembered across threads and reloads.
+- **Details:** resizable between a minimum and maximum (`THREAD_PANEL` in
+  `lib/panel-width.ts`) on desktop only; width is remembered across threads and
+  reloads.
 
 ## Close a thread
 

@@ -38,13 +38,15 @@
     "@tiptap/starter-kit": "^3.13.0",
     "@tiptap/suggestion": "^3.13.0",
     "ai": "^6.0.205",
+    "better-auth": "^1.7.7",
     "clsx": "^2.1.1",
     "frimousse": "^0.3.0",
     "lucide-react": "^0.475.0",
     "nanoid": "^5.1.11",
     "next": "16.2.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

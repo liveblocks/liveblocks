@@ -65,8 +65,40 @@ export async function openAppAs(
   return { context, page };
 }
 
+export async function openSignIn(
+  page: Page,
+  { exampleId }: { exampleId: string }
+) {
+  await page.goto(`/?${new URLSearchParams({ exampleId })}`);
+  await expect(signInHeading(page)).toBeVisible({ timeout: 30_000 });
+}
+
+export async function signInAs(page: Page, user: DemoUser) {
+  await demoAccountButton(page, user).click();
+  await expect(channelHeading(page, "general")).toBeVisible({
+    timeout: 30_000,
+  });
+  await expect(userMenuButton(page, user)).toBeVisible();
+}
+
+export function signInHeading(page: Page) {
+  return page.getByRole("heading", { name: "Sign in", level: 1 });
+}
+
+export function demoAccountButton(page: Page, user: DemoUser) {
+  return page
+    .getByRole("list", { name: "Demo accounts" })
+    .getByRole("button", { name: new RegExp(`^${user.name}`) });
+}
+
 export function rail(page: Page) {
   return page.getByRole("navigation");
+}
+
+export function userMenuButton(page: Page, user: DemoUser) {
+  return rail(page).getByRole("button", {
+    name: `Signed in as ${user.name}. Switch user`,
+  });
 }
 
 export function railItem(page: Page, label: "Home" | "DMs" | "Activity") {

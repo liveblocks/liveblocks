@@ -104,18 +104,18 @@ they cover, never as sibling files.
 
 ## Feature inventory
 
-| Feature                    | Owns                                                                                                                                                              | May import from features           |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `features/users`           | User switcher (`user-menu.tsx`); `api/liveblocks-auth.ts`, `api/users.ts`, `api/users-search.ts`                                                                  | —                                  |
-| `features/workspaces`      | Workspace list and themes (`workspaces.ts`), `workspace-switcher.tsx`                                                                                             | —                                  |
-| `features/channels`        | `channels.ts` (`DEFAULT_CHANNELS`, `createInitialStorage`), `channel-list.tsx` (CRUD, reorder, badges), `channel-members.tsx`                                     | `activity`                         |
-| `features/direct-messages` | `direct-message-list.tsx` (compact + detailed lists)                                                                                                              | `activity`                         |
-| `features/messages`        | `message.tsx` (hover toolbar, reactions, reply pill), `message-list.tsx` (scrolling, intros), `message-items.ts` (grouping, dividers), `emoji-picker-popover.tsx` | —                                  |
-| `features/composer`        | `composer.tsx`, `composer.css`, `mention-suggestions.tsx`, `serialize-markdown.ts`, `typing-indicator.tsx`                                                        | `activity`, `ai`                   |
-| `features/threads`         | `thread-panel.tsx`                                                                                                                                                | `activity`, `composer`, `messages` |
-| `features/activity`        | `activity.ts` (root feed, unread rule), `use-activity.ts` (hooks), `activity-panel.tsx`                                                                           | —                                  |
-| `features/ai`              | `api/ai-reply.ts` (streaming reply handler), `request-ai-reply.ts` (client trigger used by the composer)                                                          | —                                  |
-| `features/help`            | `help-button.tsx` (gallery help modal)                                                                                                                            | —                                  |
+| Feature                    | Owns                                                                                                                                                                                  | May import from features           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `features/users`           | Better Auth (`api/auth.ts`, `api/demo-login.ts`, `auth-client.ts`), `useCurrentUser`, `sign-in.tsx`, `user-menu.tsx`; `api/liveblocks-auth.ts`, `api/users.ts`, `api/users-search.ts` | —                                  |
+| `features/workspaces`      | Workspace list and themes (`workspaces.ts`), `workspace-switcher.tsx`                                                                                                                 | —                                  |
+| `features/channels`        | `channels.ts` (`DEFAULT_CHANNELS`, `createInitialStorage`), `channel-list.tsx` (CRUD, reorder, badges), `channel-members.tsx`                                                         | `activity`                         |
+| `features/direct-messages` | `direct-message-list.tsx` (compact + detailed lists)                                                                                                                                  | `activity`                         |
+| `features/messages`        | `message.tsx` (hover toolbar, reactions, reply pill), `message-list.tsx` (scrolling, intros), `message-items.ts` (grouping, dividers), `emoji-picker-popover.tsx`                     | —                                  |
+| `features/composer`        | `composer.tsx`, `composer.css`, `mention-suggestions.tsx`, `serialize-markdown.ts`, `typing-indicator.tsx`                                                                            | `activity`, `ai`                   |
+| `features/threads`         | `thread-panel.tsx`                                                                                                                                                                    | `activity`, `composer`, `messages` |
+| `features/activity`        | `activity.ts` (root feed, unread rule), `use-activity.ts` (hooks), `activity-panel.tsx`                                                                                               | —                                  |
+| `features/ai`              | `api/ai-reply.ts` (streaming reply handler), `request-ai-reply.ts` (client trigger used by the composer)                                                                              | —                                  |
+| `features/help`            | `help-button.tsx` (gallery help modal)                                                                                                                                                | —                                  |
 
 The last column is the current dependency graph between features. It is acyclic
 and `lint:structure` keeps it that way. Adding an edge is fine; adding a cycle
@@ -125,12 +125,12 @@ AI route needs it and the composer needs the AI route).
 
 ### Views
 
-| View                 | Exports                          | Owns                                                                                                   |
-| -------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `views/app-shell`    | `AppShell`, `AppLoadingFallback` | providers, fake-login persistence, workspace/room selection, theming, selection fallbacks, page layout |
-| `views/rail`         | `Rail`                           | workspace switcher, Home/DMs/Activity tabs with badges, user menu                                      |
-| `views/sidebar`      | `Sidebar`                        | picks channel list, DM list or activity panel for the active tab                                       |
-| `views/conversation` | `ConversationView`               | header (channel/DM), members, help, message list, composer, thread panel                               |
+| View                 | Exports                          | Owns                                                                                                                   |
+| -------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `views/app-shell`    | `AppShell`, `AppLoadingFallback` | session gate (loading / sign-in / app), providers, workspace/room selection, theming, selection fallbacks, page layout |
+| `views/rail`         | `Rail`                           | workspace switcher, Home/DMs/Activity tabs with badges, user menu                                                      |
+| `views/sidebar`      | `Sidebar`                        | picks channel list, DM list or activity panel for the active tab                                                       |
+| `views/conversation` | `ConversationView`               | header (channel/DM), members, help, message list, composer, thread panel                                               |
 
 ### Primitives
 
@@ -180,6 +180,30 @@ Anything that would need a comment goes somewhere discoverable instead:
 line-based, not a parser: it ignores `//` inside string, template and regex
 literals, but a regex literal containing `/*` will be flagged. Rewrite the regex
 (e.g. `\/\*`) rather than adding an exception.
+
+## Markdown is not the source of truth
+
+`README.md`, `FEATURE_MAP.md`, every `FEATURE.md` and this file describe
+_behaviour_. The code is the source of truth for anything that could change
+without the behaviour changing, so none of the following belongs in a Markdown
+file:
+
+- counts ("the five demo users", "up to five avatars", "seven days")
+- names and ids of demo data (user names, channel names, workspace names)
+- durations, thresholds, dimensions and other tuning constants
+- example strings that embed any of the above ("Charlie Layne mentioned you in
+  #general")
+
+Write "the demo users", "a capped row of avatars", "a fixed lifetime", and point
+at the constant or module that holds the value when it helps (`SESSION_MAX_AGE`
+in `api/auth.ts`, `lib/database.ts`). Placeholders are fine in example strings:
+"<name> mentioned you in #<channel>". If a reader needs the actual value, they
+read the code; if a doc would go stale when a constant is edited, it is
+describing the wrong thing.
+
+The exception is this file's own tooling notes, where concrete ports, paths and
+script names are the point and are kept in sync with `package.json` and the
+config files they describe.
 
 ## Verification
 
@@ -236,6 +260,8 @@ or `curl` the API routes while developing.
 - `npx playwright install chromium` once.
 - `npm run test:e2e` needs no keys: `liveblocks dev -P` starts a local server
   and injects `LIVEBLOCKS_SECRET_KEY` and `NEXT_PUBLIC_LIVEBLOCKS_BASE_URL`.
+  Better Auth falls back to its development secret when `BETTER_AUTH_SECRET` is
+  unset; only production deployments must set it.
 - `npm run test:e2e:cloud` needs `LIVEBLOCKS_SECRET_KEY` in `.env.local`; the AI
   flows in `ai.spec.ts` also need `AI_GATEWAY_API_KEY`. See `.env.example`.
 - The e2e suite starts `next dev` on port 3111 with `NEXT_DIST_DIR=.next-e2e` so
@@ -310,11 +336,11 @@ TypeScript) and `--max-warnings 0`, so warnings block too. Config is
   would add nothing but config.
 - Unused variables and arguments prefixed with `_` are allowed.
 - The React Compiler rules `react-hooks/set-state-in-effect` and
-  `react-hooks/refs` stay on. Four effects in the codebase intentionally set
+  `react-hooks/refs` stay on. Three effects in the codebase intentionally set
   state (page-until-found loops in `message-list.tsx` and `activity-panel.tsx`,
-  identity and selection normalisation in `app-shell.tsx`) and carry a
+  selection normalisation in `app-shell.tsx`) and carry a
   `// eslint-disable-next-line react-hooks/set-state-in-effect`. Prefer
-  restructuring over adding a fifth; if you must, the disable goes on exactly
+  restructuring over adding a fourth; if you must, the disable goes on exactly
   that line.
 
 ## Formatting
@@ -358,8 +384,26 @@ Explanations that used to live in code comments.
   the state. Mutation hooks both record calls and apply them to the state.
 - **`tests/helpers/e2e.ts`** opens the app as a given demo user inside an
   isolated set of rooms (`exampleId` suffix) and exposes locators for the
-  composer, channel headings, messages, rail tabs and so on. Locator rules are
-  in [Locating elements in e2e specs](#locating-elements-in-e2e-specs).
+  composer, channel headings, messages, rail tabs and so on. `openApp` uses
+  `?examplePreview=N` (gallery preview mode, no cookie) so multi-user specs stay
+  fast and cookie-free; `openSignIn` + `signInAs` go through the real Better
+  Auth sign-in card for the specs in `features/users`. Locator rules are in
+  [Locating elements in e2e specs](#locating-elements-in-e2e-specs).
+- **`tests/helpers/auth.ts`** calls the Better Auth route handler directly
+  (`signInDemo`, `demoSessionCookie`) so API tests can obtain a real session
+  cookie without a server.
+- **Authentication** is Better Auth in stateless mode: `betterAuth()` in
+  `features/users/api/auth.ts` has no `database`, so sessions live in an
+  encrypted JWE cookie and `auth.api.getSession` never touches storage (an
+  in-memory adapter is created internally for transient writes; nothing reads it
+  back). `api/demo-login.ts` is a Better Auth plugin adding
+  `POST /sign-in/demo`; `auth-client.ts` mirrors it on the client with
+  `$InferServerPlugin` (the `{} as ReturnType<typeof demoLogin>` cast is Better
+  Auth's documented pattern for typing client plugins) and an `atomListeners`
+  entry so `useSession` refetches after a demo sign-in. `api/liveblocks-auth.ts`
+  trusts the cookie, except for `previewUserId` in gallery preview mode (see
+  `features/users/FEATURE.md`). Better Auth logs a "Base URL is not set" warning
+  once at startup; set `BETTER_AUTH_URL` to silence it.
 - **`liveblocks.config.ts`** declares `Presence` (`typingIn`), `Storage`
   (`channels: LiveList<LiveObject<Channel>>`), `UserMeta`, `FeedMetadata` and
   `FeedMessageData` globally. Chat messages have no `kind`; activity items have

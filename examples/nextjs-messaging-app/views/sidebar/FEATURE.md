@@ -1,10 +1,11 @@
 # Sidebar
 
-The column between the rail and the conversation is 280px by default and can be
-dragged between 200px and 480px via the handle on its right edge (width is
-remembered). What it shows depends on the active rail tab: the channel and
-compact DM lists (Home), the detailed DM list (DMs), or the Activity panel
-(Activity). See `views/rail/FEATURE.md` for the tabs.
+The column between the rail and the conversation has a default width and can be
+dragged between a minimum and maximum (`SIDEBAR_PANEL` in `lib/panel-width.ts`)
+via the handle on its right edge (width is remembered). What it shows depends on
+the active rail tab: the channel and compact DM lists (Home), the detailed DM
+list (DMs), or the Activity panel (Activity). See `views/rail/FEATURE.md` for
+the tabs.
 
 ## Files
 

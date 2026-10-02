@@ -1,16 +1,18 @@
 "use client";
 
 import clsx from "clsx";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, LogOutIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { getUser, getUsers } from "@/lib/database";
 
 export function UserMenu({
   userId,
   onUserChange,
+  onSignOut,
 }: {
   userId: string;
   onUserChange: (userId: string) => void;
+  onSignOut?: (() => void) | null;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -64,46 +66,61 @@ export function UserMenu({
       </button>
 
       {open ? (
-        <div
-          role="listbox"
-          className="absolute bottom-0 left-[calc(100%+8px)] z-50 w-60 overflow-hidden rounded-lg border border-black/10 bg-white text-neutral-900 shadow-xl"
-        >
-          <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        <div className="absolute bottom-0 left-[calc(100%+8px)] z-50 w-60 overflow-hidden rounded-lg border border-black/10 bg-white text-neutral-900 shadow-xl">
+          <div
+            id="user-menu-heading"
+            className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500"
+          >
             Switch user
           </div>
-          {users.map((user) => {
-            const selected = user.id === userId;
-            return (
-              <button
-                key={user.id}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => {
-                  onUserChange(user.id);
-                  setOpen(false);
-                }}
-                className={clsx(
-                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-neutral-100",
-                  selected && "bg-neutral-50"
-                )}
-              >
-                <span className="inline-block size-7 min-h-7 min-w-7 shrink-0 overflow-hidden rounded-md">
-                  <img
-                    src={user.info.avatar}
-                    alt=""
-                    className="size-full object-cover"
-                  />
-                </span>
-                <span className="min-w-0 flex-1 truncate font-medium">
-                  {user.info.name}
-                </span>
-                {selected ? (
-                  <CheckIcon className="size-4 shrink-0 text-sidebar" />
-                ) : null}
-              </button>
-            );
-          })}
+          <div role="listbox" aria-labelledby="user-menu-heading">
+            {users.map((user) => {
+              const selected = user.id === userId;
+              return (
+                <button
+                  key={user.id}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => {
+                    onUserChange(user.id);
+                    setOpen(false);
+                  }}
+                  className={clsx(
+                    "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-neutral-100",
+                    selected && "bg-neutral-50"
+                  )}
+                >
+                  <span className="inline-block size-7 min-h-7 min-w-7 shrink-0 overflow-hidden rounded-md">
+                    <img
+                      src={user.info.avatar}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {user.info.name}
+                  </span>
+                  {selected ? (
+                    <CheckIcon className="size-4 shrink-0 text-sidebar" />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          {onSignOut ? (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onSignOut();
+              }}
+              className="flex w-full items-center gap-2 border-t border-black/10 px-3 py-2 text-left text-sm text-neutral-700 transition hover:bg-neutral-100"
+            >
+              <LogOutIcon className="size-4 shrink-0" aria-hidden />
+              Sign out
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

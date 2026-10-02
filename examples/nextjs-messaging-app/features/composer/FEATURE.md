@@ -18,11 +18,11 @@
 ## @mentions
 
 - **Where:** inside any composer.
-- **How:** type `@` to open a suggestion popup listing the five demo users and
-  the AI teammate, each with an avatar, Online/Offline status, and the Agent
-  badge where relevant. Keep typing to filter by name. Use **↑/↓** to move,
-  **Enter** or click to insert, **Escape** to dismiss. While the popup is open,
-  Enter picks a suggestion instead of sending.
+- **How:** type `@` to open a suggestion popup listing the demo users and the AI
+  teammate, each with an avatar, Online/Offline status, and the Agent badge
+  where relevant. Keep typing to filter by name. Use **↑/↓** to move, **Enter**
+  or click to insert, **Escape** to dismiss. While the popup is open, Enter
+  picks a suggestion instead of sending.
 - **Details:** mentions are stored as `<@userId>` tokens in the markdown and
   rendered as brand-coloured chips. Mentioning a human adds an item to their
   Activity (see `features/activity/FEATURE.md`). Mentioning the AI triggers a
@@ -34,8 +34,8 @@
 - **Where:** the line under the composer.
 - **What:** "X is typing…", "X and Y are typing…", or "Several people are
   typing…" for others typing in the same channel, DM, or thread. Typing state is
-  broadcast through Presence and cleared 2.5 seconds after the last keystroke,
-  on send, or when leaving the conversation.
+  broadcast through Presence and cleared shortly after the last keystroke, on
+  send, or when leaving the conversation.
 
 ## Files
 

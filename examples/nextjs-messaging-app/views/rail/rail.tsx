@@ -23,6 +23,7 @@ export function Rail({
   view,
   onViewChange,
   onUserChange,
+  onSignOut,
   onWorkspaceChange,
 }: {
   workspaceId: string;
@@ -30,6 +31,7 @@ export function Rail({
   view: SidebarTab;
   onViewChange: (view: SidebarTab) => void;
   onUserChange: (userId: string) => void;
+  onSignOut?: (() => void) | null;
   onWorkspaceChange: (workspaceId: string) => void;
 }) {
   return (
@@ -46,7 +48,11 @@ export function Rail({
       </ClientSideSuspense>
 
       <div className="mt-auto">
-        <UserMenu userId={userId} onUserChange={onUserChange} />
+        <UserMenu
+          userId={userId}
+          onUserChange={onUserChange}
+          onSignOut={onSignOut}
+        />
       </div>
     </nav>
   );

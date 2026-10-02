@@ -1,15 +1,25 @@
 # App shell
 
+## Session gate
+
+Before anything else the shell resolves who you are (see
+`features/users/FEATURE.md`):
+
+- while the Better Auth session is loading, a centred spinner;
+- with no session, the sign-in card instead of the app;
+- with a session (or in gallery preview mode), the app below, keyed by user id
+  so switching users remounts the Liveblocks connection.
+
 ## Layout
 
 The app is a single page (`/`) made of four regions, left to right:
 
 | Region           | Width                      | Contents                                                                                            |
 | ---------------- | -------------------------- | --------------------------------------------------------------------------------------------------- |
-| **Rail**         | 72px                       | Workspace switcher (top), Home / DMs / Activity tabs with unread badges, user switcher (bottom)     |
-| **Sidebar**      | 280px (200–480, draggable) | Depends on the active rail tab: channel + DM lists, the detailed DM list, or the Activity panel     |
+| **Rail**         | fixed                      | Workspace switcher (top), Home / DMs / Activity tabs with unread badges, user switcher (bottom)     |
+| **Sidebar**      | draggable within a min/max | Depends on the active rail tab: channel + DM lists, the detailed DM list, or the Activity panel     |
 | **Conversation** | flexible                   | Header (channel name or DM user, members, help button), message list, composer                      |
-| **Thread panel** | 380px (300–640, draggable) | Opens to the right of the conversation when a thread is open; a full-width overlay on small screens |
+| **Thread panel** | draggable within a min/max | Opens to the right of the conversation when a thread is open; a full-width overlay on small screens |
 
 The rail and the page background take the workspace's sidebar colour; the
 sidebar and conversation sit on a white card.
@@ -19,17 +29,17 @@ sidebar and conversation sit on a white card.
 - Drag the vertical handle on the sidebar's right edge or the thread panel's
   left edge (desktop only for the thread panel) to resize between each region's
   min and max width.
-- The handle is a focusable separator: arrow keys nudge width by 16px, Home sets
-  minimum, End sets maximum; double-click resets to the default width.
-- Widths persist in localStorage (`liveblocks-messaging-app:sidebar-width`,
-  `liveblocks-messaging-app:thread-panel-width`) and are clamped on reload if
-  out of range.
+- The handle is a focusable separator: arrow keys nudge the width by a fixed
+  step, Home sets minimum, End sets maximum; double-click resets to the default
+  width.
+- Widths persist in localStorage (keys and limits in `lib/panel-width.ts`) and
+  are clamped on reload if out of range.
 
 ## Remembered view
 
 - The active rail tab, the open channel or DM, and the open thread are saved per
-  room as you navigate (`liveblocks-messaging-app:view:<roomId>`), so reopening
-  or reloading the app shows what you were last looking at.
+  room as you navigate (key format in `lib/view-state.ts`), so reopening or
+  reloading the app shows what you were last looking at.
 - The state is written to both `sessionStorage` and `localStorage`. On load the
   tab's own `sessionStorage` wins, so reloading a tab restores _that_ tab's
   view; a brand-new tab falls back to `localStorage`, i.e. the last view used

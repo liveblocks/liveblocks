@@ -23,15 +23,20 @@ vi.mock("@liveblocks/node", () => ({
 }));
 
 import { POST } from "@/features/users/api/liveblocks-auth";
-import { getUser, getUsers } from "@/lib/database";
+import { getUser } from "@/lib/database";
+import { demoSessionCookie } from "@/tests/helpers/auth";
 
-const DEMO_USER_IDS = getUsers().map((user) => user.id);
-
-function authRequest(body?: unknown) {
+function authRequest({
+  body,
+  cookie,
+}: { body?: unknown; cookie?: string } = {}) {
   return POST(
     new NextRequest("http://localhost/api/liveblocks-auth", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(cookie ? { cookie } : {}),
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
   );
@@ -40,11 +45,12 @@ function authRequest(body?: unknown) {
 describe("POST /api/liveblocks-auth", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.clearAllMocks();
   });
 
   it("returns 403 when LIVEBLOCKS_SECRET_KEY is missing", async () => {
     vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "");
-    const response = await authRequest({ userId: "charlie.layne@example.com" });
+    const response = await authRequest({ body: { room: "r" } });
     expect(response.status).toBe(403);
     await expect(response.text()).resolves.toBe(
       "Missing LIVEBLOCKS_SECRET_KEY"
@@ -52,15 +58,35 @@ describe("POST /api/liveblocks-auth", () => {
     expect(LiveblocksMock).not.toHaveBeenCalled();
   });
 
-  it("authorizes a known demo user", async () => {
+  it("returns 401 without a session", async () => {
+    vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
+    const response = await authRequest({ body: { room: "r" } });
+    expect(response.status).toBe(401);
+    await expect(response.text()).resolves.toBe("Unauthorized");
+    expect(prepareSession).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 for invalid JSON without a session", async () => {
+    vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
+    const response = await POST(
+      new NextRequest("http://localhost/api/liveblocks-auth", {
+        method: "POST",
+        body: "not-json",
+      })
+    );
+    expect(response.status).toBe(401);
+  });
+
+  it("authorizes the signed-in demo user", async () => {
     vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
     authorize.mockResolvedValue({
       status: 200,
       body: JSON.stringify({ token: "t" }),
     });
-
     const user = getUser("charlie.layne@example.com")!;
-    const response = await authRequest({ userId: user.id });
+    const cookie = await demoSessionCookie(user.id);
+
+    const response = await authRequest({ body: { room: "r" }, cookie });
 
     expect(LiveblocksMock).toHaveBeenCalledWith({
       secret: "sk_test",
@@ -74,12 +100,29 @@ describe("POST /api/liveblocks-auth", () => {
     await expect(response.text()).resolves.toBe(JSON.stringify({ token: "t" }));
   });
 
+  it("ignores a userId in the body when a session is present", async () => {
+    vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
+    authorize.mockResolvedValue({ status: 200, body: "{}" });
+    const cookie = await demoSessionCookie("charlie.layne@example.com");
+
+    await authRequest({
+      body: { room: "r", userId: "mislav.abha@example.com" },
+      cookie,
+    });
+
+    expect(prepareSession).toHaveBeenCalledWith(
+      "charlie.layne@example.com",
+      expect.any(Object)
+    );
+  });
+
   it("passes NEXT_PUBLIC_LIVEBLOCKS_BASE_URL to Liveblocks", async () => {
     vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
     vi.stubEnv("NEXT_PUBLIC_LIVEBLOCKS_BASE_URL", "http://localhost:1153");
     authorize.mockResolvedValue({ status: 200, body: "{}" });
+    const cookie = await demoSessionCookie("charlie.layne@example.com");
 
-    await authRequest({ userId: "charlie.layne@example.com" });
+    await authRequest({ body: { room: "r" }, cookie });
 
     expect(LiveblocksMock).toHaveBeenCalledWith({
       secret: "sk_test",
@@ -87,60 +130,53 @@ describe("POST /api/liveblocks-auth", () => {
     });
   });
 
-  it("returns 403 for an unknown userId", async () => {
-    vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
-    const response = await authRequest({ userId: "nobody@example.com" });
-    expect(response.status).toBe(403);
-    await expect(response.text()).resolves.toBe("User not found");
-  });
+  describe("gallery preview", () => {
+    it("authorizes previewUserId without a session", async () => {
+      vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
+      authorize.mockResolvedValue({ status: 200, body: "{}" });
+      const user = getUser("tatum.paolo@example.com")!;
 
-  it("falls back to a random demo user for ai-assistant", async () => {
-    vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
-    authorize.mockResolvedValue({ status: 200, body: "{}" });
-    vi.spyOn(Math, "random").mockReturnValue(0);
+      const response = await authRequest({
+        body: { room: "r", previewUserId: user.id },
+      });
 
-    await authRequest({ userId: "ai-assistant" });
+      expect(response.status).toBe(200);
+      expect(prepareSession).toHaveBeenCalledWith(user.id, {
+        userInfo: user.info,
+      });
+    });
 
-    expect(prepareSession).toHaveBeenCalledWith(
-      DEMO_USER_IDS[0],
-      expect.objectContaining({ userInfo: getUser(DEMO_USER_IDS[0])!.info })
-    );
-    expect(prepareSession.mock.calls[0][0]).not.toBe("ai-assistant");
-    vi.restoreAllMocks();
-  });
+    it("prefers previewUserId over the session cookie", async () => {
+      vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
+      authorize.mockResolvedValue({ status: 200, body: "{}" });
+      const cookie = await demoSessionCookie("charlie.layne@example.com");
 
-  it("falls back to a random demo user for invalid JSON", async () => {
-    vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
-    authorize.mockResolvedValue({ status: 200, body: "{}" });
-    vi.spyOn(Math, "random").mockReturnValue(0.99);
+      await authRequest({
+        body: { room: "r", previewUserId: "mislav.abha@example.com" },
+        cookie,
+      });
 
-    const response = await POST(
-      new NextRequest("http://localhost/api/liveblocks-auth", {
-        method: "POST",
-        body: "not-json",
-      })
-    );
+      expect(prepareSession).toHaveBeenCalledWith(
+        "mislav.abha@example.com",
+        expect.any(Object)
+      );
+    });
 
-    expect(response.status).toBe(200);
-    expect(prepareSession).toHaveBeenCalledWith(
-      DEMO_USER_IDS[DEMO_USER_IDS.length - 1],
-      expect.any(Object)
-    );
-    vi.restoreAllMocks();
-  });
+    it("returns 401 for an unknown previewUserId", async () => {
+      vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
+      const response = await authRequest({
+        body: { room: "r", previewUserId: "nobody@example.com" },
+      });
+      expect(response.status).toBe(401);
+      expect(prepareSession).not.toHaveBeenCalled();
+    });
 
-  it("falls back to a random demo user when body omits userId", async () => {
-    vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
-    authorize.mockResolvedValue({ status: 200, body: "{}" });
-    vi.spyOn(Math, "random").mockReturnValue(0);
-
-    const response = await authRequest({});
-
-    expect(response.status).toBe(200);
-    expect(prepareSession).toHaveBeenCalledWith(
-      DEMO_USER_IDS[0],
-      expect.any(Object)
-    );
-    vi.restoreAllMocks();
+    it("returns 401 for the AI teammate as previewUserId", async () => {
+      vi.stubEnv("LIVEBLOCKS_SECRET_KEY", "sk_test");
+      const response = await authRequest({
+        body: { room: "r", previewUserId: "ai-assistant" },
+      });
+      expect(response.status).toBe(401);
+    });
   });
 });

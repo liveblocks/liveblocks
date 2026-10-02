@@ -36,9 +36,12 @@ and the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway). DM the AI
 directly and it replies inline. Each user also has a personal activity feed:
 DMs, @mentions, and replies in threads they're part of are written there as
 references to the original message and stamped as read once seen, which powers
-the Activity view and the unread badges in the sidebar. The login is fake: pick
-any demo user from the dropdown, and your last choice is remembered in
-`localStorage`.
+the Activity view and the unread badges in the sidebar. Sign-in is handled by
+[Better Auth](https://better-auth.com) in its stateless mode (encrypted cookie
+sessions, still no database) with a small demo-login plugin that lets you pick
+any of the demo users; `/api/liveblocks-auth` only issues Liveblocks tokens for
+the user in that cookie. Swapping the demo plugin for a real provider is a
+one-file change — see `features/users/FEATURE.md`.
 
 ## Getting started
 
@@ -69,11 +72,14 @@ Alternatively, you can set up your project manually:
 - Add an `AI_GATEWAY_API_KEY` from the
   [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) so the AI teammate can
   reply when you mention or DM it
+- Optionally add a `BETTER_AUTH_SECRET` (`openssl rand -base64 32`); it is
+  required when deploying
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
-To see realtime sync, open the page in two browser tabs and pick two different
-users. Messages, direct messages, typing indicators, and channel edits sync
-across both tabs.
+To see realtime sync, open the page in two browsers (or a normal and a private
+window, since the session is a cookie) and sign in as two different users.
+Messages, direct messages, typing indicators, and channel edits sync across
+both.
 
 </details>
 
@@ -136,7 +142,8 @@ you to deploy to Vercel.
 
 After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-messaging-app)
-on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` and `AI_GATEWAY_API_KEY`
-environment variables as [secrets](https://codesandbox.io/docs/secrets).
+on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY`, `BETTER_AUTH_SECRET` and
+`AI_GATEWAY_API_KEY` environment variables as
+[secrets](https://codesandbox.io/docs/secrets).
 
 </details>

@@ -42,7 +42,7 @@ to everyone in the workspace in realtime.
 
 - **Where:** Home tab → Channels list.
 - **How:** press on any channel row and drag it up or down; the whole row is the
-  drag handle. A 5px movement threshold keeps ordinary clicks working. The new
+  drag handle. A small movement threshold keeps ordinary clicks working. The new
   order is written to Storage and syncs live.
 
 ## Channel members

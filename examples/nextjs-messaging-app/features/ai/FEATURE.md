@@ -17,8 +17,8 @@ always shown online. It posts through `@liveblocks/node` from the
 
 - **How:** open **Liveblocks AI** from either DM list and send any message. No
   mention is needed.
-- **What happens:** the AI replies inline in the DM, using the last 24 messages
-  of the conversation as context.
+- **What happens:** the AI replies inline in the DM, using the most recent
+  messages of the conversation as context.
 
 ## Streaming
 

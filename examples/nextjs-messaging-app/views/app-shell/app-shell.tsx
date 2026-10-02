@@ -11,8 +11,9 @@ import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ActivityTarget } from "@/features/activity";
 import { createInitialStorage } from "@/features/channels";
+import { SignIn, useCurrentUser } from "@/features/users";
 import { getWorkspace, WORKSPACES } from "@/features/workspaces";
-import { getUser, getUsers } from "@/lib/database";
+import { getUser } from "@/lib/database";
 import { useExamplePreviewIndex, useExampleRoomId } from "@/lib/example.client";
 import { getDmFeedId } from "@/lib/feeds";
 import type {
@@ -26,24 +27,7 @@ import { ConversationView } from "@/views/conversation";
 import { Rail } from "@/views/rail";
 import { Sidebar } from "@/views/sidebar";
 
-const STORAGE_USER_KEY = "liveblocks-messaging-app:user";
 const STORAGE_WORKSPACE_KEY = "liveblocks-messaging-app:workspace";
-
-function getInitialUserId(previewIndex: number | null) {
-  const users = getUsers();
-  if (previewIndex !== null) {
-    return users[previewIndex % users.length].id;
-  }
-
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem(STORAGE_USER_KEY);
-    if (stored && getUser(stored)) {
-      return stored;
-    }
-  }
-
-  return users[0].id;
-}
 
 function getInitialWorkspaceId() {
   if (typeof window !== "undefined") {
@@ -67,17 +51,39 @@ export function AppLoadingFallback() {
 
 export function AppShell() {
   const previewIndex = useExamplePreviewIndex();
-  const [userId, setUserId] = useState(() => getInitialUserId(previewIndex));
+  const currentUser = useCurrentUser(previewIndex);
+
+  if (currentUser.status === "loading") {
+    return <AppLoadingFallback />;
+  }
+
+  if (currentUser.status === "signed-out") {
+    return <SignIn onSignIn={currentUser.signIn} />;
+  }
+
+  return (
+    <AuthenticatedApp
+      key={currentUser.userId}
+      userId={currentUser.userId}
+      preview={currentUser.preview}
+      onUserChange={currentUser.switchUser}
+      onSignOut={currentUser.signOut}
+    />
+  );
+}
+
+function AuthenticatedApp({
+  userId,
+  preview,
+  onUserChange,
+  onSignOut,
+}: {
+  userId: string;
+  preview: boolean;
+  onUserChange: (userId: string) => Promise<void>;
+  onSignOut: (() => Promise<void>) | null;
+}) {
   const [workspaceId, setWorkspaceId] = useState(getInitialWorkspaceId);
-
-  useEffect(() => {
-    if (previewIndex !== null) {
-      const users = getUsers();
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUserId(users[previewIndex % users.length].id);
-    }
-  }, [previewIndex]);
-
   const roomId = useExampleRoomId(workspaceId);
 
   const authEndpoint = useCallback(
@@ -87,18 +93,15 @@ export function AppShell() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ room, userId }),
+        body: JSON.stringify(
+          preview ? { room, previewUserId: userId } : { room }
+        ),
       });
 
       return await response.json();
     },
-    [userId]
+    [preview, userId]
   );
-
-  const handleUserChange = useCallback((nextUserId: string) => {
-    localStorage.setItem(STORAGE_USER_KEY, nextUserId);
-    setUserId(nextUserId);
-  }, []);
 
   const handleWorkspaceChange = useCallback((nextWorkspaceId: string) => {
     localStorage.setItem(STORAGE_WORKSPACE_KEY, nextWorkspaceId);
@@ -110,7 +113,6 @@ export function AppShell() {
 
   return (
     <LiveblocksProvider
-      key={userId}
       throttle={16}
       authEndpoint={authEndpoint}
       resolveUsers={async ({ userIds }) => {
@@ -144,7 +146,8 @@ export function AppShell() {
           <MessagingShell
             workspaceId={workspaceId}
             userId={userId}
-            onUserChange={handleUserChange}
+            onUserChange={onUserChange}
+            onSignOut={onSignOut}
             onWorkspaceChange={handleWorkspaceChange}
           />
         </ClientSideSuspense>
@@ -157,11 +160,13 @@ function MessagingShell({
   workspaceId,
   userId,
   onUserChange,
+  onSignOut,
   onWorkspaceChange,
 }: {
   workspaceId: string;
   userId: string;
   onUserChange: (userId: string) => void;
+  onSignOut: (() => void) | null;
   onWorkspaceChange: (workspaceId: string) => void;
 }) {
   const channels = useStorage((root) => root.channels);
@@ -274,6 +279,7 @@ function MessagingShell({
         view={view}
         onViewChange={setView}
         onUserChange={onUserChange}
+        onSignOut={onSignOut}
         onWorkspaceChange={onWorkspaceChange}
       />
 
