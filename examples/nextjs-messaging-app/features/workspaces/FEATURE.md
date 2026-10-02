@@ -3,8 +3,8 @@
 ## Workspace switcher
 
 - **Where:** lettered square button at the top of the rail.
-- **How:** click it to open a "Switch workspace" list with **Acme** and
-  **Initech**. Pick one to switch. Escape or clicking outside closes the menu.
+- **How:** click it to open a list of workspaces. Pick one to switch. Escape or
+  clicking outside closes the menu.
 - **Details:** each workspace is a separate Liveblocks room with its own channel
   list, messages, DMs, and activity. Switching workspaces also re-themes the app
   (Acme is purple with a blue accent, Initech is dark teal with a teal accent)

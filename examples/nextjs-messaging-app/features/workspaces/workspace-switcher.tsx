@@ -65,9 +65,6 @@ export function WorkspaceSwitcher({
           role="listbox"
           className="absolute left-[calc(100%+8px)] top-0 z-50 w-56 overflow-hidden rounded-md border border-black/10 bg-white text-neutral-900 shadow-xl"
         >
-          <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-            Switch workspace
-          </div>
           {WORKSPACES.map((workspace) => {
             const selected = workspace.id === workspaceId;
             return (
