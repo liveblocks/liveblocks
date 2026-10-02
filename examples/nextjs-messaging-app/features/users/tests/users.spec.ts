@@ -136,10 +136,17 @@ test.describe("users", () => {
       await awayMenu
         .getByRole("button", { name: "Set yourself as away" })
         .click();
+      await expect(awayMenu).toBeHidden();
+
+      const reopenedAway = await openAccountMenu(page, CHARLIE);
       await expect(
-        awayMenu.getByRole("button", { name: "Set yourself as online" })
+        reopenedAway.getByRole("button", { name: "Set yourself as active" })
       ).toBeVisible();
-      await expect(awayMenu.getByText("Away", { exact: true })).toBeVisible();
+      await expect(
+        reopenedAway.getByText("Away", { exact: true })
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(reopenedAway).toBeHidden();
 
       await expect(dmHeaderStatus(other.page, CHARLIE)).toContainText("Away");
       await expect(dmHeaderStatus(other.page, CHARLIE)).toContainText(
@@ -155,11 +162,13 @@ test.describe("users", () => {
 
       const reopened = await openAccountMenu(page, CHARLIE);
       await reopened
-        .getByRole("button", { name: "Set yourself as online" })
+        .getByRole("button", { name: "Set yourself as active" })
         .click();
+      await expect(reopened).toBeHidden();
       await expect(dmHeaderStatus(other.page, CHARLIE)).toContainText("Online");
 
-      await reopened.getByRole("button", { name: "Clear status" }).click();
+      const clearMenu = await openAccountMenu(page, CHARLIE);
+      await clearMenu.getByRole("button", { name: "Clear status" }).click();
       await expect(dmHeaderStatus(other.page, CHARLIE)).not.toContainText(
         "Heads down"
       );

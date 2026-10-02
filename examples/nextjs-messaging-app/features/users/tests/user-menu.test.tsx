@@ -152,22 +152,29 @@ describe("UserMenu", () => {
     });
   });
 
-  it("sets away and toggles the menu action label", async () => {
+  it("sets away, closes the menu, and toggles the action label", async () => {
     const user = userEvent.setup();
     render(<UserMenu userId={CHARLIE} />);
 
     await openMenu(user);
-    const menu = accountMenu();
     await user.click(
-      within(menu).getByRole("button", { name: "Set yourself as away" })
+      within(accountMenu()).getByRole("button", {
+        name: "Set yourself as away",
+      })
     );
 
     expect(liveblocksMocks.updateMyPresence).toHaveBeenCalledWith({
       status: { emoji: null, text: "", away: true },
     });
+    expect(
+      screen.queryByRole("dialog", { name: "Account menu" })
+    ).not.toBeInTheDocument();
+
+    await openMenu(user);
+    const menu = accountMenu();
     expect(within(menu).getByText("Away")).toBeInTheDocument();
     expect(
-      within(menu).getByRole("button", { name: "Set yourself as online" })
+      within(menu).getByRole("button", { name: "Set yourself as active" })
     ).toBeInTheDocument();
   });
 

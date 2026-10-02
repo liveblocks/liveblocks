@@ -33,7 +33,7 @@ feature and view documents its own behaviour in its folder's `FEATURE.md`.
 - **Online dots** on avatars in the DM lists, DM header, members popover, and
   mention suggestions reflect who currently has the same workspace open. Open
   the app in a second tab as another user to see them turn green. Users marked
-  away stay connected but show a hollow dot and "Away" where labels are shown.
+  away stay connected but show a gray dot and "Away" where labels are shown.
 - **Status** (emoji and short text, plus away) lives in Presence, is persisted
   per user in localStorage (`lib/status.ts`), and is edited from the rail
   account menu (`features/users/FEATURE.md`). Surfaces that show names also show
@@ -85,21 +85,3 @@ string), and `participantIds`.
   without it.
 - `NEXT_PUBLIC_LIVEBLOCKS_BASE_URL` — optional; points the client and server at
   a self-hosted dev server (used by the e2e tests).
-
-## Shared code
-
-| What                               | Files                                     |
-| ---------------------------------- | ----------------------------------------- |
-| Avatars and presence dots          | `primitives/avatar.tsx`                   |
-| Status emoji beside names          | `primitives/status-emoji.tsx`             |
-| Status persistence and presence    | `lib/status.ts`, `lib/presence.ts`        |
-| Shared emoji picker                | `primitives/emoji-picker-popover.tsx`     |
-| Feed ids, message types and guards | `lib/feeds.ts`                            |
-| Mention tokens                     | `lib/mentions.ts`                         |
-| Navigation types (selection, tabs) | `lib/navigation.ts`                       |
-| Panel widths (resize, persistence) | `lib/panel-width.ts`                      |
-| Remembered view (tab, DM, thread)  | `lib/view-state.ts`                       |
-| `Channel` type                     | `lib/channels.ts`                         |
-| Gallery integration                | `lib/example.ts`, `lib/example.client.ts` |
-| Liveblocks types                   | `liveblocks.config.ts`                    |
-| API routes (re-exports only)       | `app/api/**/route.ts`                     |

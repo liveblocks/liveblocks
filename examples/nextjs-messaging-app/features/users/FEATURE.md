@@ -24,9 +24,9 @@
 - **Where:** the rail trigger at the bottom of the rail (`user-menu.tsx`).
 - **How:** click the trigger to open an "Account menu" dialog. Escape or
   clicking outside closes it. The trigger shows your avatar, a presence dot
-  (filled when you are active, hollow when away), and—when you have set a
-  status—an emoji in a small box above the avatar with a hover tooltip for the
-  status text.
+  (green when you are active, gray when away), and—when you have set a status—an
+  emoji in a small box above the avatar with a hover tooltip for the status
+  text.
 
 ### Status
 
@@ -45,9 +45,9 @@
 
 ### Away and online
 
-- **How:** toggle **Set yourself as away** / **Set yourself as online**. Away
-  keeps you connected but marks you inactive for presence (hollow dot, "Away"
-  labels elsewhere).
+- **How:** toggle **Set yourself as away** / **Set yourself as active**. The
+  menu closes on click. Away keeps you connected but marks you inactive for
+  presence (gray dot, "Away" labels elsewhere).
 
 ### Sign out
 

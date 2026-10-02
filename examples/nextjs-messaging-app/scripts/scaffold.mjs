@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,6 +30,8 @@ const pascal = name
   .join("");
 const title = name[0].toUpperCase() + name.slice(1).replace(/-/g, " ");
 
+const created = [];
+
 function write(relative, contents) {
   const file = path.join(root, relative);
   if (existsSync(file)) {
@@ -37,34 +40,51 @@ function write(relative, contents) {
   }
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, contents);
+  created.push(relative);
   console.log(`created ${relative}`);
 }
 
-function folderScaffold(layer) {
-  const dir = `${layer}/${name}`;
-  const importPath = `@/${layer}/${name}`;
-  write(
-    `${dir}/${name}.tsx`,
-    `export function ${pascal}() {
-  return <div data-testid="${name}">${title}</div>;
+function formatCreated() {
+  if (created.length === 0) return;
+  execFileSync("npx", ["prettier", "--write", ...created], {
+    cwd: root,
+    stdio: "inherit",
+  });
 }
-`
+
+function componentSource(tag) {
+  return `export function ${pascal}() {
+  return (
+    <${tag} role="region" aria-label="${title}">
+      ${title}
+    </${tag}>
   );
-  write(`${dir}/index.ts`, `export { ${pascal} } from "./${name}";\n`);
-  write(
-    `${dir}/tests/${name}.test.tsx`,
-    `import { render, screen } from "@testing-library/react";
+}
+`;
+}
+
+function testSource(importPath) {
+  return `import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ${pascal} } from "${importPath}";
 
 describe("${pascal}", () => {
   it("renders", () => {
     render(<${pascal} />);
-    expect(screen.getByTestId("${name}")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "${title}" })
+    ).toBeInTheDocument();
   });
 });
-`
-  );
+`;
+}
+
+function folderScaffold(layer) {
+  const dir = `${layer}/${name}`;
+  const importPath = `@/${layer}/${name}`;
+  write(`${dir}/${name}.tsx`, componentSource("div"));
+  write(`${dir}/index.ts`, `export { ${pascal} } from "./${name}";\n`);
+  write(`${dir}/tests/${name}.test.tsx`, testSource(importPath));
   write(
     `${dir}/FEATURE.md`,
     `# ${title}
@@ -82,39 +102,24 @@ implementation lives in the code.
 Next steps:
   1. Add a row for ${dir} to the ${layer === "features" ? "Features" : "Views"} table in FEATURE_MAP.md
      (lint:structure fails until it is linked).
-  2. Add it to the ${layer === "features" ? "Feature inventory" : "Views"} section of AGENTS.md.
-  3. Import it through "${importPath}" only.
-  4. npm run check
+  2. Import it through "${importPath}" only.
+  3. npm run check:feature -- ${dir}
 `);
 }
 
 if (kind === "feature") folderScaffold("features");
 if (kind === "view") folderScaffold("views");
 if (kind === "primitive") {
-  write(
-    `primitives/${name}.tsx`,
-    `export function ${pascal}() {
-  return <span data-testid="${name}">${title}</span>;
-}
-`
-  );
+  write(`primitives/${name}.tsx`, componentSource("span"));
   write(
     `primitives/tests/${name}.test.tsx`,
-    `import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { ${pascal} } from "@/primitives/${name}";
-
-describe("${pascal}", () => {
-  it("renders", () => {
-    render(<${pascal} />);
-    expect(screen.getByTestId("${name}")).toBeInTheDocument();
-  });
-});
-`
+    testSource(`@/primitives/${name}`)
   );
   console.log(`
 Next steps:
-  1. Add it to the Primitives section of AGENTS.md and the Shared code table in FEATURE_MAP.md.
-  2. npm run check
+  1. Import it through "@/primitives/${name}" only.
+  2. npm run check:feature -- primitives/${name}.tsx
 `);
 }
+
+formatCreated();

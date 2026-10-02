@@ -14,6 +14,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "lint:structure": "node scripts/check-structure.mjs",
+    "fix": "eslint . --fix && prettier --write .",
+    "check:feature": "node scripts/check-feature.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",

@@ -88,22 +88,34 @@ export function UserMenu({
             </div>
           </div>
 
-          <StatusEditor
-            emoji={status.emoji}
-            text={status.text}
-            canClear={hasStatus(status)}
-            onEmojiChange={(emoji) => setStatus({ emoji })}
-            onTextChange={(text) => setStatus({ text })}
-            onTextSubmit={(text) => {
-              setStatus({ text });
-              setOpen(false);
-            }}
-            onClear={clearStatus}
-          />
+          <div className="px-3 pt-4 pb-0.5">
+            <StatusEditor
+              emoji={status.emoji}
+              text={status.text}
+              canClear={hasStatus(status)}
+              onEmojiChange={(emoji) => setStatus({ emoji })}
+              onTextChange={(text) => setStatus({ text })}
+              onTextSubmit={(text) => {
+                setStatus({ text });
+                setOpen(false);
+              }}
+              onClear={clearStatus}
+            />
+          </div>
 
-          <div className="border-t border-black/10 py-1">
-            <MenuItem onClick={() => setAway(active)}>
-              {active ? "Set yourself as away" : "Set yourself as online"}
+          <div className="py-1">
+            <MenuItem
+              onClick={() => {
+                setAway(active);
+                setOpen(false);
+              }}
+            >
+              <span>
+                Set yourself as{" "}
+                <strong className="font-semibold">
+                  {active ? "away" : "active"}
+                </strong>
+              </span>
             </MenuItem>
           </div>
 
@@ -159,18 +171,12 @@ function StatusEditor({
 
   return (
     <form
-      className="px-3 py-3"
+      className=""
       onSubmit={(event) => {
         event.preventDefault();
         onTextSubmit(draft);
       }}
     >
-      <label
-        htmlFor="user-status-text"
-        className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500"
-      >
-        Status
-      </label>
       <div className="flex items-center gap-1 rounded-md border border-neutral-300 bg-white pr-1 transition-all focus-within:border-neutral-400 focus-within:ring-2 focus-within:ring-neutral-100/80">
         <EmojiPickerPopover onSelect={onEmojiChange}>
           <button
@@ -183,6 +189,9 @@ function StatusEditor({
             {emoji ?? <SmilePlusIcon className="size-4" aria-hidden />}
           </button>
         </EmojiPickerPopover>
+        <label htmlFor="user-status-text" className="sr-only">
+          Status
+        </label>
         <input
           id="user-status-text"
           type="text"
@@ -243,9 +252,7 @@ function PresenceDot({
       className={clsx(
         "absolute size-3 rounded-full border-2",
         ringClassName,
-        active
-          ? "bg-green-500"
-          : "bg-white shadow-[inset_0_0_0_1.5px_var(--color-neutral-400)]",
+        active ? "bg-green-500" : "bg-neutral-400",
         className
       )}
       aria-label={active ? "Online" : "Away"}

@@ -102,65 +102,19 @@ features/<name>/
 One rule covers every layer: tests live in a `tests/` folder next to the code
 they cover, never as sibling files.
 
-## Feature inventory
+## Where things live
 
-| Feature                    | Owns                                                                                                                                                                                                                  | May import from features           |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `features/users`           | Better Auth (`api/auth.ts`, `api/demo-login.ts`, `auth-client.ts`), `useCurrentUser`, `useUserStatus`, `sign-in.tsx`, account menu (`user-menu.tsx`); `api/liveblocks-auth.ts`, `api/users.ts`, `api/users-search.ts` | —                                  |
-| `features/workspaces`      | Workspace list and themes (`workspaces.ts`), `workspace-switcher.tsx`                                                                                                                                                 | —                                  |
-| `features/channels`        | `channels.ts` (`DEFAULT_CHANNELS`, `createInitialStorage`), `channel-list.tsx` (CRUD, reorder, badges), `channel-members.tsx`                                                                                         | `activity`                         |
-| `features/direct-messages` | `direct-message-list.tsx` (compact + detailed lists)                                                                                                                                                                  | `activity`                         |
-| `features/messages`        | `message.tsx` (hover toolbar, reactions, reply pill), `message-list.tsx` (scrolling, intros), `message-items.ts` (grouping, dividers)                                                                                 | —                                  |
-| `features/composer`        | `composer.tsx`, `composer.css`, `mention-suggestions.tsx`, `serialize-markdown.ts`, `typing-indicator.tsx`                                                                                                            | `activity`, `ai`                   |
-| `features/threads`         | `thread-panel.tsx`                                                                                                                                                                                                    | `activity`, `composer`, `messages` |
-| `features/activity`        | `activity.ts` (root feed, unread rule), `use-activity.ts` (hooks), `activity-panel.tsx`                                                                                                                               | —                                  |
-| `features/ai`              | `api/ai-reply.ts` (streaming reply handler), `request-ai-reply.ts` (client trigger used by the composer)                                                                                                              | —                                  |
-| `features/help`            | `help-button.tsx` (gallery help modal)                                                                                                                                                                                | —                                  |
+What a feature or view does is in its `FEATURE.md`, indexed from
+`FEATURE_MAP.md`. The folder is the list of what it owns. Do not copy that list
+into this file.
 
-The last column is the current dependency graph between features. It is acyclic
-and `lint:structure` keeps it that way. Adding an edge is fine; adding a cycle
-is not — move the shared piece to `lib/` instead (that is why
-`getThreadParticipantIds` lives in `lib/threads.ts`, not `features/threads`: the
-AI route needs it and the composer needs the AI route).
+Feature imports must stay acyclic. `npm run lint:structure` checks the graph.
+Adding an edge is fine; a cycle is not. Move the shared piece to `lib/`
+(`getThreadParticipantIds` lives in `lib/threads.ts` because the AI route and
+the composer both need it).
 
-### Views
-
-| View                 | Exports                          | Owns                                                                                                                                                  |
-| -------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `views/app-shell`    | `AppShell`, `AppLoadingFallback` | session gate (loading / sign-in / app), providers, workspace/room selection, `initialPresence` status seed, theming, selection fallbacks, page layout |
-| `views/rail`         | `Rail`                           | workspace switcher, Home/DMs/Activity tabs with badges, account menu trigger                                                                          |
-| `views/sidebar`      | `Sidebar`                        | picks channel list, DM list or activity panel for the active tab                                                                                      |
-| `views/conversation` | `ConversationView`               | header (channel/DM), members, help, message list, composer, thread panel                                                                              |
-
-### Primitives
-
-`avatar.tsx`, `unread-badge.tsx`, `column-header.tsx`, `resize-handle.tsx`
-(`ResizeHandle`), `preview-row.tsx` (`PreviewRow`, `MessagePreview`,
-`UnreadDot`, `PreviewSkeleton`), `markdown.tsx` (`Markdown`, `InlineMarkdown`),
-`emoji-picker-popover.tsx` (reactions and account status), `status-emoji.tsx`
-(status emoji beside names).
-
-A primitive is promoted from a feature only once a second feature or view needs
+Promote a primitive out of a feature only once a second feature or view needs
 it. Until then it stays in the feature.
-
-### Shared `lib/`
-
-| File                                      | Contents                                                                                                                                                                                  |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/database.ts`                         | Demo users, `AI_USER`, `getUser`, `getUsers`, `getRandomUser` (gallery convention; see `.claude/skills/create-example`)                                                                   |
-| `lib/feeds.ts`                            | Feed id prefixes and builders (`getDmFeedId`, `isDmFeedId`, `getThreadFeedId`, `isThreadFeedId`, `getActivityFeedId`), `ChatMessage` / `ActivityItem` types and guards, `ThreadFeed` type |
-| `lib/mentions.ts`                         | `<@userId>` tokens: `getMentionedUserIds`, `mentionToken`, `hasMention`                                                                                                                   |
-| `lib/threads.ts`                          | `getThreadParticipantIds` (authors + mentioned users of a thread)                                                                                                                         |
-| `lib/channels.ts`                         | `Channel` (the shape stored in Storage's `channels` list)                                                                                                                                 |
-| `lib/navigation.ts`                       | `Selection`, `Conversation`, `MessageHighlight`, `SidebarTab`                                                                                                                             |
-| `lib/panel-width.ts`                      | Resizable panel widths: `SIDEBAR_PANEL`, `THREAD_PANEL` configs, `clampPanelWidth`, `readPanelWidth`/`writePanelWidth` (localStorage), `usePanelWidth` hook                               |
-| `lib/view-state.ts`                       | Remembered view per room: `ViewState`, `parseViewState`, `readViewState`/`writeViewState` (sessionStorage first, then localStorage)                                                       |
-| `lib/time.ts`                             | `formatTime`, `formatDayLabel`                                                                                                                                                            |
-| `lib/status.ts`                           | Per-user status persistence in localStorage (`readStatus`, `writeStatus`, `normalizeStatus`, `hasStatus`, `isActive`)                                                                     |
-| `lib/presence.ts`                         | `useUserPresence` — merged map of user id to online/away and status for lists and headers                                                                                                 |
-| `lib/example.ts`, `lib/example.client.ts` | Gallery integration (`exampleId`, `examplePreview`)                                                                                                                                       |
-
-Every `lib/` module has a test in `lib/tests/` (`lib/tests/feeds.test.ts`).
 
 ## Comments policy
 
@@ -214,27 +168,34 @@ config files they describe.
 Run these from `examples/nextjs-messaging-app/`. A change is not done until the
 relevant set is green.
 
-| Command                  | What it proves                                                               | When                                          |
-| ------------------------ | ---------------------------------------------------------------------------- | --------------------------------------------- |
-| `npm run typecheck`      | `tsc --noEmit` passes                                                        | after every series of edits                   |
-| `npm run lint`           | ESLint (Next + hooks + TypeScript rules), zero warnings allowed              | after every series of edits                   |
-| `npm run lint:structure` | layers, barrel-only imports, no cycles, anatomy, test placement, no comments | after moving or adding files                  |
-| `npm run format:check`   | every file is Prettier-formatted (`.prettierrc`)                             | before declaring any task done                |
-| `npm test`               | all vitest suites (unit, component, API)                                     | after every series of edits                   |
-| `npm run test:baseline`  | `npm test` + no tests were lost versus `tests/baseline.json`                 | before declaring any task done                |
-| `npm run check`          | typecheck, lint, lint:structure, format:check, test:baseline, in order       | before declaring any task done                |
-| `npm run test:e2e`       | Playwright against a throwaway local Liveblocks dev server                   | after touching UI flows, before finishing     |
-| `npm run check:all`      | `check` + `test:e2e`                                                         | restructures, multi-feature changes           |
-| `npm run build`          | production `next build` succeeds                                             | after changing `app/`, config or dependencies |
-| `npm run test:e2e:cloud` | e2e against the keys in `.env.local`; the only way to run the AI specs       | only when `features/ai` changed               |
+| Command                           | What it proves                                                                                                  | When                                                              |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `npm run typecheck`               | `tsc --noEmit` passes                                                                                           | after every series of edits                                       |
+| `npm run lint`                    | ESLint (Next + hooks + TypeScript rules), zero warnings allowed                                                 | after every series of edits                                       |
+| `npm run lint:structure`          | layers, barrel-only imports, no cycles, anatomy, test placement, no comments, no `data-testid` outside `tests/` | after moving or adding files                                      |
+| `npm run format:check`            | every file is Prettier-formatted (`.prettierrc`)                                                                | before declaring any task done                                    |
+| `npm run fix`                     | `eslint . --fix`, then `prettier --write .`                                                                     | when lint or format is failing                                    |
+| `npm test`                        | all vitest suites (unit, component, API)                                                                        | after every series of edits                                       |
+| `npm run test:baseline`           | `npm test` + no tests were lost versus `tests/baseline.json`                                                    | before declaring any task done                                    |
+| `npm run check:feature -- <path>` | structure, plus eslint, prettier, and vitest for that path                                                      | while iterating on one feature, view, primitive, or `lib/` module |
+| `npm run check`                   | typecheck, lint, lint:structure, format:check, test:baseline, in order                                          | before declaring any task done                                    |
+| `npm run test:e2e`                | Playwright against a throwaway local Liveblocks dev server                                                      | after touching UI flows, before finishing                         |
+| `npm run check:all`               | `check` + `test:e2e`                                                                                            | restructures, multi-feature changes                               |
+| `npm run build`                   | production `next build` succeeds                                                                                | after changing `app/`, config or dependencies                     |
+| `npm run test:e2e:cloud`          | e2e against the keys in `.env.local`; the only way to run the AI specs                                          | only when `features/ai` changed                                   |
 
 Targeted runs while iterating:
 
 ```bash
-npx vitest run features/channels                 # one feature's vitest suites
-npx vitest run primitives                        # all primitive tests
+npm run check:feature -- features/channels
+npm run check:feature -- lib/feeds.ts
 npx liveblocks dev -P --no-check -c "playwright test features/channels"
 ```
+
+`check:feature` accepts a feature, view, primitive, or `lib/` path (a directory
+or a file). A bare name such as `channels` resolves to `features/channels` when
+that folder exists. It does not typecheck and it does not compare the test
+baseline; `npm run check` still does both before a task is done.
 
 ### Test baseline
 
@@ -248,8 +209,8 @@ against it:
 - more → the script rewrites `baseline.json` with the new counts. Commit it.
 
 The Playwright numbers come from `playwright test --list`, so they need no
-browser or server. Two tests in `features/ai/tests/ai.spec.ts` skip themselves
-on the local dev server; they still count.
+browser or server. Specs that skip themselves on the local dev server (see
+`features/ai/tests/ai.spec.ts`) still count.
 
 ### Running the app without keys
 
@@ -294,9 +255,10 @@ in the DOM.
    any user), the `<li>` gets a `data-*` attribute with the id the UI already
    has: `data-user-id` on DM rows, `data-message-id` on messages. Helpers take
    the object, not the display name (`dmRow(page, MISLAV)`, not
-   `dmRow(page, "Mislav Abha")`). Prefer a domain id over `data-testid`; the
-   attribute is part of the DOM contract, not a test hook, and reads the same in
-   DevTools.
+   `dmRow(page, "Mislav Abha")`). `data-testid` is forbidden outside `tests/`
+   (`lint:structure` fails on it). The domain id is part of the DOM contract,
+   not a test hook, and reads the same in DevTools. Test doubles inside `tests/`
+   may still use `data-testid`.
 4. **Unique test data over filters.** Message text in specs comes from
    `uniqueText()`, so `messageByText()` matches exactly one element. Do not
    filter on a substring that another message could contain.
@@ -325,10 +287,11 @@ everything inside the row.
 6. Update the feature's `FEATURE.md` (behaviour and its file list). Touch
    `FEATURE_MAP.md` only to add a row for a new feature or view, and this file
    only if a route, script or rule changed.
-7. Run Prettier on every file you edited (`npx prettier --write <files>`, or
-   `npm run format` for everything). Never hand-format.
-8. Run `npm run check`, then `npm run test:e2e` if any UI flow changed. Commit
-   `tests/baseline.json` if it changed.
+7. Run `npm run fix` (or `npx prettier --write` on the files you edited). Never
+   hand-format.
+8. While iterating, `npm run check:feature -- <path>`. Before declaring the task
+   done, run `npm run check`, then `npm run test:e2e` if any UI flow changed.
+   Commit `tests/baseline.json` if it changed.
 
 ## Linting
 
@@ -340,12 +303,9 @@ TypeScript) and `--max-warnings 0`, so warnings block too. Config is
   would add nothing but config.
 - Unused variables and arguments prefixed with `_` are allowed.
 - The React Compiler rules `react-hooks/set-state-in-effect` and
-  `react-hooks/refs` stay on. Three effects in the codebase intentionally set
-  state (page-until-found loops in `message-list.tsx` and `activity-panel.tsx`,
-  selection normalisation in `app-shell.tsx`) and carry a
-  `// eslint-disable-next-line react-hooks/set-state-in-effect`. Prefer
-  restructuring over adding a fourth; if you must, the disable goes on exactly
-  that line.
+  `react-hooks/refs` stay on. An effect that intentionally sets state carries
+  `// eslint-disable-next-line react-hooks/set-state-in-effect` on that line.
+  Prefer restructuring over adding another.
 
 ## Formatting
 
@@ -416,7 +376,7 @@ Explanations that used to live in code comments.
   `kind: "activity"`.
 - **`liveblocks` (CLI)** is a devDependency only for `liveblocks dev`.
 - **`scripts/`**: `check-structure.mjs` (architecture rules),
-  `check-test-baseline.mjs` (test counts), `scaffold.mjs` (`new:*` commands).
-  All plain Node, no dependencies.
+  `check-test-baseline.mjs` (test counts), `check-feature.mjs` (scoped check),
+  `scaffold.mjs` (`new:*` commands). All plain Node, no dependencies.
 - **`.next-local`** is the dist dir for `npm run dev:local`, for the same reason
   `.next-e2e` exists: Next refuses two dev servers sharing one dist dir.

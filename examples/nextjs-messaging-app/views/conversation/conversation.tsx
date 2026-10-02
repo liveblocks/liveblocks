@@ -176,7 +176,7 @@ function DmHeader({ user }: { user: Liveblocks["UserMeta"] }) {
         {status && hasStatus(status) ? (
           <span
             className="flex min-w-0 items-center gap-1 text-xs text-neutral-500"
-            data-testid="dm-header-user-status"
+            aria-label={status.text ? `Status: ${status.text}` : "Status"}
           >
             {status.emoji ? <span aria-hidden>{status.emoji}</span> : null}
             {status.text ? (

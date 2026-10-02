@@ -86,7 +86,10 @@ function checkComments(file, source) {
   lines.forEach((raw, index) => {
     const line = raw.trim();
     const report = (snippet) =>
-      fail(file, `line ${index + 1}: comment is not allowed: ${snippet}`);
+      fail(
+        file,
+        `line ${index + 1}: comment is not allowed (${snippet}). Put the explanation in FEATURE.md, AGENTS.md tooling notes, or a test name.`
+      );
 
     if (inBlock) {
       if (line.includes("*/")) inBlock = false;
@@ -119,6 +122,19 @@ function checkComments(file, source) {
   });
 }
 
+function checkTestIds(file, source) {
+  if (!/\.tsx?$/.test(file)) return;
+  if (path.relative(root, file).split(path.sep).includes("tests")) return;
+  source.split("\n").forEach((line, index) => {
+    if (line.includes("data-testid")) {
+      fail(
+        file,
+        `line ${index + 1}: data-testid is not allowed outside tests/. Use a role and accessible name, or a data-<entity>-id on a list row.`
+      );
+    }
+  });
+}
+
 function checkImports(file, source) {
   const layer = layerOf(file);
   const owner = featureOf(file);
@@ -133,12 +149,18 @@ function checkImports(file, source) {
         isBarrel &&
         specifier.includes("/api/")
       ) {
-        fail(file, `barrel must not export server code: ${specifier}`);
+        fail(
+          file,
+          `barrel must not export server code (${specifier}). Drop it from index.ts; app/api routes import the handler directly.`
+        );
       }
       if (specifier.startsWith("..") && owner) {
         const target = path.resolve(path.dirname(file), specifier);
         if (!target.startsWith(path.join(root, owner))) {
-          fail(file, `relative import escapes ${owner}: ${specifier}`);
+          fail(
+            file,
+            `relative import escapes ${owner} (${specifier}). Import other features and views through their index (@/features/<name>).`
+          );
         }
       }
       continue;
@@ -149,13 +171,19 @@ function checkImports(file, source) {
 
     if (targetLayer === "tests") {
       if (!isTest && layer !== "tests") {
-        fail(file, `only tests may import test helpers: ${specifier}`);
+        fail(
+          file,
+          `only tests may import test helpers (${specifier}). Move shared production code to lib/ or primitives/.`
+        );
       }
       continue;
     }
 
     if (!LAYER_ORDER.includes(targetLayer)) {
-      fail(file, `unknown layer in import: ${specifier}`);
+      fail(
+        file,
+        `unknown layer in import (${specifier}). Use @/lib, @/primitives, @/features, @/views, or @/tests.`
+      );
       continue;
     }
 
@@ -166,7 +194,10 @@ function checkImports(file, source) {
     const from = LAYER_ORDER.indexOf(layer);
     const to = LAYER_ORDER.indexOf(targetLayer);
     if (to > from) {
-      fail(file, `${layer} may not import from ${targetLayer}: ${specifier}`);
+      fail(
+        file,
+        `${layer} may not import from ${targetLayer} (${specifier}). Move the shared piece down to a layer ${layer} is allowed to import.`
+      );
     }
 
     if (targetLayer === "features" || targetLayer === "views") {
@@ -176,10 +207,16 @@ function checkImports(file, source) {
         const isApiHandler = segments[2] === "api";
         if (isRouteFile && isApiHandler) continue;
         if (isTest && owner === target) continue;
-        fail(file, `deep import; use @/${target} instead: ${specifier}`);
+        fail(
+          file,
+          `deep import (${specifier}). Export it from ${target}/index.ts and import @/${target}.`
+        );
       }
       if (layer === "app" && !isRouteFile && targetLayer === "features") {
-        fail(file, `app may only import views: ${specifier}`);
+        fail(
+          file,
+          `app may only import views, plus feature API handlers from route files (${specifier}).`
+        );
       }
     }
   }
@@ -198,31 +235,37 @@ function checkAnatomy() {
       const folder = path.join(dir, name);
       if (!statSync(folder).isDirectory()) continue;
       if (!exists(path.join(folder, "index.ts"))) {
-        fail(folder, "missing index.ts");
+        fail(folder, "missing index.ts. Add one that lists named exports.");
       }
       const doc = path.join(folder, "FEATURE.md");
       if (!exists(doc) || readFileSync(doc, "utf8").trim() === "") {
-        fail(folder, "missing FEATURE.md (behaviour doc)");
+        fail(
+          folder,
+          "missing FEATURE.md. Describe the user-observable behaviour and list the files."
+        );
       } else if (
         !new RegExp(`${kind}/${name}/FEATURE\\.md(?![\\w.])`).test(featureMap)
       ) {
-        fail(doc, "not linked from FEATURE_MAP.md");
+        fail(
+          doc,
+          "not linked from FEATURE_MAP.md. Add a row to the Features or Views table."
+        );
       }
       const tests = path.join(folder, "tests");
       const testFiles = exists(tests)
         ? readdirSync(tests).filter((f) => /\.(test|spec)\.tsx?$/.test(f))
         : [];
       if (testFiles.length === 0) {
-        fail(
-          folder,
-          "tests/ must contain at least one *.test.* or *.spec.* file"
-        );
+        fail(folder, "tests/ needs at least one *.test.* or *.spec.* file.");
       }
       const api = path.join(folder, "api");
       if (exists(api)) {
         const index = readFileSync(path.join(folder, "index.ts"), "utf8");
         if (index.includes('"./api/') || index.includes("'./api/")) {
-          fail(path.join(folder, "index.ts"), "barrel must not export ./api/");
+          fail(
+            path.join(folder, "index.ts"),
+            "barrel must not export ./api/. API handlers stay server-only."
+          );
         }
       }
     }
@@ -236,7 +279,10 @@ function checkAnatomy() {
     for (const file of readdirSync(dir)) {
       if (!/\.tsx?$/.test(file)) continue;
       if (/\.test\.tsx?$/.test(file)) {
-        fail(path.join(dir, file), `test files belong in ${kind}/tests/`);
+        fail(
+          path.join(dir, file),
+          `test file belongs in ${kind}/tests/, next to the other tests for that layer.`
+        );
         continue;
       }
       const base = file.replace(/\.(client\.)?tsx?$/, "");
@@ -244,7 +290,10 @@ function checkAnatomy() {
         new RegExp(`^${base}\\.test\\.tsx?$`).test(f)
       );
       if (!hasTest) {
-        fail(path.join(dir, file), `missing ${kind}/tests/${base}.test.ts(x)`);
+        fail(
+          path.join(dir, file),
+          `missing ${kind}/tests/${base}.test.ts(x). Add a test named after the module.`
+        );
       }
     }
   }
@@ -257,7 +306,10 @@ function checkAnatomy() {
       if (!statSync(folder).isDirectory()) continue;
       for (const file of readdirSync(folder)) {
         if (/\.(test|spec)\.tsx?$/.test(file)) {
-          fail(path.join(folder, file), "test files belong in tests/");
+          fail(
+            path.join(folder, file),
+            "test file belongs in tests/, not beside the source."
+          );
         }
       }
     }
@@ -272,7 +324,10 @@ function checkAnatomy() {
   ];
   for (const dir of stray) {
     if (exists(path.join(root, dir))) {
-      fail(path.join(root, dir), "legacy directory must not exist");
+      fail(
+        path.join(root, dir),
+        "legacy directory must not exist. Tests live next to the code they cover."
+      );
     }
   }
 }
@@ -282,7 +337,10 @@ function checkBarrels(files) {
     if (featureOf(file) && path.basename(file) === "index.ts") {
       const source = readFileSync(file, "utf8");
       if (/export\s+\*/.test(source)) {
-        fail(file, "barrels must list named exports, not export *");
+        fail(
+          file,
+          "barrels must list named exports. Replace export * with explicit names."
+        );
       }
     }
   }
@@ -307,7 +365,7 @@ function checkFeatureCycles(files) {
     if (done.has(node)) return;
     if (visiting.has(node)) {
       const cycle = [...trail.slice(trail.indexOf(node)), node].join(" -> ");
-      errors.push(`feature cycle: ${cycle}`);
+      errors.push(`feature cycle: ${cycle}. Move the shared piece to lib/.`);
       return;
     }
     visiting.add(node);
@@ -327,7 +385,10 @@ const files = [
 for (const file of files) {
   const source = readFileSync(file, "utf8");
   checkComments(file, source);
-  if (/\.tsx?$/.test(file)) checkImports(file, source);
+  if (/\.tsx?$/.test(file)) {
+    checkImports(file, source);
+    checkTestIds(file, source);
+  }
 }
 checkAnatomy();
 checkBarrels(files);
