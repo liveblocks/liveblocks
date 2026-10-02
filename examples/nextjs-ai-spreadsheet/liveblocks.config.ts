@@ -95,6 +95,18 @@ declare global {
       colId: string;
     };
 
+    // Comments posted by the Jev-powered reviewer (see lib/jev-review.ts) are
+    // tagged so the UI can show "Fix it" / "Ignore" under them. `pending` shows
+    // the buttons; `accepted` / `ignored` hides them again for everyone.
+    CommentMetadata: {
+      review?: "pending" | "accepted" | "ignored";
+      // The recommended fix, ready to apply, as JSON (see lib/fix.ts). Written
+      // together with the review comment so "Fix it" can apply it instantly
+      // with `mutateStorage` instead of asking the LLM again. Removed once
+      // applied.
+      fix?: string;
+    };
+
     // The shape of every message stored in a chat feed (see Chat.tsx). Mirrors
     // the realtime AI Elements example.
     FeedMessageData: {
