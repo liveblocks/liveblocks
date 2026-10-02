@@ -13,6 +13,11 @@ declare global {
 
     Presence: {
       typingIn: string | null;
+      status?: {
+        emoji: string | null;
+        text: string;
+        away: boolean;
+      };
     };
 
     Storage: {

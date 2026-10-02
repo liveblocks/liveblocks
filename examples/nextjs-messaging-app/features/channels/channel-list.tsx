@@ -248,7 +248,7 @@ export function ChannelList({
               }}
               placeholder="channel-name"
               autoFocus
-              className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none"
+              className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900 transition-all placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-100/80"
             />
           </div>
         ) : null}
@@ -335,7 +335,7 @@ function SortableChannelItem({
             }}
             onClick={(event) => event.stopPropagation()}
             autoFocus
-            className="min-w-0 flex-1 rounded border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
+            className="min-w-0 flex-1 rounded border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-900 transition-all focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-100/80"
           />
         ) : (
           <button

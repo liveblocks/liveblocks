@@ -101,25 +101,6 @@ test.describe("app shell", () => {
     await expect(dmRow(page, AI_USER)).toContainText("Agent");
   });
 
-  test("switches the signed-in user from the rail", async ({ page }) => {
-    await openApp(page, { exampleId: uniqueExampleId(), user: CHARLIE });
-
-    await rail(page)
-      .getByRole("button", {
-        name: `Signed in as ${CHARLIE.name}. Switch user`,
-      })
-      .click();
-    await page.getByRole("option", { name: MISLAV.name }).click();
-
-    await expect(
-      rail(page).getByRole("button", {
-        name: `Signed in as ${MISLAV.name}. Switch user`,
-      })
-    ).toBeVisible();
-    await expect(dmRow(page, CHARLIE)).toBeVisible();
-    await expect(dmRow(page, MISLAV)).toHaveCount(0);
-  });
-
   test("sidebar and thread panel resize by dragging and remember their width", async ({
     page,
   }) => {

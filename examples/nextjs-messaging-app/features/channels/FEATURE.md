@@ -51,9 +51,11 @@ to everyone in the workspace in realtime.
   only).
 - **How:** click it to open a popover listing all demo users plus the AI
   teammate. Each row shows an avatar, the name, "(you)" for yourself, an
-  **Agent** badge for the AI, and an Online/Offline dot. Online status comes
-  from room presence, so a user is online when they have the same workspace open
-  in another tab or browser. The AI is always shown online.
+  **Agent** badge for the AI, and a presence label (Online, Away, or Offline).
+  Status emoji from Presence appears next to the name when set
+  (`lib/presence.ts`, `primitives/status-emoji.tsx`). A user is online when they
+  have the workspace open and are not marked away; away users stay connected but
+  show as Away. The AI is always shown online.
 
 ## Channel intro
 

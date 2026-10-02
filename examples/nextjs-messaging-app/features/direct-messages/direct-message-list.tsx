@@ -1,11 +1,14 @@
 "use client";
 
 import { useFeedMessages } from "@liveblocks/react";
-import { useFeeds, useOthersMapped, useSelf } from "@liveblocks/react/suspense";
+import { useFeeds, useSelf } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { useMemo } from "react";
 import { AI_USER, AI_USER_ID, getUsers } from "@/lib/database";
+import { useUserPresence } from "@/lib/presence";
+import { type UserStatus } from "@/lib/status";
 import { Avatar } from "@/primitives/avatar";
+import { StatusEmoji } from "@/primitives/status-emoji";
 import {
   MessagePreview,
   PreviewRow,
@@ -22,6 +25,7 @@ type DirectMessageUser = {
   feedId: string;
   isAgent: boolean;
   isOnline: boolean;
+  status: UserStatus | undefined;
   active: boolean;
   unreadCount: number;
 };
@@ -36,11 +40,7 @@ export function DirectMessageList({
   variant?: "compact" | "detailed";
 }) {
   const selfId = useSelf((me) => me.id);
-  const otherIds = useOthersMapped((other) => other.id);
-  const onlineIds = useMemo(
-    () => new Set(otherIds.map(([, id]) => id)),
-    [otherIds]
-  );
+  const presence = useUserPresence();
   const unreadActivity = useUnreadActivity();
   const unreadCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -61,13 +61,14 @@ export function DirectMessageList({
             user,
             feedId,
             isAgent,
-            isOnline: isAgent || onlineIds.has(user.id),
+            isOnline: isAgent || (presence.get(user.id)?.online ?? false),
+            status: presence.get(user.id)?.status,
             active: user.id === activeUserId,
             unreadCount: unreadCounts.get(feedId) ?? 0,
           };
         }
       ),
-    [activeUserId, onlineIds, selfId, unreadCounts]
+    [activeUserId, presence, selfId, unreadCounts]
   );
 
   if (variant === "detailed") {
@@ -78,7 +79,7 @@ export function DirectMessageList({
 
   return (
     <ul className="space-y-0.5 px-2 pb-2">
-      {users.map(({ user, isAgent, isOnline, active, unreadCount }) => (
+      {users.map(({ user, isAgent, isOnline, status, active, unreadCount }) => (
         <li key={user.id} data-user-id={user.id}>
           <button
             type="button"
@@ -96,13 +97,16 @@ export function DirectMessageList({
               online={isOnline}
               ringClassName={active ? "border-neutral-800" : "border-white"}
             />
-            <span
-              className={clsx(
-                "min-w-0 flex-1 truncate",
-                unreadCount > 0 && !active && "font-semibold text-neutral-900"
-              )}
-            >
-              {user.info.name}
+            <span className="flex min-w-0 flex-1 items-center gap-1.5">
+              <span
+                className={clsx(
+                  "min-w-0 truncate",
+                  unreadCount > 0 && !active && "font-semibold text-neutral-900"
+                )}
+              >
+                {user.info.name}
+              </span>
+              <StatusEmoji status={status} />
             </span>
             <UnreadBadge count={unreadCount} />
             {isAgent ? (
@@ -137,7 +141,7 @@ function DetailedList({
   );
 
   return (
-    <ul className="py-2">
+    <ul className="pb-2">
       {users.map((entry) =>
         existingFeedIds.has(entry.feedId) ? (
           <DetailedRow
@@ -176,6 +180,7 @@ function DmTitle({ entry }: { entry: DirectMessageUser }) {
       >
         {entry.user.info.name}
       </span>
+      <StatusEmoji status={entry.status} />
       {entry.isAgent ? (
         <AgentBadge className="bg-brand-100 text-brand-600" />
       ) : null}

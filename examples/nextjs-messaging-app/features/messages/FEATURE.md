@@ -70,7 +70,7 @@ Hover any message to reveal a small toolbar at the top right:
 
 - `features/messages/message-list.tsx`
 - `features/messages/message.tsx`
-- `features/messages/emoji-picker-popover.tsx`
+- `primitives/emoji-picker-popover.tsx`
 - `features/messages/message-items.ts`
 - `lib/time.ts`
 - `primitives/markdown.tsx`

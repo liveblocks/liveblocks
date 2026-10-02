@@ -4,12 +4,13 @@ import { useEffect, useRef } from "react";
 import {
   ClientSideSuspense,
   useCreateFeed,
-  useOthers,
   useRoom,
   useSelf,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { AI_USER_ID } from "@/lib/database";
+import { useUserPresence } from "@/lib/presence";
+import { hasStatus } from "@/lib/status";
 import { ConversationComposer } from "@/features/composer";
 import { HelpButton } from "@/features/help";
 import { MessageList } from "@/features/messages";
@@ -140,9 +141,10 @@ export function ConversationView({
 
 function DmHeader({ user }: { user: Liveblocks["UserMeta"] }) {
   const isAgent = user.id === AI_USER_ID;
-  const isOnline = useOthers(
-    (others) => isAgent || others.some((other) => other.id === user.id)
-  );
+  const entry = useUserPresence().get(user.id);
+  const isOnline = isAgent || (entry?.online ?? false);
+  const label = isOnline ? "Online" : entry ? "Away" : "Offline";
+  const status = entry?.status;
 
   return (
     <div className="flex min-w-0 items-center gap-2.5">
@@ -157,7 +159,7 @@ function DmHeader({ user }: { user: Liveblocks["UserMeta"] }) {
             "absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-white",
             isOnline ? "bg-green-500" : "bg-neutral-400"
           )}
-          aria-label={isOnline ? "Online" : "Offline"}
+          aria-label={label}
         />
       </span>
       <div className="flex min-w-0 items-center gap-2">
@@ -169,10 +171,19 @@ function DmHeader({ user }: { user: Liveblocks["UserMeta"] }) {
             Agent
           </span>
         ) : (
-          <span className="shrink-0 text-xs text-neutral-500">
-            {isOnline ? "Online" : "Offline"}
-          </span>
+          <span className="shrink-0 text-xs text-neutral-500">{label}</span>
         )}
+        {status && hasStatus(status) ? (
+          <span
+            className="flex min-w-0 items-center gap-1 text-xs text-neutral-500"
+            data-testid="dm-header-user-status"
+          >
+            {status.emoji ? <span aria-hidden>{status.emoji}</span> : null}
+            {status.text ? (
+              <span className="truncate">{status.text}</span>
+            ) : null}
+          </span>
+        ) : null}
       </div>
     </div>
   );

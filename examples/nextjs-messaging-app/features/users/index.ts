@@ -5,4 +5,5 @@ export {
   getPreviewUserId,
   useCurrentUser,
 } from "./use-current-user";
+export { useUserStatus } from "./use-user-status";
 export { UserMenu } from "./user-menu";

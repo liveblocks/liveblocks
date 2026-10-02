@@ -8,7 +8,7 @@ feature and view documents its own behaviour in its folder's `FEATURE.md`.
 
 | Feature         | Docs                                                                       | One-line summary                                               |
 | --------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| users           | [features/users/FEATURE.md](features/users/FEATURE.md)                     | Better Auth sign-in, user switcher and sign-out for demo users |
+| users           | [features/users/FEATURE.md](features/users/FEATURE.md)                     | Better Auth sign-in, account menu (status, away, sign out)     |
 | workspaces      | [features/workspaces/FEATURE.md](features/workspaces/FEATURE.md)           | Switch Acme and Initech workspaces with sidebar theming        |
 | channels        | [features/channels/FEATURE.md](features/channels/FEATURE.md)               | Channel CRUD, reorder, members, intros synced in Storage       |
 | direct-messages | [features/direct-messages/FEATURE.md](features/direct-messages/FEATURE.md) | Compact and detailed DM lists and lazy feed ids                |
@@ -32,7 +32,12 @@ feature and view documents its own behaviour in its folder's `FEATURE.md`.
 
 - **Online dots** on avatars in the DM lists, DM header, members popover, and
   mention suggestions reflect who currently has the same workspace open. Open
-  the app in a second tab as another user to see them turn green.
+  the app in a second tab as another user to see them turn green. Users marked
+  away stay connected but show a hollow dot and "Away" where labels are shown.
+- **Status** (emoji and short text, plus away) lives in Presence, is persisted
+  per user in localStorage (`lib/status.ts`), and is edited from the rail
+  account menu (`features/users/FEATURE.md`). Surfaces that show names also show
+  the status emoji when set (`lib/presence.ts`, `primitives/status-emoji.tsx`).
 - **Typing indicators** are also presence-driven (see
   `features/composer/FEATURE.md`).
 - The AI is always shown online.
@@ -45,7 +50,7 @@ feature and view documents its own behaviour in its folder's `FEATURE.md`.
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Room**     | One per workspace: `liveblocks:examples:nextjs-messaging-app:<workspaceId>` (plus `-<exampleId>` in the gallery)                                                                             |
 | **Storage**  | `channels: LiveList<LiveObject<{ id, name }>>` — the ordered channel list                                                                                                                    |
-| **Presence** | `{ typingIn: string \| null }` — the feed id the user is typing in; also powers online status                                                                                                |
+| **Presence** | `{ typingIn: string \| null, status?: { emoji, text, away } }` — typing target, optional status; also powers online/away dots and labels                                                     |
 | **Feeds**    | Channel messages (feed id = channel id), DMs (`dm_<a>__<b>`), thread replies (`thread_<parentMessageId>`), and per-user activity (`activity_<userId>`), all distinguished by `metadata.type` |
 
 Feed message shapes (`liveblocks.config.ts`):
@@ -86,6 +91,9 @@ string), and `participantIds`.
 | What                               | Files                                     |
 | ---------------------------------- | ----------------------------------------- |
 | Avatars and presence dots          | `primitives/avatar.tsx`                   |
+| Status emoji beside names          | `primitives/status-emoji.tsx`             |
+| Status persistence and presence    | `lib/status.ts`, `lib/presence.ts`        |
+| Shared emoji picker                | `primitives/emoji-picker-popover.tsx`     |
 | Feed ids, message types and guards | `lib/feeds.ts`                            |
 | Mention tokens                     | `lib/mentions.ts`                         |
 | Navigation types (selection, tabs) | `lib/navigation.ts`                       |

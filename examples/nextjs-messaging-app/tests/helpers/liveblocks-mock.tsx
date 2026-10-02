@@ -301,8 +301,24 @@ function buildSelf(current: MockState): Self {
   };
 }
 
+export function shallow<T>(a: T, b: T): boolean {
+  if (Object.is(a, b)) {
+    return true;
+  }
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return (
+      a.length === b.length &&
+      a.every((item, index) => Object.is(item, b[index]))
+    );
+  }
+  return false;
+}
+
 export function useSelf(): Self;
-export function useSelf<T>(selector: (me: Self) => T): T;
+export function useSelf<T>(
+  selector: (me: Self) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
 export function useSelf<T>(selector?: (me: Self) => T) {
   const current = useMockState();
   const self = buildSelf(current);
@@ -330,7 +346,10 @@ export function useOthers<T>(selector?: (others: Other[]) => T) {
   return selector ? selector(others) : others;
 }
 
-export function useOthersMapped<T>(mapper: (other: Other) => T): [number, T][] {
+export function useOthersMapped<T>(
+  mapper: (other: Other) => T,
+  _isEqual?: (prev: T, curr: T) => boolean
+): [number, T][] {
   const current = useMockState();
   return buildOthers(current).map((other) => [
     other.connectionId,

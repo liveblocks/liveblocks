@@ -67,50 +67,6 @@ describe("useCurrentUser", () => {
     });
   });
 
-  it("switches preview user locally for known demo users only", async () => {
-    useSessionMock.mockReturnValue({ isPending: false, data: null });
-    const { result } = renderHook(() => useCurrentUser(0));
-
-    await act(async () => {
-      await signedIn(result.current).switchUser(users[2].id);
-    });
-    expect(result.current).toMatchObject({
-      status: "signed-in",
-      userId: users[2].id,
-      preview: true,
-    });
-
-    await act(async () => {
-      await signedIn(result.current).switchUser("unknown@example.com");
-    });
-    expect(result.current).toMatchObject({
-      status: "signed-in",
-      userId: users[2].id,
-    });
-    expect(signInDemoMock).not.toHaveBeenCalled();
-  });
-
-  it("drops preview override when previewIndex changes", async () => {
-    useSessionMock.mockReturnValue({ isPending: false, data: null });
-    const { result, rerender } = renderHook(
-      ({ previewIndex }: { previewIndex: number }) =>
-        useCurrentUser(previewIndex),
-      { initialProps: { previewIndex: 0 } }
-    );
-
-    await act(async () => {
-      await signedIn(result.current).switchUser(users[3].id);
-    });
-    expect(result.current).toMatchObject({ userId: users[3].id });
-
-    rerender({ previewIndex: 1 });
-    expect(result.current).toMatchObject({
-      status: "signed-in",
-      userId: getPreviewUserId(1),
-      preview: true,
-    });
-  });
-
   it("returns loading while the session is pending", () => {
     useSessionMock.mockReturnValue({ isPending: true });
     const { result } = renderHook(() => useCurrentUser(null));
@@ -154,7 +110,7 @@ describe("useCurrentUser", () => {
     expect(signInDemoMock).toHaveBeenCalledWith({ userId: users[1].id });
   });
 
-  it("returns signed-in for a known session user with auth switch and sign-out", async () => {
+  it("returns signed-in for a known session user with sign-out", async () => {
     useSessionMock.mockReturnValue({
       isPending: false,
       data: { user: { id: users[0].id } },
@@ -166,11 +122,6 @@ describe("useCurrentUser", () => {
       userId: users[0].id,
       preview: false,
     });
-
-    await act(async () => {
-      await signedIn(result.current).switchUser(users[2].id);
-    });
-    expect(signInDemoMock).toHaveBeenCalledWith({ userId: users[2].id });
 
     await act(async () => {
       await signedIn(result.current).signOut?.();

@@ -22,6 +22,7 @@ import type {
   Selection,
   SidebarTab,
 } from "@/lib/navigation";
+import { readStatus } from "@/lib/status";
 import { readViewState, writeViewState } from "@/lib/view-state";
 import { ConversationView } from "@/views/conversation";
 import { Rail } from "@/views/rail";
@@ -66,7 +67,6 @@ export function AppShell() {
       key={currentUser.userId}
       userId={currentUser.userId}
       preview={currentUser.preview}
-      onUserChange={currentUser.switchUser}
       onSignOut={currentUser.signOut}
     />
   );
@@ -75,12 +75,10 @@ export function AppShell() {
 function AuthenticatedApp({
   userId,
   preview,
-  onUserChange,
   onSignOut,
 }: {
   userId: string;
   preview: boolean;
-  onUserChange: (userId: string) => Promise<void>;
   onSignOut: (() => Promise<void>) | null;
 }) {
   const [workspaceId, setWorkspaceId] = useState(getInitialWorkspaceId);
@@ -139,14 +137,13 @@ function AuthenticatedApp({
       <RoomProvider
         key={roomId}
         id={roomId}
-        initialPresence={{ typingIn: null }}
+        initialPresence={{ typingIn: null, status: readStatus(userId) }}
         initialStorage={initialStorage}
       >
         <ClientSideSuspense fallback={<AppLoadingFallback />}>
           <MessagingShell
             workspaceId={workspaceId}
             userId={userId}
-            onUserChange={onUserChange}
             onSignOut={onSignOut}
             onWorkspaceChange={handleWorkspaceChange}
           />
@@ -159,13 +156,11 @@ function AuthenticatedApp({
 function MessagingShell({
   workspaceId,
   userId,
-  onUserChange,
   onSignOut,
   onWorkspaceChange,
 }: {
   workspaceId: string;
   userId: string;
-  onUserChange: (userId: string) => void;
   onSignOut: (() => void) | null;
   onWorkspaceChange: (workspaceId: string) => void;
 }) {
@@ -278,7 +273,6 @@ function MessagingShell({
         userId={userId}
         view={view}
         onViewChange={setView}
-        onUserChange={onUserChange}
         onSignOut={onSignOut}
         onWorkspaceChange={onWorkspaceChange}
       />

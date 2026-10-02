@@ -7,8 +7,7 @@ Before anything else the shell resolves who you are (see
 
 - while the Better Auth session is loading, a centred spinner;
 - with no session, the sign-in card instead of the app;
-- with a session (or in gallery preview mode), the app below, keyed by user id
-  so switching users remounts the Liveblocks connection.
+- with a session (or in gallery preview mode), the app below.
 
 ## Layout
 
@@ -16,7 +15,7 @@ The app is a single page (`/`) made of four regions, left to right:
 
 | Region           | Width                      | Contents                                                                                            |
 | ---------------- | -------------------------- | --------------------------------------------------------------------------------------------------- |
-| **Rail**         | fixed                      | Workspace switcher (top), Home / DMs / Activity tabs with unread badges, user switcher (bottom)     |
+| **Rail**         | fixed                      | Workspace switcher (top), Home / DMs / Activity tabs with unread badges, account menu (bottom)      |
 | **Sidebar**      | draggable within a min/max | Depends on the active rail tab: channel + DM lists, the detailed DM list, or the Activity panel     |
 | **Conversation** | flexible                   | Header (channel name or DM user, members, help button), message list, composer                      |
 | **Thread panel** | draggable within a min/max | Opens to the right of the conversation when a thread is open; a full-width overlay on small screens |
@@ -59,6 +58,13 @@ sidebar and conversation sit on a white card.
   the app falls back to the first channel.
 - If every channel has been deleted the conversation area shows "Create a
   channel to start messaging".
+
+## Presence seeding
+
+- When the Liveblocks room connects, `app-shell.tsx` sets `initialPresence` from
+  the signed-in user's persisted status (`lib/status.ts`) so status and away
+  state are available to other clients immediately. See
+  `features/users/FEATURE.md`.
 
 ## Files
 

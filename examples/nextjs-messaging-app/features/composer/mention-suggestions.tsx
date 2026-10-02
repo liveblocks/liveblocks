@@ -1,19 +1,13 @@
 "use client";
 
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useState,
-} from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import type {
   SuggestionKeyDownProps,
   SuggestionProps,
 } from "@tiptap/suggestion";
-import { useOthers, useSelf } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { AI_USER_ID } from "@/lib/database";
+import { useUserPresence } from "@/lib/presence";
 
 export type MentionItem = {
   id: string;
@@ -33,13 +27,7 @@ export const MentionSuggestions = forwardRef<
 >(function MentionSuggestions(props, ref) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const items = props.items;
-  const selfId = useSelf((me) => me.id);
-  const others = useOthers();
-  const onlineIds = useMemo(() => {
-    const ids = new Set(others.map((other) => other.id));
-    ids.add(selfId);
-    return ids;
-  }, [others, selfId]);
+  const presence = useUserPresence();
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -85,7 +73,7 @@ export const MentionSuggestions = forwardRef<
     <div className="max-h-64 w-72 overflow-y-auto rounded border border-neutral-200 bg-white py-1 shadow-lg">
       {items.map((item, index) => {
         const isAgent = item.id === AI_USER_ID;
-        const isOnline = isAgent || onlineIds.has(item.id);
+        const isOnline = isAgent || (presence.get(item.id)?.online ?? false);
 
         return (
           <button

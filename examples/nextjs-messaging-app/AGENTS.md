@@ -104,18 +104,18 @@ they cover, never as sibling files.
 
 ## Feature inventory
 
-| Feature                    | Owns                                                                                                                                                                                  | May import from features           |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `features/users`           | Better Auth (`api/auth.ts`, `api/demo-login.ts`, `auth-client.ts`), `useCurrentUser`, `sign-in.tsx`, `user-menu.tsx`; `api/liveblocks-auth.ts`, `api/users.ts`, `api/users-search.ts` | —                                  |
-| `features/workspaces`      | Workspace list and themes (`workspaces.ts`), `workspace-switcher.tsx`                                                                                                                 | —                                  |
-| `features/channels`        | `channels.ts` (`DEFAULT_CHANNELS`, `createInitialStorage`), `channel-list.tsx` (CRUD, reorder, badges), `channel-members.tsx`                                                         | `activity`                         |
-| `features/direct-messages` | `direct-message-list.tsx` (compact + detailed lists)                                                                                                                                  | `activity`                         |
-| `features/messages`        | `message.tsx` (hover toolbar, reactions, reply pill), `message-list.tsx` (scrolling, intros), `message-items.ts` (grouping, dividers), `emoji-picker-popover.tsx`                     | —                                  |
-| `features/composer`        | `composer.tsx`, `composer.css`, `mention-suggestions.tsx`, `serialize-markdown.ts`, `typing-indicator.tsx`                                                                            | `activity`, `ai`                   |
-| `features/threads`         | `thread-panel.tsx`                                                                                                                                                                    | `activity`, `composer`, `messages` |
-| `features/activity`        | `activity.ts` (root feed, unread rule), `use-activity.ts` (hooks), `activity-panel.tsx`                                                                                               | —                                  |
-| `features/ai`              | `api/ai-reply.ts` (streaming reply handler), `request-ai-reply.ts` (client trigger used by the composer)                                                                              | —                                  |
-| `features/help`            | `help-button.tsx` (gallery help modal)                                                                                                                                                | —                                  |
+| Feature                    | Owns                                                                                                                                                                                                                  | May import from features           |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `features/users`           | Better Auth (`api/auth.ts`, `api/demo-login.ts`, `auth-client.ts`), `useCurrentUser`, `useUserStatus`, `sign-in.tsx`, account menu (`user-menu.tsx`); `api/liveblocks-auth.ts`, `api/users.ts`, `api/users-search.ts` | —                                  |
+| `features/workspaces`      | Workspace list and themes (`workspaces.ts`), `workspace-switcher.tsx`                                                                                                                                                 | —                                  |
+| `features/channels`        | `channels.ts` (`DEFAULT_CHANNELS`, `createInitialStorage`), `channel-list.tsx` (CRUD, reorder, badges), `channel-members.tsx`                                                                                         | `activity`                         |
+| `features/direct-messages` | `direct-message-list.tsx` (compact + detailed lists)                                                                                                                                                                  | `activity`                         |
+| `features/messages`        | `message.tsx` (hover toolbar, reactions, reply pill), `message-list.tsx` (scrolling, intros), `message-items.ts` (grouping, dividers)                                                                                 | —                                  |
+| `features/composer`        | `composer.tsx`, `composer.css`, `mention-suggestions.tsx`, `serialize-markdown.ts`, `typing-indicator.tsx`                                                                                                            | `activity`, `ai`                   |
+| `features/threads`         | `thread-panel.tsx`                                                                                                                                                                                                    | `activity`, `composer`, `messages` |
+| `features/activity`        | `activity.ts` (root feed, unread rule), `use-activity.ts` (hooks), `activity-panel.tsx`                                                                                                                               | —                                  |
+| `features/ai`              | `api/ai-reply.ts` (streaming reply handler), `request-ai-reply.ts` (client trigger used by the composer)                                                                                                              | —                                  |
+| `features/help`            | `help-button.tsx` (gallery help modal)                                                                                                                                                                                | —                                  |
 
 The last column is the current dependency graph between features. It is acyclic
 and `lint:structure` keeps it that way. Adding an edge is fine; adding a cycle
@@ -125,18 +125,20 @@ AI route needs it and the composer needs the AI route).
 
 ### Views
 
-| View                 | Exports                          | Owns                                                                                                                   |
-| -------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `views/app-shell`    | `AppShell`, `AppLoadingFallback` | session gate (loading / sign-in / app), providers, workspace/room selection, theming, selection fallbacks, page layout |
-| `views/rail`         | `Rail`                           | workspace switcher, Home/DMs/Activity tabs with badges, user menu                                                      |
-| `views/sidebar`      | `Sidebar`                        | picks channel list, DM list or activity panel for the active tab                                                       |
-| `views/conversation` | `ConversationView`               | header (channel/DM), members, help, message list, composer, thread panel                                               |
+| View                 | Exports                          | Owns                                                                                                                                                  |
+| -------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `views/app-shell`    | `AppShell`, `AppLoadingFallback` | session gate (loading / sign-in / app), providers, workspace/room selection, `initialPresence` status seed, theming, selection fallbacks, page layout |
+| `views/rail`         | `Rail`                           | workspace switcher, Home/DMs/Activity tabs with badges, account menu trigger                                                                          |
+| `views/sidebar`      | `Sidebar`                        | picks channel list, DM list or activity panel for the active tab                                                                                      |
+| `views/conversation` | `ConversationView`               | header (channel/DM), members, help, message list, composer, thread panel                                                                              |
 
 ### Primitives
 
 `avatar.tsx`, `unread-badge.tsx`, `column-header.tsx`, `resize-handle.tsx`
 (`ResizeHandle`), `preview-row.tsx` (`PreviewRow`, `MessagePreview`,
-`UnreadDot`, `PreviewSkeleton`), `markdown.tsx` (`Markdown`, `InlineMarkdown`).
+`UnreadDot`, `PreviewSkeleton`), `markdown.tsx` (`Markdown`, `InlineMarkdown`),
+`emoji-picker-popover.tsx` (reactions and account status), `status-emoji.tsx`
+(status emoji beside names).
 
 A primitive is promoted from a feature only once a second feature or view needs
 it. Until then it stays in the feature.
@@ -154,6 +156,8 @@ it. Until then it stays in the feature.
 | `lib/panel-width.ts`                      | Resizable panel widths: `SIDEBAR_PANEL`, `THREAD_PANEL` configs, `clampPanelWidth`, `readPanelWidth`/`writePanelWidth` (localStorage), `usePanelWidth` hook                               |
 | `lib/view-state.ts`                       | Remembered view per room: `ViewState`, `parseViewState`, `readViewState`/`writeViewState` (sessionStorage first, then localStorage)                                                       |
 | `lib/time.ts`                             | `formatTime`, `formatDayLabel`                                                                                                                                                            |
+| `lib/status.ts`                           | Per-user status persistence in localStorage (`readStatus`, `writeStatus`, `normalizeStatus`, `hasStatus`, `isActive`)                                                                     |
+| `lib/presence.ts`                         | `useUserPresence` — merged map of user id to online/away and status for lists and headers                                                                                                 |
 | `lib/example.ts`, `lib/example.client.ts` | Gallery integration (`exampleId`, `examplePreview`)                                                                                                                                       |
 
 Every `lib/` module has a test in `lib/tests/` (`lib/tests/feeds.test.ts`).
@@ -384,7 +388,8 @@ Explanations that used to live in code comments.
   the state. Mutation hooks both record calls and apply them to the state.
 - **`tests/helpers/e2e.ts`** opens the app as a given demo user inside an
   isolated set of rooms (`exampleId` suffix) and exposes locators for the
-  composer, channel headings, messages, rail tabs and so on. `openApp` uses
+  composer, channel headings, messages, rail tabs, the rail account menu trigger
+  (`userMenuButton`, `openAccountMenu`, `accountMenu`) and so on. `openApp` uses
   `?examplePreview=N` (gallery preview mode, no cookie) so multi-user specs stay
   fast and cookie-free; `openSignIn` + `signInAs` go through the real Better
   Auth sign-in card for the specs in `features/users`. Locator rules are in
@@ -404,7 +409,8 @@ Explanations that used to live in code comments.
   trusts the cookie, except for `previewUserId` in gallery preview mode (see
   `features/users/FEATURE.md`). Better Auth logs a "Base URL is not set" warning
   once at startup; set `BETTER_AUTH_URL` to silence it.
-- **`liveblocks.config.ts`** declares `Presence` (`typingIn`), `Storage`
+- **`liveblocks.config.ts`** declares `Presence` (`typingIn`, optional `status`
+  with emoji, text, and away), `Storage`
   (`channels: LiveList<LiveObject<Channel>>`), `UserMeta`, `FeedMetadata` and
   `FeedMessageData` globally. Chat messages have no `kind`; activity items have
   `kind: "activity"`.

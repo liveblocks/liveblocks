@@ -19,10 +19,11 @@
 
 - **Where:** inside any composer.
 - **How:** type `@` to open a suggestion popup listing the demo users and the AI
-  teammate, each with an avatar, Online/Offline status, and the Agent badge
-  where relevant. Keep typing to filter by name. Use **↑/↓** to move, **Enter**
-  or click to insert, **Escape** to dismiss. While the popup is open, Enter
-  picks a suggestion instead of sending.
+  teammate, each with an avatar, Online/Away/Offline status, a status emoji when
+  set, and the Agent badge where relevant (`mention-suggestions.tsx`,
+  `lib/presence.ts`). Keep typing to filter by name. Use **↑/↓** to move,
+  **Enter** or click to insert, **Escape** to dismiss. While the popup is open,
+  Enter picks a suggestion instead of sending.
 - **Details:** mentions are stored as `<@userId>` tokens in the markdown and
   rendered as brand-coloured chips. Mentioning a human adds an item to their
   Activity (see `features/activity/FEATURE.md`). Mentioning the AI triggers a

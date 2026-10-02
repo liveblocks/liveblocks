@@ -117,7 +117,7 @@ export function ActivityPanel({
           </p>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto py-2">
+        <div className="min-h-0 flex-1 overflow-y-auto pb-2">
           <ul>
             {items.map((item) => (
               <ActivityRow

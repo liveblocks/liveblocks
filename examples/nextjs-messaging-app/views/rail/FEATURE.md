@@ -17,6 +17,14 @@
     mentions inside DM threads).
   - Activity counts **all** unread items.
 
+## Account menu
+
+- **Where:** bottom of the rail.
+- **How:** renders the users feature account menu (`user-menu.tsx`): status on
+  the trigger (emoji box, presence dot, tooltip) and the menu for editing
+  status, toggling away/online, and signing out. See
+  `features/users/FEATURE.md`.
+
 ## Files
 
 - `views/rail/rail.tsx`

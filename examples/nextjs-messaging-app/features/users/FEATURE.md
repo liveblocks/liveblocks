@@ -19,24 +19,51 @@
   and only issues a Liveblocks token for that user. The client never tells the
   server who it is.
 
-## User switcher and sign out
+## Account menu
 
-- **Where:** avatar button at the bottom of the rail.
-- **How:** click the avatar to open a "Switch user" list. Picking another user
-  signs you in as them (a new cookie replaces the old one) and remounts the
-  whole Liveblocks connection, so presence, feeds, and activity all reload for
-  the new identity. "Sign out" clears the session and returns to the sign-in
-  card. Escape or clicking outside closes the menu.
-- **Details:** nothing about the identity is kept in `localStorage`; a reload
-  restores the user from the cookie. Clearing cookies signs you out.
+- **Where:** the rail trigger at the bottom of the rail (`user-menu.tsx`).
+- **How:** click the trigger to open an "Account menu" dialog. Escape or
+  clicking outside closes it. The trigger shows your avatar, a presence dot
+  (filled when you are active, hollow when away), and—when you have set a
+  status—an emoji in a small box above the avatar with a hover tooltip for the
+  status text.
+
+### Status
+
+- **How:** pick an emoji through the shared emoji picker
+  (`primitives/emoji-picker-popover.tsx`), type a short line of text, and save
+  with **Enter** (which also closes the menu) or by leaving the field. **Clear
+  status** removes emoji and text.
+- **Details:** status is part of room Presence (`liveblocks.config.ts`: optional
+  `status` with emoji, text, and away). Your last status is persisted per user
+  in localStorage via `lib/status.ts` (`readStatus`, `writeStatus`,
+  `normalizeStatus`, `hasStatus`, `isActive`) and seeded into the room through
+  `initialPresence` in `views/app-shell/app-shell.tsx`. Updates go through
+  `useUserStatus` in `use-user-status.ts`, which writes both Presence and
+  storage. Other surfaces read merged presence through `lib/presence.ts`
+  (`useUserPresence`).
+
+### Away and online
+
+- **How:** toggle **Set yourself as away** / **Set yourself as online**. Away
+  keeps you connected but marks you inactive for presence (hollow dot, "Away"
+  labels elsewhere).
+
+### Sign out
+
+- **How:** **Sign out** clears the Better Auth session and returns to the
+  sign-in card. Hidden in gallery preview mode (see below).
+- **Details:** identity comes from the session cookie, not from `localStorage`;
+  reloading restores the signed-in user from the cookie. Clearing cookies signs
+  you out.
 
 ## Gallery preview mode
 
 - **Where:** only when the URL has `?examplePreview=N` (the liveblocks.io
   gallery embeds several panes of the app as different users).
 - **How:** the pane is signed in as demo user `N` without a cookie and without
-  the sign-in card. The user switcher still works but only for that pane, and
-  there is no "Sign out".
+  the sign-in card. The account menu works for that pane's status and
+  away/online toggle; there is no **Sign out**.
 - **Why:** the panes are same-origin iframes and would share one cookie jar, so
   cookie sessions cannot make them different people. In this mode the client
   sends `previewUserId` to `/api/liveblocks-auth`, which honours it ahead of any
@@ -61,6 +88,7 @@
 - `features/users/sign-in.tsx`
 - `features/users/user-menu.tsx`
 - `features/users/use-current-user.ts`
+- `features/users/use-user-status.ts`
 - `features/users/auth-client.ts`
 - `features/users/api/auth.ts`
 - `features/users/api/demo-login.ts`
@@ -68,4 +96,6 @@
 - `features/users/api/users.ts`
 - `features/users/api/users-search.ts`
 - `lib/database.ts`
+- `lib/status.ts`
+- `liveblocks.config.ts` (Presence `status` shape)
 - Tests: `tests/`

@@ -19,9 +19,11 @@ vi.mock("@liveblocks/react", () => import("@/tests/helpers/liveblocks-mock"));
 const SELF = "charlie.layne@example.com";
 const MISLAV = "mislav.abha@example.com";
 
-function renderRail(view: "home" | "dms" | "activity" = "home") {
+function renderRail(
+  view: "home" | "dms" | "activity" = "home",
+  options: { onSignOut?: (() => void) | null } = {}
+) {
   const onViewChange = vi.fn();
-  const onUserChange = vi.fn();
   const onWorkspaceChange = vi.fn();
   render(
     <Rail
@@ -29,11 +31,11 @@ function renderRail(view: "home" | "dms" | "activity" = "home") {
       userId={SELF}
       view={view}
       onViewChange={onViewChange}
-      onUserChange={onUserChange}
       onWorkspaceChange={onWorkspaceChange}
+      onSignOut={options.onSignOut}
     />
   );
-  return { onViewChange, onUserChange, onWorkspaceChange };
+  return { onViewChange, onWorkspaceChange };
 }
 
 describe("Rail", () => {
@@ -131,16 +133,33 @@ describe("Rail", () => {
     }
   });
 
-  it("opens the user menu and switches user", async () => {
+  it("opens the account menu from the user control", async () => {
     const user = userEvent.setup();
-    const { onUserChange } = renderRail();
+    renderRail();
 
     await user.click(
-      screen.getByRole("button", { name: /signed in as charlie layne/i })
+      screen.getByRole("button", {
+        name: /signed in as charlie layne.*open menu/i,
+      })
     );
-    await user.click(screen.getByRole("option", { name: /mislav abha/i }));
+    expect(
+      screen.getByRole("dialog", { name: "Account menu" })
+    ).toBeInTheDocument();
+  });
 
-    expect(onUserChange).toHaveBeenCalledWith(MISLAV);
+  it("shows Sign out in the account menu when onSignOut is passed", async () => {
+    const user = userEvent.setup();
+    const onSignOut = vi.fn();
+    renderRail("home", { onSignOut });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /signed in as charlie layne.*open menu/i,
+      })
+    );
+    await user.click(screen.getByRole("button", { name: "Sign out" }));
+
+    expect(onSignOut).toHaveBeenCalled();
   });
 
   it("opens the workspace switcher and switches workspace", async () => {

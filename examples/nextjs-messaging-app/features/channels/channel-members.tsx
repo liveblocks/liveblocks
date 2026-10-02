@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { useOthersMapped, useSelf } from "@liveblocks/react/suspense";
+import { useSelf } from "@liveblocks/react/suspense";
 import { UsersIcon } from "lucide-react";
 import { AI_USER, AI_USER_ID, getUsers } from "@/lib/database";
+import { useUserPresence } from "@/lib/presence";
+import { StatusEmoji } from "@/primitives/status-emoji";
 
 type Member = {
   id: string;
@@ -27,12 +28,7 @@ const MEMBERS: Member[] = [
 
 export function ChannelMembers() {
   const selfId = useSelf((me) => me.id);
-  const otherIds = useOthersMapped((other) => other.id);
-  const onlineIds = useMemo(() => {
-    const ids = new Set(otherIds.map(([, id]) => id));
-    ids.add(selfId);
-    return ids;
-  }, [otherIds, selfId]);
+  const presence = useUserPresence();
 
   return (
     <Popover.Root>
@@ -61,7 +57,9 @@ export function ChannelMembers() {
           <ul className="max-h-64 overflow-y-auto py-1">
             {MEMBERS.map((member) => {
               const isAgent = member.id === AI_USER_ID;
-              const isOnline = isAgent || onlineIds.has(member.id);
+              const entry = presence.get(member.id);
+              const isOnline = isAgent || (entry?.online ?? false);
+              const label = isOnline ? "Online" : entry ? "Away" : "Offline";
 
               return (
                 <li
@@ -77,6 +75,7 @@ export function ChannelMembers() {
                   </span>
                   <span className="flex min-w-0 flex-1 items-center gap-2 font-semibold">
                     <span className="truncate">{member.name}</span>
+                    <StatusEmoji status={entry?.status} />
                     {member.id === selfId ? (
                       <span className="font-normal text-neutral-400">
                         (you)
@@ -88,23 +87,15 @@ export function ChannelMembers() {
                       </span>
                     ) : null}
                   </span>
-                  {isOnline ? (
-                    <>
-                      <span
-                        className="size-2 shrink-0 rounded-full bg-green-500"
-                        aria-label="Online"
-                      />
-                      <span className="text-neutral-400">Online</span>
-                    </>
-                  ) : (
-                    <>
-                      <span
-                        className="size-2 shrink-0 rounded-full border-[1.5px] border-neutral-400"
-                        aria-label="Offline"
-                      />
-                      <span className="text-neutral-400">Offline</span>
-                    </>
-                  )}
+                  <span
+                    className={
+                      isOnline
+                        ? "size-2 shrink-0 rounded-full bg-green-500"
+                        : "size-2 shrink-0 rounded-full border-[1.5px] border-neutral-400"
+                    }
+                    aria-label={label}
+                  />
+                  <span className="text-neutral-400">{label}</span>
                 </li>
               );
             })}

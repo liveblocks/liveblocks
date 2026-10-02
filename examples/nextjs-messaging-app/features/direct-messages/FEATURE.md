@@ -4,25 +4,28 @@
 
 - **Where:** Home tab → Direct messages section under the channels.
 - **What:** one row per other demo user, plus **Liveblocks AI** with an
-  **Agent** badge. Each row has a small avatar with a green/grey presence dot,
-  the name, and a red unread badge when there is unread activity in that
-  conversation. Click a row to open the DM.
+  **Agent** badge. Each row has a small avatar with a presence dot, the name
+  (with a status emoji when set), and a red unread badge when there is unread
+  activity in that conversation. Click a row to open the DM. Presence comes from
+  `lib/presence.ts`.
 
 ## DM list (detailed)
 
 - **Where:** DMs tab.
 - **What:** the same people, laid out like the Activity panel: large avatar with
-  presence dot, name (and Agent badge), time of the latest message, a
-  brand-coloured unread badge, and a two-line preview of the latest message.
-  Your own latest message is prefixed with "You: ". Conversations that have
-  never been opened show "No messages yet". Previews stay live, so streaming AI
-  replies, edits, and deletions update in place.
+  presence dot, name (status emoji when set, and Agent badge), time of the
+  latest message, a brand-coloured unread badge, and a two-line preview of the
+  latest message. Your own latest message is prefixed with "You: ".
+  Conversations that have never been opened show "No messages yet". Previews
+  stay live, so streaming AI replies, edits, and deletions update in place.
 
 ## DM conversation header
 
 - **Where:** top of the conversation when a DM is open.
-- **What:** the other person's avatar with a presence dot, their name, and an
-  "Online"/"Offline" label (or the **Agent** badge for the AI).
+- **What:** the other person's avatar with a presence dot, their name (and
+  status emoji when set), an "Online", "Away", or "Offline" label, and the
+  status text when set (or the **Agent** badge for the AI). Rendered in
+  `views/conversation/conversation.tsx` using `lib/presence.ts`.
 
 ## DM intro
 

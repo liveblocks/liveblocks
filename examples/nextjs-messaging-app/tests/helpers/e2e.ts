@@ -97,8 +97,18 @@ export function rail(page: Page) {
 
 export function userMenuButton(page: Page, user: DemoUser) {
   return rail(page).getByRole("button", {
-    name: `Signed in as ${user.name}. Switch user`,
+    name: `Signed in as ${user.name}. Open menu`,
   });
+}
+
+export function accountMenu(page: Page) {
+  return page.getByRole("dialog", { name: "Account menu" });
+}
+
+export async function openAccountMenu(page: Page, user: DemoUser) {
+  await userMenuButton(page, user).click();
+  await expect(accountMenu(page)).toBeVisible();
+  return accountMenu(page);
 }
 
 export function railItem(page: Page, label: "Home" | "DMs" | "Activity") {

@@ -5,8 +5,12 @@ import {
   TATUM,
   USERS,
   demoAccountButton,
+  dmHeaderStatus,
   dmRow,
+  openAccountMenu,
   openApp,
+  openAppAs,
+  openDm,
   openSignIn,
   signInAs,
   signInHeading,
@@ -60,30 +64,12 @@ test.describe("users", () => {
     await expect(signInHeading(page)).toBeVisible({ timeout: 30_000 });
   });
 
-  test("switching user from the rail signs in as someone else", async ({
-    page,
-  }) => {
-    await openSignIn(page, { exampleId: uniqueExampleId() });
-    await signInAs(page, CHARLIE);
-
-    await userMenuButton(page, CHARLIE).click();
-    await page.getByRole("option", { name: MISLAV.name }).click();
-
-    await expect(userMenuButton(page, MISLAV)).toBeVisible();
-    await expect(dmRow(page, CHARLIE)).toBeVisible();
-
-    await page.reload();
-    await expect(userMenuButton(page, MISLAV)).toBeVisible({
-      timeout: 30_000,
-    });
-  });
-
   test("signing out returns to the sign-in screen", async ({ page }) => {
     await openSignIn(page, { exampleId: uniqueExampleId() });
     await signInAs(page, CHARLIE);
 
-    await userMenuButton(page, CHARLIE).click();
-    await page.getByRole("button", { name: "Sign out" }).click();
+    const menu = await openAccountMenu(page, CHARLIE);
+    await menu.getByRole("button", { name: "Sign out" }).click();
 
     await expect(signInHeading(page)).toBeVisible();
 
@@ -96,12 +82,11 @@ test.describe("users", () => {
   }) => {
     await openApp(page, { exampleId: uniqueExampleId(), user: TATUM });
 
-    await expect(userMenuButton(page, TATUM)).toBeVisible();
-    await userMenuButton(page, TATUM).click();
+    const menu = await openAccountMenu(page, TATUM);
     await expect(
-      page.getByRole("option", { name: CHARLIE.name })
+      menu.getByRole("button", { name: "Set yourself as away" })
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Sign out" })).toHaveCount(0);
+    await expect(menu.getByRole("button", { name: "Sign out" })).toHaveCount(0);
   });
 
   test("two browsers keep separate sessions", async ({ browser }) => {
@@ -121,5 +106,65 @@ test.describe("users", () => {
 
     await first.close();
     await second.close();
+  });
+
+  test("status and away state are shared with other users and survive reloads", async ({
+    page,
+    browser,
+  }) => {
+    const exampleId = uniqueExampleId();
+    await openApp(page, { exampleId, user: CHARLIE });
+
+    const other = await openAppAs(browser, { exampleId, user: MISLAV });
+    try {
+      await openDm(other.page, CHARLIE);
+      await expect(dmHeaderStatus(other.page, CHARLIE)).toContainText("Online");
+
+      const menu = await openAccountMenu(page, CHARLIE);
+      await expect(menu.getByRole("button", { name: "Sign out" })).toHaveCount(
+        0
+      );
+      await menu.getByRole("button", { name: "Add an emoji" }).click();
+      await page.locator("button", { hasText: "😀" }).first().click();
+      const statusInput = menu.getByRole("textbox", { name: "Status" });
+      await statusInput.fill("Heads down");
+      await statusInput.press("Enter");
+      await expect(menu).toBeHidden();
+      await expect(userMenuButton(page, CHARLIE)).toContainText("😀");
+
+      const awayMenu = await openAccountMenu(page, CHARLIE);
+      await awayMenu
+        .getByRole("button", { name: "Set yourself as away" })
+        .click();
+      await expect(
+        awayMenu.getByRole("button", { name: "Set yourself as online" })
+      ).toBeVisible();
+      await expect(awayMenu.getByText("Away", { exact: true })).toBeVisible();
+
+      await expect(dmHeaderStatus(other.page, CHARLIE)).toContainText("Away");
+      await expect(dmHeaderStatus(other.page, CHARLIE)).toContainText(
+        "Heads down"
+      );
+      await expect(dmRow(other.page, CHARLIE)).toContainText("😀");
+
+      await page.reload();
+      await expect(userMenuButton(page, CHARLIE)).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(dmHeaderStatus(other.page, CHARLIE)).toContainText("Away");
+
+      const reopened = await openAccountMenu(page, CHARLIE);
+      await reopened
+        .getByRole("button", { name: "Set yourself as online" })
+        .click();
+      await expect(dmHeaderStatus(other.page, CHARLIE)).toContainText("Online");
+
+      await reopened.getByRole("button", { name: "Clear status" }).click();
+      await expect(dmHeaderStatus(other.page, CHARLIE)).not.toContainText(
+        "Heads down"
+      );
+    } finally {
+      await other.context.close();
+    }
   });
 });

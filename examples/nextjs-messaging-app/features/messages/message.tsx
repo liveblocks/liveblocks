@@ -18,7 +18,7 @@ import { getUser } from "@/lib/database";
 import type { ChatMessage, ChatMessageData, ThreadFeed } from "@/lib/feeds";
 import { formatTime } from "@/lib/time";
 import { Markdown } from "@/primitives/markdown";
-import { EmojiPickerPopover } from "./emoji-picker-popover";
+import { EmojiPickerPopover } from "@/primitives/emoji-picker-popover";
 
 export type MessageReaction = NonNullable<ChatMessageData["reactions"]>[number];
 

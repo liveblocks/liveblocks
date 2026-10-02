@@ -22,7 +22,6 @@ export function Rail({
   userId,
   view,
   onViewChange,
-  onUserChange,
   onSignOut,
   onWorkspaceChange,
 }: {
@@ -30,12 +29,11 @@ export function Rail({
   userId: string;
   view: SidebarTab;
   onViewChange: (view: SidebarTab) => void;
-  onUserChange: (userId: string) => void;
   onSignOut?: (() => void) | null;
   onWorkspaceChange: (workspaceId: string) => void;
 }) {
   return (
-    <nav className="flex w-[72px] shrink-0 flex-col items-center bg-sidebar py-3 text-sidebar-foreground">
+    <nav className="flex w-[72px] shrink-0 flex-col items-center bg-sidebar py-4 text-sidebar-foreground">
       <WorkspaceSwitcher
         workspaceId={workspaceId}
         onWorkspaceChange={onWorkspaceChange}
@@ -48,11 +46,7 @@ export function Rail({
       </ClientSideSuspense>
 
       <div className="mt-auto">
-        <UserMenu
-          userId={userId}
-          onUserChange={onUserChange}
-          onSignOut={onSignOut}
-        />
+        <UserMenu userId={userId} onSignOut={onSignOut} />
       </div>
     </nav>
   );
