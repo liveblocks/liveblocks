@@ -64,10 +64,10 @@ export function EmojiPickerPopover({
                   ),
                   Emoji: ({ emoji, ...props }) => (
                     <button
-                      className="icon-grow flex size-8 items-center justify-center rounded-md text-lg transition-colors data-[active]:bg-neutral-100"
+                      className="flex size-8 items-center justify-center rounded-md text-lg transition-colors data-[active]:bg-neutral-100"
                       {...props}
                     >
-                      <span data-icon>{emoji.emoji}</span>
+                      <span>{emoji.emoji}</span>
                     </button>
                   ),
                 }}

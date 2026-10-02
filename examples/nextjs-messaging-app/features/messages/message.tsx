@@ -252,13 +252,13 @@ function ReactionChips({
             })
             .join(", ")}
           className={clsx(
-            "icon-grow cursor-pointer rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5 transition-colors",
+            "cursor-pointer rounded-full border px-1.75 text-normal gap-1 flex items-center h-6.5 transition-colors",
             group.selfReacted
               ? "border-brand-500/60 bg-brand-50 text-brand-700 font-medium"
               : "border-transparent bg-neutral-200/50 hover:border-neutral-200 hover:bg-white text-neutral-700"
           )}
         >
-          <span data-icon>{group.emoji}</span>{" "}
+          <span>{group.emoji}</span>{" "}
           <span className="text-xs tabular-nums">{group.reactions.length}</span>
         </button>
       ))}

@@ -157,7 +157,7 @@ export function HelpButton() {
       <style>{HOVER_CSS}</style>
       <button
         type="button"
-        className="lb-help-button icon-grow"
+        className="lb-help-button"
         style={styles.button}
         onClick={() => setIsOpen(true)}
         aria-label="How to use this example"
