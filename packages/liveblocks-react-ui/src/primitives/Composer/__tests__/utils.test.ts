@@ -1,4 +1,4 @@
-import type { CommentBody } from "@liveblocks/client";
+import type { CommentBody } from "@liveblocks/core";
 import { describe, expect, test } from "vitest";
 
 import type { ComposerBody } from "../../../types";
@@ -609,4 +609,117 @@ describe("composerBodyToCommentBody", () => {
       expect(composerBodyToCommentBody(composerBody)).toEqual(commentBody);
     }
   );
+});
+
+describe("list round-trip serialization", () => {
+  test("bulleted, numbered nest, and task list with checked", () => {
+    const composerBody: ComposerBody = [
+      {
+        type: "bulleted-list",
+        children: [
+          {
+            type: "list-item",
+            children: [{ type: "paragraph", children: [{ text: "Top" }] }],
+          },
+          {
+            type: "list-item",
+            children: [
+              { type: "paragraph", children: [{ text: "With nest" }] },
+              {
+                type: "numbered-list",
+                children: [
+                  {
+                    type: "list-item",
+                    children: [
+                      {
+                        type: "paragraph",
+                        children: [{ text: "Nested num" }],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        type: "task-list",
+        children: [
+          {
+            type: "list-item",
+            checked: true,
+            children: [
+              { type: "paragraph", children: [{ text: "Done item" }] },
+            ],
+          },
+          {
+            type: "list-item",
+            checked: false,
+            children: [
+              { type: "paragraph", children: [{ text: "Todo item" }] },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const commentBody = composerBodyToCommentBody(composerBody);
+
+    expect(commentBody).toEqual({
+      version: 1,
+      content: [
+        {
+          type: "bulleted-list",
+          children: [
+            {
+              type: "list-item",
+              children: [{ type: "paragraph", children: [{ text: "Top" }] }],
+            },
+            {
+              type: "list-item",
+              children: [
+                { type: "paragraph", children: [{ text: "With nest" }] },
+                {
+                  type: "numbered-list",
+                  children: [
+                    {
+                      type: "list-item",
+                      children: [
+                        {
+                          type: "paragraph",
+                          children: [{ text: "Nested num" }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: "task-list",
+          children: [
+            {
+              type: "list-item",
+              checked: true,
+              children: [
+                { type: "paragraph", children: [{ text: "Done item" }] },
+              ],
+            },
+            {
+              type: "list-item",
+              checked: false,
+              children: [
+                { type: "paragraph", children: [{ text: "Todo item" }] },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(commentBodyToComposerBody(commentBody)).toEqual(composerBody);
+  });
 });
