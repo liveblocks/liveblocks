@@ -17,7 +17,7 @@
   "dependencies": {
     "@dagrejs/dagre": "^1.0.4",
     "@liveblocks/core": "workspace:*",
-    "@plasmohq/storage": "^1.13.0",
+    "@plasmohq/storage": "^1.15.0",
     "@radix-ui/react-dialog": "^1.0.2",
     "@radix-ui/react-popover": "^1.0.3",
     "@radix-ui/react-select": "^1.2.0",
