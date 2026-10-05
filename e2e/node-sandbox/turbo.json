@@ -1,6 +1,21 @@
 {
   "extends": ["//"],
   "tasks": {
+    "load": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "passThroughEnv": ["LIVEBLOCKS_*"],
+      "outputs": []
+    },
+    "load:smoke": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "passThroughEnv": ["LIVEBLOCKS_*"],
+      "outputs": []
+    },
+    "typecheck": {
+      "inputs": ["$TURBO_DEFAULT$", "load/**", "test/**"]
+    },
     "test": {
       "dependsOn": ["^build"],
       "cache": false

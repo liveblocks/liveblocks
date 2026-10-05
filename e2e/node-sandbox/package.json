@@ -6,7 +6,10 @@
   "scripts": {
     "format": "(eslint --fix test/ || true) && prettier --write test/",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "load": "node load/index.ts",
+    "load:smoke": "node load/index.ts --smoke"
   },
   "license": "ISC",
   "description": "",
