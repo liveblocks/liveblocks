@@ -185,9 +185,9 @@ class Liveblocks:
         """Get rooms
 
          This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
-        newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups
-        accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-
-        reference/liveblocks-node#get-rooms).
+        newest to oldest. You can filter rooms by room ID prefixes, metadata, whether they contain comments,
+        users accesses, and groups accesses. Corresponds to
+        [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
         There is a pagination system where the cursor to the next page is returned in the response as
         `nextCursor`, which can be combined with `startingAfter`.
@@ -208,10 +208,12 @@ class Liveblocks:
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
                 `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
             organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
-            query (str | Unset): Query to filter rooms. You can filter by `roomId` and `metadata`, for
-                example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn
-                more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-
-                filter-rooms-using-query-language). Example: metadata["color"]:"blue".
+            query (str | Unset): Query to filter rooms. You can filter by `roomId`, `metadata`, and
+                `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND
+                roomId^"liveblocks:engineering" AND hasThreads:true`. The `hasThreads` filter checks
+                whether rooms contain at least one thread. Learn more about [filtering rooms with query
+                language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
+                Example: metadata["color"]:"blue" AND hasThreads:true.
             user_id (str | Unset): A filter on users accesses. Example: user-123.
             group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
                 Example: group1,group2.
@@ -2585,8 +2587,8 @@ class Liveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-
-        permissions) section.
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-
+        token-room-permissions) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
         doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end
@@ -3767,9 +3769,9 @@ class AsyncLiveblocks:
         """Get rooms
 
          This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
-        newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups
-        accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-
-        reference/liveblocks-node#get-rooms).
+        newest to oldest. You can filter rooms by room ID prefixes, metadata, whether they contain comments,
+        users accesses, and groups accesses. Corresponds to
+        [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
         There is a pagination system where the cursor to the next page is returned in the response as
         `nextCursor`, which can be combined with `startingAfter`.
@@ -3790,10 +3792,12 @@ class AsyncLiveblocks:
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
                 `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
             organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
-            query (str | Unset): Query to filter rooms. You can filter by `roomId` and `metadata`, for
-                example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn
-                more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-
-                filter-rooms-using-query-language). Example: metadata["color"]:"blue".
+            query (str | Unset): Query to filter rooms. You can filter by `roomId`, `metadata`, and
+                `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND
+                roomId^"liveblocks:engineering" AND hasThreads:true`. The `hasThreads` filter checks
+                whether rooms contain at least one thread. Learn more about [filtering rooms with query
+                language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
+                Example: metadata["color"]:"blue" AND hasThreads:true.
             user_id (str | Unset): A filter on users accesses. Example: user-123.
             group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
                 Example: group1,group2.
@@ -6167,8 +6171,8 @@ class AsyncLiveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-
-        permissions) section.
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-
+        token-room-permissions) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
         doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end
