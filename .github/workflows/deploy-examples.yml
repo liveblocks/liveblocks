@@ -132,6 +132,9 @@ jobs:
           echo Triggering deployment for nextjs-live-form-selection
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ypmCK9Ww5ROey9Y9f1Q4SWtlGSGa/TqtsylS5TE; echo
 
+          echo Triggering deployment for nextjs-messaging-app
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_gsVYyFXPiP9ftH240xxm1wr16syb/yw7KGedXtF; echo
+
           echo Triggering deployment for nextjs-multiplayer-handsontable
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_1T5W3NupIFxKYDGgbCygAnrArELa/1WOeYSxEdK; echo
 
