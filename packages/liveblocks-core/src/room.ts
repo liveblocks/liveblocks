@@ -3,6 +3,7 @@ import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
+import { TokenKind } from "./protocol/AuthToken";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type {
@@ -1819,16 +1820,34 @@ export function createRoom<
     }
   }
 
+  /**
+   * Whether this connection is a backend session, which is a property of the
+   * credential rather than a choice: a token carrying `be` authorizes a socket
+   * held by a customer's backend, which has no presence and for which the
+   * server refuses to fan any out. There is no valid combination where this
+   * disagrees with the token, so it is never configurable.
+   */
+  function isBackendSession(): boolean {
+    const authValue = managedSocket.authValue;
+    return (
+      authValue?.type === "secret" &&
+      authValue.token.parsed.k === TokenKind.ACCESS_TOKEN &&
+      authValue.token.parsed.be === true
+    );
+  }
+
   function onDidConnect() {
-    // Re-broadcast the full user presence as soon as we (re)connect
-    context.buffer.presenceUpdates = {
-      type: "full",
-      data:
-        // Because context.me.current is a readonly object, we'll have to
-        // make a copy here. Otherwise, type errors happen later when
-        // "patching" my presence.
-        { ...context.myPresence.get() },
-    };
+    if (!isBackendSession()) {
+      // Re-broadcast the full user presence as soon as we (re)connect
+      context.buffer.presenceUpdates = {
+        type: "full",
+        data:
+          // Because context.me.current is a readonly object, we'll have to
+          // make a copy here. Otherwise, type errors happen later when
+          // "patching" my presence.
+          { ...context.myPresence.get() },
+      };
+    }
 
     // NOTE: There was a flush here before, but I don't think it's really
     // needed anymore. We're now combining this flush with the one below, to
