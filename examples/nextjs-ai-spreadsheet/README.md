@@ -31,7 +31,7 @@ and order all sync instantly to everyone — along with live selection presence 
 per-cell comment threads. Everything is addressed by stable ids, so moving,
 sorting, and inserting or deleting rows and columns never breaks comments,
 formatting, or presence, and every user sees the same order. The AI lives in a
-[Feeds](https://liveblocks.io/docs/collaboration-features/ai-collaboration)-based
+[Feeds](https://liveblocks.io/docs/products/sync/feeds)-based
 chat: it edits the spreadsheet from the server with `@liveblocks/node`
 (`mutateStorage`) and shows its live selection with `setPresence`, streaming both
 its reply and the grid edits as it works.

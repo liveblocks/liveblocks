@@ -70,7 +70,7 @@ the [`/docs/pages`](./pages) directory.
 ```
 
 If the MDX file location is different than its URL, the `file` property can be
-used to explicitely specify the file location.
+used to explicitly specify the file location.
 
 ```json
 {
@@ -85,9 +85,9 @@ shouldn't appear in the navigation.
 
 ```json
 {
-  "title": "API v1 Endpoints",
+  "title": "Notifications / Webhooks",
   "hidden": true,
-  "path": "/api-reference/rest-api-endpoints-v1"
+  "path": "/get-started/nextjs-notifications-webhooks"
 }
 ```
 

@@ -446,7 +446,7 @@ const ChartTooltipRow = ({ value, name, color }: ChartTooltipRowProps) => (
       />
       <p
         className={cx(
-          // commmon
+          // common
           "text-right whitespace-nowrap",
           // text color
           "text-neutral-700 dark:text-neutral-300",

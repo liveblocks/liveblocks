@@ -1,0 +1,608 @@
+---
+meta:
+  title: "Storage"
+  parentTitle: "Sync"
+  description:
+    "Model persistent collaborative state with conflict-free data types, and add
+    per-user undo and redo."
+---
+
+Storage is the persistent document inside Sync. Multiple humans and agents can
+edit it at the same time, and conflict resolution merges simultaneous changes
+without losing unrelated edits. Documents remain after every user disconnects,
+unlike [Presence](/docs/products/sync/presence), which is temporary.
+
+## Conflict-free data types
+
+Storage documents are built from conflict-free data types, each
+[resolving simultaneous edits differently](/docs/guides/how-conflict-resolution-works-in-liveblocks-sync).
+
+<Table columns={["15%", "auto", "53%"]}>
+
+| Data type                   | Description                                               | Example value                                     |
+| --------------------------- | --------------------------------------------------------- | ------------------------------------------------- |
+| [`LiveObject`](#LiveObject) | A record of named values, similar to a JavaScript object. | `LiveObject({ x: 50, y: 100, color: "red" })`     |
+| [`LiveList`](#LiveList)     | An ordered collection, similar to a JavaScript array.     | `LiveList(["rectangle-1", "circle-2"])`           |
+| [`LiveMap`](#LiveMap)       | A key-value collection, similar to a JavaScript map.      | `LiveMap([["pierre", 152], ["alicia", 186]])`     |
+| [`LiveText`](#LiveText)     | A collection of text nodes, storing formatting data.      | `LiveText(["Hello world", { format: "bold" }])`   |
+| [`LiveFile`](#LiveFile)     | An immutable reference to an uploaded file.               | `LiveFile({ name: "photo.png", size: 984, ... })` |
+
+</Table>
+
+### LiveObject
+
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) is similar to a
+JavaScript object that is synchronized on all clients—users can update different
+properties at the same time, and changes are merged together. Use it for storing
+records with fixed key names and where the values don’t necessarily have the
+same types, for example, a shape on a canvas.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+
+// Defining a LiveObject
+const shape = new LiveObject({
+  x: 50,
+  y: 100,
+  color: "red",
+});
+
+// Example methods
+shape.get("color");
+shape.set("color", "blue");
+shape.update({ x: 100, y: 200 });
+```
+
+### LiveList
+
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) is similar to a
+JavaScript array that is synchronized across clients—users can delete, insert,
+and move items at the same time as others, and changes are merged together. Use
+it for storing an ordered collection of items, for example a list of layers on a
+canvas.
+
+```ts
+import { LiveList } from "@liveblocks/client";
+
+// Defining a LiveList
+const layers = new LiveList(["rectangle-1", "circle-2"]);
+
+// Example methods
+layers.push("triangle-3");
+layers.move(0, 2);
+layers.remove(1);
+```
+
+### LiveMap
+
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) is similar to a
+JavaScript map that is synchronized across clients—users can update, delete, and
+insert items at the same time as others, and changes are merged together
+automatically. Use it for storing key-value pairs, for example a list of users
+and their upvotes.
+
+```ts
+import { LiveMap } from "@liveblocks/client";
+
+// Defining a LiveMap
+const users = new LiveMap([
+  ["pierre", 152],
+  ["alicia", 185],
+]);
+
+// Example methods
+users.keys();
+users.delete("alicia");
+users.set("pierre", 153);
+```
+
+### LiveText
+
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) is used to store
+collaborative rich text data—users can insert, replace, and format text at the
+same time as others, and changes are merged together automatically. It’s
+generally most useful when used internally by a
+[text editing](/docs/products/sync/text-editing) integration, but it can be
+handled directly too.
+
+```ts
+import { LiveText } from "@liveblocks/client";
+
+// Defining a LiveText
+const text = new LiveText(["Hello", { format: "bold" }]);
+
+// Example methods
+text.insert(5, " world");
+text.replace(0, 5, "Hi");
+text.format(0, 2, { format: "italic" });
+```
+
+`LiveText` supports
+[Tiptap](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode),
+[BlockNote](/docs/api-reference/liveblocks-react-blocknote#Liveblocks-collaboration-mode),
+[ProseMirror](/docs/api-reference/liveblocks-prosemirror), and
+[CodeMirror](/docs/api-reference/liveblocks-codemirror).
+
+### LiveFile
+
+[`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile) is used to store a
+reference to a file uploaded to Liveblocks. Any kind of file can be uploaded
+with [`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile) and
+attached to your data tree.
+
+```ts
+import { LiveFile } from "@liveblocks/client";
+import { useUploadFile } from "@liveblocks/react/suspense";
+
+const uploadFile = useUploadFile();
+const liveFile = await uploadFile(file);
+
+// LiveFile<{ id: "fl_xxx", name: "photo.png", size: 12345, mimeType: "image/png" }>
+console.log(liveFile);
+```
+
+### Nesting data types
+
+`LiveObject`, `LiveList`, and `LiveMap` can each contain other live structures,
+allowing you to build a full JSON-like document tree. Each part of the structure
+can be edited independently, and changes are merged together automatically. For
+example, a `LiveList` of shapes may contain `LiveObject` shapes.
+
+```ts
+import { LiveMap, LiveObject } from "@liveblocks/client";
+
+const shape = new LiveObject({
+  x: 50,
+  y: 100,
+  color: "red",
+});
+
+const shapes = new LiveList([shape]);
+```
+
+In the following complex example, all data types are used, and some
+modifications are made.
+
+```ts title="Complex example" isCollapsable isCollapsed
+import { LiveMap, LiveObject } from "@liveblocks/client";
+
+// Setting up a collection of documents
+const documents = new LiveMap([]);
+
+// Creating a new document
+const document = new LiveObject({
+  meta: new LiveObject({
+    title: "Untitled",
+    createdAt: new Date().getTime(),
+    tags: new LiveList(["article"]),
+  }),
+  header: await uploadFile(file),
+  content: new LiveText(["Hello world"]),
+});
+
+// Updating meta properties
+const meta = document.get("meta");
+meta.set("title", "My article");
+meta.get("tags").push("technology");
+
+// Updating the content
+document
+  .get("content")
+  .insert(0, "This week, I learned…", { format: "italic" });
+
+// Adding the document to the collection
+documents.set("document-1", document);
+```
+
+## Using Storage
+
+### Setting up
+
+Before using Storage, first decide on the shape of your document, and set the
+`Storage` type in your Liveblocks config file. This makes every hook and
+mutation in your app fully typed, with TypeScript. In this example, this canvas
+document holds a list of shapes.
+
+```tsx file="liveblocks.config.ts"
+import { LiveList, LiveObject } from "@liveblocks/client";
+
+// +++
+type Shape = LiveObject<{
+  x: number;
+  y: number;
+  color: string;
+}>;
+// +++
+
+declare global {
+  interface Liveblocks {
+    // +++
+    Storage: {
+      shapes: LiveList<Shape>;
+    };
+    // +++
+  }
+}
+```
+
+Next, in React, create an initial document with
+[`initialStorage`](/docs/api-reference/liveblocks-react#setting-initial-storage)
+on [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider). It’s
+applied once, the first time a room is entered—after that, the stored document
+is the source of truth.
+
+```tsx
+import { LiveList, LiveObject } from "@liveblocks/client";
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App({ children }: { children: React.ReactNode }) {
+  return (
+    <RoomProvider
+      id="my-room"
+      // +++
+      initialStorage={{
+        shapes: new LiveList([new LiveObject({ x: 50, y: 100, color: "red" })]),
+      }}
+      // +++
+    >
+      {children}
+    </RoomProvider>
+  );
+}
+```
+
+Now that the type has been set, and the initial document has been created, you
+can now start to use Storage in your application.
+
+### Reading data
+
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) reads a part of
+the document, returning it as an immutable JSON value. For example, a `LiveList`
+is converted into a plain JavaScript array, making it easy to render it in your
+component. Using a selector function like `(root) => root.shapes`, you can fetch
+only the part of the document you need, and it will re-render in realtime as
+other users make changes.
+
+```tsx
+import { useStorage } from "@liveblocks/react/suspense";
+
+function Canvas() {
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  return (
+    <>
+      // +++
+      {shapes.map((shape, index) => (
+        <Shape key={index} x={shape.x} y={shape.y} color={shape.color} />
+      ))}
+      // +++
+    </>
+  );
+}
+```
+
+### Updating data
+
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation) creates a
+callback that modifies the document. Changes apply instantly for the current
+user, sync to everyone else in realtime, and merge with any simultaneous edits.
+
+```tsx
+import { useMutation } from "@liveblocks/react/suspense";
+import { LiveObject } from "@liveblocks/client";
+
+function Toolbar() {
+  // +++
+  const addShape = useMutation(({ storage }) => {
+    const shapes = storage.get("shapes");
+
+    const newShape = new LiveObject({
+      x: 150,
+      y: 250,
+      color: "orange",
+    });
+
+    shapes.push(newShape);
+  }, []);
+  // +++
+
+  return <button onClick={() => addShape()}>Add shape</button>;
+}
+```
+
+Mutations can accept extra arguments after the context object, so you can pass
+in values when calling them. The following mutation takes a `color` property,
+and sets it on a shape at a given index.
+
+```tsx
+import { useMutation } from "@liveblocks/react/suspense";
+
+function ColorPicker({ index }: { index: number }) {
+  const setColor = useMutation(
+    // +++
+    ({ storage }, color: string) => {
+      // +++
+      const shape = storage.get("shapes").get(index);
+
+      if (shape) {
+        // +++
+        shape.set("color", color);
+        // +++
+      }
+    },
+    [index]
+  );
+
+  // +++
+  return <input type="color" onChange={(e) => setColor(e.target.value)} />;
+  // +++
+}
+```
+
+Storage can also be modified from your back end and by AI agents, learn more
+under [server-side editing](/docs/products/sync/server-side-editing) and
+[agentic editing](/docs/products/sync/agentic-editing).
+
+### Creating a multiplayer component
+
+Putting together [`useStorage`](/docs/api-reference/liveblocks-react#useStorage)
+and [`useMutation`](/docs/api-reference/liveblocks-react#useMutation), you can
+create editable multiplayer components in your app. For example, a select menu
+that updates in realtime for all users.
+
+```ts title="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    Storage: {
+      // +++
+      priority: "low" | "medium" | "high";
+      // +++
+    };
+  }
+}
+```
+
+```tsx
+import { useStorage } from "@liveblocks/react/suspense";
+
+function SelectPriority() {
+  // +++
+  const priority = useStorage((root) => root.priority);
+  // +++
+
+  // +++
+  const setPriority = useMutation(({ storage }, priority: string) => {
+    storage.set("priority", priority);
+  });
+  // +++
+
+  return (
+    // +++
+    <select value={property} onChange={(e) => setProperty(e.target.value)}>
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+    // +++
+  );
+}
+```
+
+### Undo and redo changes [#multiplayer-undo-redo]
+
+When using Storage, each user has an independent undo stack which is saved in
+memory until the user leaves the page. Using undo reverts the user’s Storage
+changes without reversing work made by other collaborators.
+
+The [`useUndo`](/docs/api-reference/liveblocks-react#useUndo) and
+[`useRedo`](/docs/api-reference/liveblocks-react#useRedo) hooks can be used to
+trigger undo/redo actions. Additionally
+[`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo) and
+[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo) can be used to
+check if there are any actions to undo/redo, helpful for disabling buttons. Put
+these together to create undo and redo buttons.
+
+```tsx
+import {
+  useCanRedo,
+  useCanUndo,
+  useRedo,
+  useUndo,
+} from "@liveblocks/react/suspense";
+
+function HistoryButtons() {
+  // +++
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+  // +++
+
+  return (
+    <>
+      // +++
+      <button onClick={undo} disabled={!canUndo}>
+        ↩️ Undo
+      </button>
+      <button onClick={redo} disabled={!canRedo}>
+        ↪️ Redo
+      </button>
+      // +++
+    </>
+  );
+}
+```
+
+### Pause and resume history
+
+You can choose to pause undo/redo history when a single gesture should count as
+a single undo step. For example, picture dragging a shape across a canvas—it
+moves 200 pixels, but you wouldn’t want to press undo 200 times. Pausing history
+allows you to merge this drag action into one undo step. Intermediate positions
+still sync to other clients, but undo restores the position from before the
+drag.
+
+```tsx
+import { useHistory, useMutation } from "@liveblocks/react/suspense";
+
+function Shape({ index }: { index: number }) {
+  // +++
+  const { pause, resume } = useHistory();
+  // +++
+
+  const moveShape = useMutation(({ storage }, x: number, y: number) => {
+    const shape = storage.get("shapes").get(index);
+
+    if (shape) {
+      shape.update({ x, y });
+    }
+  });
+
+  return (
+    <ShapeComponent
+      // +++
+      onDragStart={() => pause()}
+      onDragEnd={() => resume()}
+      // +++
+      onDragMove={moveShape}
+    />
+  );
+}
+```
+
+[`useHistory`](/docs/api-reference/liveblocks-react#useHistory) also exposes
+`disable` for when a local change should not enter the stack at all.
+
+### Presence history
+
+Undo only affects Storage by default, but it can sometimes be helpful to revert
+Presence changes too. For example, when a shape is dragged on a canvas, a user’s
+Presence may be visible around the shape. If the shape is moved back with undo,
+it makes sense to move the user’s selection back too. Pass
+`{ addToHistory: true }` when updating Presence to add a value to the undo/redo
+stack.
+
+```tsx
+import { useHistory, useMutation } from "@liveblocks/react/suspense";
+
+function Shape({ index }: { index: number }) {
+  const { pause, resume } = useHistory();
+
+  const moveShape = useMutation(
+    // +++
+    ({ storage, setMyPresence }, x: number, y: number) => {
+      // +++
+      const shape = storage.get("shapes").get(index);
+
+      if (shape) {
+        shape.update({ x, y });
+        // +++
+        setMyPresence({ selectedShapeIndex: index }, { addToHistory: true });
+        // +++
+      }
+    }
+  );
+
+  return (
+    <ShapeComponent
+      onDragStart={() => pause()}
+      onDragEnd={() => resume()}
+      onDragMove={moveShape}
+    />
+  );
+}
+```
+
+Note that [`useMutation`](/docs/api-reference/liveblocks-react#useMutation)
+provides a `setMyPresence` helper, so that you don't need to import
+[`useUpdateMyPresence`](/docs/api-reference/liveblocks-react#useUpdateMyPresence)
+separately.
+
+### Version history
+
+Storage supports version history, allowing you to snapshot document states and
+revert to previous versions of the document.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const { data } = await liveblocks.createVersionHistorySnapshot("my-room");
+// +++
+```
+
+To learn more about how to do this, read the
+[version history](/docs/products/sync/version-history) page.
+
+### Server-side editing
+
+You can read and edit Storage directly from the server, using conflict-free data
+types or JSON Patch.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+await liveblocks.mutateStorage("my-room", ({ root }) => {
+  const shapes = root.get("shapes");
+
+  const newShape = new LiveObject({
+    x: 250,
+    y: 300,
+    color: "purple",
+  });
+
+  shapes.push(newShape);
+});
+// +++
+```
+
+To learn more about how to do this, read the
+[server-side editing](/docs/products/sync/server-side-editing) page.
+
+### Agentic editing
+
+AI agents can generate changes for your document, using Node.js methods or JSON
+Patch.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+await liveblocks.mutateStorage("my-room-id", async ({ root }) => {
+  const shapes = root.get("shapes");
+
+  const { output: shape } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        x: z.number(),
+        y: z.number(),
+        color: z.string(),
+      }),
+    }),
+    prompt: `Create a rectangle for the canvas. Here are current shapes: ${shapes.toJSON()}`,
+  });
+
+  shapes.set(new LiveObject(shape));
+});
+```
+
+To learn more about how to do this, read the
+[agentic editing](/docs/products/sync/agentic-editing) page.

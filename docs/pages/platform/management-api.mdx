@@ -205,6 +205,21 @@ jobs:
             -H "Content-Type: application/json"
 ```
 
+### Filter projects by name
+
+Use the optional `query` parameter with the `name` field to list projects whose
+name exactly matches the provided value. Matching is case-sensitive, and project
+names are not unique, so the response may contain multiple projects. Pagination
+applies to the filtered results.
+
+```bash
+# >_ terminal
+curl --get "https://api.liveblocks.io/v2/management/projects" \
+  -H "Authorization: Bearer lbs_*******************" \
+  -H "Content-Type: application/json" \
+  --data-urlencode 'query=name:"My Project"'
+```
+
 ## Rate limiting
 
 The Management API enforces rate limits to ensure fair usage and system

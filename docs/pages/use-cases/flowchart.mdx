@@ -1,0 +1,448 @@
+---
+meta:
+  title: "Flowchart"
+  parentTitle: "Use cases"
+  description:
+    "Build collaborative flowcharts with synchronized nodes, cursors, AI
+    editing, undo/redo, and comments."
+---
+
+With Liveblocks you can create a collaborative flowchart, workflow builder, or
+node-based editor. Synchronize nodes and edges, show live cursors, add
+multiplayer undo/redo, and modify diagrams with AI. Get started with our React
+Flow integration, or build your own flowchart using primitives.
+
+<Figure
+  caption={
+    <>
+      Multiplayer editing in the{" "}
+      <a href="/examples/collaborative-flowchart-ai/nextjs-react-flow-ai">
+        Collaborative Flowchart AI
+      </a>{" "}
+      example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="jkc00sEI49F8PTiHz8mdfpVweOw3lmUjQt98EJybegtc"
+    alt="Example of a collaborative flowchart"
+    static={true}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Realtime collaboration**](#realtime-collaboration): Synchronize nodes,
+  edges, positions, and custom data between users.
+- [**Presence**](#presence): Show live cursors, avatar stacks, and active
+  selections.
+- [**Server-side editing**](#server-side-editing): Let trusted backend processes
+  read and modify the diagram.
+- [**Agentic editing**](#agentic-editing): Let AI agents generate and apply
+  diagram changes.
+- [**Version history**](#version-history): Save, preview, and restore complete
+  diagram states.
+- [**Multiplayer undo/redo**](#multiplayer-undo-redo): Give each user an
+  independent history of their diagram changes.
+- [**Comments**](#comments): Attach review discussions to nodes or positions in
+  the flowchart.
+- [**Permissions**](#permissions): Control which users can view and edit the
+  diagram.
+
+## Get started [#get-started]
+
+Choose a starting point for your flowchart.
+
+<ListGrid columns={2} defaultVisibleItems={2}>
+  <DocsCard
+    type="technology"
+    title="Get started with React Flow"
+    href="/docs/get-started/nextjs-react-flow"
+    description="Build a collaborative flowchart with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with React Flow & AI"
+    href="/docs/get-started/nextjs-ai-react-flow"
+    description="Let an AI agent edit a live flowchart"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with a custom canvas"
+    href="/docs/get-started/nextjs-canvas-custom"
+    description="Create custom draggable shapes and layers"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with presence"
+    href="/docs/get-started/nextjs-presence"
+    description="Add realtime presence and cursors"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with comments"
+    href="/docs/get-started/nextjs-comments-canvas"
+    description="Add draggable comment threads"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented using our
+[`@liveblocks/react-flow`](/docs/api-reference/liveblocks-react-flow) package.
+When using another flowchart library, build the same features directly with
+[Sync](/docs/products/sync).
+
+### Realtime collaboration [#realtime-collaboration]
+
+Use
+[`useLiveblocksFlow`](/docs/api-reference/liveblocks-react-flow#useLiveblocksFlow)
+to turn React Flow into a controlled multiplayer diagram. The hook stores nodes
+and edges in Sync, then provides the change handlers React Flow needs for
+moving, connecting, updating, and deleting them. Deleting a node and its edges
+through `onDelete` is synchronized as one action.
+
+```tsx
+import { ReactFlow } from "@xyflow/react";
+import { useLiveblocksFlow } from "@liveblocks/react-flow";
+
+function Flow() {
+  // +++
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
+    useLiveblocksFlow({
+      suspense: true,
+      nodes: { initial: [] },
+      edges: { initial: [] },
+    });
+  // +++
+
+  return (
+    <ReactFlow
+      // +++
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDelete={onDelete}
+      // +++
+    />
+  );
+}
+```
+
+Custom nodes and edges work as they normally do in React Flow, and their `data`
+properties are deeply synchronized by default, so that concurrent changes to
+different properties can merge. Additionally, you can
+[define values as local-only](/docs/api-reference/liveblocks-react-flow#sync-config)
+and
+[add multiple diagrams to a room](/docs/api-reference/liveblocks-react-flow#storageKey).
+
+### Presence [#presence]
+
+Render [`Cursors`](/docs/api-reference/liveblocks-react-flow#Cursors) inside
+`ReactFlow` to show each collaborator’s pointer. It stores temporary positions
+in [Presence](/docs/products/sync/presence) and converts them through the React
+Flow viewport as users pan and zoom. Add
+[`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) outside the
+flow to show everyone currently in the room.
+
+```tsx
+import { ReactFlow, type Edge, type Node } from "@xyflow/react";
+import { Cursors } from "@liveblocks/react-flow";
+import { AvatarStack } from "@liveblocks/react-ui";
+
+function FlowPresence({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) {
+  return (
+    <>
+      // +++
+      <AvatarStack />
+      <ReactFlow nodes={nodes} edges={edges}>
+        <Cursors />
+      </ReactFlow>
+      // +++
+    </>
+  );
+}
+```
+
+Configure
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+to provide names and colors for the cursors.
+
+### Server-side editing [#server-side-editing]
+
+Trusted server processes can edit the flowchart from the back end using
+[`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow). The
+callback exposes React Flow nodes and edges rather than Sync primitives, and
+connected users receive each change in realtime.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { mutateFlow } from "@liveblocks/react-flow/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await mutateFlow({ client: liveblocks, roomId: "flowchart-room" }, (flow) => {
+  flow.updateNodeData("node-1", { label: "Approved" });
+
+  flow.addEdge({
+    id: "node-1-to-node-2",
+    source: "node-1",
+    target: "node-2",
+  });
+});
+// +++
+```
+
+Discover methods for modifying the flowchart in the
+[MutableFlow API reference](/docs/api-reference/liveblocks-react-flow#mutable-flow),
+or read [Server-side editing](/docs/products/sync/server-side-editing) for the
+general backend workflow.
+
+### Agentic editing [#agentic-editing]
+
+To allow AI agents to modify your flowchart, generate your changes with AI then
+use [`mutateFlow`](/docs/api-reference/liveblocks-react-flow#mutateFlow) to
+apply them. To show that AI is working in your app use
+[`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+to show it working—your agent will appear in [Presence](#presence) alongside
+humans. Finally, remove the agent’s presence to indicate that the agent is no
+longer working.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { mutateFlow } from "@liveblocks/react-flow/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "flowchart-room";
+const agent: Liveblocks["UserMeta"] = {
+  id: "ai-agent",
+  info: { name: "AI agent", color: "#7c3aed" },
+};
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "thinking", editingId: "node-1" },
+  ttl: 60,
+});
+// +++
+
+// +++
+await mutateFlow({ client: liveblocks, roomId }, async (flow) => {
+  const { output } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        label: z.string(),
+      }),
+    }),
+    prompt: `Add a review step to the flowchart. Here is the current flow: ${flow.toJSON()}`,
+  });
+
+  flow.updateNodeData("node-1", { label: output.label });
+
+  flow.addEdge({
+    id: "node-1-to-node-2",
+    source: "node-1",
+    target: "node-2",
+  });
+});
+// +++
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "idle", editingId: null },
+  ttl: 2,
+});
+// +++
+```
+
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
+workflow state, and to pass agent status updates to the UI. Learn more under
+[Agentic editing](/docs/products/sync/agentic-editing).
+
+### Version history [#version-history]
+
+Create versions before publishing a workflow, importing nodes, or allowing an
+agent to restructure the diagram. Use
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
+to list versions,
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData)
+to build a read-only preview, and
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion)
+to restore the complete flow as one synchronized change.
+
+```tsx
+import { useRestoreToStorageVersion } from "@liveblocks/react/suspense";
+
+function RestoreFlow({ versionId }: { versionId: string }) {
+  // +++
+  const restore = useRestoreToStorageVersion(versionId);
+  // +++
+
+  // +++
+  return <button onClick={() => restore()}>Restore this flowchart</button>;
+  // +++
+}
+```
+
+Automatic versions can be enabled in the dashboard, and meaningful versions can
+be created from a backend with
+[`Liveblocks.createVersionHistorySnapshot`](/docs/api-reference/liveblocks-node#create-version-history-snapshot).
+Read [Version history](/docs/products/sync/version-history) for the complete
+preview and restore flow.
+
+### Multiplayer undo/redo [#multiplayer-undo-redo]
+
+`useLiveblocksFlow` automatically groups diagram changes into useful history
+steps. Dragging or resizing a node produces one undo step, and deleting a node
+with its connected edges is undone together. Connect this history to your
+toolbar with [`useUndo`](/docs/api-reference/liveblocks-react#useUndo),
+[`useRedo`](/docs/api-reference/liveblocks-react#useRedo),
+[`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo), and
+[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo).
+
+```tsx
+import {
+  useCanRedo,
+  useCanUndo,
+  useRedo,
+  useUndo,
+} from "@liveblocks/react/suspense";
+
+function FlowToolbar() {
+  // +++
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+  // +++
+
+  return (
+    <>
+      // +++
+      <button onClick={undo} disabled={!canUndo}>
+        Undo
+      </button>
+      <button onClick={redo} disabled={!canRedo}>
+        Redo
+      </button>
+      // +++
+    </>
+  );
+}
+```
+
+Each user’s history is independent and does not reverse another user’s work.
+Read [Multiplayer undo/redo](/docs/products/sync/storage#multiplayer-undo-redo)
+for the underlying history behavior.
+
+### Comments [#comments]
+
+Attach [Comments](/docs/products/comments) to a node ID or a point in flow
+coordinates with thread metadata. For node comments, store normalized `x` and
+`y` values alongside the node ID so the pin remains attached as the node moves
+or resizes. A
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer)
+can create the thread from a pin.
+
+```tsx
+import { CommentPin, FloatingComposer } from "@liveblocks/react-ui";
+
+function CommentOnNode({ nodeId }: { nodeId: string }) {
+  return (
+    // +++
+    <FloatingComposer metadata={{ attachedToNodeId: nodeId, x: 0.5, y: 0.5 }}>
+      <CommentPin />
+    </FloatingComposer>
+    // +++
+  );
+}
+```
+
+Use [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to render
+existing threads, resolve their metadata against the latest node positions, and
+apply the React Flow viewport transform. The
+[Collaborative Flowchart Builder](/examples/collaborative-flowchart-builder/nextjs-flowchart-builder)
+example contains a complete implementation.
+
+### Permissions [#permissions]
+
+Each flowchart is contained inside a room in your Liveblocks app, and permission
+groups can set access to the diagram. For example, your flowchart may have an
+editor group and a viewer group. This can be set when modifying or creating a
+room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom(`my-room-id`, {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access
+    olivier: ["*:write"],
+  },
+});
+```
+
+More complex controls can be set too, learn more under
+[Permissions](/docs/api-reference/authentication/permissions).
+
+## Examples [#examples]
+
+Explore complete implementations with different levels of flowchart behavior.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative Flowchart",
+      slug: "collaborative-flowchart/nextjs-react-flow",
+      image: "/images/examples/thumbnails/collaborative-flowchart.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Flowchart Builder",
+      slug: "collaborative-flowchart-builder/nextjs-flowchart-builder",
+      image: "/images/examples/thumbnails/collaborative-flowchart-builder.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Flowchart AI",
+      slug: "collaborative-flowchart-ai/nextjs-react-flow-ai",
+      image: "/images/examples/thumbnails/collaborative-flowchart-ai.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

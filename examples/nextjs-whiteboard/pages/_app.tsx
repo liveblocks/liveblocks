@@ -7,6 +7,7 @@ function App({ Component, pageProps }: AppProps) {
   return (
     <LiveblocksProvider
       publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!}
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
     >
       <Head>
         <title>Liveblocks</title>

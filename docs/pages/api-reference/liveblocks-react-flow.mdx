@@ -146,7 +146,7 @@ export function App() {
 ## useLiveblocksFlow
 
 This hook returns a controlled [React Flow](https://reactflow.dev/) state made
-collaborative using Liveblocks Storage.
+collaborative using Storage.
 
 You can pass initial nodes and edges to the hook which will be set when entering
 the room for the first time.
@@ -236,8 +236,8 @@ export function App() {
     config](#sync-config).
   </PropertiesListItem>
   <PropertiesListItem name="storageKey" type="string" optional>
-    The key used to store the flow in Liveblocks Storage. Defaults to `"flow"`.
-    See [`storageKey`](#storageKey).
+    The key used to store the flow in Storage. Defaults to `"flow"`. See
+    [`storageKey`](#storageKey).
   </PropertiesListItem>
   <PropertiesListItem name="suspense" type="boolean" optional>
     When `true`, suspends until the diagram is ready. Learn more about this in
@@ -284,8 +284,8 @@ not take effect.
 
 ### Local state vs Storage
 
-Some React Flow fields are intentionally **not** written to Liveblocks Storage
-so each client keeps their own selection and interaction state:
+Some React Flow fields are intentionally **not** written to Storage so each
+client keeps their own selection and interaction state:
 
 - **Nodes:** `selected`, `dragging`, `measured`, `resizing`
 - **Edges:** `selected`
@@ -448,8 +448,8 @@ export function App() {
 ### Storage key [#storageKey]
 
 By default, `useLiveblocksFlow` stores nodes and edges under key `"flow"` in
-Liveblocks Storage. Use the `storageKey` option to choose a different key or to
-support multiple diagrams in a single room.
+Storage. Use the `storageKey` option to choose a different key or to support
+multiple diagrams in a single room.
 
 ```tsx
 "use client";
@@ -730,13 +730,13 @@ npm install @liveblocks/node @liveblocks/react-flow
 ### mutateFlow [#mutateFlow]
 
 `mutateFlow` opens a room’s flow for reading and mutating. A "flow" is a
-collection of nodes and edges stored in Liveblocks Storage. By default, your
-flow gets persisted in the Room’s Storage under the top-level key `"flow"`, but
-you can change this with the `storageKey` option.
+collection of nodes and edges stored in Storage. By default, your flow gets
+persisted in the Room’s Storage under the top-level key `"flow"`, but you can
+change this with the `storageKey` option.
 
 <Banner type="info" title="No need to work with Liveblocks primitives">
-  Even though internally `mutateFlow` uses Liveblocks Storage and its primitives
-  like LiveObjects, LiveLists, and LiveMaps, you don’t need to work with those
+  Even though internally `mutateFlow` uses Storage and its primitives like
+  LiveObjects, LiveLists, and LiveMaps, you don’t need to work with those
   directly. You just work with React Flow nodes and edges as you normally would,
   and they get intelligently stored and synchronized via Live structures in the
   most efficient manner.
@@ -751,8 +751,8 @@ you can change this with the `storageKey` option.
     The ID of the room whose flow to mutate.
   </PropertiesListItem>
   <PropertiesListItem name="storageKey" type="string" optional>
-    The key used to store the flow in Liveblocks Storage. Defaults to `"flow"`.
-    Must match the [`storageKey`](#storageKey) used on the client.
+    The key used to store the flow in Storage. Defaults to `"flow"`. Must match
+    the [`storageKey`](#storageKey) used on the client.
   </PropertiesListItem>
   <PropertiesListItem name="nodes.sync" type="NodeSyncConfig" optional>
     Per-type sync configuration for node `data` keys. Must match the [sync
@@ -993,9 +993,9 @@ await mutateFlow({ client, roomId }, (flow) => {
 ### How mutations are flushed [#mutateFlow-flushing]
 
 The [`mutateFlow`][] function is built on top of [`Liveblocks.mutateStorage`][],
-but rather than giving you access to the Liveblocks Storage root directly, it
-gives you a convenient API tailored to React Flow—a `MutableFlow` instance you
-can use to read or mutate your nodes and edges directly.
+but rather than giving you access to the Storage root directly, it gives you a
+convenient API tailored to React Flow—a `MutableFlow` instance you can use to
+read or mutate your nodes and edges directly.
 
 Under the hood, everything still gets stored and synced efficiently via Live
 structures (`LiveObject`, `LiveMap`, etc), but this is an implementation detail.

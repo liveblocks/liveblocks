@@ -126,8 +126,16 @@ export interface InboxNotificationOverrides {
   ) => ReactNode;
 }
 
+export interface HistoryVersionSummaryOverrides {
+  HISTORY_VERSION_SUMMARY_AUTHORS_LIST: (
+    list: ReactNode | undefined
+  ) => ReactNode;
+}
+
 export interface HistoryVersionPreviewOverrides {
-  HISTORY_VERSION_PREVIEW_AUTHORS_LIST: (list: ReactNode) => ReactNode;
+  HISTORY_VERSION_PREVIEW_AUTHORS_LIST: (
+    list: ReactNode | undefined
+  ) => ReactNode;
   HISTORY_VERSION_PREVIEW_RESTORE: string;
   HISTORY_VERSION_PREVIEW_EMPTY: ReactNode;
   HISTORY_VERSION_PREVIEW_ERROR: (error: Error) => ReactNode;
@@ -139,6 +147,7 @@ export type Overrides = LocalizationOverrides &
   CommentOverrides &
   ThreadOverrides &
   InboxNotificationOverrides &
+  HistoryVersionSummaryOverrides &
   HistoryVersionPreviewOverrides &
   AiComposerOverrides &
   AiChatMessageOverrides &
@@ -243,9 +252,10 @@ export const defaultOverrides: Overrides = {
       {user} mentioned you{room ? <> in {room}</> : null}
     </>
   ),
-  HISTORY_VERSION_PREVIEW_AUTHORS_LIST: (list: ReactNode) => (
-    <>Edits from {list}</>
-  ),
+  HISTORY_VERSION_SUMMARY_AUTHORS_LIST: (list: ReactNode | undefined) =>
+    list === undefined ? "Unattributed" : list,
+  HISTORY_VERSION_PREVIEW_AUTHORS_LIST: (list: ReactNode | undefined) =>
+    list === undefined ? "Unattributed edits" : <>Edits from {list}</>,
   HISTORY_VERSION_PREVIEW_RESTORE: "Restore",
   HISTORY_VERSION_PREVIEW_EMPTY: "No content.",
   HISTORY_VERSION_PREVIEW_ERROR: () =>

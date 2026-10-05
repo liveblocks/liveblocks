@@ -25,7 +25,7 @@ export default function RoomErrors() {
 
       default:
         // Unexpected error
-        toast.error("An unexpected error happenned");
+        toast.error("An unexpected error happened");
         break;
     }
   });

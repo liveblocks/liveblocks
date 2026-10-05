@@ -1,0 +1,488 @@
+---
+meta:
+  title: "Inbox"
+  parentTitle: "Use cases"
+  description:
+    "Build an in-app inbox with unread badges, automatic comment and mention
+    notifications, custom notification kinds, user settings, and email delivery."
+---
+
+Create an inbox with Liveblocks. Show new activity in realtime, receive comment
+and mention notifications automatically, trigger custom notifications from your
+back end, and deliver missed activity by email, Slack, Microsoft Teams, and
+more.
+
+<Figure
+  caption={
+    <>
+      Inbox inside the <a href="/nextjs-starter-kit">Next.js Starter Kit</a>
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="UH1jkBWEIIfSPzx6sCgubaFcgUS01HN00IeFkerWayRk00"
+    alt="Inbox"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**In-app inbox**](#in-app-inbox): Render each user’s notifications with hooks
+  and ready-made components.
+- [**Unread indicators**](#unread-indicators): Show unread badges and mark
+  notifications as read.
+- [**Collaboration notifications**](#collaboration-notifications): Receive
+  automatic notifications for comments and mentions.
+- [**Custom notifications**](#custom-notifications): Trigger any notification
+  kind from your back end and render it your way.
+- [**Notification batching**](#notification-batching): Group related activities
+  into a single notification.
+- [**Subscription settings**](#subscription-settings): Let users mute rooms or
+  subscribe to everything.
+- [**Notification settings**](#notification-settings): Build a settings panel
+  for each delivery channel.
+- [**Email and other channels**](#email-and-other-channels): Deliver missed
+  notifications by email, Slack, Teams, or web push.
+- [**Workspace inboxes**](#workspace-inboxes): Give users a separate inbox in
+  each workspace.
+
+## Get started [#get-started]
+
+Choose the channels you need. Each guide uses Next.js and can be combined with
+the others.
+
+<ListGrid columns={2} defaultVisibleItems={4}>
+  <DocsCard
+    type="technology"
+    title="Get started with an in-app inbox"
+    href="/docs/get-started/nextjs-notifications-in-app"
+    description="Render a realtime notification inbox"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with email"
+    href="/docs/get-started/nextjs-notifications-email"
+    description="Send emails about unread notifications"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with custom notifications"
+    href="/docs/get-started/nextjs-notifications-custom-in-app"
+    description="Trigger and render your own notification kinds"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Slack"
+    href="/docs/get-started/nextjs-notifications-slack"
+    description="Deliver notifications to Slack"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with web push"
+    href="/docs/get-started/nextjs-notifications-web-push"
+    description="Send browser push notifications"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with webhooks"
+    href="/docs/get-started/nextjs-notifications-webhooks"
+    description="Handle notification events on your server"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented. Unlike other
+Liveblocks products, [Notifications](/docs/products/notifications) is
+[project-based](/docs/products/notifications/concepts#Project-based) rather than
+room-based—a user receives notifications from every room in one inbox, and only
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+is required, not
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider). Combine it
+with [Comments](/docs/products/comments) for automatic thread notifications, and
+with your back end for custom application events. In multi-tenant apps, users
+can have a separate [inbox per workspace](#workspace-inboxes).
+
+### In-app inbox [#in-app-inbox]
+
+List the current user’s notifications with
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and render them with the ready-made
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+and
+[`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList)
+components. New notifications appear in realtime, without polling, and each
+built-in kind is rendered for you.
+
+```tsx
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
+
+function Inbox() {
+  // +++
+  const { inboxNotifications } = useInboxNotifications();
+  // +++
+
+  return (
+    <InboxNotificationList>
+      // +++
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+      // +++
+    </InboxNotificationList>
+  );
+}
+```
+
+Learn more under
+[default components](/docs/products/notifications/default-components).
+
+### Unread indicators [#unread-indicators]
+
+Display an unread notifications count badge on your inbox button with
+[`useUnreadInboxNotificationsCount`](/docs/api-reference/liveblocks-react#useUnreadInboxNotificationsCount),
+plus add
+[`useMarkAllInboxNotificationsAsRead`](/docs/api-reference/liveblocks-react#useMarkAllInboxNotificationsAsRead)
+and
+[`useDeleteAllInboxNotifications`](/docs/api-reference/liveblocks-react#useDeleteAllInboxNotifications)
+to mark notifications as read and delete them.
+
+```tsx
+import {
+  useMarkAllInboxNotificationsAsRead,
+  useUnreadInboxNotificationsCount,
+  useDeleteAllInboxNotifications,
+} from "@liveblocks/react/suspense";
+
+function InboxHeader() {
+  // +++
+  const { count } = useUnreadInboxNotificationsCount();
+  const markAllAsRead = useMarkAllInboxNotificationsAsRead();
+  const deleteAll = useDeleteAllInboxNotifications();
+  // +++
+
+  return (
+    <header>
+      // +++
+      <span>{count} unread</span>
+      <button onClick={markAllAsRead}>✅ Mark all as read</button>
+      <button onClick={deleteAll}>❌ Delete all</button>
+      // +++
+    </header>
+  );
+}
+```
+
+Learn more under [hooks](/docs/products/notifications/hooks).
+
+### Collaboration notifications [#collaboration-notifications]
+
+[Comments](/docs/products/comments) sends `thread` notifications automatically
+when users are mentioned or receive replies in threads they’re participating in.
+Read state stays in sync both ways—viewing a thread marks its notification as
+read, and the default [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
+component shows unread indicators. When rendering a thread notification, fetch
+its thread data with
+[`useInboxNotificationThread`](/docs/api-reference/liveblocks-react#useInboxNotificationThread).
+
+```tsx
+import { useInboxNotificationThread } from "@liveblocks/react/suspense";
+
+function ThreadPreview({
+  inboxNotificationId,
+}: {
+  inboxNotificationId: string;
+}) {
+  // +++
+  const thread = useInboxNotificationThread(inboxNotificationId);
+  // +++
+
+  return <span>{thread.comments.length} comments</span>;
+}
+```
+
+Learn more under
+[notification kinds](/docs/products/notifications/concepts#Notification-kinds).
+
+### Custom notifications [#custom-notifications]
+
+Notify users about your own application events, such as a completed export, a
+shared document, or a completed AI task, with
+[`Liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
+Custom kinds start with a `$`, and `activityData` holds whatever your UI needs
+to render the notification.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.triggerInboxNotification({
+  userId: "olivier@example.com",
+  kind: "$fileUploaded",
+  subjectId: "file-123",
+  activityData: {
+    fileName: "quarterly-report.pdf",
+    uploadedBy: "Quinn",
+  },
+});
+// +++
+```
+
+Render each custom kind with
+[`InboxNotification.Custom`](/docs/api-reference/liveblocks-react-ui#InboxNotification.Custom)
+by passing a `kinds` prop to the default component.
+
+```tsx
+import { InboxNotification } from "@liveblocks/react-ui";
+
+<InboxNotification
+  inboxNotification={inboxNotification}
+  // +++
+  kinds={{
+    $fileUploaded: (props) => (
+      <InboxNotification.Custom {...props} title="New file uploaded" aside="📁">
+        {props.inboxNotification.activities[0].data.fileName}
+      </InboxNotification.Custom>
+    ),
+  }}
+  // +++
+/>;
+```
+
+Learn more under
+[rendering notification kinds differently](/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently).
+
+### Notification batching [#notification-batching]
+
+You can batch groups of custom notifications into a single notification, helping
+you to avoid flooding inboxes, which works similarly to how `thread`
+notifications group new comments from the same thread. Enable batching for a
+custom kind in the [dashboard](/dashboard), then trigger notifications with the
+same `subjectId`—each new activity updates the existing notification.
+
+```ts
+const options = {
+  userId: "olivier@example.com",
+  kind: "$fileUploaded",
+  // +++
+  // Same subjectId, so activities are added to one notification
+  subjectId: "file-123",
+  // +++
+};
+
+await liveblocks.triggerInboxNotification({
+  ...options,
+  activityData: { status: "processing" },
+});
+
+await liveblocks.triggerInboxNotification({
+  ...options,
+  activityData: { status: "complete" },
+});
+```
+
+Learn more under
+[notification batching](/docs/products/notifications/concepts#Notification-batching).
+
+### Subscription settings [#subscription-settings]
+
+Each user can control which thread notifications they receive in each room:
+`"all"` for everything, `"replies_and_mentions"` by default, or `"none"` to mute
+the room. Build a mute control with
+[`useRoomSubscriptionSettings`](/docs/api-reference/liveblocks-react#useRoomSubscriptionSettings).
+
+```tsx
+import { useRoomSubscriptionSettings } from "@liveblocks/react/suspense";
+
+function MuteButton() {
+  // +++
+  const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+  // +++
+
+  return (
+    // +++
+    <button onClick={() => updateSettings({ threads: "none" })}>
+      {settings.threads === "none" ? "Muted" : "Mute this document"}
+    </button>
+    // +++
+  );
+}
+```
+
+Settings can also be changed server-side with
+[`Liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings),
+for example to subscribe a document’s author to everything in their document.
+
+### Notification settings [#notification-settings]
+
+Let users choose which notification kinds they receive on each delivery
+channel—`email`, `slack`, `teams`, and `webPush`—with
+[`useNotificationSettings`](/docs/api-reference/liveblocks-react#useNotificationSettings).
+Each kind must first be enabled on your project’s notifications dashboard page.
+
+```tsx
+import { useNotificationSettings } from "@liveblocks/react/suspense";
+
+function NotificationSettings() {
+  // +++
+  const [{ settings }, updateSettings] = useNotificationSettings();
+  // +++
+
+  return (
+    <label>
+      Receive thread notifications by email:
+      <input
+        type="checkbox"
+        // +++
+        checked={settings.email?.thread}
+        onChange={(e) =>
+          updateSettings({ email: { thread: e.target.checked } })
+        }
+        // +++
+      />
+    </label>
+  );
+}
+```
+
+The
+[notification settings guide](/docs/guides/how-to-create-a-notification-settings-panel)
+details how to build a complete settings panel for your application.
+
+### Email and other channels [#email-and-other-channels]
+
+Liveblocks sends a
+[`notification` webhook event](/docs/api-reference/webhook-events#NotificationEvent)
+when a user has unread notifications on an enabled channel, by default up to
+every 30 minutes per user. Handle it on your server to deliver email, Slack,
+Teams, or web push notifications. For comment emails,
+[`@liveblocks/emails`](/docs/api-reference/liveblocks-emails) fetches and styles
+the unread comments for you.
+
+```tsx
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+import {
+  isThreadNotificationEvent,
+  Liveblocks,
+  WebhookHandler,
+} from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET!);
+
+export async function POST(request: Request) {
+  const event = webhookHandler.verifyRequest({
+    headers: request.headers,
+    rawBody: await request.text(),
+  });
+
+  // +++
+  if (isThreadNotificationEvent(event)) {
+    const emailData = await prepareThreadNotificationEmailAsReact(
+      liveblocks,
+      event
+    );
+
+    // Render `emailData` and send the email with your provider
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
+```
+
+For custom kinds, fetch the notification with
+[`Liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId)
+and format the message yourself. Learn more under
+[email notifications](/docs/products/notifications/email-notifications).
+
+### Workspace inboxes [#workspace-inboxes]
+
+If your app has multiple workspaces or tenants, use
+[organizations](/docs/api-reference/authentication/organizations) to give each
+user a separate inbox per workspace. Notifications from rooms created with an
+`organizationId` belong to that organization automatically, and custom
+notifications can be assigned to one when triggered.
+
+```ts
+await liveblocks.triggerInboxNotification({
+  userId: "olivier@example.com",
+  kind: "$fileUploaded",
+  subjectId: "file-123",
+  activityData: { fileName: "quarterly-report.pdf" },
+  // +++
+  organizationId: "acme-corp",
+  // +++
+});
+```
+
+Authenticate each user with the `organizationId` of their current
+workspace—their token only grants access to that organization, so
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and unread counts only show that workspace’s notifications.
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  userId: "olivier@example.com",
+  // +++
+  organizationId: "acme-corp",
+  // +++
+});
+```
+
+Learn more under
+[Organizations](/docs/api-reference/authentication/organizations).
+
+## Examples [#examples]
+
+Explore complete examples that combine the features described above.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Comments notifications",
+      slug: "comments-notifications/nextjs-comments-notifications",
+      image: "/images/examples/thumbnails/comments-notifications.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Custom notifications",
+      slug: "notifications-custom/nextjs-notifications-custom",
+      image: "/images/examples/thumbnails/custom-notifications.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notification settings",
+      slug: "notification-settings/nextjs-notification-settings",
+      image: "/images/examples/thumbnails/notification-settings.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

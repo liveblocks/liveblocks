@@ -5,13 +5,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "npx liveblocks dev --persist --cmd 'next dev'",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
     "@liveblocks/client": "^3.23.0",
     "@liveblocks/react": "^3.23.0",
-    "next": "^16.1.6",
+    "next": "^16.2.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

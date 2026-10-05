@@ -35,18 +35,53 @@ const adapter = createLiveblocksAdapter({
 
 ## Configuration
 
-| Option              | Type       | Default                       | Description                                                                                                       |
-| ------------------- | ---------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `apiKey`            | `string`   | —                             | Liveblocks secret key (`sk_...`) for REST API calls                                                               |
-| `webhookSecret`     | `string`   | —                             | Webhook signing secret (`whsec_...`) from the dashboard                                                           |
-| `botUserId`         | `string`   | —                             | User ID used when the bot creates, edits, or reacts to comments; must match your app’s user identifiers           |
-| `botUserName`       | `string`   | `"liveblocks-bot"`            | Display name for the bot                                                                                          |
-| `resolveUsers`      | `function` | —                             | Resolves user IDs for @mentions; return one entry per input id in order, or `undefined` to skip (see TSDoc types) |
-| `resolveGroupsInfo` | `function` | —                             | Resolves group IDs for @mentions; same ordering rules as `resolveUsers`                                           |
-| `logger`            | `Logger`   | `ConsoleLogger("info")` child | Chat SDK–compatible logger                                                                                        |
+| Option              | Type                 | Default                       | Description                                                                                                       |
+| ------------------- | -------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `apiKey`            | `string \| function` | —                             | Liveblocks secret key (`sk_...`) or resolver invoked for every REST API call                                      |
+| `webhookSecret`     | `string \| function` | —                             | Webhook signing secret (`whsec_...`) or resolver invoked for every webhook; required without `webhookVerifier`    |
+| `webhookVerifier`   | `function`           | —                             | Custom inbound verifier used instead of `webhookSecret`                                                           |
+| `botUserId`         | `string`             | —                             | User ID used when the bot creates, edits, or reacts to comments; must match your app’s user identifiers           |
+| `botUserName`       | `string`             | `"liveblocks-bot"`            | Display name for the bot                                                                                          |
+| `resolveUsers`      | `function`           | —                             | Resolves user IDs for @mentions; return one entry per input id in order, or `undefined` to skip (see TSDoc types) |
+| `resolveGroupsInfo` | `function`           | —                             | Resolves group IDs for @mentions; same ordering rules as `resolveUsers`                                           |
+| `logger`            | `Logger`             | `ConsoleLogger("info")` child | Chat SDK–compatible logger                                                                                        |
 
 Resolver return types follow `@liveblocks/core` user and group metadata shapes
 (`U["info"]`, `DGI`).
+
+### Dynamic credentials and custom webhook verification
+
+`apiKey` and `webhookSecret` accept synchronous or asynchronous resolver
+functions. The adapter invokes them for every outbound REST API call or inbound
+webhook request, so credentials can be fetched lazily or rotated:
+
+```typescript
+const adapter = createLiveblocksAdapter({
+  apiKey: () => secrets.get("liveblocks-api-key"),
+  webhookSecret: () => secrets.get("liveblocks-webhook-secret"),
+  botUserId: "my-bot-user",
+});
+```
+
+For webhook-forwarding infrastructure that verifies requests itself, pass a
+`webhookVerifier` instead of `webhookSecret`:
+
+```typescript
+const adapter = createLiveblocksAdapter({
+  apiKey: () => secrets.get("liveblocks-api-key"),
+  webhookVerifier: async (request, body) => {
+    return verifyForwardedWebhook(request, body);
+  },
+  botUserId: "my-bot-user",
+});
+```
+
+The verifier receives the incoming `Request` and raw body. Return a truthy value
+to accept the request. A returned string replaces the body used for event
+parsing; throwing or returning a falsy value rejects the request with **401**.
+When both options are provided, `webhookVerifier` takes precedence over
+`webhookSecret`. This supports custom secret stores and forwarding services,
+including a future Vercel Connect integration.
 
 ### Resolving mentions
 
@@ -110,8 +145,8 @@ export async function POST(request: Request) {
 }
 ```
 
-The adapter verifies signatures with `webhookSecret`; invalid requests get
-**401**.
+The adapter verifies signatures with `webhookSecret`, or uses `webhookVerifier`
+when configured. Invalid requests get **401**.
 
 > **Serverless:** Passing `waitUntil` (e.g. on Vercel) lets work continue after
 > the response is sent.

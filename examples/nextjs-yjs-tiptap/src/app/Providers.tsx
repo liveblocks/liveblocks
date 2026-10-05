@@ -6,7 +6,7 @@ import { Suspense } from "react";
 
 export function Providers({ children }: PropsWithChildren) {
   // Try changing the lostConnectionTimeout value to increase
-  // or reduct the time it takes to reconnect
+  // or reduce the time it takes to reconnect
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <Suspense>{children}</Suspense>

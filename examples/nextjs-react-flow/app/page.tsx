@@ -16,6 +16,7 @@ export default function Page() {
     <LiveblocksProvider
       throttle={16}
       authEndpoint="/api/liveblocks-auth"
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(
           userIds.map((userId) => ["userIds", userId])

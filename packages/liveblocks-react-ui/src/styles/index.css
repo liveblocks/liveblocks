@@ -2373,6 +2373,8 @@
   min-inline-size: 0;
   padding: var(--lb-spacing);
   background: var(--lb-dynamic-background);
+  outline: none;
+  text-align: start;
   transition-property: background;
 
   &:where(

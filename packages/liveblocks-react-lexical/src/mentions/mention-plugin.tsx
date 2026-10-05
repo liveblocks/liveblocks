@@ -128,7 +128,7 @@ function $isCurrentSelectionAtBoundary(offset: number): boolean {
   // If the offset is not zero, i.e. not at the beginning of the text node, the selection is somewhere in the middle of the entity, i.e. not at the boundary.
   if (offset !== 0) return false;
 
-  // Othewise (if the offset is zero), it means the selection could be at the start of an entity. It could also be at the end of the previous entity, or it could be in a position where there are no entities at all.
+  // Otherwise (if the offset is zero), it means the selection could be at the start of an entity. It could also be at the end of the previous entity, or it could be in a position where there are no entities at all.
   // So, we check if the previous sibling of the node at the anchor of the selection is a text entity. If it is, then the selection is at the boundary of the entity.
   const selection = $getSelection();
 

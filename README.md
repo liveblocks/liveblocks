@@ -16,20 +16,17 @@ infrastructure to enable people and AI to work together inside your app.**
 
 <img src="./assets/concepts/liveblocks-collaboration-infrastructure.png" alt="Liveblocks Collaboration Infrastructure"   />
 
-## Ready-made features
+## Products
 
 Liveblocks includes a set of collaboration building blocks you can use
-individually or together. These ready-made features provide pre-built
-components, hooks, and APIs that handle the complexity of realtime
-collaboration, allowing you to focus on building your product’s unique
-experience.
+individually or together. These products provide pre-built hooks, components,
+and APIs that handle the complexity of realtime collaboration, allowing you to
+focus on building your product’s unique experience.
 
+- [Sync](https://liveblocks.io/sync) - Add realtime collaboration to your
+  product experience
 - [Comments](https://liveblocks.io/comments) - Add contextual comments directly
   inside your product
-- [Multiplayer](https://liveblocks.io/multiplayer) - Add realtime collaboration
-  to your product experience
-- [AI Agents](https://liveblocks.io/ai-agents) - Add AI collaborators to your
-  product
 - [Notifications](https://liveblocks.io/notifications) - Add notifications to
   your app to keep users coming back
 
@@ -43,20 +40,23 @@ notifications, and more.
 - [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)
 - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
 - [`@liveblocks/react-ui`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui)
+- [`@liveblocks/react-flow`](https://liveblocks.io/docs/api-reference/liveblocks-react-flow)
 - [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap)
 - [`@liveblocks/react-blocknote`](https://liveblocks.io/docs/api-reference/liveblocks-react-blocknote)
-- [`@liveblocks/node-prosemirror`](https://liveblocks.io/docs/api-reference/liveblocks-node-prosemirror)
 - [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical)
-- [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical)
+- [`@liveblocks/codemirror`](https://liveblocks.io/docs/api-reference/liveblocks-codemirror)
+- [`@liveblocks/prosemirror`](https://liveblocks.io/docs/api-reference/liveblocks-prosemirror)
 - [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
 - [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
 - [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
 - [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
-- [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
+- [`@liveblocks/node-prosemirror`](https://liveblocks.io/docs/api-reference/liveblocks-node-prosemirror)
+- [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical)
 - [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
 - [`@liveblocks/chat-sdk-adapter`](https://liveblocks.io/docs/api-reference/liveblocks-chat-sdk-adapter)
 - [Python SDK](https://liveblocks.io/docs/api-reference/liveblocks-python)
 - [`REST API`](https://liveblocks.io/docs/api-reference/rest-api-endpoints)
+- [Webhook events](https://liveblocks.io/docs/api-reference/webhook-events)
 
 ## Developers
 

@@ -41,7 +41,7 @@ export function Threads() {
             Comment: (commentProps) => {
               const feedId = commentProps.comment.metadata.feedId;
 
-              // This app's AI workflow creates a placeholder comment for AI respones
+              // This app's AI workflow creates a placeholder comment for AI responses
               // These comments have a `feedId`, so if we detect it, we use a custom component
               if (feedId) {
                 return (

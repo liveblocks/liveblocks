@@ -1,0 +1,84 @@
+---
+meta:
+  title: "The type you provided for 'FeedMetadata' is not a valid JSON value"
+  parentTitle: "Error"
+  description: "Your 'FeedMetadata' type is incorrect and needs to be updated"
+---
+
+## Why this error occurred
+
+You have provided a custom `FeedMetadata` type for your application, but the
+type you provided isn’t a (completely) valid JSON value. Values like `Date`,
+`Map`, `Set`, functions, classes, or `unknown` aren’t valid JSON.
+
+```ts highlight="4-7"
+declare global {
+  interface Liveblocks {
+    FeedMetadata: {
+      // Your own fields go here…
+      title: string;
+      type: "chat" | "thread";
+      createdAt: Date; // ❌ The issue is here
+    };
+  }
+}
+```
+
+In the example above, the problem is in the `createdAt` field, because a `Date`
+isn’t a valid JSON value.
+
+## How to fix it
+
+You’ll need to figure out what part of your provided `FeedMetadata` type
+definition isn’t valid JSON. Sometimes this is immediately obvious, like in the
+example above.
+
+Sometimes the issue may be a bit less obvious:
+
+```ts highlight="6-7"
+import type { Json } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    FeedMetadata: {
+      custom: unknown; // ❌ Unknowns could contain non-JSON
+      custom: Json; // ✅ Prefer using Json
+    };
+  }
+}
+```
+
+By using `Json`, you can still work with unknown or unspecified values, but
+still ensure they will be valid JSON.
+
+## If you cannot find the root cause
+
+Sometimes types can be complex and the root cause is still unclear. In those
+cases, there is a small trick you can use. Try to assign your type to the
+required base type, with this line:
+
+```ts highlight="9-10"
+import type { Json } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    FeedMetadata: MyFeedMetadata;
+  }
+}
+
+// Quick debugging snippet to find root cause
+const xxx: Json = {} as MyFeedMetadata;
+//    ^?
+//    The error will appear here
+```
+
+Now TypeScript will explain why it thinks your type isn’t valid JSON:
+
+```error showLineNumbers={false}
+Type 'MyFeedMetadata' is not assignable to type 'Json'.
+  Type 'MyFeedMetadata' is not assignable to type 'JsonObject'.
+    Property 'createdAt' is incompatible with index signature.
+      Type 'Date' is not assignable to type 'Json | undefined'.
+        Type 'Date' is not assignable to type 'JsonObject'.
+          Index signature for type 'string' is missing in type 'Date'.
+```

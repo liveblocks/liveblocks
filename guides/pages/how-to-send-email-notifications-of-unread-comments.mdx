@@ -5,11 +5,10 @@ meta:
     "Learn how to automatically send email notifications of unread comments."
 ---
 
-Liveblocks [Comments](/docs/ready-made-features/comments) allows you to build a
-commenting experience. With our webhooks and REST API, it’s possible to
-aggregate a list of unread comments from the last 30 minutes into a single
-email, and send it to your users. Notifications can also be displayed in your
-app using
+Liveblocks [Comments](/docs/products/comments) allows you to build a commenting
+experience. With our webhooks and REST API, it’s possible to aggregate a list of
+unread comments from the last 30 minutes into a single email, and send it to
+your users. Notifications can also be displayed in your app using
 [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
 and the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
@@ -40,8 +39,8 @@ In this guide we’ll be learning how to send emails notifying users about unrea
 comments, and more specifically, we’ll be looking at how to:
 
 - Trigger events based on unread comments using the
-  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook
-  event.
+  [`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent)
+  webhook event.
 - Fetch unread comments and add styles to comment text using the
   [`@liveblocks/emails`](/docs/api-reference/liveblocks-emails) package.
 - Send an email notification containing a list of unread comments in thread
@@ -69,13 +68,14 @@ that if there are 4 new comments in a thread you’re participating in, you will
 have a single inbox notification for it, instead of 4 “normal” notifications.
 
 Learn more about Notifications for Comments in the
-[overview page](/docs/ready-made-features/comments/email-notifications).
+[overview page](/docs/products/comments/email-notifications).
 
 ## Using webhooks
 
 Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
 send requests to your API endpoint when certain events occurs. One webhook we
-provide is the [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent)
+provide is the
+[`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent)
 webhook, which is triggered for each participating user in a thread, 30 minutes
 after activity has occurred, and this can be used to send emails to your users.
 
@@ -89,8 +89,9 @@ You can send notifications via different channels, such as email, Slack,
 Microsoft Teams, and Web Push. In our dashboard, you can enable notifications on
 certain channels, and in this case, we’ll be using the email channel. You must
 always enable the correct channel to ensure your
-[`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook events
-are triggered, and this guide will take you through setting it up.
+[`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent)
+webhook events are triggered, and this guide will take you through setting it
+up.
 
 ## Create an endpoint in your project
 
@@ -327,8 +328,8 @@ export async function POST(request: Request) {
 After verifying the request, we can then check we’re receiving the correct type
 of event, on the correct channel. There are different `notification` events, and
 in this case we’d like to check for
-[thread notification](/docs/platform/webhooks#Thread-notification), as we’re
-specifically listening for new comments. We can do this using
+[thread notification](/docs/api-reference/webhook-events#Thread-notification),
+as we’re specifically listening for new comments. We can do this using
 [`ThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent),
 making sure to check for the `email` channel.
 
@@ -879,7 +880,7 @@ Great, we’re successfully sending email notifications after new comments are
 created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
-  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent).
+  [`NotificationEvent`](/docs/api-reference/webhook-events#NotificationEvent).
 - How to use the [`@liveblocks/emails`](/docs/api-reference/liveblocks-emails)
   package to fetch and render unread thread data.
 - How to send email notifications with [Resend](https://resend.com).

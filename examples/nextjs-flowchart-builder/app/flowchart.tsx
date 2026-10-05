@@ -64,6 +64,7 @@ import {
   Icon,
 } from "@liveblocks/react-ui";
 import { HelpControl } from "../components/HelpButton";
+import { VersionsDialog } from "./version-history-dialog";
 import {
   DndContext,
   type DragEndEvent,
@@ -1694,6 +1695,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
           <Panel position="top-right">
             <div className="flowchart-avatar-stack">
               <AvatarStack size={32} gap={3} />
+              <VersionsDialog />
             </div>
           </Panel>
           <Background />

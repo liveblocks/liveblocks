@@ -636,6 +636,9 @@ body {
 
 .flowchart-avatar-stack {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   &::before {
     content: "";
@@ -809,4 +812,176 @@ body {
   width: 4rem;
   height: 4rem;
   opacity: 0.2;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.flowchart-version-history-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid rgb(0 0 0 / 8%);
+  background: rgb(255 255 255 / 85%);
+  color: #404040;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.flowchart-version-history-trigger:hover {
+  background: #fff;
+  color: #171717;
+  border-color: rgb(0 0 0 / 12%);
+}
+
+.flowchart-version-history-trigger:focus-visible {
+  outline: 2px solid var(--flowchart-accent);
+  outline-offset: 2px;
+}
+
+.flowchart-version-history-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgb(0 0 0 / 50%);
+  cursor: pointer;
+}
+
+.flowchart-version-history-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1001;
+  width: 90vw;
+  height: 85vh;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: #171717;
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  outline: none;
+}
+
+.flowchart-versions {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.flowchart-versions-preview {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.flowchart-versions-list {
+  position: relative;
+  width: 250px;
+  height: 100%;
+  overflow: auto;
+  border-left: 1px solid rgb(0 0 0 / 8%);
+  flex: none;
+}
+
+.flowchart-version-preview {
+  height: 100%;
+  min-height: 0;
+}
+
+.flowchart-version-preview-content {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.flowchart-version-preview-content .react-flow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.flowchart-version-preview-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+  color: #737373;
+  font-size: 14px;
+  text-align: center;
+}
+
+.flowchart-version-preview-label {
+  pointer-events: none;
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.flowchart-version-preview-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.flowchart-version-preview-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.flowchart-version-preview-button-primary {
+  background: #171717;
+  color: #fff;
+}
+
+.flowchart-version-preview-button-primary:hover:not(:disabled) {
+  background: #404040;
+}
+
+.flowchart-version-preview-button-danger {
+  background: #fff;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.flowchart-version-preview-button-danger:hover:not(:disabled) {
+  background: #fef2f2;
 }

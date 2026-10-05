@@ -13,6 +13,7 @@
     "build": "tsc -d --project ./tsconfig.json",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },

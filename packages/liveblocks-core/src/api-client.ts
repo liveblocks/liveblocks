@@ -2316,13 +2316,13 @@ class HttpClient {
     const response = await this.#fetchPolyfill(url, {
       ...options,
       headers: {
-        // These headers are default, but can be overriden by custom headers
+        // These headers are default, but can be overridden by custom headers
         "Content-Type": "application/json; charset=utf-8",
 
         // Possible header overrides
         ...options?.headers,
 
-        // Cannot be overriden by custom headers
+        // Cannot be overridden by custom headers
         Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
         "X-LB-Client": PKG_VERSION || "dev",
       },
@@ -2382,7 +2382,7 @@ class HttpClient {
 
   /**
    * Makes a GET request and returns the raw response.
-   * Won't throw if the reponse is a non-2xx.
+   * Won't throw if the response is a non-2xx.
    * @deprecated Ideally, use .get() instead.
    */
   public async rawGet(
@@ -2396,7 +2396,7 @@ class HttpClient {
 
   /**
    * Makes a POST request and returns the raw response.
-   * Won't throw if the reponse is a non-2xx.
+   * Won't throw if the response is a non-2xx.
    * @deprecated Ideally, use .post() instead.
    */
   public async rawPost(
@@ -2412,7 +2412,7 @@ class HttpClient {
 
   /**
    * Makes a DELETE request and returns the raw response.
-   * Won't throw if the reponse is a non-2xx.
+   * Won't throw if the response is a non-2xx.
    * @deprecated Ideally, use .delete() instead.
    */
   public async rawDelete(
@@ -2424,7 +2424,7 @@ class HttpClient {
 
   /**
    * Makes a GET request, and return the JSON response.
-   * Will throw if the reponse is a non-2xx.
+   * Will throw if the response is a non-2xx.
    */
   public async get<T extends JsonObject>(
     endpoint: URLSafeString,
@@ -2437,7 +2437,7 @@ class HttpClient {
 
   /**
    * Makes a POST request, and return the JSON response.
-   * Will throw if the reponse is a non-2xx.
+   * Will throw if the response is a non-2xx.
    */
   public async post<T extends JsonObject>(
     endpoint: URLSafeString,
@@ -2460,7 +2460,7 @@ class HttpClient {
 
   /**
    * Makes a DELETE request, and return the JSON response.
-   * Will throw if the reponse is a non-2xx.
+   * Will throw if the response is a non-2xx.
    */
   public async delete<T extends JsonObject>(
     endpoint: URLSafeString,
@@ -2471,7 +2471,7 @@ class HttpClient {
 
   /**
    * Makes a PUT request for a Blob body, and return the JSON response.
-   * Will throw if the reponse is a non-2xx.
+   * Will throw if the response is a non-2xx.
    */
   public async putBlob<T extends JsonObject>(
     endpoint: URLSafeString,

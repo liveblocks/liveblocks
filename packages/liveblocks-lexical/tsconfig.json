@@ -1,0 +1,9 @@
+{
+  "extends": "../../shared/tsconfig.common.json",
+
+  "compilerOptions": {
+    "lib": ["dom", "es2022"],
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["src", "rollup.config.js"]
+}

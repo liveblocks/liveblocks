@@ -47,6 +47,7 @@ import type {
   PlainLsonObject,
   QueryMetadata,
   QueryParams,
+  ReadonlyJson,
   RoomAccesses,
   RoomPermissions,
   RoomSubscriptionSettings,
@@ -1053,7 +1054,7 @@ export class Liveblocks {
 
   async #post(
     path: URLSafeString,
-    json: Json | undefined,
+    json: ReadonlyJson | undefined,
     options?: RequestOptions,
     params?: QueryParams
   ): Promise<Response> {
@@ -1083,7 +1084,7 @@ export class Liveblocks {
 
   async #patch(
     path: URLSafeString,
-    json: Json,
+    json: ReadonlyJson,
     options?: RequestOptions
   ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);
@@ -1235,7 +1236,7 @@ export class Liveblocks {
    * groups they belong to). What permissions this user will end up having is
    * determined by whatever permissions you assign the user/group in your
    * Liveblocks account, through the Permissions API:
-   * https://liveblocks.io/docs/rooms/permissions
+   * https://liveblocks.io/docs/api-reference/authentication#Default-room-permissions
    *
    * IMPORTANT:
    * Always verify that you trust the user making the request before calling
@@ -1249,7 +1250,7 @@ export class Liveblocks {
    * object form and specify the `groupIds` property. Those `groupIds` should
    * match the groupIds you assigned permissions to via the Liveblocks
    * Permissions API, see
-   * https://liveblocks.io/docs/rooms/permissions#permissions-levels-groups-accesses-example
+   * https://liveblocks.io/docs/api-reference/authentication#permissions-levels-groups-accesses-example
    *
    * @param options.userInfo Custom metadata to attach to this user. Data you
    * add here will be visible to all other clients in the room, through the
@@ -1634,7 +1635,7 @@ export class Liveblocks {
   }
 
   /**
-   * Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. Duplicates can happen if a user is in the requested room with multiple browser tabs opened.
+   * Returns a list of users currently present in the requested room. For better performance, we recommend to call this endpoint every 10 seconds maximum. Duplicates can happen if a user is in the requested room with multiple browser tabs opened.
    * @param roomId The id of the room to get the users from.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of users currently present in the requested room.

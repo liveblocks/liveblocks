@@ -1,0 +1,368 @@
+---
+meta:
+  title: "Agentic users"
+  parentTitle: "Use cases"
+  description:
+    "Let AI agents work alongside people—editing shared documents without
+    conflicts, showing presence, chatting, commenting, and triggering workflows
+    from any language."
+---
+
+Liveblocks enables you to add AI agents to your app as first-class
+collaborators. Agents can edit the same multiplayer [Sync](/docs/products/sync)
+documents as your users, appear in presence alongside humans, show live status,
+chat in realtime, reply to comments, and run from any language or workflow tool.
+
+<Figure
+  caption={
+    <>
+      Agentic users in the{" "}
+      <a href="/examples/ai-spreadsheet/nextjs-ai-spreadsheet">
+        AI Spreadsheet
+      </a>{" "}
+      example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="4fuVnRvRFnCuox7702f01pYFaCte9ziG9Byn4tYTjVUB8"
+    alt="Agentic users"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Agentic editing**](#agentic-editing): Let AI generate and apply document
+  changes simultaneously with other users.
+- [**Edit from any language**](#json-patch): Modify documents from Node.js,
+  Python, or any stack with JSON Patch.
+- [**AI presence**](#ai-presence): Show agents working live, with avatars and
+  focus indicators as they make changes.
+- [**AI status**](#ai-status): Stream live status updates to your app with
+  persistent feeds.
+- [**AI chat**](#ai-chat): Build custom multiplayer chats for agents and humans.
+- [**AI comments**](#ai-comments): Let agents review content and join thread
+  discussions.
+
+## Get started [#get-started]
+
+Choose the features you need. Each guide uses Next.js and can be combined with
+the others.
+
+<ListGrid columns={2} defaultVisibleItems={2}>
+  <DocsCard
+    type="technology"
+    title="Get started with AI presence"
+    href="/docs/get-started/nextjs-ai-presence"
+    description="Show an AI agent working in your app"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with AI comments"
+    href="/docs/get-started/nextjs-comments-ai"
+    description="Let AI reply to your users’ threads"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with AI flowcharts"
+    href="/docs/get-started/nextjs-ai-react-flow"
+    description="Let an AI agent edit a live flowchart"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with AI notifications"
+    href="/docs/get-started/nextjs-ai-notifications"
+    description="Notify users when AI finishes work"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented. Agents edit shared
+documents through [Sync](/docs/products/sync), appear in
+[Presence](/docs/products/sync/presence) like human users, publish working
+status and chat through [Feeds](/docs/products/sync/feeds), and reply to
+[comments](/docs/products/comments).
+
+### Agentic editing [#agentic-editing]
+
+Agents can read and modify your realtime [Sync](/docs/products/sync) documents
+concurrently with your users. Generate changes with AI, then apply them with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage)—edits
+appear instantly for connected users.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+await liveblocks.mutateStorage("my-room-id", async ({ root }) => {
+  const document = root.toJSON();
+
+  const { output: task } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        title: z.string(),
+        status: z.enum(["todo", "in-progress", "done"]),
+      }),
+    }),
+    prompt: `Create a task for the launch plan. Here are current tasks: ${document}`,
+  });
+
+  root.get("tasks").set("task-1", new LiveObject(task));
+});
+// +++
+```
+
+Learn more under [Agentic editing](/docs/products/sync/agentic-editing).
+
+### Editing from any language [#json-patch]
+
+Agentic pipelines are often built in Python or other non-JavaScript stacks. The
+[JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
+lets any system edit Storage over HTTP using
+[RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902) operations, a standard
+LLMs already understand, allowing models to generate patches directly from
+natural language instructions.
+
+```python
+import requests
+
+operations = [
+    {"op": "replace", "path": "/tasks/task-1/status", "value": "done"},
+    {"op": "add", "path": "/tasks/task-1/reviewedBy", "value": "ai-agent"},
+]
+
+response = requests.patch(
+    "https://api.liveblocks.io/v2/rooms/my-room-id/storage/json-patch",
+    json=operations,
+    headers={"Authorization": "Bearer sk_prod_..."},
+)
+```
+
+Learn more in our
+[JSON Patch guide](/docs/guides/modifying-storage-via-rest-api-with-json-patch).
+
+### AI presence [#ai-presence]
+
+Show what agents are working on inside your app by giving them
+[live Presence](/docs/products/sync/presence) updates, such as selections,
+typing indicators, and online avatars.
+[`Liveblocks.setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+allows you to set your agent’s presence.
+
+```ts
+// +++
+await liveblocks.setPresence("my-room-id", {
+  userId: "ai-agent",
+  userInfo: { name: "AI agent", color: "#7c3aed" },
+  data: { status: "editing", focusedId: "task-1" },
+  ttl: 60,
+});
+// +++
+```
+
+After setting presence, you can read it in your app with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) like any human, so
+existing avatar stacks, cursors, and focus indicators show AI activity with no
+extra UI.
+
+```tsx
+import { useOthers } from "@liveblocks/react/suspense";
+
+function AgentPresence() {
+  // +++
+  const others = useOthers();
+  const agent = others.find((other) => other.id === "ai-agent");
+  // +++
+
+  // +++
+  return <div>{agent?.presence.data.status}</div>;
+  // +++
+}
+```
+
+Learn more under the [Presence](/docs/use-cases/presence) use case.
+
+### AI status [#ai-status]
+
+Presence shows that an agent is in the room right now, but it disappears when
+the process ends. Use [Feeds](/docs/products/sync/feeds) to publish the agent’s
+working state—thinking, searching, writing, complete—and save it permanently in
+a history. Create a status message with
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages)
+when work starts, then update it with
+[`Liveblocks.updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId)
+as the agent moves through each stage.
+
+```ts
+// +++
+await liveblocks.createFeedMessage({
+  roomId: "my-room-id",
+  feedId: "agent-status",
+  id: "current",
+  data: { status: "searching", label: "Searching documents…" },
+});
+// +++
+
+// +++
+await liveblocks.updateFeedMessage({
+  roomId: "my-room-id",
+  feedId: "agent-status",
+  messageId: "current",
+  data: { status: "writing", label: "Updating the launch plan…" },
+  updatedAt: Date.now(),
+});
+// +++
+```
+
+In React, read the latest status with
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages) and
+render it in your UI.
+
+```tsx
+import { useFeedMessages } from "@liveblocks/react/suspense";
+
+function AgentStatus() {
+  // +++
+  const { messages } = useFeedMessages("agent-status");
+  const status = messages[messages.length - 1];
+  // +++
+
+  if (!status) {
+    return null;
+  }
+
+  return <p>{status.data.label}</p>;
+}
+```
+
+Keep status in its own feed, separate from [chat](#ai-chat). Learn more under
+[Feeds](/docs/products/sync/feeds).
+
+### AI chat [#ai-chat]
+
+Use [Feeds](/docs/products/sync/feeds) for anything the agent says that should
+persist: chat replies and streamed output. Append messages with
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages),
+and stream a reply token by token by updating one message repeatedly with
+[`Liveblocks.updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId).
+
+```ts
+// +++
+await liveblocks.createFeedMessage({
+  roomId: "my-room-id",
+  feedId: "assistant",
+  data: { role: "assistant", content: "I’ve updated the launch plan." },
+});
+// +++
+```
+
+Users who reconnect can read the full output later, unlike presence, which
+disappears with the connection. Use [AI status](#ai-status) for the agent’s
+current working state. For the complete messaging patterns, read the
+[chat](/docs/use-cases/chat) use case.
+
+### AI comments [#ai-comments]
+
+Agents can review content and leave contextual feedback with
+[Comments](/docs/products/comments). Generate the feedback with AI, convert it
+with
+[`markdownToCommentBody`](/docs/api-reference/liveblocks-node#markdown-to-comment-body),
+and post it with
+[`Liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads)
+under the agent’s own user ID.
+
+```ts
+import { Liveblocks, markdownToCommentBody } from "@liveblocks/node";
+import { generateText } from "ai";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const { text } = await generateText({
+  model: "openai/gpt-5.6-sol",
+  prompt: `Review this paragraph and suggest one improvement: ${paragraph}`,
+});
+// +++
+
+// +++
+await liveblocks.createThread({
+  roomId: "my-room-id",
+  data: {
+    comment: {
+      userId: "ai-agent",
+      body: markdownToCommentBody(text),
+    },
+    metadata: { paragraphId: "paragraph-4" },
+  },
+});
+// +++
+```
+
+You can also automatically trigger an agent when a user mentions it in a thread
+using the
+[`commentCreated`](/docs/api-reference/webhook-events#CommentCreatedEvent)
+webhook. Learn more under the [comments](/docs/use-cases/comments) use case.
+
+## Examples [#examples]
+
+Explore complete examples that combine the features described above.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Spreadsheet",
+      slug: "ai-spreadsheet/nextjs-ai-spreadsheet",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Comments",
+      slug: "ai-comments/nextjs-comments-ai",
+      image: "/images/examples/thumbnails/comments-ai.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Flowchart AI",
+      slug: "collaborative-flowchart-ai/nextjs-react-flow-ai",
+      image: "/images/examples/thumbnails/collaborative-flowchart-ai.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Reports Dashboard",
+      slug: "ai-dashboard-reports/nextjs-ai-dashboard-reports",
+      image: "/images/examples/thumbnails/ai-reports-dashboard.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

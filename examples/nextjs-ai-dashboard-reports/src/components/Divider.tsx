@@ -45,7 +45,7 @@ const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
           className={cx(
             // base
             "h-px w-full",
-            // backround color
+            // background color
             "bg-neutral-200 dark:bg-neutral-800",
           )}
         />

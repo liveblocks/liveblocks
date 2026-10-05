@@ -37,7 +37,7 @@ test.describe("Yjs - Text", () => {
     await waitForJson(pages, "#text", "test text");
   });
 
-  test("support text greather than 128k", async () => {
+  test("support text greater than 128k", async () => {
     const [page1, page2] = pages;
 
     // wait for pages to sync

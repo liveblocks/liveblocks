@@ -54,5 +54,5 @@ a [secret](https://codesandbox.io/docs/secrets).
 ### Tutorial
 
 Follow our
-[step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-online-whiteboard/react-zustand)
+[step by step tutorial](https://liveblocks.io/docs/guides/how-to-create-a-collaborative-online-whiteboard-with-react-zustand-and-liveblocks)
 to build it from scratch.

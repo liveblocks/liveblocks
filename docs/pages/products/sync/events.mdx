@@ -1,0 +1,163 @@
+---
+meta:
+  title: "Events"
+  parentTitle: "Sync"
+  description:
+    "Send transient realtime events to other clients in a Liveblocks room."
+---
+
+Broadcast ephemeral events to the other clients connected to a room. Events
+contain custom JSON data and are not persisted after they’re sent, meaning only
+connected clients receive them. Use them to trigger toast notifications, render
+emoji reactions, send play/pause signals, tell clients to refresh API data, and
+more.
+
+## Setting up an event
+
+Before sending an event, make sure to set the `RoomEvent` type in your config
+file, using a union for multiple events. Any JSON data can be defined and
+sent—in this example, two events are defined, a `"REACTION"` event and a
+`"PLAY"` event.
+
+```tsx file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    RoomEvent:
+      | { type: "REACTION"; emoji: string }
+      | { type: "VIDEO"; action: "PLAY" | "PAUSE" };
+    // +++
+  }
+}
+```
+
+[`useBroadcastEvent`](/docs/api-reference/liveblocks-react#useBroadcastEvent)
+allows you to send a custom event to everyone else in the room, for example an
+emoji reaction.
+
+```tsx
+import { useBroadcastEvent } from "@liveblocks/react/suspense";
+
+function ReactionButton() {
+  // +++
+  const broadcast = useBroadcastEvent();
+  // +++
+
+  return (
+    // +++
+    <button onClick={() => broadcast({ type: "REACTION", emoji: "🔥" })}>
+      // +++ 🔥
+    </button>
+  );
+}
+```
+
+[`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener)
+allows you to listen for sent events and react to them, for example the
+`"REACTION"` event sent above.
+
+```tsx
+import { useEventListener } from "@liveblocks/react/suspense";
+
+function Reactions() {
+  // +++
+  useEventListener(({ event, user, connectionId }) => {
+    if (event.type === "REACTION") {
+      // Render an emoji animation
+      __triggerFlyingEmoji__(event.emoji);
+    }
+  });
+  // +++
+
+  // ...
+}
+```
+
+The callback also receives the `user` that sent the event, and their
+`connectionId`. Note that the sender does not receive their own event.
+
+## Broadcast from the server
+
+Send events from your back end with
+[`Liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event)
+or the
+[Broadcast event REST API](/docs/api-reference/rest-api-endpoints#post-broadcast-event),
+and every client will receive them in realtime.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({ secret: "{{SECRET_KEY}}" });
+
+await liveblocks.broadcastEvent("my-room-id", { type: "VIDEO"; action: "PLAY" });
+```
+
+When an event comes from the server, listeners receive a `connectionId` of `-1`
+and a `user` of `null`.
+
+```tsx
+import { useEventListener } from "@liveblocks/react/suspense";
+
+function VideoPlayer() {
+  useEventListener(({ event, connectionId, user }) => {
+    if (event.type === "VIDEO" && event.action === "PLAY") {
+      // +++
+      if (connectionId === -1 && user === null) {
+        console.log("The video was played by the server");
+      } else {
+        // +++
+        console.log(`${user.info.name} played the video`);
+      }
+    }
+
+    // ...
+  });
+}
+```
+
+## Revalidate server data [#revalidate-server-data]
+
+A common pattern is broadcasting an event after changing data on your server, so
+every client refetches it immediately. In combination with a data-fetching
+package like [SWR](https://swr.vercel.app), call its `mutate` when the event
+arrives.
+
+```tsx
+import {
+  useBroadcastEvent,
+  useEventListener,
+} from "@liveblocks/react/suspense";
+import useSWR from "swr";
+
+function ShareDialog() {
+  // +++
+  const broadcast = useBroadcastEvent();
+  const { data, mutate } = useSWR("/api/share-dialog", fetcher);
+  // +++
+
+  // Refetch when another client reports a change
+  useEventListener(({ event }) => {
+    // +++
+    if (event.type === "SHARE_DIALOG_UPDATED") {
+      mutate();
+    }
+    // +++
+  });
+
+  async function addUser(email: string) {
+    await __addUser__(email);
+
+    // Revalidate locally, then tell other clients to revalidate
+    // +++
+    mutate();
+    broadcast({ type: "SHARE_DIALOG_UPDATED" });
+    // +++
+  }
+
+  // ...
+}
+```
+
+Read about
+[revalidating API data in realtime](/docs/guides/revalidate-api-data-with-swr)
+for a complete example.

@@ -14,7 +14,10 @@ import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
 
 export default function TextEditor() {
-  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  const editor = useCreateBlockNoteWithLiveblocks({}, {
+    collaborationMode: "liveblocks",
+    mentions: true
+  });
 
   return (
     <div className="relative min-h-screen flex flex-col">

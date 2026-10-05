@@ -1,0 +1,32 @@
+/*************************************
+ *       Collaboration cursors       *
+ *************************************/
+
+.lb-lexical-cursors {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: none;
+}
+
+.lb-lexical-cursor-selection {
+  position: absolute;
+  background-color: color-mix(
+    in srgb,
+    var(--lb-lexical-cursor-color) 25%,
+    transparent
+  );
+  border-radius: 1px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.lb-lexical-cursor-caret {
+  position: absolute;
+  width: 0;
+  border-left: 2px solid var(--lb-lexical-cursor-color);
+  pointer-events: none;
+  box-sizing: border-box;
+}

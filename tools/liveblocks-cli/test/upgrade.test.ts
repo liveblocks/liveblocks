@@ -17,7 +17,22 @@
 
 import { describe, expect, test } from "bun:test";
 
-import { highestVersion } from "~/upgrade/index";
+import { getSkipInstallArgs, highestVersion } from "~/upgrade/index";
+
+describe("getSkipInstallArgs", () => {
+  test("uses npm's package lock option", () => {
+    expect(getSkipInstallArgs("npm")).toEqual(["--package-lock-only"]);
+  });
+
+  test("uses pnpm and Bun's lockfile option", () => {
+    expect(getSkipInstallArgs("pnpm")).toEqual(["--lockfile-only"]);
+    expect(getSkipInstallArgs("bun")).toEqual(["--lockfile-only"]);
+  });
+
+  test("uses Yarn's update-lockfile mode", () => {
+    expect(getSkipInstallArgs("yarn")).toEqual(["--mode=update-lockfile"]);
+  });
+});
 
 describe("pickHighestVersion", () => {
   // Simulates: npm view @liveblocks/core@latest version --json

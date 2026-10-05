@@ -23,7 +23,9 @@ This example shows how to build a collaborative flowchart builder with
 [Next.js](https://nextjs.org/).
 
 You can place blocks, connect them, edit labels, undo and redo, and attach
-comments to the canvas or to specific blocks.
+comments to the canvas or to specific blocks. Open version history from the
+clock button next to the avatars to preview and restore earlier flowchart
+states.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-flowchart-builder.png" width="536" alt="Collaborative Flowchart Builder" />
 

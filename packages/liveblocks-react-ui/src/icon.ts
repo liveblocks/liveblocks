@@ -1,5 +1,5 @@
 // Unlike `icons/index.ts` which exports all icons privately, this file
-// is meant to export all icons which should be publically available
+// is meant to export all icons which should be publicly available
 // via `import { Icon } from "@liveblocks/react-ui"` and `<Icon.* />`.
 
 export {

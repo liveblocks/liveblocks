@@ -1,4 +1,9 @@
-import { createClient, shallow } from "@liveblocks/client";
+import {
+  createClient,
+  LiveList,
+  LiveObject,
+  shallow,
+} from "@liveblocks/client";
 import { ClientMsgCode, ServerMsgCode, wait } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
@@ -312,7 +317,14 @@ describe("useOthers", () => {
 describe("useHasPermissionAccess", () => {
   test("optimistically allows writing to scoped comments resources before permission hints arrive", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <RoomProvider id="room" initialPresence={{ x: 0 }} autoConnect={false}>
+      <RoomProvider
+        id="room"
+        initialPresence={{ x: 0 }}
+        initialStorage={() => ({
+          obj: new LiveObject({ a: 0, nested: new LiveList([]) }),
+        })}
+        autoConnect={false}
+      >
         {children}
       </RoomProvider>
     );
@@ -332,7 +344,13 @@ describe("useHasPermissionAccess", () => {
 
   test("uses aggregate and scoped comment access from the connection before permission hints arrive", async () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <RoomProvider id="room" initialPresence={{ x: 0 }}>
+      <RoomProvider
+        id="room"
+        initialPresence={{ x: 0 }}
+        initialStorage={() => ({
+          obj: new LiveObject({ a: 0, nested: new LiveList([]) }),
+        })}
+      >
         {children}
       </RoomProvider>
     );

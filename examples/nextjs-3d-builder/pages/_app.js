@@ -8,9 +8,10 @@ function App({ Component, pageProps }) {
   const roomId = useExampleRoomdId("nextjs-3d-builder");
 
   return (
-    <LiveblocksProvider
-      publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY}
-    >
+      <LiveblocksProvider
+        publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY}
+        baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+      >
       <RoomProvider id={roomId} initialStorage={{ colors: new LiveObject() }}>
         <Head>
           <title>Liveblocks</title>

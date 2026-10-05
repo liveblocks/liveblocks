@@ -29,6 +29,10 @@ export {
   snapshotToPlainLson_eager,
   snapshotToPlainLson_lazy,
 } from "~/formats/PlainLson";
+export {
+  hasUploadedLivefiles,
+  hasUploadedLivefilesInPlainLson,
+} from "~/livefiles";
 export { makeInMemorySnapshot } from "~/makeInMemorySnapshot";
 export type { MetadataDB } from "~/MetadataDB";
 export { makeMetadataDB } from "~/MetadataDB";

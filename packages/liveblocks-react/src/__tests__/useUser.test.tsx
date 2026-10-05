@@ -385,7 +385,7 @@ describe("useUser", () => {
     unmount();
   });
 
-  test("should return an error if resolveUsers returns undefined for a specifc user ID", async () => {
+  test("should return an error if resolveUsers returns undefined for a specific user ID", async () => {
     const roomId = nanoid();
 
     const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>

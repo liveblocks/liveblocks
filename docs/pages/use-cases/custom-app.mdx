@@ -1,0 +1,675 @@
+---
+meta:
+  title: "Custom app"
+  parentTitle: "Use cases"
+  description:
+    "Build a custom collaborative app with synchronized state, presence,
+    activity feeds, AI editing, notifications, and comments."
+---
+
+Build a custom collaborative application when no ready-made editor or
+integration matches your interface, for example an issue tracker, CRM,
+dashboard, or internal tool. Synchronize your application state, show live
+collaborators, and layer on activity feeds, comments, notifications, and AI
+editing as your product needs them.
+
+<Figure
+  caption={
+    <>
+      Custom realtime features in the{" "}
+      <a href="/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker">
+        Linear-like Issue Tracker
+      </a>{" "}
+      example
+    </>
+  }
+>
+  <MuxVideo
+    playbackId="f9GXC0295YExLiHS62p2zfP6W8vx01qW5mkBNxZPZXDyM"
+    alt="Custom app"
+    static={true}
+    height={520}
+    width={768}
+  />
+</Figure>
+
+## Features [#features]
+
+- [**Realtime collaboration**](#realtime-collaboration): Application state is
+  permanent & updates in realtime for connected users.
+- [**Presence**](#presence): Show avatar stacks, live selections, multiplayer
+  cursors, and agent activity.
+- [**Activity feed**](#activity-feed): Show a persistent, realtime timeline of
+  everything happening in your app.
+- [**Revalidating API data**](#revalidating-api-data): Tell other clients to
+  refetch data stored in your own database.
+- [**Server-side editing**](#server-side-editing): Modify application state from
+  a trusted back end.
+- [**Agentic editing**](#agentic-editing): Generate and apply validated changes
+  with AI.
+- [**Version history**](#version-history): Save, preview, and restore
+  application state from snapshots.
+- [**Multiplayer undo/redo**](#multiplayer-undo-redo): Each user can
+  independently undo and redo their own changes.
+- [**File uploads**](#file-uploads): Attach uploaded files to your application
+  records.
+- [**Comments**](#comments): Attach commenting threads to any record in your
+  app.
+- [**Notifications**](#notifications): Notify users about mentions, assignments,
+  and custom events.
+- [**Permissions**](#permissions): Control which users can read and edit the
+  app.
+
+## Get started [#get-started]
+
+Choose a starting point for your app.
+
+<ListGrid columns={2} defaultVisibleItems={4}>
+  <DocsCard
+    type="technology"
+    title="Get started with Sync"
+    href="/docs/get-started/nextjs"
+    description="Synchronize your application state"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with presence"
+    href="/docs/get-started/nextjs-presence"
+    description="Add realtime presence and live selections"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with comments"
+    href="/docs/get-started/nextjs-comments"
+    description="Attach comment threads to your records"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with notifications"
+    href="/docs/get-started/nextjs-notifications-in-app"
+    description="Add an in-app notification inbox"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Implementation [#implementation]
+
+This is an overview of how each feature can be implemented, using an issue
+tracker as the example app. [Sync](/docs/products/sync) can be used to
+store any type of permanent realtime data, such as issues.
+[Presence](/docs/products/sync/presence) can hold temporary selections and
+interaction state, and [Feeds](/docs/products/sync/feeds) can store durable
+activity streams.
+
+### Realtime collaboration [#realtime-collaboration]
+
+Using [Sync](/docs/products/sync), you can add realtime collaboration
+to your application state using
+[conflict-free data types](/docs/products/sync/storage). In this snippet, a
+realtime “priority” property can be read and edited using
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) and
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation).
+
+```tsx
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+
+function IssuePriority() {
+  // +++
+  const priority = useStorage((root) => root.priority);
+  // +++
+
+  // +++
+  const setPriority = useMutation(({ storage }, newPriority: string) => {
+    storage.set("priority", newPriority);
+  });
+  // +++
+
+  return (
+    <>
+      // +++
+      <span>Priority: {priority}</span>
+      <Select
+        value={priority}
+        items={["Low", "Medium", "High"]}
+        onChange={(newPriority) => setPriority(newPriority)}
+      />
+      // +++
+    </>
+  )
+```
+
+Learn more under [Storage](/docs/products/sync/storage).
+
+### Presence [#presence]
+
+Using presence, you can show avatar stacks, live selections, and agent activity
+in your app. To build a custom avatar stack, read connected collaborators with
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) and the current
+user with [`useSelf`](/docs/api-reference/liveblocks-react#useSelf), then render
+the user data returned by
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
+
+```tsx
+import { useOthers, useSelf } from "@liveblocks/react/suspense";
+
+function CustomAvatarStack() {
+  // +++
+  const others = useOthers();
+  const currentUser = useSelf();
+  // +++
+
+  return (
+    <div style={{ display: "flex", marginLeft: "8px" }}>
+      // +++
+      {others.map(({ connectionId, info }) => (
+        <img
+          key={connectionId}
+          src={info.avatar}
+          alt={info.name}
+          style={{ borderRadius: "9999px", marginLeft: "-8px" }}
+        />
+      ))}
+      <img
+        src={currentUser.info.avatar}
+        alt={currentUser.info.name}
+        style={{ borderRadius: "9999px", marginLeft: "-8px" }}
+      />
+      // +++
+    </div>
+  );
+}
+```
+
+Learn more under [Presence](/docs/products/sync/presence).
+
+### Activity feed [#activity-feed]
+
+Using [Feeds](/docs/products/sync/feeds), you can add a persistent, realtime
+activity feed to your app, for example a timeline of status changes,
+assignments, and activity on an issue. Render the timeline with
+[`useFeedMessages`](/docs/api-reference/liveblocks-react#useFeedMessages) and
+append events with
+[`useCreateFeedMessage`](/docs/api-reference/liveblocks-react#useCreateFeedMessage).
+
+```tsx
+import {
+  useCreateFeedMessage,
+  useFeedMessages,
+} from "@liveblocks/react/suspense";
+
+function ActivityFeed() {
+  // +++
+  const { messages } = useFeedMessages("activity");
+  const createMessage = useCreateFeedMessage();
+  // +++
+
+  return (
+    <aside>
+      // +++
+      {messages.map((message) => (
+        <p key={message.id}>{message.data.text}</p>
+      ))}
+      // +++
+      <button
+        onClick={
+          () =>
+            // +++
+            createMessage("activity", { text: "Issue moved to In progress" })
+          // +++
+        }
+      >
+        Move issue
+      </button>
+    </aside>
+  );
+}
+```
+
+Your server and background workflows can append to the same feed with
+[`Liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages),
+and the same primitives also power chat interfaces and AI agent progress. Learn
+more under [Feeds](/docs/products/sync/feeds).
+
+### Revalidating API data [#revalidating-api-data]
+
+You can keep some app data in your own database rather than in
+[Sync](/docs/products/sync), and still make it feel realtime. When a
+user saves a change through your API, use
+[`useBroadcastEvent`](/docs/api-reference/liveblocks-react#useBroadcastEvent) to
+send a transient [broadcast event](/docs/products/sync/events) to the other
+connected clients, and
+[`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener) to
+revalidate the cached data when it arrives, for example with SWR.
+
+```tsx
+import {
+  useBroadcastEvent,
+  useEventListener,
+} from "@liveblocks/react/suspense";
+import { useSWRConfig } from "swr";
+
+function IssueSettings() {
+  // +++
+  const broadcast = useBroadcastEvent();
+  // +++
+  const { mutate } = useSWRConfig();
+
+  // +++
+  useEventListener(({ event }) => {
+    if (event.type === "REVALIDATE") {
+      mutate(event.key);
+    }
+  });
+  // +++
+
+  return (
+    <button
+      onClick={async () => {
+        await saveIssue();
+        // +++
+        broadcast({ type: "REVALIDATE", key: "/api/issues" });
+        // +++
+      }}
+    >
+      Save issue
+    </button>
+  );
+}
+```
+
+Broadcast events are not persisted—use them for signals, not for state. Read
+[revalidating API data with SWR](/docs/guides/revalidate-api-data-with-swr) for
+the full pattern, and learn more under [events](/docs/products/sync/events).
+
+### Server-side editing [#server-side-editing]
+
+Edit your application state from your server with
+[`Liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage),
+for example to add a link to an issue. The mutation uses the same Sync data
+types as the client, and connected users receive the result in realtime.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+// +++
+await liveblocks.mutateStorage("my-room-id", ({ root }) => {
+  const links = root.get("links");
+  links.push("https://example.com");
+});
+// +++
+```
+
+Read [Server-side editing](/docs/products/sync/server-side-editing) for
+validation, versioning, bulk mutations, and other document formats.
+
+### Agentic editing [#agentic-editing]
+
+To allow AI agents to modify your app, generate your changes with AI then use
+[`mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage) to apply
+them. To show that AI is working in your app use
+[`setPresence`](/docs/api-reference/liveblocks-node#post-rooms-roomId-presence)
+to show it working—your agent will appear in [Presence](#presence) alongside
+humans. Finally, remove the agent’s presence to indicate that the agent is no
+longer working.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const roomId = "my-room-id";
+const agent: Liveblocks["UserMeta"] = {
+  id: "ai-agent",
+  info: { name: "AI agent", color: "#7c3aed" },
+};
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "thinking", selectedIssueId: null },
+  ttl: 60,
+});
+// +++
+
+// +++
+await liveblocks.mutateStorage(roomId, async ({ root }) => {
+  const document = root.toJSON();
+
+  const { output: newLinks } = await generateText({
+    model: "openai/gpt-5.6-sol",
+    output: Output.object({
+      schema: z.object({
+        links: z.array(z.string()),
+      }),
+    }),
+    prompt: `Add related links to this issue. Here is the issue and current links: ${document}`,
+  });
+
+  const links = root.get("links");
+
+  for (const link of newLinks.links) {
+    links.push(link);
+  }
+});
+// +++
+
+// +++
+await liveblocks.setPresence(roomId, {
+  userId: agent.id,
+  userInfo: agent.info,
+  data: { status: "idle", selectedIssueId: null },
+  ttl: 2,
+});
+// +++
+```
+
+Additionally, you can use [Feeds](/docs/products/sync/feeds) to store AI
+workflow state, and to pass agent status updates to the UI. Learn more under
+[Agentic editing](/docs/products/sync/agentic-editing).
+
+### Version history [#version-history]
+
+Create version snapshots, manually or automatically, list old versions, and
+restore to a specific version—useful before bulk imports or large agent edits.
+Use
+[`useHistoryVersions`](/docs/api-reference/liveblocks-react#useHistoryVersions)
+to list versions,
+[`useHistoryVersionStorageData`](/docs/api-reference/liveblocks-react#useHistoryVersionStorageData)
+to render a read-only preview, and
+[`useRestoreToStorageVersion`](/docs/api-reference/liveblocks-react#useRestoreToStorageVersion)
+to restore the complete application Storage state as one synchronized change.
+
+```tsx
+import {
+  useHistoryVersions,
+  useRestoreToStorageVersion,
+} from "@liveblocks/react/suspense";
+
+function AppHistoryVersions() {
+  // +++
+  const versions = useHistoryVersions();
+  const restore = useRestoreToStorageVersion();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {versions.map((version) => (
+        <div key={version.id} onClick={() => restore(version.id)}>
+          Snapshot created at {version.createdAt}
+        </div>
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+Read [Version history](/docs/products/sync/version-history) to learn more.
+
+### Multiplayer undo/redo [#multiplayer-undo-redo]
+
+Each user can independently undo and redo their own changes with
+[`useUndo`](/docs/api-reference/liveblocks-react#useUndo) and
+[`useRedo`](/docs/api-reference/liveblocks-react#useRedo). Additionally,
+[`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo) and
+[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo) can be used to
+disable the undo and redo buttons when the user is at the beginning or end of
+the undo/redo stack.
+
+```tsx
+import {
+  useUndo,
+  useRedo,
+  useCanUndo,
+  useCanRedo,
+} from "@liveblocks/react/suspense";
+
+function AppUndoRedo() {
+  // +++
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+  // +++
+
+  return (
+    <div>
+      // +++
+      <button onClick={undo} disabled={!canUndo}>
+        ↩️ Undo
+      </button>
+      <button onClick={redo} disabled={!canRedo}>
+        ↪️ Redo
+      </button>
+      // +++
+    </div>
+  );
+}
+```
+
+History can also be paused, resumed, and disabled. Read
+[Multiplayer undo/redo](/docs/products/sync/storage#multiplayer-undo-redo) to
+learn more.
+
+### File uploads [#file-uploads]
+
+You can upload files and other binary assets with
+[`useUploadFile`](/docs/api-reference/liveblocks-react#useUploadFile), for
+example to attach a screenshot to an issue. It uploads the file to the current
+room as a [`LiveFile`](/docs/api-reference/liveblocks-client#LiveFile), which
+you can then attach to your data tree.
+
+```tsx
+import { useCallback } from "react";
+import { useMutation, useUploadFile } from "@liveblocks/react/suspense";
+
+function UploadAttachment({ issueId }: { issueId: string }) {
+  // +++
+  const uploadFile = useUploadFile();
+  // +++
+
+  const addAttachment = useMutation(
+    ({ storage }, liveFile) => {
+      // +++
+      const attachments = storage.get("attachments");
+      attachments.push(liveFile);
+      // +++
+    },
+    [issueId]
+  );
+
+  const handleFileChange = useCallback(async (file) => {
+    // +++
+    const liveFile = await uploadFile(file);
+    addAttachment(liveFile);
+    // +++
+  }, []);
+
+  return (
+    <label>
+      <input
+        type="file"
+        // +++
+        onChange={(e) => handleFileChange(e.currentTarget.files[0])}
+        // +++
+      />
+      ⬆️ Upload attachment
+    </label>
+  );
+}
+```
+
+Learn more under [File uploads](/docs/products/sync/storage#LiveFile).
+
+### Comments [#comments]
+
+Add commenting to your app, for example as a discussion section below each
+issue. [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) allows
+you to fetch the threads for a specific record, while the
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) and
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) components render
+discussions and create new ones.
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { Composer, Thread } from "@liveblocks/react-ui";
+
+function IssueComments({ issueId }: { issueId: string }) {
+  // +++
+  const { threads } = useThreads({
+    query: { metadata: { issueId } },
+  });
+  // +++
+
+  return (
+    <div>
+      // +++
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      <Composer metadata={{ issueId }} />
+      // +++
+    </div>
+  );
+}
+```
+
+Learn more under [Comments](/docs/products/comments).
+
+### Notifications [#notifications]
+
+Using [Notifications](/docs/products/notifications), you can create an inbox
+tray that notifies users about mentions and replies in comments. You can also
+trigger custom notifications for your own application events, such as an issue
+being assigned to a user. Render the current user’s inbox with
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and the ready-made
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component.
+
+```tsx
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+import { InboxNotificationList, InboxNotification } from "@liveblocks/react-ui";
+
+function InboxTray() {
+  // +++
+  const { inboxNotifications } = useInboxNotifications();
+  // +++
+
+  return (
+    <InboxNotificationList>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+          kinds={{
+            thread: (props) => (
+              <InboxNotification.Thread {...props} showRoomName={false} />
+            ),
+            // +++
+            $issueAssigned: (props) => (
+              <InboxNotification.Custom
+                {...props}
+                title="Issue assigned to you"
+                aside={<InboxNotification.Icon>❕</InboxNotification.Icon>}
+              >
+                {props.inboxNotification.activities[0].data.issueTitle}
+              </InboxNotification.Custom>
+            ),
+            // +++
+          }}
+        />
+      ))}
+    </InboxNotificationList>
+  );
+}
+```
+
+You can trigger custom notifications with
+[`Liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
+Learn more under [Notifications](/docs/products/notifications).
+
+### Permissions [#permissions]
+
+Each part of your app is contained inside a room in your Liveblocks app, and
+permission groups can set access to it. For example, your issue board may have
+an editor group and a viewer group. This can be set when modifying or creating a
+room, for example with
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms).
+
+```ts
+await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: [
+    // No access by default
+  ],
+  groupsAccesses: {
+    // "viewers" group has read access
+    viewers: ["*:read"],
+  },
+  usersAccesses: {
+    // "olivier" has write access
+    olivier: ["*:write"],
+  },
+});
+```
+
+More complex controls can be set too, learn more under
+[Permissions](/docs/api-reference/authentication/permissions).
+
+## Examples [#examples]
+
+Explore complete implementations in our example gallery.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Linear-like Issue Tracker",
+      slug: "linear-like-issue-tracker/nextjs-linear-like-issue-tracker",
+      image: "/images/examples/thumbnails/linear-like-issue-tracker.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative To-do List",
+      slug: "collaborative-todo-list/nextjs-todo-list",
+      image: "/images/examples/thumbnails/collaborative-todo-list.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Cursors",
+      slug: "live-cursors/nextjs-live-cursors",
+      image: "/images/examples/thumbnails/live-cursors.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Form Selection",
+      slug: "live-form-selection/nextjs-live-form-selection",
+      image: "/images/examples/thumbnails/live-form-selection.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

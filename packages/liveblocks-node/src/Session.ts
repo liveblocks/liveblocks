@@ -1,7 +1,7 @@
 import type {
   IUserInfo,
-  Json,
   JsonObject,
+  ReadonlyJson,
   URLSafeString,
 } from "@liveblocks/core";
 import { normalizeRoomPermissions, Permission, url } from "@liveblocks/core";
@@ -26,7 +26,7 @@ const FULL_ACCESS = Object.freeze([Permission.Write] as const);
 
 const roomPatternRegex = /^([*]|[^*]{1,128}[*]?)$/;
 
-type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
+type PostFn = (path: URLSafeString, json: ReadonlyJson) => Promise<Response>;
 
 /**
  * Class to help you construct the exact permission set to grant a user.

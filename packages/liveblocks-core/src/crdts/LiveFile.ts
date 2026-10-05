@@ -14,6 +14,7 @@ import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
+import type { OpSource } from "./StorageUpdates";
 
 export type { LiveFileData } from "../protocol/StorageNode";
 
@@ -108,8 +109,8 @@ export class LiveFile extends AbstractCrdt {
   }
 
   /** @internal */
-  _apply(op: Op, isLocal: boolean): ApplyResult {
-    return super._apply(op, isLocal);
+  _apply(op: Op, source: OpSource): ApplyResult {
+    return super._apply(op, source);
   }
 
   /** @internal */

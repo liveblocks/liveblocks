@@ -89,7 +89,7 @@ const CommandBarBar = React.forwardRef<
 })
 CommandBarBar.displayName = "CommandBarBar"
 
-const CommandBarSeperator = React.forwardRef<
+const CommandBarSeparator = React.forwardRef<
   HTMLDivElement,
   Omit<React.ComponentPropsWithoutRef<"div">, "children">
 >(({ className, ...props }, ref) => {
@@ -101,7 +101,7 @@ const CommandBarSeperator = React.forwardRef<
     />
   )
 })
-CommandBarSeperator.displayName = "CommandBar.Seperator"
+CommandBarSeparator.displayName = "CommandBar.Separator"
 
 interface CommandProps
   extends Omit<
@@ -184,6 +184,6 @@ export {
   CommandBar,
   CommandBarBar,
   CommandBarCommand,
-  CommandBarSeperator,
+  CommandBarSeparator,
   CommandBarValue,
 }

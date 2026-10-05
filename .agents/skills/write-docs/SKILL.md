@@ -11,12 +11,27 @@ description:
 
 ## Quick Start
 
-Before writing, inspect nearby docs and copy their structure.
+Before writing, identify the target page and check its directory for a local
+template. If a `*.template.mdx` file exists, read it completely and use it as
+the primary structure for pages in that directory. Also check for the current
+legacy `*-template.mdx` naming used by some folders.
+
+```bash
+rg --files docs/pages/<section> -g '*.template.mdx' -g '*-template.mdx'
+```
+
+After reading any local template, inspect nearby docs and follow their current
+terminology, components, and level of detail.
+
+When creating or restructuring a page under `docs/pages/use-cases/`, read and
+follow
+[`_use-case-template.mdx`](../../../docs/pages/use-cases/_use-case-template.mdx).
+Use Canvas, Flowchart, and Slideshow as the current reference pages.
 
 ```bash
 rg --files docs/pages
 sed -n '1,180p' docs/pages/api-reference/liveblocks-react.mdx
-sed -n '1,180p' docs/pages/collaboration-features/comments/users-and-mentions.mdx
+sed -n '1,180p' docs/pages/products/comments/users-and-mentions.mdx
 ```
 
 Then write the smallest docs update that makes the feature findable from the
@@ -25,8 +40,12 @@ places users are likely to look.
 ## Workflow
 
 1. Identify the docs surface:
-   - API reference: every new public API, prop, option, return value, or type.
-   - Ready-made feature pages: user-facing workflows and common combinations.
+   - API reference: every new public API, prop, option, return value, or type,
+     plus Authentication under `docs/pages/api-reference/authentication`.
+   - Product pages: product concepts, features, and workflows under
+     `docs/pages/products`, with canonical URLs under `/docs/products`.
+   - Use case pages: explanations of how several Liveblocks features combine for
+     an application type, under `docs/pages/use-cases`.
    - Guides: task-specific docs under `guides/pages`, registered in
      `guides/guides.json`.
    - Platform pages: dashboard, account, project, webhook, REST, limits, or
@@ -51,6 +70,8 @@ places users are likely to look.
    - Check: "Can I link to one place that explains this feature?"
 
 4. Match the existing page:
+   - Follow a folder-local `*.template.mdx` or `*-template.mdx` before copying a
+     neighboring page.
    - Keep existing frontmatter shape.
    - Use the same heading depth and anchor style, such as
      `### Name [#custom-anchor]`.
@@ -61,8 +82,12 @@ places users are likely to look.
      `tutorial/tutorials.json`.
 
 5. Verify:
-   - Inspect changed MDX for broken links, malformed JSX, heading hierarchy, and
-     route or guide registration.
+   - Run the docs link checker after making changes:
+     `node scripts/check-docs-links.mts`
+     It validates internal `/docs/*` links and `#anchors` in `docs/pages`,
+     `guides/pages`, and `tutorial` — the same check CI runs on docs PRs.
+   - Inspect changed MDX for malformed JSX, heading hierarchy, and route or
+     guide registration.
 
 ## Style Rules
 
@@ -87,3 +112,7 @@ places users are likely to look.
 
 See [REFERENCE.md](REFERENCE.md) for placement rules, API reference structure,
 MDX conventions, and review checklists.
+
+See
+[`_use-case-template.mdx`](../../../docs/pages/use-cases/_use-case-template.mdx)
+for the required structure, snippet patterns, and checks for use case pages.

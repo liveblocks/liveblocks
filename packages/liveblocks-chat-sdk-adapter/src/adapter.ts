@@ -56,14 +56,25 @@ import {
 type PhrasingContent = Paragraph["children"][number];
 
 const ADAPTER_PREFIX = "liveblocks";
+
+function normalizeSecretProvider(
+  value: LiveblocksSecretValue
+): () => Promise<string> {
+  if (typeof value === "function") {
+    return async () => await value();
+  }
+  return () => Promise.resolve(value);
+}
+
 export class LiveblocksAdapter<
   U extends BaseUserMeta = BaseUserMeta,
   DGI extends BaseGroupInfo = BaseGroupInfo,
 > implements Adapter<{ roomId: string; threadId: string }, CommentData> {
   readonly name = "liveblocks";
   readonly userName: string;
-  readonly #client: Liveblocks;
-  readonly #webhookHandler: WebhookHandler;
+  readonly #apiKey: () => Promise<string>;
+  readonly #webhookSecret: (() => Promise<string>) | undefined;
+  readonly #webhookVerifier: LiveblocksWebhookVerifier | undefined;
   readonly #resolveUsers:
     | ((
         args: ResolveUsersArgs
@@ -78,8 +89,12 @@ export class LiveblocksAdapter<
   readonly #botUserId: string;
   #chat: ChatInstance | null = null;
   constructor(config: LiveblocksAdapterConfig<U, DGI>) {
-    this.#client = new Liveblocks({ secret: config.apiKey });
-    this.#webhookHandler = new WebhookHandler(config.webhookSecret);
+    this.#apiKey = normalizeSecretProvider(config.apiKey);
+    this.#webhookSecret =
+      config.webhookSecret === undefined
+        ? undefined
+        : normalizeSecretProvider(config.webhookSecret);
+    this.#webhookVerifier = config.webhookVerifier;
     this.#resolveUsers = config.resolveUsers;
     this.#resolveGroupsInfo = config.resolveGroupsInfo;
     this.#botUserId = config.botUserId;
@@ -96,15 +111,42 @@ export class LiveblocksAdapter<
     request: Request,
     options?: WebhookOptions
   ): Promise<Response> {
+    const body = await request.text();
     let event: WebhookEvent;
-    try {
-      event = this.#webhookHandler.verifyRequest({
-        headers: request.headers,
-        rawBody: await request.text(),
-      });
-    } catch (error) {
-      this.#logger.error("Failed to verify webhook request", { error });
-      return new Response("Invalid webhook request", { status: 401 });
+    if (this.#webhookVerifier !== undefined) {
+      let verified: unknown;
+      try {
+        verified = await this.#webhookVerifier(request, body);
+      } catch (error) {
+        this.#logger.error("Failed to verify webhook request", { error });
+        return new Response("Invalid webhook request", { status: 401 });
+      }
+      if (!verified) {
+        return new Response("Invalid webhook request", { status: 401 });
+      }
+
+      try {
+        event = JSON.parse(
+          typeof verified === "string" ? verified : body
+        ) as WebhookEvent;
+      } catch (error) {
+        this.#logger.error("Failed to parse webhook request", { error });
+        return new Response("Invalid webhook request", { status: 400 });
+      }
+    } else {
+      try {
+        const webhookSecret = await this.#webhookSecret?.();
+        if (webhookSecret === undefined) {
+          throw new Error("Webhook secret is required");
+        }
+        event = new WebhookHandler(webhookSecret).verifyRequest({
+          headers: request.headers,
+          rawBody: body,
+        });
+      } catch (error) {
+        this.#logger.error("Failed to verify webhook request", { error });
+        return new Response("Invalid webhook request", { status: 401 });
+      }
     }
 
     if (event.type === "commentCreated") {
@@ -113,7 +155,8 @@ export class LiveblocksAdapter<
         threadId: event.data.threadId,
       });
 
-      const comment = await this.#client.getComment({
+      const client = await this.#getClient();
+      const comment = await client.getComment({
         roomId: event.data.roomId,
         threadId: event.data.threadId,
         commentId: event.data.commentId,
@@ -177,7 +220,8 @@ export class LiveblocksAdapter<
   ): Promise<RawMessage<CommentData>> {
     const { roomId, threadId: threadId_liveblocks } =
       this.decodeThreadId(threadId);
-    const comment = await this.#client.createComment({
+    const client = await this.#getClient();
+    const comment = await client.createComment({
       roomId,
       threadId: threadId_liveblocks,
       data: {
@@ -196,7 +240,8 @@ export class LiveblocksAdapter<
     const { roomId, threadId: threadId_liveblocks } =
       this.decodeThreadId(threadId);
 
-    const comment = await this.#client.editComment({
+    const client = await this.#getClient();
+    const comment = await client.editComment({
       roomId,
       threadId: threadId_liveblocks,
       commentId: messageId,
@@ -211,7 +256,8 @@ export class LiveblocksAdapter<
   async deleteMessage(threadId: string, messageId: string): Promise<void> {
     const { roomId, threadId: threadId_liveblocks } =
       this.decodeThreadId(threadId);
-    await this.#client.deleteComment({
+    const client = await this.#getClient();
+    await client.deleteComment({
       roomId,
       threadId: threadId_liveblocks,
       commentId: messageId,
@@ -226,7 +272,8 @@ export class LiveblocksAdapter<
     const { roomId, threadId: threadId_liveblocks } =
       this.decodeThreadId(threadId);
 
-    await this.#client.addCommentReaction({
+    const client = await this.#getClient();
+    await client.addCommentReaction({
       roomId,
       threadId: threadId_liveblocks,
       commentId: messageId,
@@ -247,7 +294,8 @@ export class LiveblocksAdapter<
     const { roomId, threadId: threadId_liveblocks } =
       this.decodeThreadId(threadId);
 
-    await this.#client.removeCommentReaction({
+    const client = await this.#getClient();
+    await client.removeCommentReaction({
       roomId,
       threadId: threadId_liveblocks,
       commentId: messageId,
@@ -265,7 +313,8 @@ export class LiveblocksAdapter<
     const { roomId, threadId: threadId_liveblocks } =
       this.decodeThreadId(threadId);
 
-    const thread = await this.#client.getThread({
+    const client = await this.#getClient();
+    const thread = await client.getThread({
       roomId,
       threadId: threadId_liveblocks,
     });
@@ -299,7 +348,8 @@ export class LiveblocksAdapter<
     const { roomId, threadId: threadId_liveblocks } =
       this.decodeThreadId(threadId);
 
-    const thread = await this.#client.getThread({
+    const client = await this.#getClient();
+    const thread = await client.getThread({
       roomId,
       threadId: threadId_liveblocks,
     });
@@ -324,7 +374,8 @@ export class LiveblocksAdapter<
       const { roomId, threadId: threadId_liveblocks } =
         this.decodeThreadId(threadId);
 
-      const comment = await this.#client.getComment({
+      const client = await this.#getClient();
+      const comment = await client.getComment({
         roomId,
         threadId: threadId_liveblocks,
         commentId: messageId,
@@ -346,7 +397,8 @@ export class LiveblocksAdapter<
     options?: ListThreadsOptions
   ): Promise<ListThreadsResult<CommentData>> {
     const roomId = getRoomIdFromChannelId(channelId);
-    const { data } = await this.#client.getThreads({ roomId });
+    const client = await this.#getClient();
+    const { data } = await client.getThreads({ roomId });
     const threads = data
       .map((thread) => {
         const nonDeletedComments = thread.comments
@@ -394,7 +446,8 @@ export class LiveblocksAdapter<
   }
 
   async fetchChannelInfo(channelId: string): Promise<ChannelInfo> {
-    const room = await this.#client.getRoom(getRoomIdFromChannelId(channelId));
+    const client = await this.#getClient();
+    const room = await client.getRoom(getRoomIdFromChannelId(channelId));
     return {
       id: room.id,
       name: room.id,
@@ -408,7 +461,8 @@ export class LiveblocksAdapter<
     options?: FetchOptions
   ): Promise<FetchResult<CommentData>> {
     const roomId = getRoomIdFromChannelId(channelId);
-    const { data } = await this.#client.getThreads({ roomId });
+    const client = await this.#getClient();
+    const { data } = await client.getThreads({ roomId });
 
     const comments = data
       .map((thread) => {
@@ -450,7 +504,8 @@ export class LiveblocksAdapter<
     message: AdapterPostableMessage
   ): Promise<RawMessage<CommentData>> {
     const roomId = getRoomIdFromChannelId(channelId);
-    const thread = await this.#client.createThread({
+    const client = await this.#getClient();
+    const thread = await client.createThread({
       roomId,
       data: {
         comment: {
@@ -524,13 +579,13 @@ export class LiveblocksAdapter<
     roomId: string,
     attachment: CommentData["attachments"][number]
   ): Attachment {
-    const client = this.#client;
     return {
       type: getAttachmentType(attachment.mimeType),
       name: attachment.name,
       mimeType: attachment.mimeType,
       size: attachment.size,
       fetchData: async () => {
+        const client = await this.#getClient();
         const { url } = await client.getAttachment({
           roomId,
           attachmentId: attachment.id,
@@ -544,6 +599,10 @@ export class LiveblocksAdapter<
         return Buffer.from(await response.arrayBuffer());
       },
     };
+  }
+
+  async #getClient(): Promise<Liveblocks> {
+    return new Liveblocks({ secret: await this.#apiKey() });
   }
 
   /**
@@ -1311,19 +1370,29 @@ function getAttachmentType(mimeType: string): Attachment["type"] {
   return "file";
 }
 
-export interface LiveblocksAdapterConfig<
+export type LiveblocksSecretValue = string | (() => string | Promise<string>);
+
+/**
+ * Custom webhook verifier used in place of the Liveblocks webhook secret.
+ *
+ * Return a truthy value to accept the request. Returning a string substitutes
+ * the body used for event parsing. Throw or return a falsy value to reject the
+ * request with a 401 response.
+ */
+export type LiveblocksWebhookVerifier = (
+  request: Request,
+  body: string
+) => Awaitable<unknown>;
+
+interface LiveblocksAdapterBaseConfig<
   U extends BaseUserMeta,
   DGI extends BaseGroupInfo,
 > {
   /**
-   * The Liveblocks secret key. Must start with "sk_". Get it from the Liveblocks dashboard: https://liveblocks.io/dashboard/apikeys
+   * The Liveblocks secret key, or a resolver invoked for every REST API call.
+   * The resolved value must start with "sk_". Get it from the Liveblocks dashboard: https://liveblocks.io/dashboard/apikeys
    */
-  apiKey: string;
-  /**
-   * The Liveblocks webhook signing secret. Get it from the Liveblocks dashboard: https://liveblocks.io/dashboard/webhooks
-   * @example "whsec_wPbvQ+u3VtN2e2tRPDKchQ1tBZ3svaHLm"
-   */
-  webhookSecret: string;
+  apiKey: LiveblocksSecretValue;
   /**
    * A function that returns user info from user IDs; used to resolve @user mentions in comment bodies.
    * This function should return an array of user info in the same order as the input user IDs, or `undefined` to skip resolution.
@@ -1354,6 +1423,35 @@ export interface LiveblocksAdapterConfig<
    */
   logger?: Logger;
 }
+
+export type LiveblocksAdapterConfig<
+  U extends BaseUserMeta,
+  DGI extends BaseGroupInfo,
+> = LiveblocksAdapterBaseConfig<U, DGI> &
+  (
+    | {
+        /**
+         * The Liveblocks webhook signing secret, or a resolver invoked for
+         * every webhook request. Get it from the Liveblocks dashboard:
+         * https://liveblocks.io/dashboard/webhooks
+         * @example "whsec_wPbvQ+u3VtN2e2tRPDKchQ1tBZ3svaHLm"
+         */
+        webhookSecret: LiveblocksSecretValue;
+        /**
+         * A custom webhook verifier. When provided, it takes precedence over
+         * `webhookSecret`.
+         */
+        webhookVerifier?: LiveblocksWebhookVerifier;
+      }
+    | {
+        webhookSecret?: LiveblocksSecretValue;
+        /**
+         * A custom webhook verifier used instead of native Liveblocks
+         * signature verification.
+         */
+        webhookVerifier: LiveblocksWebhookVerifier;
+      }
+  );
 
 /**
  * Creates a {@link LiveblocksAdapter} configured for Liveblocks Comments.

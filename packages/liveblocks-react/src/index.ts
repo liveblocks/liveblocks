@@ -90,6 +90,7 @@ export {
   useOthersConnectionIds,
   useOthersMapped,
   useSelf,
+  useMutableStorage,
   useStorage,
   useThreads,
   useFeeds,

@@ -18,12 +18,13 @@
 import type { JsonObject } from "@liveblocks/core";
 import { nanoid, Permission, WebsocketCloseCodes } from "@liveblocks/core";
 import type { Millis } from "@liveblocks/server";
-import { DefaultMap, Room } from "@liveblocks/server";
+import { DefaultMap, hasUploadedLivefiles, Room } from "@liveblocks/server";
 import { Database } from "bun:sqlite";
 import { mkdirSync, mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join, resolve } from "path";
 
+import { setBlobsRoot } from "../blobs/store";
 import { BunSQLiteDriver } from "./BunSQLiteDriver";
 
 // ---------------------------------------------------------------------------
@@ -54,9 +55,8 @@ export type ClientMeta = JsonObject;
 // Module state
 // ---------------------------------------------------------------------------
 
-// Bumped to v3 when the per-room node storage schema added new CRDT node
-// types. Old v1/v2 data is left untouched on disk.
-const DEFAULT_BASE_PATH = ".liveblocks/v3";
+const DEFAULT_ROOT = ".liveblocks";
+const DEFAULT_BASE_PATH = join(DEFAULT_ROOT, "v2");
 let basePath = DEFAULT_BASE_PATH;
 let isEphemeral = false;
 let _initializedDb: Database | null = null;
@@ -65,8 +65,15 @@ function roomsDir(): string {
   return join(basePath, "rooms");
 }
 
+/** Where LiveFile blobs live, alongside the per-room storage files. */
+function blobsDir(): string {
+  return join(basePath, "files");
+}
+
 function ensureInit(): void {
   if (_initializedDb) return;
+
+  setBlobsRoot(blobsDir());
 
   const dbPath = join(basePath, "db.sql");
   mkdirSync(dirname(dbPath), { recursive: true });
@@ -331,6 +338,15 @@ const instances = new DefaultMap<
   const storage = new BunSQLiteDriver(getStoragePath(record.internalId));
   const room = new Room<RoomMeta, SessionMeta, ClientMeta>(roomId, {
     storage,
+    hooks: {
+      // A client may not reference a LiveFile it hasn't uploaded yet. Without
+      // this the room would happily sync a node pointing at nothing, and its
+      // size would be whatever the client felt like claiming.
+      isClientMsgAllowed: (msg) =>
+        hasUploadedLivefiles(storage, [msg])
+          ? { allowed: true }
+          : { allowed: false, reason: "Storage file has not been uploaded" },
+    },
   });
   return room;
 });
@@ -352,7 +368,22 @@ export function useEphemeralStorage(): string {
   const root = mkdtempSync(join(tmpdir(), "liveblocks-dev-"));
   basePath = join(root, "data");
   isEphemeral = true;
+  setBlobsRoot(blobsDir());
   return root;
+}
+
+/**
+ * Switch to persistent storage under `.liveblocks/`. Returns the root
+ * directory, the counterpart of `useEphemeralStorage()`'s return value, so
+ * callers can place sibling files (e.g. server.log) without caring which
+ * mode is active.
+ */
+export function usePersistentStorage(): string {
+  basePath = DEFAULT_BASE_PATH;
+  isEphemeral = false;
+  setBlobsRoot(blobsDir());
+  mkdirSync(DEFAULT_ROOT, { recursive: true });
+  return DEFAULT_ROOT;
 }
 
 /**

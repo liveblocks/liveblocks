@@ -5,7 +5,7 @@ import { auth } from "@/auth/manager";
 
 /**
  * Authenticating your Liveblocks application
- * https://liveblocks.io/docs/authentication
+ * https://liveblocks.io/docs/api-reference/authentication
  */
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
@@ -31,10 +31,7 @@ export async function POST() {
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard
-  session.allow(
-    `liveblocks:notifications-settings-examples:*`,
-    ["*:write"]
-  );
+  session.allow(`liveblocks:notifications-settings-examples:*`, ["*:write"]);
 
   // Authorize the user and return the result
   const { status, body } = await session.authorize();

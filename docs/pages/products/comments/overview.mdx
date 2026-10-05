@@ -1,0 +1,64 @@
+---
+meta:
+  title: "Overview"
+  parentTitle: "Comments"
+  description:
+    "Learn what Liveblocks Comments provides and how its threads, mentions, and
+    components fit together."
+---
+
+Liveblocks Comments adds contextual discussions to your product. Threads can be
+attached to a room, document position, text selection, table cell, or any
+location represented by metadata.
+
+<Banner title="Get started with Comments" type="info">
+
+Follow the [Next.js Comments guide](/docs/get-started/nextjs-comments) or choose
+another [Comments get-started guide](/docs/get-started).
+
+</Banner>
+
+## Features [#features]
+
+- Realtime threads, comments, replies, reactions, and resolution
+- User mentions and notification subscriptions
+- Ready-made React components and lower-level primitives
+- Custom thread metadata for positioning and filtering
+- Attachments, rich comment bodies, and edit history
+- In-app, email, and webhook notification workflows
+- Client, server, and REST APIs
+
+## Render room threads [#render-room-threads]
+
+Use [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to retrieve
+threads and [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) to render
+the default interface.
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { Thread } from "@liveblocks/react-ui";
+
+export function Comments() {
+  const { threads } = useThreads();
+
+  return threads.map((thread) => <Thread key={thread.id} thread={thread} />);
+}
+```
+
+Use the [default components](/docs/products/comments/default-components) for the
+quickest integration, or combine [hooks](/docs/products/comments/hooks) and
+[primitives](/docs/products/comments/primitives) for a custom interface.
+
+## Attach comments to content [#attach-comments-to-content]
+
+Store application-specific placement data in
+[thread metadata](/docs/products/comments/metadata). For text annotations, use a
+supported [text editor integration](/docs/use-cases/text-editor). For canvases
+and tables, store the shape, coordinate, row, or cell identifier.
+
+## Next steps [#next-steps]
+
+- Learn the [Comments concepts](/docs/products/comments/concepts).
+- Configure [users and mentions](/docs/products/comments/users-and-mentions).
+- Browse [Comments guides](/docs/guides?topics=comments).
+- Explore [Comments examples](https://liveblocks.io/examples?tags=comments).

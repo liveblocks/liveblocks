@@ -2,7 +2,7 @@ import { assertNever, nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
-import type { CreateOp, Op } from "../protocol/Op";
+import type { CreateOp, LiveTextData, Op, TextOperation } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type {
   NodeMap,
@@ -17,6 +17,7 @@ import {
   isMapStorageNode,
   isObjectStorageNode,
   isRegisterStorageNode,
+  isTextStorageNode,
 } from "../protocol/StorageNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import { createManagedPool, type ManagedPool } from "./AbstractCrdt";
@@ -25,8 +26,10 @@ import { LiveList, type LiveListUpdates } from "./LiveList";
 import { LiveMap, type LiveMapUpdates } from "./LiveMap";
 import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { LiveText, type LiveTextUpdates } from "./LiveText";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
-import type { StorageUpdate } from "./StorageUpdates";
+import type { StorageUpdate, UpdateSource } from "./StorageUpdates";
+import { LOCAL_EDIT, REMOTE } from "./StorageUpdates";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));
@@ -44,6 +47,8 @@ export function creationOpToLson(op: CreateOp): Lson {
       return new LiveMap();
     case OpCode.CREATE_LIST:
       return new LiveList([]);
+    case OpCode.CREATE_TEXT:
+      return new LiveText(op.data, op.version);
     default:
       return assertNever(op, "Unknown creation Op");
   }
@@ -99,6 +104,8 @@ export function deserialize(
     return LiveMap._deserialize(node, parentToChildren, pool);
   } else if (isRegisterStorageNode(node)) {
     return LiveRegister._deserialize(node, parentToChildren, pool);
+  } else if (isTextStorageNode(node)) {
+    return LiveText._deserialize(node, parentToChildren, pool);
   } else if (isFileStorageNode(node)) {
     return LiveFile._deserialize(node, parentToChildren, pool);
   } else {
@@ -119,6 +126,8 @@ export function deserializeToLson(
     return LiveMap._deserialize(node, parentToChildren, pool);
   } else if (isRegisterStorageNode(node)) {
     return node[1].data;
+  } else if (isTextStorageNode(node)) {
+    return LiveText._deserialize(node, parentToChildren, pool);
   } else if (isFileStorageNode(node)) {
     return LiveFile._deserialize(node, parentToChildren, pool);
   } else {
@@ -131,6 +140,7 @@ export function isLiveStructure(value: unknown): value is LiveStructure {
     isLiveList(value) ||
     isLiveMap(value) ||
     isLiveObject(value) ||
+    isLiveText(value) ||
     isLiveFile(value)
   );
 }
@@ -149,6 +159,10 @@ export function isLiveMap(value: unknown): value is LiveMap<string, Lson> {
 
 export function isLiveObject(value: unknown): value is LiveObject<LsonObject> {
   return value instanceof LiveObject;
+}
+
+export function isLiveText(value: unknown): value is LiveText {
+  return value instanceof LiveText;
 }
 
 export function isLiveFile(value: unknown): value is LiveFile {
@@ -174,6 +188,7 @@ export function liveNodeToLson(obj: LiveNode): Lson {
     obj instanceof LiveList ||
     obj instanceof LiveMap ||
     obj instanceof LiveObject ||
+    obj instanceof LiveText ||
     obj instanceof LiveFile
   ) {
     return obj;
@@ -187,6 +202,7 @@ export function lsonToLiveNode(value: Lson): LiveNode {
     value instanceof LiveObject ||
     value instanceof LiveMap ||
     value instanceof LiveList ||
+    value instanceof LiveText ||
     value instanceof LiveFile
   ) {
     return value;
@@ -315,7 +331,47 @@ export function isJsonEq(a: Json | undefined, b: Json | undefined): boolean {
  *  - UPDATE_OBJECT for "root" (data changed: a: 1 → 99)
  *  - CREATE_OBJECT for "node2" (added)
  */
-export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
+export type DiffNodeMapOptions = {
+  /**
+   * Whether existing LiveText nodes should be reconciled through UPDATE_TEXT
+   * operations. Authoritative storage loads leave this disabled and resync the
+   * nodes directly; user-initiated restores enable it so the change advances
+   * the current LiveText timeline.
+   */
+  includeLiveTextUpdates?: boolean;
+};
+
+function liveTextDataToReplaceOps(
+  before: LiveTextData,
+  after: LiveTextData
+): TextOperation[] {
+  const ops: TextOperation[] = [];
+  const beforeLength = before.reduce(
+    (length, [text]) => length + text.length,
+    0
+  );
+
+  if (beforeLength > 0) {
+    ops.push({ type: "delete", index: 0, length: beforeLength });
+  }
+
+  let index = 0;
+  for (const [text, attributes] of after) {
+    if (text.length === 0) {
+      continue;
+    }
+    ops.push({ type: "insert", index, text, attributes });
+    index += text.length;
+  }
+
+  return ops;
+}
+
+export function diffNodeMap(
+  prev: NodeMap,
+  next: NodeMap,
+  options?: DiffNodeMapOptions
+): Op[] {
   const ops: Op[] = [];
 
   const idsToRecreate = new Set<string>();
@@ -438,6 +494,16 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
           parentKey: crdt.parentKey,
         });
         break;
+      case CrdtType.TEXT:
+        ops.push({
+          type: OpCode.CREATE_TEXT,
+          id,
+          parentId: crdt.parentId,
+          parentKey: crdt.parentKey,
+          data: crdt.data,
+          version: crdt.version,
+        });
+        break;
     }
   }
 
@@ -473,6 +539,27 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
           }
         }
       }
+      // NOTE: CrdtType.TEXT nodes that exist on both sides are deliberately
+      // NOT diffed into UPDATE_TEXT ops here. The UPDATE_TEXT op path
+      // carries pending-op transformation semantics that don't apply to
+      // authoritative snapshots; LiveText nodes are reconciled against the
+      // snapshot directly (see LiveText._resyncText, called from the room).
+      if (
+        options?.includeLiveTextUpdates === true &&
+        crdt.type === CrdtType.TEXT &&
+        currentCrdt.type === CrdtType.TEXT &&
+        !isJsonEq(crdt.data, currentCrdt.data)
+      ) {
+        ops.push({
+          type: OpCode.UPDATE_TEXT,
+          id,
+          // A restore is a new edit in the current timeline. The version from
+          // the historic snapshot describes its old timeline and must not move
+          // this node's current version backwards.
+          baseVersion: currentCrdt.version,
+          ops: liveTextDataToReplaceOps(currentCrdt.data, crdt.data),
+        });
+      }
       if (crdt.parentKey !== currentCrdt.parentKey) {
         ops.push({
           type: OpCode.SET_PARENT_KEY,
@@ -481,6 +568,7 @@ export function diffNodeMap(prev: NodeMap, next: NodeMap): Op[] {
         });
       }
     } else {
+      // new Crdt
       emitCreate(id, crdt);
     }
   });
@@ -527,6 +615,33 @@ function mergeListStorageUpdates<T extends Lson>(
   };
 }
 
+function mergeTextStorageUpdates(
+  first: LiveTextUpdates,
+  second: LiveTextUpdates
+): LiveTextUpdates {
+  return {
+    ...second,
+    updates: first.updates.concat(second.updates),
+  };
+}
+
+function mergeUpdateSources(
+  first: UpdateSource,
+  second: UpdateSource
+): UpdateSource {
+  // Any remote change in the mix makes the merged update remote: it no longer
+  // describes a change this client made on its own.
+  if (first.origin === "remote" || second.origin === "remote") {
+    return REMOTE;
+  }
+
+  // Undo/redo replays are more specific than plain edits, so they win. When
+  // both are replays, the later one describes the merged update best.
+  if (second.via !== "edit") return second;
+  if (first.via !== "edit") return first;
+  return LOCAL_EDIT;
+}
+
 export function mergeStorageUpdates(
   first: StorageUpdate | undefined,
   second: StorageUpdate
@@ -535,15 +650,18 @@ export function mergeStorageUpdates(
     return second;
   }
 
+  const source = mergeUpdateSources(first.source, second.source);
+
   if (first.type === "LiveObject" && second.type === "LiveObject") {
-    return mergeObjectStorageUpdates(first, second);
+    return { ...mergeObjectStorageUpdates(first, second), source };
   } else if (first.type === "LiveMap" && second.type === "LiveMap") {
-    return mergeMapStorageUpdates(first, second);
+    return { ...mergeMapStorageUpdates(first, second), source };
   } else if (first.type === "LiveList" && second.type === "LiveList") {
-    return mergeListStorageUpdates(first, second);
+    return { ...mergeListStorageUpdates(first, second), source };
+  } else if (first.type === "LiveText" && second.type === "LiveText") {
+    return { ...mergeTextStorageUpdates(first, second), source };
   } else {
     /* Mismatching merge types. Throw an error here? */
+    return { ...second, source };
   }
-
-  return second;
 }

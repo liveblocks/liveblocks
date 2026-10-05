@@ -208,7 +208,7 @@ export class IncrementalJsonParser {
     result = result.trimEnd();
     result = stripChar(result, ",.");
 
-    // Complete partial keywords at the end (if umambiguous)
+    // Complete partial keywords at the end (if unambiguous)
     result = result + this.#autocompleteTail(result);
 
     // Use the bracket stack to compute the suffix

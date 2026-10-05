@@ -29,7 +29,7 @@ function evaluateAst(
       }
       case NodeKind.Addition:
         return visitAdditiveBinaryExpression(node, (l, r) => l + r);
-      case NodeKind.Substraction:
+      case NodeKind.Subtraction:
         return visitAdditiveBinaryExpression(node, (l, r) => l - r);
       case NodeKind.Multiplication:
         return visitSimpleBinaryExpression(node, (l, r) => l * r);

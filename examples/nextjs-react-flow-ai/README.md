@@ -29,6 +29,8 @@ powered by [Liveblocks](https://liveblocks.io),
 You can place blocks, connect them, edit labels, undo and redo, add pinned
 comments on the canvas, and ask the AI to edit the diagram in real-time for
 everyone in the room. You can also talk to the AI Assistant in comment threads.
+Before each AI run, a version snapshot is saved so you can preview and restore
+earlier flowchart states from the history button next to the avatars.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-flowchart-ai.png" width="536" alt="Collaborative React Flow with AI" />
 

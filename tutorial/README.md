@@ -4,7 +4,7 @@
 1. Inside the correct technology directory, create a folder with the URL slug as the name
 2. Each page of the tutorial has a separate folder. Inside this folder is the following structure:
 ```
-intial - The project shown when the page loads
+initial - The project shown when the page loads
 solved - The project shown when you press the "Show solution" button 
 guide.mdx - The markdown guide
 ```
@@ -12,7 +12,7 @@ guide.mdx - The markdown guide
 OR
 
 ```
-intial - The project shown when the page loads
+initial - The project shown when the page loads
 solved-diff - The project files that differ to initial when you press "Show solution" button 
 guide.mdx - The markdown guide
 ```

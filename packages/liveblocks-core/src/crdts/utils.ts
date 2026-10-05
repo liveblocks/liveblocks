@@ -3,6 +3,7 @@ import { LiveFile } from "./LiveFile";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
+import { LiveText } from "./LiveText";
 import type { Lson } from "./Lson";
 
 /**
@@ -29,6 +30,12 @@ export function toPlainLson(lson: Lson): PlainLson {
     return {
       liveblocksType: "LiveList",
       data: [...lson].map((item) => toPlainLson(item)),
+    };
+  } else if (lson instanceof LiveText) {
+    return {
+      liveblocksType: "LiveText",
+      data: lson.toJSON(),
+      version: lson.version,
     };
   } else if (lson instanceof LiveFile) {
     return {

@@ -401,6 +401,10 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       readonly age: number;
     } | null>();
 
+    expectTypeOf(
+      ctx.useMutableStorage()
+    ).toEqualTypeOf<LiveObject<MyStorage> | null>();
+
     expectTypeOf(ctx.useStorageRoot()).toEqualTypeOf<
       [root: LiveObject<MyStorage> | null]
     >();
@@ -417,6 +421,10 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       readonly name: string;
       readonly age: number;
     }>();
+
+    expectTypeOf(ctx.suspense.useMutableStorage()).toEqualTypeOf<
+      LiveObject<MyStorage>
+    >();
 
     expectTypeOf(ctx.suspense.useStorageRoot()).toEqualTypeOf<
       [root: LiveObject<MyStorage> | null]

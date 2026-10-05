@@ -4,7 +4,7 @@ import { getRandomUser } from "@/app/database";
 
 /**
  * Authenticating your Liveblocks application
- * https://liveblocks.io/docs/authentication
+ * https://liveblocks.io/docs/api-reference/authentication
  */
 
 export async function POST(_request: NextRequest) {

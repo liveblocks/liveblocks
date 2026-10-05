@@ -4,11 +4,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Authenticating your Liveblocks application
- * https://liveblocks.io/docs/authentication
+ * https://liveblocks.io/docs/api-reference/authentication
  */
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
 });
 
 export async function POST(request: NextRequest) {

@@ -93,6 +93,7 @@ export {
   useOthersConnectionIdsSuspense as useOthersConnectionIds,
   useOthersMappedSuspense as useOthersMapped,
   useSelfSuspense as useSelf,
+  useMutableStorageSuspense as useMutableStorage,
   useStorageSuspense as useStorage,
   useThreadsSuspense as useThreads,
   useAttachmentUrlSuspense as useAttachmentUrl,

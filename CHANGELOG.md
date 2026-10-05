@@ -1,4 +1,73 @@
-## vNEXT (not yet released)
+## v3.24.3
+
+### `@liveblocks/client`
+
+- Fix `LiveText` reconnect convergence with pending edits, including lost
+  acknowledgements, repeated reconnects, and queued edits. Recovery updates now
+  reach editor integrations instead of being filtered as local echoes.
+
+## v3.24.2
+
+### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
+
+- Fix edge cases in return types of `.toJSON()`, `useStorage()` selectors, and
+  `getStorageDocument(roomId, "json")`:
+  - a `LiveObject` whose properties are all optional no longer loses its keys
+    when nested inside another Live structure.
+  - a value typed as `Record<string, T>` no longer loses `T`.
+  - an object carrying both a string index signature and named keys no longer
+    loses the named keys.
+  - a `LiveObject` converts to the same type whether you reach it directly or
+    through a parent.
+
+### `@liveblocks/chat-sdk-adapter`
+
+- Allow `apiKey` and `webhookSecret` to be resolved per request, and add custom
+  `webhookVerifier` support for rotated credentials and webhook-forwarding
+  infrastructure such as Vercel Connect.
+
+## v3.24.1
+
+### `@liveblocks/react`
+
+- Add new hook `useMutableStorage()` to get direct access to the mutable Storage
+  root. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useMutableStorage).
+- Fix thread resolved/unresolved status being reverted under some conditions.
+  (Thanks @VihaanAgarwal for the contribution!)
+
+## v3.24.0
+
+This release introduces `LiveText` (beta), a collaborative rich-text data
+structure for plain text with optional inline formatting.
+
+### `@liveblocks/client`
+
+- Storage updates delivered to deep subscribers now carry a `source` field,
+  saying whether the change was made by this client
+  (`{ origin: "local", via: "edit" | "undo" | "redo" }`) or by another one
+  (`{ origin: "remote" }`), see
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#update-source).
+- Add `LiveText` for collaborative text editing with concurrent inserts,
+  deletes, and formatting changes.
+
+### `@liveblocks/codemirror`, `@liveblocks/lexical`, and `@liveblocks/prosemirror`
+
+- Introduce packages for integrating CodeMirror, Lexical, and ProseMirror
+  editors with Liveblocks Storage and `LiveText`.
+
+### `@liveblocks/react-tiptap`
+
+- Fix `useIsEditorReady()` so it correctly reports when the Tiptap editor is
+  ready. Thanks @danilowoz for the fix.
+
+## v3.23.1
+
+### `@liveblocks/react-ui`
+
+- Improve version history components for versions without authors, which can
+  occur with server-only changes. Add `HISTORY_VERSION_SUMMARY_AUTHORS_LIST` and
+  update `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` overrides to reflect this.
 
 ## v3.23.0
 
@@ -228,7 +297,7 @@ both the room's Storage and Yjs documents (previously Yjs only).
 ## v3.18.0
 
 For full upgrade instructions, see the
-[3.18 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.18).
+[3.18 upgrade guide](https://liveblocks.io/docs/api-reference/upgrading/3.18).
 
 ### `@liveblocks/client`
 
@@ -767,8 +836,10 @@ metadata to individual comments in the same way as thread metadata.
 
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about
-[group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
-and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
+[group mentions](https://liveblocks.io/docs/products/comments/users-and-mentions)
+and
+[tenants](https://liveblocks.io/docs/api-reference/authentication/organizations)
+in the docs.
 
 ### `@liveblocks/client`
 
@@ -1148,13 +1219,13 @@ We’ve used this as an opportunity to tidy up some of our existing APIs, ensuri
 consistency throughout our offering.
 
 For full upgrade instructions and codemods, see the
-[3.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.0).
+[3.0 upgrade guide](https://liveblocks.io/docs/api-reference/upgrading/3.0).
 
 ### All packages
 
 - TypeScript 5.0 is now the minimum supported version.
 - Remove deprecated APIs, see
-  [the deprecated section](https://liveblocks.io/docs/platform/upgrading/3.0#deprecated)
+  [the deprecated section](https://liveblocks.io/docs/api-reference/upgrading/3.0#deprecated)
   in the upgrade guide to learn more.
 
 ### `@liveblocks/react`
@@ -1233,7 +1304,7 @@ We are also using this opportunity to rename some of the concepts around
 notifications and notification settings to improve clarity. None of these
 changes are breaking but you can learn more about them, their rationale, and how
 to automatically apply them with a codemod in our
-[Upgrade Guide for 2.24](https://liveblocks.io/docs/platform/upgrading/2.24).
+[Upgrade Guide for 2.24](https://liveblocks.io/docs/api-reference/upgrading/2.24).
 
 ### `@liveblocks/react-ui`
 
@@ -1717,8 +1788,8 @@ useErrorListener((err: LiveblocksError) => {
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
-learn how to adapt your code.
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16)
+to learn how to adapt your code.
 
 #### Filtering by absence of metadata
 
@@ -1741,8 +1812,8 @@ useThreads({
 ```
 
 See the
-[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
-learn how to adapt your code.
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/api-reference/upgrading/2.16)
+to learn how to adapt your code.
 
 #### Bug fixes
 
@@ -2098,7 +2169,7 @@ app.
 
 We are introducing attachments to allow users to add files to their comments,
 for more information about this change please read our
-[Upgrade Guide for 2.8](https://liveblocks.io/docs/platform/upgrading/2.8).
+[Upgrade Guide for 2.8](https://liveblocks.io/docs/api-reference/upgrading/2.8).
 
 ### `@liveblocks/react-ui`
 
@@ -2255,9 +2326,9 @@ you're interested in getting access, please
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
-[threads](https://liveblocks.io/docs/ready-made-features/comments/concepts#Threads),
-for more information about this change please read our
-[Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
+[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
+more information about this change please read our
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/api-reference/upgrading/2.2).
 
 ### `@liveblocks/react`
 
@@ -2436,7 +2507,7 @@ const client = createClient(/* options */);
 ```
 
 For full upgrade instructions and codemods, see the
-[2.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/2.0).
+[2.0 upgrade guide](https://liveblocks.io/docs/api-reference/upgrading/2.0).
 
 ### `create-liveblocks-app`
 
@@ -3329,8 +3400,8 @@ connection with Liveblocks servers.
   - `room.subscribe("lost-connection")`: high-level API to get informed when
     Liveblocks’ automatic reconnection process is taking longer than usual, so
     you can show a toast message on screen. (See this
-    [example](https://liveblocks.io/examples/connection-status) for an
-    illustration.)
+    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status)
+    for an illustration.)
 - New behavior:
   - The client will stop retrying to establish a connection in cases where
     retrying would not help. For example an explicit 403 forbidden response from
@@ -3343,8 +3414,8 @@ connection with Liveblocks servers.
   - `useStatus()` - React hook version of `room.getStatus()`
   - `useLostConnectionListener()` - React hook version of
     `room.subscribe("lost-connection")` (See this
-    [example](https://liveblocks.io/examples/connection-status) for an
-    illustration.)
+    [example](https://liveblocks.io/examples/connection-status/nextjs-connection-status)
+    for an illustration.)
 
 ### Bugs fixed
 
@@ -3479,7 +3550,8 @@ Non-existent.
 ## v1.0.0
 
 This major release marks the maturity of Liveblocks. For upgrade instructions,
-see the [1.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/1.0).
+see the
+[1.0 upgrade guide](https://liveblocks.io/docs/api-reference/upgrading/1.0).
 
 ## `@liveblocks/node`
 
@@ -3511,7 +3583,7 @@ Liveblocks account.
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
     to verify event requests from Liveblock's webhook functionality. It also
     provides fully typed `WebhookEvents`.
-  - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
+  - Check out our [Webhooks guide](https://liveblocks.io/docs/platform/webhooks)
     for more details
 
 ## v0.19.8
@@ -3673,7 +3745,7 @@ Internal updates:
 All packages now provide an `isReadOnly` flag on user instances. It is available
 when getting self or others. `isReadOnly` is true when storage is read-only, see
 the
-[room management guide](https://liveblocks.io/docs/guides/managing-rooms-users-permissions#permissions)
+[room management guide](https://liveblocks.io/docs/api-reference/authentication#Default-room-permissions)
 for more information.
 
 ```ts
@@ -3734,7 +3806,7 @@ In **@liveblocks/react**:
   ```
 
   To read more, see
-  https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+  https://liveblocks.io/docs/api-reference/troubleshooting#stale-props-zombie-child
 
 - In **@liveblocks/zustand**:
   - Fix a confusing error message
@@ -3756,7 +3828,7 @@ In **@liveblocks/react**:
 ## v0.18.0
 
 For information, please read our
-[Upgrade Guide for 0.18](https://liveblocks.io/docs/platform/upgrading/0.18).
+[Upgrade Guide for 0.18](https://liveblocks.io/docs/api-reference/upgrading/0.18).
 
 ### New React hooks ✨
 
@@ -3784,7 +3856,7 @@ For information, please read our
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17)
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/api-reference/upgrading/0.17)
   for instructions.
 - Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
@@ -3928,7 +4000,7 @@ Fix `@liveblocks/nodes` packaging.
 ## v0.17.0
 
 For information, please read our
-[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/api-reference/upgrading/0.17).
 
 ### TypeScript improvements ✨
 
@@ -3939,7 +4011,7 @@ longer need to provide any extra type annotations anywhere for your Liveblocks
 code! 🙌
 
 To learn how to set that up, follow the instructions in our
-[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/api-reference/upgrading/0.17).
 
 - No more `any` types used (in `@liveblocks/client` and `@liveblocks/react`)
 - All APIs that work with Presence data will now require it to be
@@ -3995,9 +4067,9 @@ It's surprisingly simple!
 - In **@liveblocks/react**:
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
-    [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
+    [Recommended Upgrade Steps section](https://liveblocks.io/docs/api-reference/upgrading/0.17#recommended-upgrade-steps)
     within our
-    [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
+    [Upgrade Guide](https://liveblocks.io/docs/api-reference/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`

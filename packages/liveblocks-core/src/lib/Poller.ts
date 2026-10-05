@@ -158,7 +158,7 @@ export function makePoller(
       return {
         target: mayPoll() ? "@enabled" : "@idle",
         effect: () => {
-          // Increase the backoff delay if an error occured
+          // Increase the backoff delay if an error occurred
           context.backoff =
             BACKOFF_DELAYS.find((delay) => delay > context.backoff) ??
             BACKOFF_DELAYS[BACKOFF_DELAYS.length - 1];

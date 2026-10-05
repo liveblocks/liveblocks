@@ -1,21 +1,32 @@
 ---
 meta:
-  title: "Get started with a BlockNote text editor using Liveblocks and Next.js"
+  title:
+    "Get started with a BlockNote text editor using Liveblocks Yjs and Next.js"
   parentTitle: "Quickstart"
   description:
-    "Learn how to get started with a BlockNote text editor using Liveblocks and
-    Next.js."
+    "Learn how to get started with a Yjs-backed BlockNote text editor using
+    Liveblocks and Next.js."
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. Follow the following steps to start adding
+collaborative experiences. Follow the following steps to start adding Yjs-backed
 collaboration to your Next.js application using the APIs from the
 [`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote)
 package.
 
+<Banner title="LiveText beta">
+
+Our new LiveText integration is available in beta, enabling a quicker, more
+efficient method of text editing. Learn more in the
+[BlockNote get started guide](/docs/get-started/nextjs-blocknote-storage).
+
+</Banner>
+
 <Banner title="Live example">
 
-See the finished result in the [Collaborative Text Editor](/examples/collaborative-text-editor/nextjs-blocknote) example.
+See the finished result in the
+[Collaborative Text Editor](/examples/collaborative-text-editor/nextjs-blocknote)
+example.
 
 </Banner>
 
@@ -151,7 +162,7 @@ See the finished result in the [Collaborative Text Editor](/examples/collaborati
   <StepTitle>Render threads and composer</StepTitle>
   <StepContent>
 
-    To add [Comments](/docs/ready-made-features/comments) to your text editor, we need to import a thread composer
+    To add [Comments](/docs/products/comments) to your text editor, we need to import a thread composer
     and list each thread on the page. Create a `Threads.tsx` file that uses [`FloatingComposer`](/docs/api-reference/liveblocks-react-blocknote#FloatingComposer)
     for creating new threads, alongside [`AnchoredThreads`](/docs/api-reference/liveblocks-react-blocknote#AnchoredThreads) and [`FloatingThreads`](/docs/api-reference/liveblocks-react-blocknote#FloatingThreads) for displaying threads on desktop and mobile.
 
@@ -252,7 +263,7 @@ See the finished result in the [Collaborative Text Editor](/examples/collaborati
     import "@blocknote/mantine/style.css";
     import "@liveblocks/react-ui/styles.css";
     import "@liveblocks/react-ui/styles/dark/media-query.css";
-    import "@liveblocks/react-tiptap/styles.css";
+    import "@liveblocks/react-blocknote/styles.css";
     import "./globals.css";
     ```
 
@@ -294,9 +305,10 @@ See the finished result in the [Collaborative Text Editor](/examples/collaborati
 ## What to read next
 
 Congratulations! You now have set up the foundation for your collaborative
-BlockNote text editor inside your React application.
+BlockNote text editor inside your Next.js application.
 
 - [@liveblocks/react-blocknote API Reference](/docs/api-reference/liveblocks-react-blocknote)
+- [Storage-backed BlockNote Next.js quickstart](/docs/get-started/nextjs-blocknote-storage)
 - [BlockNote guides](/docs/guides?technologies=blocknote)
 - [BlockNote website](https://www.blocknotejs.org/)
 

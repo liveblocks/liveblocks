@@ -555,7 +555,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      *        description="The current list of todos"
      *        value={todos} />
      *
-     * By mounting this component, the AI will get access to this knwoledge.
+     * By mounting this component, the AI will get access to this knowledge.
      * By unmounting this component, the AI will no longer have access to it.
      * It can choose to use or ignore this knowledge in its responses.
      */
@@ -640,7 +640,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      *        description="The current list of todos"
      *        value={todos} />
      *
-     * By mounting this component, the AI will get access to this knwoledge.
+     * By mounting this component, the AI will get access to this knowledge.
      * By unmounting this component, the AI will no longer have access to it.
      * It can choose to use or ignore this knowledge in its responses.
      */
@@ -788,8 +788,11 @@ type RoomContextBundleCommon<
   useCanRedo(): boolean;
 
   /**
-   * Returns the mutable (!) Storage root. This hook exists for
-   * backward-compatible reasons.
+   * Returns the mutable (!) Storage root, wrapped in a 1-tuple.
+   *
+   * @deprecated Use `useMutableStorage()` instead, which returns the root
+   * directly instead of wrapping it in a 1-tuple, and which does not return
+   * `null` in its Suspense version.
    *
    * @example
    * const [root] = useStorageRoot();
@@ -1190,6 +1193,22 @@ export type RoomContextBundle<
       ): T | null;
 
       /**
+       * Returns the mutable Storage root, or `null` while Storage is still
+       * loading.
+       *
+       * Unlike `useStorage()`, this hook is not reactive: your component will
+       * re-render only once, when Storage has finished loading. It will not
+       * re-render when the contents of the returned tree change. Use it when
+       * you need direct access to a mutable Live structure, for example to
+       * hand a `LiveText` node to a text editor binding.
+       *
+       * @example
+       * const root = useMutableStorage();
+       * const liveText = root?.get("myLiveText");
+       */
+      useMutableStorage(): LiveObject<S> | null;
+
+      /**
        * Gets the current user once it is connected to the room.
        *
        * @example
@@ -1450,6 +1469,22 @@ export type RoomContextBundle<
               selector: (root: ToJson<S>) => T,
               isEqual?: (prev: T, curr: T) => boolean
             ): T;
+
+            /**
+             * Returns the mutable Storage root, suspending until Storage has
+             * finished loading.
+             *
+             * Unlike `useStorage()`, this hook is not reactive: your component
+             * will not re-render when the contents of the returned tree
+             * change. Use it when you need direct access to a mutable Live
+             * structure, for example to hand a `LiveText` node to a text
+             * editor binding.
+             *
+             * @example
+             * const root = useMutableStorage();
+             * const liveText = root.get("myLiveText");
+             */
+            useMutableStorage(): LiveObject<S>;
 
             /**
              * Gets the current user once it is connected to the room.

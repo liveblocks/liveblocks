@@ -169,13 +169,19 @@ export function ackIgnoredOp(opId: string): IgnoredOp {
   return { type: OpCode.DELETE_CRDT, id: "ACK", opId }; // (H)Ack Op
 }
 
-function stripOpId(op: Op): ServerWireOp {
+/** Remove sender-only acknowledgement metadata before broadcasting to peers. */
+function toBroadcastOp(op: Op): ServerWireOp {
+  if (op.type === OpCode.UPDATE_TEXT) {
+    // Replay recovery belongs only to the sender's acknowledgement.
+    const { opId: _, history: _history, ...rest } = op;
+    return rest;
+  }
   // TODO: Optimize later! Instead of duplicating every op and
   // stripping the opId explicitly, it would be generally more
   // efficient if we treated the opIds as "envelopes" around Ops (or
   // send them in a separate array altogether at the protocol level
   // in V8 soon--even better, as it would not even require any stripping!)
-  const { opId: _, ...rest } = op; // Strip opIds from all outgoing messages!
+  const { opId: _, ...rest } = op;
   return rest;
 }
 
@@ -1617,7 +1623,9 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         // semantics to provide snapshot isolation.
         this.driver.bump_storage_version?.();
 
-        const result = this.storage.applyOps(msg.ops);
+        const result = this.storage.applyOps(msg.ops, {
+          includeTextHistory: msg.includeTextHistory,
+        });
 
         const opsToForward: ServerWireOp[] = result.flatMap((r) =>
           r.action === "accepted" ? [r.op] : []
@@ -1636,11 +1644,14 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
 
               case "rectified":
                 // The op was already applied earlier; re-acknowledge it with
-                // its stored, authoritative position.
-                return [r.ackOp, r.fix];
+                // its stored, authoritative fields and optional correction.
+                return r.fix !== undefined ? [r.ackOp, r.fix] : [r.ackOp];
 
               case "accepted":
                 return r.fix !== undefined ? [r.fix] : [];
+
+              case "rejected":
+                return [];
 
               // istanbul ignore next
               default:
@@ -1652,7 +1663,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
         if (opsToForward.length > 0) {
           scheduleFanOut({
             type: ServerMsgCode.UPDATE_STORAGE,
-            ops: opsToForward.map(stripOpId),
+            ops: opsToForward.map(toBroadcastOp),
           });
           scheduleReply({
             type: ServerMsgCode.UPDATE_STORAGE,
@@ -1664,6 +1675,14 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           replyImmediately({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: opsToSendBack,
+          });
+        }
+
+        for (const rejected of result.filter((r) => r.action === "rejected")) {
+          replyImmediately({
+            type: ServerMsgCode.REJECT_STORAGE_OP,
+            opIds: rejected.opIds,
+            reason: rejected.reason,
           });
         }
 

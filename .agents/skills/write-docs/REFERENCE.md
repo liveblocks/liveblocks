@@ -15,10 +15,57 @@ meta:
 ---
 ```
 
-API reference pages are usually long package pages under
-`docs/pages/api-reference`. Feature docs live under
-`docs/pages/collaboration-features`, but many URLs are still written as
-`/docs/ready-made-features/...`; follow nearby links when editing.
+Use this current map when deciding where a page or link belongs:
+
+| Surface        | Files                                                                                       | Canonical URLs                           |
+| -------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Docs overview  | `docs/pages/index.mdx`                                                                      | `/docs`                                  |
+| Products       | `docs/pages/products`                                                                       | `/docs/products/...`                     |
+| Use cases      | `docs/pages/use-cases`                                                                      | `/docs/use-cases/...`                    |
+| API reference  | `docs/pages/api-reference` and `docs/pages/api-reference.mdx`                               | `/docs/api-reference/...`                |
+| Get started    | `docs/pages/get-started`                                                                    | `/docs/get-started/...`                  |
+| Tools          | `docs/pages/tools`                                                                          | `/docs/tools/...`                        |
+| Integrations   | `docs/pages/integrations` and `docs/pages/integrations.mdx`                                 | `/docs/integrations/...`                 |
+| Platform       | `docs/pages/platform`                                                                       | `/docs/platform/...`                     |
+| Authentication | `docs/pages/api-reference/authentication` and `docs/pages/api-reference/authentication.mdx` | `/docs/api-reference/authentication/...` |
+| Pricing        | `docs/pages/pricing`                                                                        | `/docs/pricing/...`                      |
+
+Product documentation moved from `docs/pages/collaboration-features` to
+`docs/pages/products`. Use `/docs/products/...` for canonical product links; do
+not add new pages or links under `collaboration-features` or
+`ready-made-features`.
+
+Sync, Comments, and Notifications have a short product landing page at
+`docs/pages/products/<product>.mdx` and a detailed overview at
+`docs/pages/products/<product>/overview.mdx`. Put focused product concepts and
+workflows beside the overview. Feeds is part of Sync and lives at
+`docs/pages/products/sync/feeds.mdx`.
+
+Use case pages live under `docs/pages/use-cases`. They combine the relevant
+products and APIs for one application type, then link to get started guides and
+complete examples rather than reproducing a step-by-step guide.
+
+Authentication is the first group in API Reference, immediately after its
+overview. Its files and canonical URLs live under
+`api-reference/authentication`.
+
+API reference pages remain under `docs/pages/api-reference`. Do not move or
+rewrite API reference pages as a side effect of the product information
+architecture change unless the task requires API documentation or a link is
+broken. The Sync product name does not rename public Storage APIs such as
+`useStorage`, `initialStorage`, or `mutateStorage`.
+
+### Folder-local templates
+
+Before editing a docs page, check the directory containing it for a
+`*.template.mdx` file. Read any matching template completely and use it as the
+primary structure and checklist for work in that folder. A local template is
+more specific than the general patterns in this reference.
+
+Some current templates still use the legacy `*-template.mdx` suffix, including
+`docs/pages/use-cases/_use-case-template.mdx` and
+`docs/pages/integrations/_provider-template.mdx`; check for those too. Template
+files are source material and should not be registered in `docs/routes.json`.
 
 Guides live outside the docs tree under `guides/pages`, and new guides must be
 registered in `guides/guides.json`. Use guides for focused, task-specific
@@ -162,6 +209,8 @@ Each repetition should be short and contextual, not copied wholesale.
 
 ## Checks Before Finishing
 
+- Run `node scripts/check-docs-links.mts` to catch broken internal links and
+  anchors before opening a PR.
 - New public APIs have arguments, options, returns, and snippets.
 - New docs pages are added to `docs/routes.json`.
 - New guides are added under `guides/pages` and registered in

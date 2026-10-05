@@ -1,0 +1,464 @@
+---
+meta:
+  title: "Text editing"
+  parentTitle: "Sync"
+  description:
+    "Add collaborative rich text to your documents with LiveText, and connect
+    editors such as Tiptap, Lexical, and BlockNote."
+---
+
+Sync supports collaborative text editing, merging simultaneous keystrokes
+character by character so multiple people, and AI agents, can edit the same
+documents without overwriting each other. There are two ways to add text
+editing: [LiveText](#LiveText), the recommended choice for new applications, and
+[Yjs](#Yjs), for editors that require the Yjs ecosystem.
+
+<Banner title="LiveText vs Yjs">
+  For a full comparison, read the [LiveText vs
+  Yjs](/docs/guides/livetext-vs-yjs) guide.
+</Banner>
+
+## LiveText
+
+When using [`LiveText`](/docs/products/sync/storage#LiveText) for text
+collaboration, it is a node in your [Storage](/docs/products/sync/storage) tree,
+alongside `LiveObject`, `LiveList`, and `LiveMap`. Because text is part of the
+same document as the rest of your collaborative data, you read and write to it
+using the same APIs, plus edits share one undo history, and restoring a version
+restores everything together.
+
+Each `LiveText` currently has a 2 MB limit, which means [Yjs](#Yjs) is best
+suited for documents that will grow very long. We’re working on improving this.
+
+We recommend `LiveText` as the default choice for new applications that don’t
+require long documents. It currently supports Tiptap, BlockNote, ProseMirror,
+and CodeMirror—Tiptap is
+[our rich-text editor of choice](/blog/which-rich-text-editor-framework-should-you-choose-in-2025).
+
+### Get started with LiveText
+
+<ListGrid columns={2} defaultVisibleItems={4}>
+  <DocsCard
+    type="technology"
+    title="Get started with Tiptap"
+    href="/docs/get-started/nextjs-tiptap-storage"
+    description="Rich text editor built on LiveText with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with BlockNote"
+    href="/docs/get-started/nextjs-blocknote-storage"
+    description="Block-based editor built on LiveText with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with ProseMirror"
+    href="/docs/get-started/nextjs-prosemirror"
+    description="Text editor built on LiveText with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with CodeMirror"
+    href="/docs/get-started/nextjs-codemirror"
+    description="Code editor built on LiveText with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Yjs
+
+When using [Yjs](/docs/products/sync/text-editing/yjs) for text collaboration, a
+document is a `Y.Doc` that lives in the same room as your Storage data, but is
+otherwise separate, with its own lifecycle, API, and binary format. In exchange
+you get a large ecosystem of editor bindings—Slate, Quill, Monaco, SuperDoc, and
+anything else built on Yjs—along with subdocuments and experimental offline
+persistence.
+
+We recommend Yjs when writing long documents, when your editor only has a Yjs
+binding.
+
+### Get started with Yjs
+
+<ListGrid columns={2} defaultVisibleItems={4}>
+  <DocsCard
+    type="technology"
+    title="Get started with SuperDoc & Yjs"
+    href="/docs/get-started/yjs-superdoc-react"
+    description="Yjs-backed document editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Monaco & Yjs"
+    href="/docs/get-started/yjs-monaco-react"
+    description="Yjs-backed code editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Lexical & Yjs"
+    href="/docs/get-started/nextjs-lexical"
+    description="Yjs-backed text editor with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Slate & Yjs"
+    href="/docs/get-started/yjs-slate-react"
+    description="Yjs-backed text editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Quill & Yjs"
+    href="/docs/get-started/yjs-quill-react"
+    description="Yjs-backed text editor with React"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with Tiptap & Yjs"
+    href="/docs/get-started/nextjs-tiptap"
+    description="Yjs-backed text editor with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Get started with BlockNote & Yjs"
+    href="/docs/get-started/nextjs-blocknote"
+    description="Block-based text editor with Next.js"
+    visual={<DocsNextjsIcon />}
+  />
+</ListGrid>
+
+## Supported editors [#supported-editors]
+
+Some editors can be connected with either LiveText or Yjs, others only through
+their Yjs binding.
+
+<Table columns={["16%", "42%", "auto"]}>
+
+| Editor                                                  | With LiveText                                                                                                                                                                                          | With Yjs                                                                                                                     |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| [Tiptap](/docs/products/sync/text-editing/tiptap)       | [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap) with [`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode)          | [`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap)                                                    |
+| [BlockNote](/docs/products/sync/text-editing/blocknote) | [`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote) with [`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-blocknote#Liveblocks-collaboration-mode) | [`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote)                                              |
+| [Lexical](/docs/products/sync/text-editing/lexical)     | Not supported yet                                                                                                                                                                                      | [`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexical)                                                  |
+| [ProseMirror](https://prosemirror.net)                  | [`@liveblocks/prosemirror`](/docs/api-reference/liveblocks-prosemirror)                                                                                                                                | [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) with [`y-prosemirror`](https://github.com/yjs/y-prosemirror)         |
+| [CodeMirror](https://codemirror.net)                    | [`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror)                                                                                                                                  | [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) with [`y-codemirror.next`](https://github.com/yjs/y-codemirror.next) |
+| SuperDoc, Slate, Quill, Monaco, tldraw, other           | Not supported yet                                                                                                                                                                                      | [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) with the editor’s Yjs binding                                        |
+
+</Table>
+
+A few details worth knowing before you decide:
+
+- For **Tiptap and BlockNote**, this is a single option on a package you’re
+  already using. Comments, mentions, cursors, and toolbars work the same in
+  either mode.
+- Tiptap and BlockNote AI and experimental offline support currently require Yjs
+  mode.
+- Each `LiveText` has a 2 MB limit, so Yjs is best suited for documents that
+  will grow very long. We’re working on improving this.
+
+## Setting up LiveText
+
+[`LiveText`](/docs/api-reference/liveblocks-client#LiveText) supports Tiptap,
+BlockNote, ProseMirror, and CodeMirror.
+
+### Tiptap
+
+To set up a collaborative Tiptap editor with `LiveText`, use
+[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap) and
+pass
+[`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-tiptap#Liveblocks-collaboration-mode).
+
+```tsx
+"use client";
+
+import {
+  FloatingToolbar,
+  useLiveblocksExtension,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+
+function TextEditor() {
+  // +++
+  const liveblocks = useLiveblocksExtension({
+    collaborationMode: "liveblocks",
+  });
+  // +++
+
+  const editor = useEditor({
+    extensions: [
+      // +++
+      liveblocks,
+      // +++
+      StarterKit.configure({
+        // The Liveblocks extension comes with its own history handling
+        undoRedo: false,
+      }),
+    ],
+    immediatelyRender: false,
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+```
+
+Learn [more about its features](/docs/products/sync/text-editing/tiptap) or read
+the API reference under
+[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap).
+
+### BlockNote
+
+To set up a collaborative BlockNote editor with `LiveText`, use
+[`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote)
+and pass
+[`collaborationMode: "liveblocks"`](/docs/api-reference/liveblocks-react-blocknote#Liveblocks-collaboration-mode).
+
+```tsx
+"use client";
+
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditor() {
+  // +++
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      collaborationMode: "liveblocks",
+    }
+  );
+  // +++
+
+  return (
+    <div>
+      // +++
+      <BlockNoteView editor={editor} />
+      // +++
+    </div>
+  );
+}
+```
+
+Learn [more about its features](/docs/products/sync/text-editing/blocknote) or
+read the API reference under
+[`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote).
+
+### ProseMirror
+
+To set up a collaborative ProseMirror editor with `LiveText`, use
+[`@liveblocks/prosemirror`](/docs/api-reference/liveblocks-prosemirror).
+
+```tsx
+"use client";
+
+import { useEffect, useRef } from "react";
+import {
+  createLiveblocksCollaborationCaretPlugin,
+  createLiveblocksCollaborationPlugin,
+} from "@liveblocks/prosemirror";
+import "@liveblocks/prosemirror/styles.css";
+import { useRoom } from "@liveblocks/react/suspense";
+import { EditorState } from "prosemirror-state";
+import type { Schema } from "prosemirror-model";
+import { EditorView } from "prosemirror-view";
+import "@liveblocks/prosemirror/styles.css";
+
+const INITIAL_CONTENT = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [{ type: "text", text: "Hello world" }],
+    },
+  ],
+};
+
+export function Editor({ schema }: { schema: Schema }) {
+  // +++
+  const room = useRoom();
+  // +++
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current === null) return;
+
+    // +++
+    const info = room.getSelf()?.info;
+    const user = {
+      name: typeof info?.name === "string" ? info.name : undefined,
+      color: typeof info?.color === "string" ? info.color : undefined,
+    };
+    const caretStorage = { users: [] };
+    // +++
+
+    const state = EditorState.create({
+      schema,
+      plugins: [
+        // +++
+        createLiveblocksCollaborationPlugin({
+          room,
+          field: "document",
+          initialContent: INITIAL_CONTENT,
+          fallbackDocument: () => INITIAL_CONTENT,
+        }),
+        createLiveblocksCollaborationCaretPlugin(
+          { room, field: "document", user },
+          caretStorage
+        ),
+        // +++
+      ],
+    });
+
+    const view = new EditorView(containerRef.current, { state });
+    return () => view.destroy();
+  }, [room, schema]);
+
+  return <div ref={containerRef} className="editor" />;
+}
+```
+
+### CodeMirror
+
+To set up a collaborative CodeMirror editor with `LiveText`, use
+[`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror).
+
+```tsx
+"use client";
+
+import { useEffect, useRef } from "react";
+import { EditorView } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
+import {
+  createLiveblocksPresencePlugin,
+  createLiveblocksSyncPlugin,
+} from "@liveblocks/codemirror";
+import { useMutableStorage, useRoom } from "@liveblocks/react/suspense";
+
+export function Editor() {
+  // +++
+  const room = useRoom();
+  const text = useMutableStorage().get("document");
+  // +++
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current === null) return;
+
+    const view = new EditorView({
+      parent: containerRef.current,
+      state: EditorState.create({
+        doc: text.toString(),
+        extensions: [
+          // +++
+          createLiveblocksSyncPlugin(room, text),
+          createLiveblocksPresencePlugin(room, text),
+          // +++
+        ],
+      }),
+    });
+
+    return () => {
+      view.destroy();
+    };
+  }, [room, text]);
+
+  return <div ref={containerRef} className="editor" />;
+}
+```
+
+```css
+.lb-remote-selection {
+  position: absolute;
+  background-color: color-mix(in srgb, var(--lb-remote-color) 25%, transparent);
+  border-radius: 1px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.lb-remote-caret {
+  position: absolute;
+  width: 0;
+  border-left: 2px solid var(--lb-remote-color);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+```
+
+Learn more on the
+[`@liveblocks/codemirror`](/docs/api-reference/liveblocks-codemirror) API
+reference.
+
+## Setting up Yjs
+
+To set up a collaborative text editor with `Yjs`, you need to connect a room and
+fetch its `Y.Doc`. This is then passed to whichever editor you’re using.
+
+```tsx
+import { useRoom } from "@liveblocks/react";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+
+function App() {
+  // +++
+  const room = useRoom();
+  const yProvider = getYjsProviderForRoom(room);
+  const yDoc = yProvider.getYDoc();
+  // +++
+
+  // ...
+}
+```
+
+Read the [Yjs page](/docs/products/sync/text-editing/yjs) for more details and
+check [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) for its API
+reference.
+
+### Lexical
+
+To set up a Lexical Yjs editor, the process is different, as we have a special
+package for it.
+
+```tsx
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
+
+// +++
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+// +++
+
+function Editor() {
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      // +++
+      <LiveblocksPlugin />
+      // +++
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
+```
+
+Learn [more about its features](/docs/products/sync/text-editing/lexical) or
+read the API reference under
+[`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexical).

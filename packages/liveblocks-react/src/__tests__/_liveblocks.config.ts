@@ -24,12 +24,15 @@ const client = createClient({
   },
 });
 
+const roomContext = createRoomContext<Presence, Storage>(client);
+
 export const {
   RoomProvider,
   useCanRedo,
   useCanUndo,
   useHistory,
   useIsInsideRoom,
+  useMutableStorage,
   useMutation,
   useMyPresence,
   useOthers,
@@ -37,4 +40,6 @@ export const {
   useStorage,
   useUndo,
   useThreads,
-} = createRoomContext<Presence, Storage>(client);
+} = roomContext;
+
+export const { suspense } = roomContext;

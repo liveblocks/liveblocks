@@ -984,7 +984,7 @@ describe("client", () => {
         metadata: {
           color: "blue",
         },
-        visibility: "private",
+        visibility: "private" as const,
       };
 
       server.use(
@@ -3470,7 +3470,7 @@ describe("client", () => {
   });
 
   describe("update room subscription settings", () => {
-    test("should update user's room subcription settings", async () => {
+    test("should update user's room subscription settings", async () => {
       const userId = "user1";
       const roomId = "room1";
       const settings: Partial<RoomSubscriptionSettings> = {

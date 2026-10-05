@@ -17,7 +17,28 @@
 
 import type { IUserInfo } from "@liveblocks/core";
 import type { Decoder } from "decoders";
-import { inexact, optional, string } from "decoders";
+import {
+  array,
+  inexact,
+  optional,
+  sized,
+  startsWith,
+  string,
+  uuid,
+} from "decoders";
+
+// Mirrors `storageFileIdDecoder` in @shared/common, which isn't reachable from
+// here: that package is backend-only and this one is mirrored to the public
+// repo. The shape is "fl_" plus 21 nanoid characters.
+export const storageFileId = sized(startsWith("fl_"), { size: 24 });
+
+export const storageFileIds = array(storageFileId, { max: 500 });
+
+// Multipart upload ids are minted by the blob store as UUIDs. Unlike a real
+// object store, which treats them as opaque tokens, the dev server's
+// filesystem store turns them into a directory name — so what the URL says has
+// to be checked before it gets anywhere near a path.
+export const uploadId = uuid.describe("Must be a valid upload id");
 
 // A IUserInfo shape is any JSON object, but with the only requirement that
 // `name` and `avatar` keys are strings (if present).

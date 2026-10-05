@@ -70,6 +70,12 @@ export async function runFlowchartAgent(
   prompt: string,
   options?: RunFlowchartAgentOptions
 ): Promise<{ text: string }> {
+  try {
+    await liveblocks.createVersionHistorySnapshot(roomId);
+  } catch (error) {
+    console.error("Failed to create version history snapshot", error);
+  }
+
   const agentUser = createAgentUser();
   let lastCursor: Point | null = null;
   let lastThinking: boolean = true;

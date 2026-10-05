@@ -37,8 +37,8 @@ Displays an interactive AI chat. AI can
 </Figure>
 
 Each chat is stored permanently, and is identified by its unique `chatId`. Chats
-are only visible to the [authenticated user](/docs/authentication) who created
-the chat.
+are only visible to the [authenticated user](/docs/api-reference/authentication)
+who created the chat.
 
 ```tsx
 import { AiChat } from "@liveblocks/react-ui";
@@ -589,8 +589,8 @@ Override specific parts of `AiChat` with custom components.
 
 #### AiTool
 
-Displays [AI tool calls](/docs/ready-made-features/ai-copilots/features#tools)
-and their progress. Can be customized for many different UIs.
+Displays [AI tool calls](/docs/products/ai-copilots/features#tools) and their
+progress. Can be customized for many different UIs.
 
 {/* TODO AI tool image */}
 
@@ -941,7 +941,7 @@ button displayed by default.
 
 You can additionally use `thread.resolved` to filter the displayed threads for
 example. Or if you want to create your own `Thread` component using
-[the primitives](/docs/ready-made-features/comments/primitives), you can use
+[the primitives](/docs/products/comments/primitives), you can use
 [`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
 and
 [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
@@ -1055,9 +1055,9 @@ more.
 
 Picture a thread that features a graph visualization instead of a comment. To
 render it in the thread, you can create a comment and use its
-[comment metadata](/docs/ready-made-features/comments/metadata) to define its
-data. First, set up your metadata typing in your config file. We’ll define two
-types of comments, a normal comment and a graph comment, and pass both to
+[comment metadata](/docs/products/comments/metadata) to define its data. First,
+set up your metadata typing in your config file. We’ll define two types of
+comments, a normal comment and a graph comment, and pass both to
 `CommentMetadata`. Any data can go in here, but in this example, graphs are
 defined with `type: "graph"` and a `graphId`.
 
@@ -2235,7 +2235,7 @@ provided, the `userId` prop is ignored.
 
 Primitives are unstyled, headless components that can be used to create fully
 custom commenting experiences. We have a
-[primitives example](/examples/comments-primitives) highlighting how to use
+[primitives example](/examples/comments-primitives/nextjs-comments-primitives) highlighting how to use
 them.
 
 <Banner title="Using primitives with TypeScript">
@@ -4261,6 +4261,11 @@ up in our
 
 Displays a version summary which includes the author and date.
 
+A version can have no authors when it contains only server-side changes. In that
+case, `HistoryVersionSummary` displays “Unattributed”. You can customize this
+text with
+[`HISTORY_VERSION_SUMMARY_AUTHORS_LIST`](/docs/api-reference/liveblocks-react-ui#Overrides-History-version-summary).
+
 ```tsx
 <HistoryVersionSummary
   onClick={() => {
@@ -4271,7 +4276,7 @@ Displays a version summary which includes the author and date.
 />
 ```
 
-##### Props [#HistoryVersionSummary-props]
+#### Props [#HistoryVersionSummary-props]
 
 <PropertiesList>
   <PropertiesListItem name="onClick" type="() => void">
@@ -4285,7 +4290,7 @@ Displays a version summary which includes the author and date.
   </PropertiesListItem>
 </PropertiesList>
 
-#### HistoryVersionSummaryList
+### HistoryVersionSummaryList
 
 Displays a list of version summaries for a document’s history including authors
 and dates.
@@ -4305,7 +4310,7 @@ and dates.
 </HistoryVersionSummaryList>
 ```
 
-##### Props [#HistoryVersionSummaryList-props]
+#### Props [#HistoryVersionSummaryList-props]
 
 <PropertiesList>
   <PropertiesListItem name="children" type="ReactNode">
@@ -4336,7 +4341,7 @@ Find a full list of available icons in
 #### LiveblocksUiConfig
 
 Set configuration options for all `@liveblocks/react-ui` components, such as
-[overrides](#overrides).
+[overrides](#Overrides).
 
 ```tsx
 <LiveblocksUiConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
@@ -4723,19 +4728,28 @@ and
 | `INBOX_NOTIFICATION_THREAD_MENTION`       | Thread mention text | `"X mentioned you in Y"` |
 | `INBOX_NOTIFICATION_TEXT_MENTION`         | Text mention text   | `"X mentioned you in Y"` |
 
+##### History version summary [#Overrides-History-version-summary]
+
+History version summary overrides can be set on
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+The authors list is `undefined` when the version has no authors.
+
+| Name                                   | Description       | Default value             |
+| -------------------------------------- | ----------------- | ------------------------- |
+| `HISTORY_VERSION_SUMMARY_AUTHORS_LIST` | Authors list text | `"X"` or `"Unattributed"` |
+
 ##### History version preview [#Overrides-History-version-preview]
 
-History version preview overrides can be set on both
-[`HistoryVersionSummary`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummary)
-and
+History version preview overrides can be set on
 [`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+The authors list is `undefined` when the version has no authors.
 
-| Name                                   | Description          | Default value           |
-| -------------------------------------- | -------------------- | ----------------------- |
-| `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | Authors list text    | `"Edits from X"`        |
-| `HISTORY_VERSION_PREVIEW_RESTORE`      | Restore button label | `"Restore"`             |
-| `HISTORY_VERSION_PREVIEW_EMPTY`        | Empty state text     | `"No content."`         |
-| `HISTORY_VERSION_PREVIEW_ERROR`        | Error message        | `"There was an error…"` |
+| Name                                   | Description          | Default value                              |
+| -------------------------------------- | -------------------- | ------------------------------------------ |
+| `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | Authors list text    | `"Edits from X"` or `"Unattributed edits"` |
+| `HISTORY_VERSION_PREVIEW_RESTORE`      | Restore button label | `"Restore"`                                |
+| `HISTORY_VERSION_PREVIEW_EMPTY`        | Empty state text     | `"No content."`                            |
+| `HISTORY_VERSION_PREVIEW_ERROR`        | Error message        | `"There was an error…"`                    |
 
 ##### AI composer [#Overrides-AI-composer]
 

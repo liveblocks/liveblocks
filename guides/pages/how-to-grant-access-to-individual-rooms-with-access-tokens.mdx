@@ -9,14 +9,15 @@ meta:
 
 If you’re looking to build an application with permissions at organization,
 group, and user levels, we recommend using
-[ID tokens](/docs/authentication#id-token) instead. Access tokens have
-[limitations when granting nested permissions](#limitations).
+[ID tokens](/docs/api-reference/authentication#id-token) instead. Access tokens
+have [limitations when granting nested permissions](/docs/api-reference/authentication/access-token#limitations).
 
 </Banner>
 
-With [access tokens](/docs/authentication/access-token) we always recommend
-using a [naming pattern](/docs/authentication/access-token#Naming-pattern) to
-grant access to multiple rooms at once, for example every room in a user’s
+With [access tokens](/docs/api-reference/authentication/access-token) we always
+recommend using a
+[naming pattern](/docs/api-reference/authentication/access-token#Naming-pattern)
+to grant access to multiple rooms at once, for example every room in a user’s
 organization.
 
 ```ts
@@ -36,9 +37,9 @@ When using
 Liveblocks provides the current room ID in the `request`. Below is a Next.js
 example, where the current room ID is taken from the body, and the user is
 allowed access to the room. Note that `room` is `undefined` when
-[Notifications](/docs/ready-made-features/comments/email-notifications) is
-authenticating, which is why we’re checking if it exists. Notifications works
-across rooms, and it doesn’t require any permissions.
+[Notifications](/docs/products/comments/email-notifications) is authenticating,
+which is why we’re checking if it exists. Notifications works across rooms, and
+it doesn’t require any permissions.
 
 ```tsx highlight="17,19-21"
 import { Liveblocks } from "@liveblocks/node";

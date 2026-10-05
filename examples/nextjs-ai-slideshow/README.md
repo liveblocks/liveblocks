@@ -21,7 +21,7 @@
 </p>
 
 This example shows how to build a multiplayer AI slideshow builder with
-[Liveblocks Feeds](https://liveblocks.io/docs/collaboration-features/ai-collaboration),
+[Liveblocks Feeds](https://liveblocks.io/docs/products/sync/feeds),
 [Yjs](https://yjs.dev/), [CodeMirror](https://codemirror.net/),
 [Liveblocks Comments](https://liveblocks.io/docs/products/comments), and
 [Next.js](https://nextjs.org/). Chat with AI to generate and edit slides with

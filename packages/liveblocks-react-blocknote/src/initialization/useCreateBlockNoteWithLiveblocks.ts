@@ -23,7 +23,7 @@ export const useCreateBlockNoteWithLiveblocks = <
   S extends StyleSchema = DefaultStyleSchema,
 >(
   blocknoteOptions: Partial<BlockNoteEditorOptions<B, I, S>> = {},
-  liveblocksOptions: LiveblocksExtensionOptions = undefined,
+  liveblocksOptions?: LiveblocksExtensionOptions,
   deps: DependencyList = []
 ) => {
   const liveblocksExtension = useLiveblocksExtension(liveblocksOptions);
@@ -33,6 +33,6 @@ export const useCreateBlockNoteWithLiveblocks = <
       blocknoteOptions,
       liveblocksOptions
     ),
-    [liveblocksExtension, ...deps]
+    deps
   );
 };

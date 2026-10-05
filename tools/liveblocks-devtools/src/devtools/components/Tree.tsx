@@ -1,4 +1,5 @@
 import type { DevTools, Json } from "@liveblocks/core";
+import { isPlainObject } from "@liveblocks/core";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import cx from "classnames";
@@ -181,6 +182,25 @@ export function makeJsonNode(
   return { type: "Json", id: `${parentId}:${key}`, key, payload };
 }
 
+function jsonValueToLsonTreeNodes(
+  parentId: string,
+  value: Json
+): DevTools.LsonTreeNode[] {
+  if (Array.isArray(value)) {
+    return value.map((item, index) =>
+      makeJsonNode(parentId, String(index), item)
+    );
+  }
+
+  if (isPlainObject(value)) {
+    return Object.entries(value).flatMap(([key, item]) =>
+      item === undefined ? [] : [makeJsonNode(parentId, key, item)]
+    );
+  }
+
+  return [];
+}
+
 type ArboristTreeProps<T> = TreeApi<T>["props"];
 
 type TreeProps<TTreeNode extends DevTools.TreeNode | YLogsTreeNode> = Pick<
@@ -233,6 +253,9 @@ function color(node: DevTools.TreeNode): string {
     case "LiveMap":
       return "text-blue-500 dark:text-blue-400";
 
+    case "LiveText":
+      return "text-green-500 dark:text-green-500";
+
     case "LiveFile":
       return "text-pink-500 dark:text-pink-400";
 
@@ -262,6 +285,9 @@ function background(node: DevTools.TreeNode): string {
     case "LiveMap":
       return "tree-focus:bg-blue-500 dark:tree-focus:bg-blue-400";
 
+    case "LiveText":
+      return "tree-focus:bg-green-500 dark:tree-focus:bg-green-500";
+
     case "LiveFile":
       return "tree-focus:bg-pink-500 dark:tree-focus:bg-pink-400";
 
@@ -287,6 +313,9 @@ function icon(node: DevTools.TreeNode): ReactNode {
 
     case "LiveMap":
       return <MapIcon />;
+
+    case "LiveText":
+      return <TextIcon />;
 
     case "LiveFile":
       return <FileIcon />;
@@ -497,6 +526,22 @@ function getYTreeNodeBackground(node: YTreeNode): string {
 /**
  * Function that helps construct a "preview" string for a collapsed node.
  */
+function summarizeLsonJsonPayload(payload: Json): string {
+  if (isPlainObject(payload)) {
+    const entryCount = Object.keys(payload).length;
+    return `${entryCount} ${entryCount !== 1 ? "properties" : "property"}`;
+  }
+
+  if (Array.isArray(payload)) {
+    return `${payload.length} item${payload.length !== 1 ? "s" : ""}`;
+  }
+
+  return stringify(payload);
+}
+
+/**
+ * Function that helps construct a "preview" string for a collapsed node.
+ */
 function summarize(node: DevTools.TreeNode): string {
   switch (node.type) {
     case "LiveObject":
@@ -523,6 +568,18 @@ function summarize(node: DevTools.TreeNode): string {
         node.payload.length !== 1 ? "entries" : "entry"
       }`;
 
+    case "LiveText": {
+      const text = node.payload
+        .filter((child) => child.type === "Json" && child.key !== "version")
+        .map((child) =>
+          child.type === "Json" && Array.isArray(child.payload)
+            ? String(child.payload[0] ?? "")
+            : ""
+        )
+        .join("");
+      return stringify(text);
+    }
+
     case "LiveFile": {
       const payload = node.payload;
       return Array.isArray(payload)
@@ -538,8 +595,10 @@ function summarize(node: DevTools.TreeNode): string {
       );
 
     case "CustomEvent":
-    case "Json":
       return stringify(node.payload);
+
+    case "Json":
+      return summarizeLsonJsonPayload(node.payload);
 
     default:
       // e.g. future LiveXxx types
@@ -738,6 +797,7 @@ function Row<TTreeNode extends DevTools.TreeNode>({
       <div
         className={cx(
           color(node.data),
+          "fill-current",
           isSelected && "tree-focus:text-light-0"
         )}
       >
@@ -1087,6 +1147,7 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
     case "LiveMap":
     case "LiveList":
     case "LiveObject":
+    case "LiveText":
     case "LiveFile":
       return <LiveNodeRenderer {...props} />;
 
@@ -1715,10 +1776,15 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
     case "LiveList":
     case "LiveMap":
     case "LiveObject":
+    case "LiveText":
       return node.payload;
 
+    case "Json": {
+      const children = jsonValueToLsonTreeNodes(node.id, node.payload);
+      return children.length > 0 ? children : null;
+    }
+
     case "LiveFile":
-    case "Json":
       return null;
 
     default:

@@ -86,14 +86,16 @@ jobs:
           VERSION: ${{steps.version.outputs.value}}
 
         run:
-          ./.github/scripts/release.sh -V "$VERSION" -w
+          ./.github/scripts/release.sh -V "$VERSION" -w -c
           "packages/liveblocks-core" "packages/liveblocks-client"
           "packages/liveblocks-node" "packages/liveblocks-chat-sdk-adapter"
           "packages/liveblocks-react"
           "packages/liveblocks-redux" "packages/liveblocks-zustand"
           "packages/liveblocks-yjs" "packages/liveblocks-react-ui"
           "packages/liveblocks-react-flow"
+          "packages/liveblocks-codemirror" "packages/liveblocks-lexical"
           "packages/liveblocks-react-lexical" "packages/liveblocks-node-lexical"
+          "packages/liveblocks-prosemirror"
           "packages/liveblocks-react-tiptap" "packages/liveblocks-emails"
           "packages/liveblocks-node-prosemirror"
           "packages/liveblocks-react-blocknote"
@@ -118,6 +120,8 @@ jobs:
           "packages/liveblocks-yjs" "packages/liveblocks-react-lexical"
           "packages/liveblocks-node-lexical" "packages/liveblocks-react-ui"
           "packages/liveblocks-react-flow"
+          "packages/liveblocks-codemirror" "packages/liveblocks-lexical"
+          "packages/liveblocks-prosemirror"
           "packages/liveblocks-react-tiptap" "packages/liveblocks-emails"
           "packages/liveblocks-node-prosemirror"
           "packages/liveblocks-react-blocknote"

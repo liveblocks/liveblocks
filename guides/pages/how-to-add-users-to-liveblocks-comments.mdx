@@ -34,14 +34,14 @@ learning how to:
 ## Authenticate your application
 
 The first step is to find an
-[authentication guide for your framework](/docs/authentication) and authenticate
-your app, as this is necessary for Comments.
+[authentication guide for your framework](/docs/api-reference/authentication)
+and authenticate your app, as this is necessary for Comments.
 
 Make sure to follow the metadata step in the guide, and attach the name of your
 user, along with the URL of their avatar, as these properties will both be used
-in the [default components](/docs/ready-made-features/comments#Components).
-Here’s an example using ID token authentication, our recommended method, with an
-email address as a user’s ID.
+in the [default components](/docs/products/comments/default-components). Here’s
+an example using ID token authentication, our recommended method, with an email
+address as a user’s ID.
 
 ```ts title="Metadata in ID tokens"
 const { status, body } = await liveblocks.identifyUser(

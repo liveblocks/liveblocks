@@ -35,13 +35,14 @@ describe("LiveMap edge cases", () => {
       const map = root.get("map");
       const secondItem = map.get("el2");
 
-      const applyResult = map._detachChild(secondItem!);
+      const applyResult = map._detachChild(secondItem!, { origin: "remote" });
 
       expect(applyResult).toEqual({
         modified: {
           node: map,
           type: "LiveMap",
           updates: { el2: { type: "delete", deletedItem: secondItem } },
+          source: { origin: "remote" },
         },
         reverse: [
           {

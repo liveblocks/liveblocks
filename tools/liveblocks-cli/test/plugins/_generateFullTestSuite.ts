@@ -867,6 +867,10 @@ export function generateArbitraries() {
       const depthIdentifier = fc.createDepthIdentifier();
       const depthSize = options?.depthSize;
       const maxDepth = options?.maxDepth;
+      // `record()` rejects `__proto__` keys outright as a prototype-pollution
+      // vector, so a LiveObject or LiveMap carrying one is not valid input for
+      // the API. Don't generate it.
+      const dataKey = fc.string().filter((k) => k !== "__proto__");
       return fc.letrec<{
         PlainLson: PlainLson;
         PlainLsonObject: PlainLsonObject;
@@ -884,11 +888,11 @@ export function generateArbitraries() {
         ),
         PlainLsonObject: fc.record({
           liveblocksType: fc.constant("LiveObject" as const),
-          data: fc.dictionary(fc.string(), tie("PlainLson"), { maxKeys: options?.maxKeys ?? 5 }), // prettier-ignore
+          data: fc.dictionary(dataKey, tie("PlainLson"), { maxKeys: options?.maxKeys ?? 5 }), // prettier-ignore
         }),
         PlainLsonMap: fc.record({
           liveblocksType: fc.constant("LiveMap" as const),
-          data: fc.dictionary(fc.string(), tie("PlainLson"), { maxKeys: options?.maxKeys ?? 5 }), // prettier-ignore
+          data: fc.dictionary(dataKey, tie("PlainLson"), { maxKeys: options?.maxKeys ?? 5 }), // prettier-ignore
         }),
         PlainLsonList: fc.record({
           liveblocksType: fc.constant("LiveList" as const),
@@ -2581,6 +2585,138 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         const snapshot = driver.get_snapshot();
         const nodes = [...snapshot.iter_all()];
         expect(nodes).toEqual([["root", { type: CrdtType.OBJECT, data: {} }]]);
+      }));
+  });
+
+  describe("livefile upload receipt API impl", () => {
+    const FILE_ID = "fl_iN9WvpTnFO4qXbLXpZ2Kr";
+    const OTHER_FILE_ID = "fl_Bq7zMk1RsW0dYvLc3TnAe";
+
+    function fileData(size: number, id = FILE_ID): LiveFileData {
+      return { id, name: "hello.txt", size, mimeType: "text/plain" };
+    }
+
+    /** All FILE node sizes currently in storage, in iteration order. */
+    function fileSizes(driver: TDriver): number[] {
+      const sizes = [];
+      for (const [, node] of driver.iter_nodes()) {
+        if (node.type === CrdtType.FILE) {
+          sizes.push(node.data.size);
+        }
+      }
+      return sizes;
+    }
+
+    test("get_livefile_upload_size is undefined for an unrecorded file", () =>
+      runTest((driver) => {
+        expect(driver.get_livefile_upload_size(FILE_ID)).toEqual(undefined);
+      }));
+
+    test("put_livefile_upload records a size that reads back", () =>
+      runTest((driver) => {
+        driver.put_livefile_upload(FILE_ID, 11);
+        expect(driver.get_livefile_upload_size(FILE_ID)).toEqual(11);
+
+        // Receipts are per-file, not global
+        expect(driver.get_livefile_upload_size(OTHER_FILE_ID)).toEqual(
+          undefined
+        );
+      }));
+
+    test("put_livefile_upload overwrites an existing receipt", () =>
+      runTest((driver) => {
+        driver.put_livefile_upload(FILE_ID, 11);
+        driver.put_livefile_upload(FILE_ID, 22);
+        expect(driver.get_livefile_upload_size(FILE_ID)).toEqual(22);
+      }));
+
+    test("a zero-byte upload is recorded, and is not the same as undefined", () =>
+      runTest((driver) => {
+        driver.put_livefile_upload(FILE_ID, 0);
+        expect(driver.get_livefile_upload_size(FILE_ID)).toEqual(0);
+      }));
+
+    test("set_child replaces a client-claimed size with the recorded one", () =>
+      runTest((driver) => {
+        driver.put_livefile_upload(FILE_ID, 11);
+
+        // The client claims this file is 1 byte. It is not.
+        driver.set_child("1:0", {
+          type: CrdtType.FILE,
+          parentId: "root",
+          parentKey: "file",
+          data: fileData(1),
+        });
+
+        expect(driver.get_node("1:0")).toEqual({
+          type: CrdtType.FILE,
+          parentId: "root",
+          parentKey: "file",
+          data: fileData(11),
+        });
+      }));
+
+    test("set_child replaces a client-claimed size even when the truth is 0", () =>
+      runTest((driver) => {
+        driver.put_livefile_upload(FILE_ID, 0);
+
+        driver.set_child("1:0", {
+          type: CrdtType.FILE,
+          parentId: "root",
+          parentKey: "file",
+          data: fileData(999),
+        });
+
+        expect(fileSizes(driver)).toEqual([0]);
+      }));
+
+    test("set_child leaves the claimed size alone when there is no receipt", () =>
+      runTest((driver) => {
+        // Refusing unreferenced files is the Room layer's job, not the
+        // driver's. With no receipt the driver has nothing better to say.
+        driver.set_child("1:0", {
+          type: CrdtType.FILE,
+          parentId: "root",
+          parentKey: "file",
+          data: fileData(1),
+        });
+
+        expect(fileSizes(driver)).toEqual([1]);
+      }));
+
+    test("DANGEROUSLY_reset_nodes replaces claimed sizes with recorded ones", () =>
+      runTest((driver) => {
+        driver.put_livefile_upload(FILE_ID, 11);
+
+        driver.DANGEROUSLY_reset_nodes({
+          liveblocksType: "LiveObject",
+          data: {
+            file: { liveblocksType: "LiveFile", data: fileData(1) },
+          },
+        });
+
+        expect(fileSizes(driver)).toEqual([11]);
+      }));
+
+    test("DANGEROUSLY_reset_nodes leaves unrecorded files alone", () =>
+      runTest((driver) => {
+        driver.DANGEROUSLY_reset_nodes({
+          liveblocksType: "LiveObject",
+          data: {
+            file: { liveblocksType: "LiveFile", data: fileData(1) },
+          },
+        });
+
+        expect(fileSizes(driver)).toEqual([1]);
+      }));
+
+    test("receipts survive DANGEROUSLY_reset_nodes", () =>
+      runTest((driver) => {
+        // Resetting the document wipes nodes, but upload history is not part
+        // of the document — a file that was uploaded stays uploaded.
+        driver.put_livefile_upload(FILE_ID, 11);
+        driver.DANGEROUSLY_reset_nodes(EMPTY_DOC);
+        expect(driver.get_livefile_upload_size(FILE_ID)).toEqual(11);
       }));
   });
 

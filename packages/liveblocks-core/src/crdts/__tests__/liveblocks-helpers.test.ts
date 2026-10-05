@@ -20,6 +20,7 @@ import {
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
+import { LiveText } from "../LiveText";
 import { toPlainLson } from "../utils";
 
 test("Common first positions", () => {
@@ -318,6 +319,71 @@ describe("diffNodeMap", () => {
     ]);
   });
 
+  test("liveText create and update", () => {
+    const currentItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+    ]);
+
+    const newItems: NodeMap = new Map([
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      [
+        "0:1",
+        {
+          type: CrdtType.TEXT,
+          parentId: "root",
+          parentKey: "text",
+          data: [["Hello"]],
+          version: 0,
+        },
+      ],
+    ]);
+
+    expect(diffNodeMap(currentItems, newItems)).toEqual([
+      {
+        type: OpCode.CREATE_TEXT,
+        id: "0:1",
+        parentId: "root",
+        parentKey: "text",
+        data: [["Hello"]],
+        version: 0,
+      },
+    ]);
+
+    const updatedItems: NodeMap = new Map(newItems);
+    updatedItems.set("0:1", {
+      type: CrdtType.TEXT,
+      parentId: "root",
+      parentKey: "text",
+      data: [["Hello!"]],
+      version: 1,
+    });
+
+    // Content changes of existing LiveText nodes are deliberately NOT part
+    // of the op diff: snapshots are reconciled via LiveText._resyncText
+    // (driven by the room), not via UPDATE_TEXT ops.
+    expect(diffNodeMap(newItems, updatedItems)).toEqual([]);
+
+    // A user-initiated restore is different from an authoritative snapshot
+    // load: it is a new edit in the current timeline. Use the current node's
+    // version as the base and treat the target's older version as content-only
+    // snapshot metadata.
+    expect(
+      diffNodeMap(updatedItems, newItems, {
+        includeLiveTextUpdates: true,
+      })
+    ).toEqual([
+      {
+        type: OpCode.UPDATE_TEXT,
+        id: "0:1",
+        baseVersion: 1,
+        ops: [
+          { type: "delete", index: 0, length: 6 },
+          { type: "insert", index: 0, text: "Hello", attributes: undefined },
+        ],
+      },
+    ]);
+  });
+
   test("liveObject replacing a non-object node of the same id", () => {
     const currentItems: NodeMap = new Map([
       ["root", { type: CrdtType.OBJECT, data: {} }],
@@ -603,6 +669,7 @@ describe("toPlainLson", () => {
         ["broccoli", "delicious"],
         ["spinach", "also tasty"],
       ]),
+      text: new LiveText("Hello"),
     });
 
     // What the Plain Lson should look like if the util works
@@ -616,6 +683,11 @@ describe("toPlainLson", () => {
         vegetables: {
           liveblocksType: "LiveMap",
           data: { broccoli: "delicious", spinach: "also tasty" },
+        },
+        text: {
+          liveblocksType: "LiveText",
+          data: [["Hello"]],
+          version: 0,
         },
       },
     };
