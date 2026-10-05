@@ -76,44 +76,6 @@ Alternatively, you can set up your project manually:
   required when deploying
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
-To see realtime sync, open the page in two browsers (or a normal and a private
-window, since the session is a cookie) and sign in as two different users.
-Messages, direct messages, typing indicators, and channel edits sync across
-both.
-
-</details>
-
-### Running the tests
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-The code is organised by feature (`features/`, `views/`, `primitives/`, `lib/`;
-see `AGENTS.md`), and each feature folder carries its own tests in `tests/`:
-
-- `*.test.ts(x)` — vitest: pure helpers, API route handlers with
-  `@liveblocks/node` mocked, and React components rendered against an in-memory
-  mock of `@liveblocks/react` (`tests/helpers/liveblocks-mock.tsx`)
-- `*.spec.ts` — Playwright flows against the real app, backed by the local
-  Liveblocks dev server (multi-user: mentions, DMs, threads, badges, presence)
-
-```bash
-npm run check                         # typecheck + eslint + structure + prettier + vitest
-npm test                              # vitest only
-npm run dev:local                     # run the app on :3100 against a local Liveblocks dev server, no keys
-npx vitest run features/channels      # one feature
-npx playwright install chromium       # once
-npm run test:e2e                      # e2e against a local Liveblocks dev server
-npm run test:e2e:cloud                # e2e against the keys in .env.local
-```
-
-The e2e suite starts its own `next dev` on port 3111 (build output in
-`.next-e2e`, so it can run alongside your regular dev server). The AI tests in
-`features/ai/tests/ai.spec.ts` need the real Liveblocks backend and an
-`AI_GATEWAY_API_KEY` in `.env.local`; they are skipped on the local dev server.
-Run them with `npm run test:e2e:cloud`.
-
 </details>
 
 ### Deploy on Vercel
