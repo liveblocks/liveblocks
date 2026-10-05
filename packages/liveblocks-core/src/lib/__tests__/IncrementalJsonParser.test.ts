@@ -124,6 +124,16 @@ describe("parsing basic inputs", () => {
     expect(parse('{"arr":[{"nested":42')).toEqual({ arr: [{ nested: 42 }] });
   });
 
+  test("keeps earlier keys while a new key streams in after whitespace", () => {
+    expect(parse('{"title": "Hi", "de')).toEqual({ title: "Hi" });
+    expect(parse('{"title": "Hi", "desc"')).toEqual({ title: "Hi" });
+    expect(parse('{"title": "Hi", "desc":')).toEqual({ title: "Hi" });
+    expect(parse('{"title": "Hi", "desc" :')).toEqual({ title: "Hi" });
+    expect(parse('{"a": [1, 2], "b')).toEqual({ a: [1, 2] });
+    expect(parse('{\n  "a": 1,\n  "b')).toEqual({ a: 1 });
+    expect(parse('{"a": {"b": 1, "c')).toEqual({ a: { b: 1 } });
+  });
+
   test("mixed nesting", () => {
     expect(parse('{"a":[1,{"b":')).toEqual({ a: [1, {}] });
     expect(parse('{"a":[1,{"b":[')).toEqual({ a: [1, { b: [] }] });
