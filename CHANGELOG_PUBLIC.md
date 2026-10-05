@@ -18,6 +18,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 41 (2026-10-09)
+
+## Contributors
+
 # Week 40 (2026-10-02)
 
 ## v3.24.3
@@ -27,7 +31,6 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Fix `LiveText` reconnect convergence with pending edits, including lost
   acknowledgements, repeated reconnects, and queued edits. Recovery updates now
   reach editor integrations instead of being filtered as local echoes.
-
 
 ## Contributors
 
