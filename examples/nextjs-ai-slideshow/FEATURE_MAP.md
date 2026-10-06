@@ -24,9 +24,11 @@ that owns a file, run `npm run owner -- <path>`.
 
 ## Shared code
 
-| Module                | Reach for it when                                                         |
-| --------------------- | ------------------------------------------------------------------------- |
-| [utils](lib/utils.ts) | You need to merge Tailwind class names (`cn`). Never concatenate by hand. |
+| Module                                            | Reach for it when                                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [iframe-html](lib/iframe-html.ts)                 | You need to update an iframe's HTML without reloading it (slide preview, thumbnails). |
+| [use-example-room-id](lib/use-example-room-id.ts) | You need the room id; it folds in the gallery's `exampleId` query param.              |
+| [utils](lib/utils.ts)                             | You need to merge Tailwind class names (`cn`). Never concatenate by hand.             |
 
 ## Cross-cutting
 
@@ -61,8 +63,6 @@ that owns a file, run `npm run owner -- <path>`.
 | `app/api/liveblocks-auth/`     | `features/users/api/`                            |
 | `app/api/users/`               | `features/users/api/`                            |
 | `app/page.tsx`                 | `views/slideshow-app/ and features/pptx-export/` |
-| `app/iframe-html.ts`           | `lib/`                                           |
-| `hooks/`                       | `lib/`                                           |
 | `tests/*.test.ts`              | `features/<feature>/tests/ or lib/tests/`        |
 | `tests/*.test.tsx`             | `features/<feature>/tests/`                      |
 | `tests/*.spec.ts`              | `features/<feature>/tests/`                      |

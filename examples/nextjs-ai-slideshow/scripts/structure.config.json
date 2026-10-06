@@ -22,7 +22,7 @@
   "commentsExempt": ["components/**", "liveblocks.config.ts"],
   "testExempt": ["components/ai-elements/**", "components/ui/**"],
   "featureMapDirectoryRows": ["components/ai-elements/", "components/ui/"],
-  "removedDirs": [],
+  "removedDirs": ["hooks"],
   "sizeWarnLines": 300,
   "legacy": {
     "app/chat.tsx": "features/ai-chat/",
@@ -43,8 +43,6 @@
     "app/api/liveblocks-auth/": "features/users/api/",
     "app/api/users/": "features/users/api/",
     "app/page.tsx": "views/slideshow-app/ and features/pptx-export/",
-    "app/iframe-html.ts": "lib/",
-    "hooks/": "lib/",
     "tests/*.test.ts": "features/<feature>/tests/ or lib/tests/",
     "tests/*.test.tsx": "features/<feature>/tests/",
     "tests/*.spec.ts": "features/<feature>/tests/"

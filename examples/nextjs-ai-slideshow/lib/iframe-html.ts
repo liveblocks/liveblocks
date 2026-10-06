@@ -8,10 +8,6 @@ type TransformSnapshot = {
   rect: DOMRect;
 };
 
-// Updates an already-loaded iframe's document in place instead of swapping
-// `srcDoc`, which would trigger a full document reload (white flash, lost
-// document-level event listeners). A synthetic "load" event is dispatched so
-// consumers that re-attach on load (e.g. the visual editor) get notified.
 export function patchIframeHtml(
   iframe: HTMLIFrameElement | null,
   html: string

@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useExampleRoomId } from "@/hooks/use-example-room-id";
+import { useExampleRoomId } from "@/lib/use-example-room-id";
 import { Chat } from "./chat";
 import {
   CollaborativeEditor,

@@ -32,7 +32,7 @@ import { EyeIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getElementByPath } from "./html-source-map";
-import { patchIframeHtml } from "./iframe-html";
+import { patchIframeHtml } from "@/lib/iframe-html";
 import type { SlideProposal } from "./proposal-actions";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
 import { useSlideUndo } from "./slide-undo";

@@ -18,7 +18,7 @@ import { PlusIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { patchIframeHtml } from "./iframe-html";
+import { patchIframeHtml } from "@/lib/iframe-html";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
 import { useSlideHtml } from "./slides";
 
