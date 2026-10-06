@@ -27,5 +27,7 @@ in `features/<name>/tests/`, `views/<name>/tests/`, `lib/tests/` and
 - Flows that need Liveblocks Cloud (Feeds, Comments) start with
   `test.skip(!process.env.LIVEBLOCKS_CLOUD, CLOUD_ONLY)` and are listed under
   "Cannot be verified locally" in the root AGENTS.md.
-- The suite starts its own `dev:local` with the mock assistant; never assume a
+- The suite starts its own server on a free port: `dev:local` with the mock
+  assistant by default, or plain `next dev` with the `.env.local` keys when
+  `LIVEBLOCKS_CLOUD=1` (which is when the cloud-only specs run). Never assume a
   server on a fixed port.
