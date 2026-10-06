@@ -50,7 +50,7 @@ vi.mock("@liveblocks/node", () => ({
   },
 }));
 
-import { POST } from "@/app/api/apply-slide/route";
+import { POST } from "../api/apply-slide";
 
 const ROOM = "liveblocks:examples:nextjs-ai-slideshow:test";
 

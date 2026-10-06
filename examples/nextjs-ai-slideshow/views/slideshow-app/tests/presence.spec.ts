@@ -1,5 +1,5 @@
 import { type BrowserContext, expect, type Page, test } from "@playwright/test";
-import { openSlideshow, uniqueRoomUrl } from "./e2e-helpers";
+import { openSlideshow, uniqueRoomUrl } from "@/tests/e2e-helpers";
 
 const AVATARS = "header .lb-avatar-stack .lb-avatar";
 

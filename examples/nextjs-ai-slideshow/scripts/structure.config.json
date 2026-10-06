@@ -29,15 +29,5 @@
   "featureMapDirectoryRows": ["components/ai-elements/", "components/ui/"],
   "removedDirs": ["hooks"],
   "sizeWarnLines": 300,
-  "legacy": {
-    "app/chat.tsx": "features/ai-chat/",
-    "app/proposal-actions.ts": "features/ai-chat/",
-    "app/api/ai-reply/": "features/ai-chat/api/",
-    "app/api/apply-slide/": "features/ai-chat/api/",
-    "app/collaborative-editor.tsx": "features/code-editor/",
-    "app/slide-preview.tsx": "features/slide-preview/",
-    "app/page.tsx": "views/slideshow-app/ and features/pptx-export/",
-    "tests/*.test.ts": "features/<feature>/tests/ or lib/tests/",
-    "tests/*.spec.ts": "features/<feature>/tests/"
-  }
+  "legacy": {}
 }

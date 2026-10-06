@@ -1,5 +1,5 @@
 import { type Download, expect, test } from "@playwright/test";
-import { openSlideshow, uniqueRoomUrl } from "./e2e-helpers";
+import { openSlideshow, uniqueRoomUrl } from "@/tests/e2e-helpers";
 
 test("Download .pptx eventually produces a slides.pptx file (the first click can lose the race with the offscreen iframe load)", async ({
   page,

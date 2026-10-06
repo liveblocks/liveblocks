@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resolveProposal } from "@/app/proposal-actions";
+import { resolveProposal } from "../proposal-actions";
 
 describe("resolveProposal", () => {
   afterEach(() => {

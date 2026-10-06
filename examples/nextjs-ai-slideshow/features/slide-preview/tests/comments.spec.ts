@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { CLOUD_ONLY, openSlideshow, uniqueRoomUrl } from "./e2e-helpers";
+import { CLOUD_ONLY, openSlideshow, uniqueRoomUrl } from "@/tests/e2e-helpers";
 
 test.skip(!process.env.LIVEBLOCKS_CLOUD, CLOUD_ONLY);
 

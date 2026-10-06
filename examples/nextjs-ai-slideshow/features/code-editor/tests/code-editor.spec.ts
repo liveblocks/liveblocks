@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { openSlideshow, previewFrame, uniqueRoomUrl } from "./e2e-helpers";
+import {
+  openSlideshow,
+  previewFrame,
+  uniqueRoomUrl,
+} from "@/tests/e2e-helpers";
 
 test("typing in the code editor updates the preview and other users' editors", async ({
   browser,

@@ -11,9 +11,6 @@ import { yCollab } from "y-codemirror.next";
 import * as Y from "yjs";
 import { getSlideText } from "@/features/deck";
 
-// The code editor's undo/redo state and actions, mirroring exactly what the
-// editor's own Mod-z/Mod-y keybindings do. Exposed so the header undo/redo
-// buttons can drive the editor history while the Code tab is open.
 export type EditorHistory = {
   undo: () => void;
   redo: () => void;

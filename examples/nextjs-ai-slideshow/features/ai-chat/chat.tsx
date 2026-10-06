@@ -95,11 +95,6 @@ import { HelpButton } from "@/components/help-button";
 import { resolveProposal, type SlideProposal } from "./proposal-actions";
 import { getSlideIds, getSlideText } from "@/features/deck";
 
-// Each chat is a feed in the room. Everyone connected reads and writes to the
-// selected feed, so messages (and the AI's replies) appear live for all users.
-
-// Cheap, reasoning-capable models, resolved through the Vercel AI Gateway in
-// the server route.
 const MODELS = [
   { id: "google/gemini-3-flash", name: "Gemini 3 Flash" },
   { id: "openai/gpt-5.4-mini", name: "GPT-5.4 mini" },
@@ -131,15 +126,11 @@ export function Chat({
 }) {
   const { feeds } = useFeeds();
 
-  // Chat history: every feed in the room, newest first.
   const chats = useMemo(
     () => [...feeds].sort((a, b) => b.createdAt - a.createdAt),
     [feeds]
   );
 
-  // The currently selected chat (feed). Defaults to the most recent one, or a
-  // stable default id for the first chat. (A render-time `nanoid()` here would
-  // change on every Suspense retry and never settle.)
   const [feedId, setFeedId] = useState(() => chats[0]?.feedId ?? "main");
   const [model, setModel] = useState(MODELS[0].id);
 
@@ -195,8 +186,6 @@ export function Chat({
           <HelpButton />
         </header>
 
-        {/* The chat is suspense-wrapped on its own so switching chats only
-            shows a loader in the conversation area, not the whole screen. */}
         <ClientSideSuspense
           fallback={
             <div className="flex flex-1 items-center justify-center text-muted-foreground">
@@ -251,15 +240,12 @@ function ChatWindow({
   const self = useSelf();
   const updateMyPresence = useUpdateMyPresence();
 
-  // The AI "thinking" status is shared via presence (scoped to this chat), so
-  // everyone viewing this chat sees it — not just whoever triggered the reply.
   const selfPrompting = self.presence.promptingFeedId === feedId;
   const othersPrompting = useOthers((others) =>
     others.some((other) => other.presence.promptingFeedId === feedId)
   );
   const aiThinking = selfPrompting || othersPrompting;
 
-  // Ensure a feed exists before its first message is added.
   const ensuredFeeds = useRef(new Set(messages.length > 0 ? [feedId] : []));
   const ensureFeed = useCallback(
     async (id: string, title: string) => {
@@ -269,21 +255,15 @@ function ChatWindow({
       ensuredFeeds.current.add(id);
       try {
         await createFeed(id, { metadata: { title } });
-      } catch {
-        // Feed already exists (likely created by another user), ignore.
-      }
+      } catch {}
     },
     [createFeed]
   );
 
-  // Synchronous guard against double-sends (e.g. fast clicks on a suggestion).
   const inFlight = useRef(false);
 
   const sorted = [...messages].sort((a, b) => a.createdAt - b.createdAt);
 
-  // Automatically open new pending proposals in the Slide tab, once per
-  // message. Guarded by a ref so users who dismissed the preview aren't
-  // pulled back into it on unrelated re-renders.
   const autoPreviewedIds = useRef(new Set<string>());
   useEffect(() => {
     const latestProposal = [...sorted]
@@ -310,8 +290,6 @@ function ChatWindow({
     }
   }, [sorted, feedId, onPreviewProposal]);
 
-  // Close the preview when the previewed proposal gets resolved (possibly by
-  // someone else in the room) or its message is deleted.
   useEffect(() => {
     if (!previewedProposal || previewedProposal.feedId !== feedId) {
       return;
@@ -377,7 +355,6 @@ function ChatWindow({
         ];
         await postReply(history);
       } catch {
-        // Best-effort in this demo; errors are non-fatal to the UI.
       } finally {
         updateMyPresence({ promptingFeedId: null });
         inFlight.current = false;
@@ -411,7 +388,6 @@ function ChatWindow({
         await deleteFeedMessage(feedId, messageId);
         await postReply(history);
       } catch {
-        // Best-effort in this demo; errors are non-fatal to the UI.
       } finally {
         updateMyPresence({ promptingFeedId: null });
         inFlight.current = false;
@@ -420,7 +396,6 @@ function ChatWindow({
     [feedId, sorted, deleteFeedMessage, postReply, updateMyPresence]
   );
 
-  // Total context-window usage across the conversation, shown in the composer.
   const usedTokens = sorted.reduce(
     (sum, message) => sum + (message.data.usedTokens ?? 0),
     0
@@ -480,8 +455,6 @@ function ChatWindow({
                       }`}
                     >
                       <Avatar
-                        // `lb-root` provides the CSS variables the avatar
-                        // needs (radius, colors) when used standalone.
                         className="lb-root"
                         src={avatar}
                         name={name ?? (isAssistant ? "AI" : "User")}
@@ -696,8 +669,6 @@ function ProposalCard({
 }) {
   const [submitting, setSubmitting] = useState<"apply" | "reject" | null>(null);
 
-  // While the HTML streams in, keep the code preview scrolled to the bottom
-  // so the newest output stays visible.
   const preRef = useRef<HTMLPreElement>(null);
   useEffect(() => {
     if (generating && preRef.current) {

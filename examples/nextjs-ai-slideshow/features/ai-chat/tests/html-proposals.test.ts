@@ -3,7 +3,7 @@ import {
   extractHtmlProposal,
   extractStreamingHtml,
   stripHtmlFencesForChat,
-} from "@/app/api/ai-reply/html-proposals";
+} from "../api/html-proposals";
 
 const CURRENT = "viewed-slide";
 

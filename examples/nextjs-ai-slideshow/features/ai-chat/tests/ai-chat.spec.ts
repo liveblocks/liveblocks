@@ -5,7 +5,7 @@ import {
   previewFrame,
   STARTER_HEADLINE,
   uniqueRoomUrl,
-} from "./e2e-helpers";
+} from "@/tests/e2e-helpers";
 
 test.skip(!process.env.LIVEBLOCKS_CLOUD, CLOUD_ONLY);
 

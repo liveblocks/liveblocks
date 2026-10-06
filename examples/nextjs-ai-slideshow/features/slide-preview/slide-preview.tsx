@@ -37,7 +37,7 @@ import {
   useVisualEditor,
 } from "@/features/visual-editor";
 import { patchIframeHtml } from "@/lib/iframe-html";
-import type { SlideProposal } from "./proposal-actions";
+import type { SlideProposal } from "@/features/ai-chat";
 import { SLIDE_HEIGHT, SLIDE_WIDTH, useSlideHtml } from "@/features/deck";
 
 type Coords = { x: number; y: number };
@@ -111,8 +111,6 @@ export function SlidePreview({
   onResolveProposal: (action: "apply" | "reject") => void;
 }) {
   const documentHtml = useSlideHtml(slideId, !isNewProposal);
-  // While previewing, pins stay hidden even on slides unaffected by the proposal
-  // set because accept/reject resolves the whole set.
   const html = proposalHtml ?? documentHtml;
   const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
   const [visualGestureActive, setVisualGestureActive] = useState(false);
@@ -234,8 +232,6 @@ export function SlidePreview({
     expectedBaseHtmlRef.current = null;
   }, [expectedVisualHtml, html, iframe, visualGestureActive]);
 
-  // Leave room around the slide so the shadow and proposal ring are visible
-  // even when the slide would otherwise fit exactly edge-to-edge.
   const availableWidth = Math.max(1, wrapperSize.width - PREVIEW_INSET * 2);
   const availableHeight = Math.max(1, wrapperSize.height - PREVIEW_INSET * 2);
   const scale = Math.min(
@@ -361,10 +357,6 @@ export function SlidePreview({
 
         {!proposal ? (
           <>
-            {/* `Cursors` must not be positioned absolute itself: its own
-                `.lb-cursors` class sets `position: relative`, and it measures
-                its OWN size to scale the normalized cursor coordinates — so
-                it needs a full-size wrapper instead. */}
             <div className="pointer-events-none absolute inset-0 z-10">
               <Cursors
                 className="h-full w-full"
@@ -729,9 +721,6 @@ function ThreadComposer({
   );
 }
 
-// The slide container is scaled with `transform: scale()`, which would shrink
-// or enlarge pins along with the slide. Pins should stay a constant on-screen
-// size, so this wrapper applies the inverse scale.
 function UnscaledPin({
   scale,
   children,
@@ -748,12 +737,6 @@ function UnscaledPin({
   );
 }
 
-// Overlay shown while placing a comment: tracks the cursor with a ghost pin
-// and turns a click into percentage coordinates. Coordinates are computed
-// from the overlay's bounding rect, so they stay correct regardless of the
-// slide's current `transform: scale()`. (The pin can't be `position: fixed`
-// with viewport coordinates like in the comments-canvas example, because the
-// scaled ancestor changes the containing block for fixed elements.)
 function PlacementOverlay({
   scale,
   onPlace,

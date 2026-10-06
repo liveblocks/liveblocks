@@ -24,7 +24,7 @@ vi.mock("@liveblocks/node", () => ({
   },
 }));
 
-import { POST } from "@/app/api/ai-reply/route";
+import { POST } from "../api/ai-reply";
 
 const ROOM = "liveblocks:examples:nextjs-ai-slideshow:ai";
 
