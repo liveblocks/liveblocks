@@ -427,8 +427,6 @@ function ChatWindow({
   );
 
   const lastMessage = sorted.at(-1);
-  const streamingInProgress =
-    lastMessage?.data.role === "assistant" && !!lastMessage.data.streaming;
   const followUps =
     !aiThinking &&
     lastMessage?.data.role === "assistant" &&

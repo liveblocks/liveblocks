@@ -172,6 +172,7 @@ export function useVisualEditor({
     finishTextEdit("cancel");
     callbacksRef.current.onCursorMove(null);
     setGestureActive(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resets editing state only when the slide changes; the handlers are per-render closures over refs
   }, [slideId]);
 
   useEffect(() => {
@@ -281,6 +282,7 @@ export function useVisualEditor({
       documentCleanupRef.current?.();
       documentCleanupRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- listeners are (re)attached only when the iframe, room or slide changes; the handlers are per-render closures over refs
   }, [iframe, room, slideId]);
 
   function setGestureActive(active: boolean) {

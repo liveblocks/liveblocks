@@ -277,6 +277,7 @@ function ThumbnailFrame({
         title={title}
         width={SLIDE_WIDTH}
         height={SLIDE_HEIGHT}
+        // eslint-disable-next-line react-hooks/refs -- srcDoc is latched to the first HTML; later edits are patched into the live document instead of reloading the thumbnail
         srcDoc={initialHtmlRef.current}
         sandbox="allow-same-origin"
         className="pointer-events-none absolute left-0 top-0 border-0 bg-white"

@@ -135,12 +135,14 @@ export function SlidePreview({
   const { ref: wrapperRef, size: wrapperSize } = useElementSize();
   const [placedCoords, setPlacedCoords] = useState<Coords | null>(null);
 
+  /* eslint-disable react-hooks/refs -- the iframe's srcDoc is latched per slide; these refs reset in render so the first paint of a new slide uses its own HTML */
   if (initialSrcDocRef.current.slideId !== slideId) {
     initialSrcDocRef.current = { slideId, html };
     appliedHtmlRef.current = html;
     pendingHtmlRef.current = null;
     expectedBaseHtmlRef.current = null;
   }
+  /* eslint-enable react-hooks/refs */
 
   useEffect(() => {
     latestHtmlRef.current = html;
@@ -213,6 +215,7 @@ export function SlidePreview({
     }
 
     if (expectedVisualHtml !== null && html === expectedVisualHtml) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the expectation once the shared HTML catches up with the local visual edit
       setExpectedVisualHtml(null);
       expectedBaseHtmlRef.current = null;
       appliedHtmlRef.current = html;
@@ -346,6 +349,7 @@ export function SlidePreview({
           title="Slide preview"
           width={SLIDE_WIDTH}
           height={SLIDE_HEIGHT}
+          // eslint-disable-next-line react-hooks/refs -- srcDoc is latched to the slide's first HTML; later edits are patched into the live document instead of reloading the iframe
           srcDoc={initialSrcDocRef.current.html}
           sandbox="allow-same-origin"
           className={cn(
@@ -543,6 +547,7 @@ function RemoteSelections({
   }, [iframe, slideId, visibleSelections]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- measures the iframe's DOM (an external system) and stores the rects
     recomputeRects();
     if (!iframe) {
       return;
@@ -556,6 +561,7 @@ function RemoteSelections({
 
   useEffect(() => {
     if (visibleSelections.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the measured rects when the last remote selection disappears
       setRects([]);
       return;
     }
@@ -636,6 +642,7 @@ function DraggableSlideThread({
   scale: number;
 }) {
   const defaultOpen = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity -- a thread created in the last 100ms is the one this user just placed, so it opens ready for typing
     return Date.now() - new Date(thread.createdAt).getTime() <= 100;
   }, [thread.createdAt]);
   const [isOpen, setIsOpen] = useState(defaultOpen);

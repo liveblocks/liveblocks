@@ -115,6 +115,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
   // fields so the chat/comment composers keep their native undo. CodeMirror
   // handles its own keymap on the Code tab.
   const undoRef = useRef({ undo, redo, active: false });
+  // eslint-disable-next-line react-hooks/refs -- latest-value ref: the window keydown listener below must never see a stale undo/redo
   undoRef.current = {
     undo,
     redo,
@@ -188,7 +189,8 @@ function SlideshowApp({ roomId }: { roomId: string }) {
   const fallbackIndex =
     slideIds.length === 0
       ? -1
-      : Math.min(previousSelectedIndex.current, slideIds.length - 1);
+      : // eslint-disable-next-line react-hooks/refs -- the last selected index is remembered across renders without re-rendering, so a deleted slide falls back to its neighbour
+        Math.min(previousSelectedIndex.current, slideIds.length - 1);
   const slideId =
     selectedIndex === -1 ? (slideIds[fallbackIndex] ?? null) : selectedSlideId;
 
@@ -271,6 +273,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
 
   useEffect(() => {
     if (pendingSlideId && slideIds.includes(pendingSlideId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- selection waits for the new slide to arrive from the shared Yjs document
       selectSlide(pendingSlideId);
       setPendingSlideId(null);
     }
