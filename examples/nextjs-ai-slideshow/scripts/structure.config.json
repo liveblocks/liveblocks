@@ -1,0 +1,52 @@
+{
+  "layers": {
+    "app": ["views", "features", "components", "lib"],
+    "views": ["features", "components", "lib"],
+    "features": ["features", "components", "lib"],
+    "components": ["components", "lib"],
+    "lib": ["lib"]
+  },
+  "featureRoot": "features",
+  "viewRoot": "views",
+  "surfaceFile": "index.ts",
+  "serverDir": "api",
+  "allowedDeepImports": [{ "from": "app/api/**", "to": "features/*/api/**" }],
+  "testInfra": ["tests/**"],
+  "entryFiles": [
+    "app/layout.tsx",
+    "app/page.tsx",
+    "app/providers.tsx",
+    "app/globals.css",
+    "app/api/**/route.ts"
+  ],
+  "commentsExempt": ["components/**", "liveblocks.config.ts"],
+  "testExempt": ["components/ai-elements/**", "components/ui/**"],
+  "featureMapDirectoryRows": ["components/ai-elements/", "components/ui/"],
+  "removedDirs": [],
+  "sizeWarnLines": 300,
+  "legacy": {
+    "app/chat.tsx": "features/ai-chat/",
+    "app/proposal-actions.ts": "features/ai-chat/",
+    "app/api/ai-reply/": "features/ai-chat/api/",
+    "app/api/apply-slide/": "features/ai-chat/api/",
+    "app/collaborative-editor.tsx": "features/code-editor/",
+    "app/slides.ts": "features/deck/",
+    "app/slide-doc.ts": "features/deck/",
+    "app/slide-html.ts": "features/deck/",
+    "app/slide-sidebar.tsx": "features/deck/",
+    "app/api/replace-room-html/": "features/deck/api/",
+    "app/slide-preview.tsx": "features/slide-preview/",
+    "app/visual-editor.tsx": "features/visual-editor/",
+    "app/html-source-map.ts": "features/visual-editor/",
+    "app/slide-undo.ts": "features/visual-editor/",
+    "app/database.ts": "features/users/",
+    "app/api/liveblocks-auth/": "features/users/api/",
+    "app/api/users/": "features/users/api/",
+    "app/page.tsx": "views/slideshow-app/ and features/pptx-export/",
+    "app/iframe-html.ts": "lib/",
+    "hooks/": "lib/",
+    "tests/*.test.ts": "features/<feature>/tests/ or lib/tests/",
+    "tests/*.test.tsx": "features/<feature>/tests/",
+    "tests/*.spec.ts": "features/<feature>/tests/"
+  }
+}

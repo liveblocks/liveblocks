@@ -12,10 +12,14 @@
     "lint": "eslint . --max-warnings 0",
     "format:check": "prettier --check .",
     "fix": "prettier --write . && eslint . --fix",
+    "lint:structure": "node scripts/check-structure.mjs",
+    "graph": "node scripts/check-structure.mjs --graph",
+    "owner": "node scripts/check-structure.mjs --owner",
     "test": "vitest run",
     "test:baseline": "node scripts/check-test-baseline.mjs",
     "e2e": "playwright test",
-    "check": "npm run format:check && npm run typecheck && npm run lint && npm run test:baseline",
+    "check": "npm run format:check && npm run lint:structure && npm run typecheck && npm run lint && npm run test:baseline",
+    "check:feature": "node scripts/check-feature.mjs",
     "check:all": "npm run check && npm run e2e"
   },
   "dependencies": {
