@@ -5,7 +5,7 @@ import {
   findElementSourceRange,
   getElementByPath,
   getElementPath,
-} from "@/app/html-source-map";
+} from "../html-source-map";
 
 const html = `<!doctype html>
 <html>

@@ -4,7 +4,7 @@ import {
   previewFrame,
   STARTER_HEADLINE,
   uniqueRoomUrl,
-} from "./e2e-helpers";
+} from "@/tests/e2e-helpers";
 
 test("double-clicking text in the preview edits it inline and writes the change to the shared HTML", async ({
   browser,

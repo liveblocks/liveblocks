@@ -31,12 +31,14 @@ import type { MouseEvent, ReactNode } from "react";
 import { EyeIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getElementByPath } from "./html-source-map";
+import {
+  getElementByPath,
+  useSlideUndo,
+  useVisualEditor,
+} from "@/features/visual-editor";
 import { patchIframeHtml } from "@/lib/iframe-html";
 import type { SlideProposal } from "./proposal-actions";
 import { SLIDE_HEIGHT, SLIDE_WIDTH, useSlideHtml } from "@/features/deck";
-import { useSlideUndo } from "./slide-undo";
-import { useVisualEditor } from "./visual-editor";
 
 type Coords = { x: number; y: number };
 

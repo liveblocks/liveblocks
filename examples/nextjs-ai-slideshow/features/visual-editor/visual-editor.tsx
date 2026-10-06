@@ -96,7 +96,6 @@ export type VisualEditorOptions = {
   onRedo: () => void;
 };
 
-// True for Mod-z / Mod-Shift-z / Mod-y. Returns the action or null.
 export function matchUndoRedoShortcut(
   event: KeyboardEvent
 ): "undo" | "redo" | null {
@@ -234,9 +233,6 @@ export function useVisualEditor({
         clearHover();
       };
 
-      // Mod-z / Mod-y while focus is inside the slide iframe. Disabled during
-      // inline text editing, where the browser's native contentEditable undo
-      // should keep handling the keystrokes.
       const handleKeyDown = (event: KeyboardEvent) => {
         if (textEditRef.current) {
           return;
@@ -343,9 +339,7 @@ export function useVisualEditor({
     selectElement(target);
     try {
       target.setPointerCapture(event.pointerId);
-    } catch {
-      // Pointer capture can fail if the iframe loses the pointer mid-gesture.
-    }
+    } catch {}
     const initialTransform = isHtmlElement(target)
       ? target.style.transform
       : "";
@@ -411,9 +405,7 @@ export function useVisualEditor({
     pointerGestureRef.current = null;
     try {
       gesture.element.releasePointerCapture(event.pointerId);
-    } catch {
-      // The browser may already have released capture on pointer cancel.
-    }
+    } catch {}
 
     if (action === "cancel" && isHtmlElement(gesture.element)) {
       gesture.streamCommit?.cancel();
@@ -467,8 +459,6 @@ export function useVisualEditor({
           finishTextEdit("commit");
           return;
         }
-        // The browser's default Enter behavior wraps lines in nested <div>s
-        // (breaking the element's markup); insert a plain <br> instead.
         insertLineBreak(target);
         streamCommit?.schedule();
       }
@@ -776,11 +766,6 @@ function insertLineBreak(element: HTMLElement) {
   const br = document.createElement("br");
   range.insertNode(br);
 
-  // Anchor the caret in a zero-width-space text node AFTER the break:
-  // placing it directly between the <br> and a preceding text node makes the
-  // browser normalize it back into that text node, so typing would land
-  // before the break. The marker also keeps the new line rendered while
-  // empty. Zero-width spaces are stripped again at serialization time.
   const marker = document.createTextNode(ZERO_WIDTH_SPACE);
   br.after(marker);
 

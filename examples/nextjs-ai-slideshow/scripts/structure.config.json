@@ -36,9 +36,6 @@
     "app/api/apply-slide/": "features/ai-chat/api/",
     "app/collaborative-editor.tsx": "features/code-editor/",
     "app/slide-preview.tsx": "features/slide-preview/",
-    "app/visual-editor.tsx": "features/visual-editor/",
-    "app/html-source-map.ts": "features/visual-editor/",
-    "app/slide-undo.ts": "features/visual-editor/",
     "app/page.tsx": "views/slideshow-app/ and features/pptx-export/",
     "tests/*.test.ts": "features/<feature>/tests/ or lib/tests/",
     "tests/*.spec.ts": "features/<feature>/tests/"

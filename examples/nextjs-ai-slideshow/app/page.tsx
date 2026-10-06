@@ -33,8 +33,7 @@ import {
   useSlides,
 } from "@/features/deck";
 import { SlidePreview } from "./slide-preview";
-import { useSlideUndo } from "./slide-undo";
-import { matchUndoRedoShortcut } from "./visual-editor";
+import { matchUndoRedoShortcut, useSlideUndo } from "@/features/visual-editor";
 
 type Panel = "slide" | "code";
 
