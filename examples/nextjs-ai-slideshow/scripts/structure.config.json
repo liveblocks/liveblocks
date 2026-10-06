@@ -10,7 +10,12 @@
   "viewRoot": "views",
   "surfaceFile": "index.ts",
   "serverDir": "api",
-  "allowedDeepImports": [{ "from": "app/api/**", "to": "features/*/api/**" }],
+  "allowedDeepImports": [
+    {
+      "from": "app/api/**",
+      "to": "features/*/api/**"
+    }
+  ],
   "testInfra": ["tests/**"],
   "entryFiles": [
     "app/layout.tsx",
@@ -39,9 +44,6 @@
     "app/visual-editor.tsx": "features/visual-editor/",
     "app/html-source-map.ts": "features/visual-editor/",
     "app/slide-undo.ts": "features/visual-editor/",
-    "app/database.ts": "features/users/",
-    "app/api/liveblocks-auth/": "features/users/api/",
-    "app/api/users/": "features/users/api/",
     "app/page.tsx": "views/slideshow-app/ and features/pptx-export/",
     "tests/*.test.ts": "features/<feature>/tests/ or lib/tests/",
     "tests/*.test.tsx": "features/<feature>/tests/",

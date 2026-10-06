@@ -3,7 +3,6 @@ export const AI_USER_NAME = "Liveblocks AI";
 export const AI_USER_AVATAR =
   "https://liveblocks.io/api/avatar?u=ai-assistant&agent=true";
 
-// A mock database with example users
 const USER_INFO: Liveblocks["UserMeta"][] = [
   {
     id: "charlie.layne@example.com",

@@ -400,12 +400,13 @@ function ruleTestPlacement() {
 }
 
 function firstLine(markdown) {
-  return (
-    markdown
-      .split("\n")
-      .map((l) => l.trim())
-      .find((l) => l && !l.startsWith("#")) ?? ""
-  );
+  const lines = markdown.split("\n").map((l) => l.trim());
+  const start = lines.findIndex((l) => l && !l.startsWith("#"));
+  if (start === -1) return "";
+  const paragraph = [];
+  for (let i = start; i < lines.length && lines[i]; i++)
+    paragraph.push(lines[i]);
+  return paragraph.join(" ");
 }
 
 function parseTables(markdown) {

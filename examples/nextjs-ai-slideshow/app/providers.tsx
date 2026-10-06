@@ -2,7 +2,7 @@
 
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { PropsWithChildren } from "react";
-import { getRandomUser } from "./database";
+import { getRandomUser } from "@/features/users";
 
 const userId = getRandomUser().id;
 

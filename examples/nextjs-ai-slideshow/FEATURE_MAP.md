@@ -6,8 +6,9 @@ that owns a file, run `npm run owner -- <path>`.
 
 ## Features
 
-| Feature | What a user can do | Also called |
-| ------- | ------------------ | ----------- |
+| Feature                            | What a user can do                                                                            | Also called                       |
+| ---------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------- |
+| [users](features/users/FEATURE.md) | Join a room as one of the example's demo users and see who else is in it, by name and avatar. | presence, avatars, auth, mentions |
 
 ## Views
 
@@ -59,9 +60,6 @@ that owns a file, run `npm run owner -- <path>`.
 | `app/visual-editor.tsx`        | `features/visual-editor/`                        |
 | `app/html-source-map.ts`       | `features/visual-editor/`                        |
 | `app/slide-undo.ts`            | `features/visual-editor/`                        |
-| `app/database.ts`              | `features/users/`                                |
-| `app/api/liveblocks-auth/`     | `features/users/api/`                            |
-| `app/api/users/`               | `features/users/api/`                            |
 | `app/page.tsx`                 | `views/slideshow-app/ and features/pptx-export/` |
 | `tests/*.test.ts`              | `features/<feature>/tests/ or lib/tests/`        |
 | `tests/*.test.tsx`             | `features/<feature>/tests/`                      |

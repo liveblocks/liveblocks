@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AI_USER_ID } from "@/app/database";
+import { AI_USER_ID } from "@/features/users";
 
 type UpdatePayload = Record<string, unknown>;
 

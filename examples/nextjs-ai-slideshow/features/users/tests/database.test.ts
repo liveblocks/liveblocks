@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-import { getRandomUser, getUser, getUsers } from "@/app/database";
-import { GET as getUsersRoute } from "@/app/api/users/route";
-import { GET as searchUsersRoute } from "@/app/api/users/search/route";
+import { getRandomUser, getUser, getUsers } from "../database";
+import { GET as getUsersRoute } from "../api/users";
+import { GET as searchUsersRoute } from "../api/users-search";
 
 describe("database helpers", () => {
   it("getUser finds by id and returns undefined for unknown ids", () => {

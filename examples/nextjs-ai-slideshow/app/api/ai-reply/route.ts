@@ -1,6 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import { AI_USER_AVATAR, AI_USER_ID, AI_USER_NAME } from "@/app/database";
+import { AI_USER_AVATAR, AI_USER_ID, AI_USER_NAME } from "@/features/users";
 import { INITIAL_SLIDE_ID } from "@/app/slide-doc";
 import { STARTER_SLIDE_HTML } from "@/app/slide-html";
 import {
