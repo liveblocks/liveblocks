@@ -20,7 +20,10 @@
     "e2e": "playwright test",
     "check": "npm run format:check && npm run lint:structure && npm run typecheck && npm run lint && npm run test:baseline",
     "check:feature": "node scripts/check-feature.mjs",
-    "check:all": "npm run check && npm run e2e"
+    "check:all": "npm run check && npm run e2e",
+    "new:feature": "node scripts/new-feature.mjs",
+    "env:check": "node scripts/env-check.mjs",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.4",
