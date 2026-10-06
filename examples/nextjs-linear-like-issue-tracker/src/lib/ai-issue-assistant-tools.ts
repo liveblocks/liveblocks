@@ -243,59 +243,6 @@ function updateIssuePropertiesTool(
   });
 }
 
-function updateIssuePropertyFieldsTool(
-  roomId: string,
-  state: AiIssueAssistantToolRunState
-) {
-  return tool({
-    description:
-      "Update this issue's progress, priority, and/or assignee in storage (and room metadata). Only pass fields you are changing.",
-    inputSchema: z.object({
-      progress: z.enum(ISSUE_PROGRESS_IDS).optional(),
-      priority: z.enum(ISSUE_PRIORITY_IDS).optional(),
-      assignedTo: z
-        .union([z.literal("none"), z.string().min(1)])
-        .optional()
-        .describe(
-          'Use "none" or an exact user id from the system prompt list.'
-        ),
-    }),
-    execute: async (patch) => {
-      const { progress, priority, assignedTo } = patch;
-      const updates: IssuePropertyUpdates = {};
-      if (progress !== undefined) updates.progress = progress;
-      if (priority !== undefined) updates.priority = priority;
-      if (assignedTo !== undefined) updates.assignedTo = assignedTo;
-      if (Object.keys(updates).length === 0) {
-        return { updated: false as const };
-      }
-      await applyIssuePropertyUpdates(roomId, updates);
-      state.issuePropertiesUpdated = true;
-      return { updated: true as const };
-    },
-  });
-}
-
-function updateIssueLabelsTool(
-  roomId: string,
-  state: AiIssueAssistantToolRunState
-) {
-  return tool({
-    description:
-      "Set this issue's labels (replaces the existing label set).",
-    inputSchema: z.object({
-      labels: z
-        .array(z.enum(ISSUE_LABEL_IDS))
-        .describe("Full label set to apply (replaces existing)."),
-    }),
-    execute: async ({ labels }) => {
-      await applyIssuePropertyUpdates(roomId, { labels });
-      state.issuePropertiesUpdated = true;
-      return { updated: true as const };
-    },
-  });
-}
-
 function listRecentIssuesTool() {
   return tool({
     description:
@@ -393,29 +340,13 @@ export function createAiIssueAssistantTools(
   };
 }
 
+// The "links" sparkle button only gets the links tool. The "properties" and
+// "labels" buttons don't use tools at all; they ask Jev (ai-issue-button-jev.ts).
 export function createButtonLinksTools(
   roomId: string,
   state: AiIssueAssistantToolRunState
 ) {
   return {
     append_issue_links: appendIssueLinksTool(roomId, state),
-  };
-}
-
-export function createButtonPropertiesTools(
-  roomId: string,
-  state: AiIssueAssistantToolRunState
-) {
-  return {
-    update_issue_properties: updateIssuePropertyFieldsTool(roomId, state),
-  };
-}
-
-export function createButtonLabelsTools(
-  roomId: string,
-  state: AiIssueAssistantToolRunState
-) {
-  return {
-    update_issue_labels: updateIssueLabelsTool(roomId, state),
   };
 }
