@@ -93,7 +93,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { HelpButton } from "@/components/help-button";
 import { resolveProposal, type SlideProposal } from "./proposal-actions";
-import { getSlideIds, getSlideText } from "./slide-doc";
+import { getSlideIds, getSlideText } from "@/features/deck";
 
 // Each chat is a feed in the room. Everyone connected reads and writes to the
 // selected feed, so messages (and the AI's replies) appear live for all users.

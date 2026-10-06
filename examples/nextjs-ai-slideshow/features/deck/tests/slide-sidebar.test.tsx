@@ -2,9 +2,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { SlideSidebar } from "@/app/slide-sidebar";
+import { SlideSidebar } from "../slide-sidebar";
 
-vi.mock("@/app/slides", () => ({
+vi.mock("../slides", () => ({
   useSlideHtml: () => "<html><body>thumb</body></html>",
 }));
 

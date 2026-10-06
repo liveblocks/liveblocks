@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import * as Y from "yjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getSlideIds, getSlideText, SLIDES_ARRAY_KEY } from "@/app/slide-doc";
+import { getSlideIds, getSlideText, SLIDES_ARRAY_KEY } from "../slide-doc";
 
 const lb = vi.hoisted(() => {
   let serverDoc: Y.Doc | undefined;
@@ -29,7 +29,7 @@ vi.mock("@liveblocks/node", () => ({
   },
 }));
 
-import { POST } from "@/app/api/replace-room-html/route";
+import { POST } from "../api/replace-room-html";
 
 const ROOM = "liveblocks:examples:nextjs-ai-slideshow:deck";
 

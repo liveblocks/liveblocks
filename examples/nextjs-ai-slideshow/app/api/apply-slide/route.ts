@@ -3,7 +3,7 @@ import { Liveblocks } from "@liveblocks/node";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import * as Y from "yjs";
-import { getSlideIds, getSlideText, SLIDES_ARRAY_KEY } from "@/app/slide-doc";
+import { getSlideIds, getSlideText, SLIDES_ARRAY_KEY } from "@/features/deck";
 
 type SlideProposal = { slideId: string; html: string };
 

@@ -157,11 +157,6 @@ export function useSlideHtml(slideId: string, enabled = true): string {
 
   const [state, setState] = useState(() => ({ slideId, html: readHtml() }));
 
-  // Recompute synchronously when the slide changes so consumers never render
-  // one frame of the previous slide's HTML (the iframe srcDoc is set once per
-  // slide, so a stale first value would stick). The fresh value must also be
-  // returned from THIS render: a render-phase setState only applies on the
-  // re-render, and this very render's value is what gets latched.
   let html = state.html;
   if (state.slideId !== slideId) {
     html = readHtml();

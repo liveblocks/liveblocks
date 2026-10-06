@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import * as Y from "yjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getSlideIds, getSlideText, SLIDES_ARRAY_KEY } from "@/app/slide-doc";
+import { getSlideIds, getSlideText, SLIDES_ARRAY_KEY } from "@/features/deck";
 
 type FeedMessage = {
   id: string;

@@ -9,7 +9,7 @@ import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { yCollab } from "y-codemirror.next";
 import * as Y from "yjs";
-import { getSlideText } from "./slide-doc";
+import { getSlideText } from "@/features/deck";
 
 // The code editor's undo/redo state and actions, mirroring exactly what the
 // editor's own Mod-z/Mod-y keybindings do. Exposed so the header undo/redo

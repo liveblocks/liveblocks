@@ -9,7 +9,7 @@ import {
   getSlideText,
   slideTextKey,
   SLIDES_ARRAY_KEY,
-} from "./slide-doc";
+} from "@/features/deck";
 
 export const VISUAL_EDIT_ORIGIN = "visual-edit";
 

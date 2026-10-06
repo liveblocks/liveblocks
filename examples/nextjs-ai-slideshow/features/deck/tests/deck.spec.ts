@@ -6,7 +6,7 @@ import {
   STARTER_HEADLINE,
   thumbnails,
   uniqueRoomUrl,
-} from "./e2e-helpers";
+} from "@/tests/e2e-helpers";
 
 test("a new room opens with one starter slide and no delete control", async ({
   page,

@@ -6,7 +6,7 @@ import {
   INITIAL_SLIDE_ID,
   slideTextKey,
   SLIDES_ARRAY_KEY,
-} from "@/app/slide-doc";
+} from "../slide-doc";
 
 describe("slide-doc constants", () => {
   it("INITIAL_SLIDE_ID is initial and SLIDES_ARRAY_KEY is slides", () => {

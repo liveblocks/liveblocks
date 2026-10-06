@@ -2,7 +2,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import * as Y from "yjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getSlideText, SLIDES_ARRAY_KEY } from "@/app/slide-doc";
+import { getSlideText, SLIDES_ARRAY_KEY } from "@/features/deck";
 import { useSlideUndo, VISUAL_EDIT_ORIGIN } from "@/app/slide-undo";
 
 const dummyRoom = {};

@@ -23,12 +23,17 @@ import {
   type EditorHistory,
 } from "./collaborative-editor";
 import { resolveProposal, type SlideProposal } from "./proposal-actions";
-import { getSlideIds, getSlideText } from "./slide-doc";
-import { SLIDE_HEIGHT, SLIDE_WIDTH, STARTER_SLIDE_HTML } from "./slide-html";
+import {
+  getSlideIds,
+  getSlideText,
+  SLIDE_HEIGHT,
+  SLIDE_WIDTH,
+  SlideSidebar,
+  STARTER_SLIDE_HTML,
+  useSlides,
+} from "@/features/deck";
 import { SlidePreview } from "./slide-preview";
-import { SlideSidebar } from "./slide-sidebar";
 import { useSlideUndo } from "./slide-undo";
-import { useSlides } from "./slides";
 import { matchUndoRedoShortcut } from "./visual-editor";
 
 type Panel = "slide" | "code";

@@ -6,9 +6,10 @@ that owns a file, run `npm run owner -- <path>`.
 
 ## Features
 
-| Feature                            | What a user can do                                                                            | Also called                       |
-| ---------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------- |
-| [users](features/users/FEATURE.md) | Join a room as one of the example's demo users and see who else is in it, by name and avatar. | presence, avatars, auth, mentions |
+| Feature                            | What a user can do                                                                                    | Also called                            |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| [deck](features/deck/FEATURE.md)   | Add, reorder, select and delete the slides of a shared deck, and see every slide as a live thumbnail. | slides, sidebar, thumbnails, slideshow |
+| [users](features/users/FEATURE.md) | Join a room as one of the example's demo users and see who else is in it, by name and avatar.         | presence, avatars, auth, mentions      |
 
 ## Views
 
@@ -51,16 +52,10 @@ that owns a file, run `npm run owner -- <path>`.
 | `app/api/ai-reply/`            | `features/ai-chat/api/`                          |
 | `app/api/apply-slide/`         | `features/ai-chat/api/`                          |
 | `app/collaborative-editor.tsx` | `features/code-editor/`                          |
-| `app/slides.ts`                | `features/deck/`                                 |
-| `app/slide-doc.ts`             | `features/deck/`                                 |
-| `app/slide-html.ts`            | `features/deck/`                                 |
-| `app/slide-sidebar.tsx`        | `features/deck/`                                 |
-| `app/api/replace-room-html/`   | `features/deck/api/`                             |
 | `app/slide-preview.tsx`        | `features/slide-preview/`                        |
 | `app/visual-editor.tsx`        | `features/visual-editor/`                        |
 | `app/html-source-map.ts`       | `features/visual-editor/`                        |
 | `app/slide-undo.ts`            | `features/visual-editor/`                        |
 | `app/page.tsx`                 | `views/slideshow-app/ and features/pptx-export/` |
 | `tests/*.test.ts`              | `features/<feature>/tests/ or lib/tests/`        |
-| `tests/*.test.tsx`             | `features/<feature>/tests/`                      |
 | `tests/*.spec.ts`              | `features/<feature>/tests/`                      |

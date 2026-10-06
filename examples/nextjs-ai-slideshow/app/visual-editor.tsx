@@ -10,8 +10,7 @@ import {
   getElementByPath,
   getElementPath,
 } from "./html-source-map";
-import { getSlideText } from "./slide-doc";
-import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
+import { getSlideText, SLIDE_HEIGHT, SLIDE_WIDTH } from "@/features/deck";
 import { VISUAL_EDIT_ORIGIN } from "./slide-undo";
 
 const HOVER_ATTR = "data-lb-hover";

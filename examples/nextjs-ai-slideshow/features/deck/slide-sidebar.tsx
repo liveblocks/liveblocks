@@ -254,9 +254,6 @@ function ThumbnailFrame({
   hasProposal: boolean;
 }) {
   const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
-  // srcDoc is latched to the first value; later updates are patched into the
-  // live document in place, so streaming edits don't reload (flash) the
-  // thumbnail on every change.
   const initialHtmlRef = useRef(html);
   const appliedHtmlRef = useRef(html);
 

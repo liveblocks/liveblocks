@@ -34,9 +34,8 @@ import { cn } from "@/lib/utils";
 import { getElementByPath } from "./html-source-map";
 import { patchIframeHtml } from "@/lib/iframe-html";
 import type { SlideProposal } from "./proposal-actions";
-import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./slide-html";
+import { SLIDE_HEIGHT, SLIDE_WIDTH, useSlideHtml } from "@/features/deck";
 import { useSlideUndo } from "./slide-undo";
-import { useSlideHtml } from "./slides";
 import { useVisualEditor } from "./visual-editor";
 
 type Coords = { x: number; y: number };
