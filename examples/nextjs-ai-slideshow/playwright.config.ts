@@ -31,7 +31,11 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "node scripts/dev-local.mjs --mock-ai",
+    // LIVEBLOCKS_CLOUD=1 runs against the real backend using .env.local keys,
+    // which unlocks the cloud-only specs (Feeds, Comments).
+    command: process.env.LIVEBLOCKS_CLOUD
+      ? `npx next dev --port ${port}`
+      : "node scripts/dev-local.mjs --mock-ai",
     url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,
