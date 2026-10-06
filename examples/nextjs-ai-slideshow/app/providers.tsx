@@ -24,6 +24,7 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
       throttle={16}
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       authEndpoint={authWithRandomUser("/api/liveblocks-auth")}
       // Resolve user info (name, avatar) from their id. Used by AvatarStack and
       // any other presence UI to show who's currently in the room.

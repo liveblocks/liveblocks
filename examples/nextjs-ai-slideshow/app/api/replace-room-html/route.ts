@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
 
   const liveblocks = new Liveblocks({
     secret: process.env.LIVEBLOCKS_SECRET_KEY,
+    baseUrl: process.env.LIVEBLOCKS_BASE_URL,
   });
 
   const slideIds = await replaceRoomDeck(liveblocks, roomId, slides);
