@@ -12,7 +12,11 @@
     "lint": "eslint . --max-warnings 0",
     "format:check": "prettier --check .",
     "fix": "prettier --write . && eslint . --fix",
-    "check": "npm run format:check && npm run typecheck && npm run lint"
+    "test": "vitest run",
+    "test:baseline": "node scripts/check-test-baseline.mjs",
+    "e2e": "playwright test",
+    "check": "npm run format:check && npm run typecheck && npm run lint && npm run test:baseline",
+    "check:all": "npm run check && npm run e2e"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.4",

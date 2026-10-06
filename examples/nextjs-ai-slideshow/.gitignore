@@ -6,6 +6,7 @@ node_modules
 *.tsbuildinfo
 .vercel
 .next
+.next-*
 out
 next-env.d.ts
 # Turborepo
