@@ -40,7 +40,10 @@ function resolveRange(ydoc, ytext, startAnchor, endAnchor) {
 }
 
 function syncUpdate(fromDoc, toDoc) {
-  Y.applyUpdate(toDoc, Y.encodeStateAsUpdate(fromDoc, Y.encodeStateVector(toDoc)));
+  Y.applyUpdate(
+    toDoc,
+    Y.encodeStateAsUpdate(fromDoc, Y.encodeStateVector(toDoc))
+  );
 }
 
 function replaceAndReanchor(ydoc, ytext, startAnchor, endAnchor, replacement) {

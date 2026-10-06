@@ -81,7 +81,11 @@ export async function POST(request: NextRequest) {
       return new NextResponse("Slide proposals not found", { status: 404 });
     }
 
-    newSlideIds = await applyProposalsToYjsDocument(liveblocks, roomId, proposals);
+    newSlideIds = await applyProposalsToYjsDocument(
+      liveblocks,
+      roomId,
+      proposals
+    );
   }
 
   await liveblocks.updateFeedMessage<FeedMessageData>({

@@ -60,7 +60,11 @@ export function findElementSourceRange(
   }
 
   for (const index of path) {
-    if (!Number.isInteger(index) || index < 0 || element.tagName === "template") {
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      element.tagName === "template"
+    ) {
       return null;
     }
 
@@ -81,7 +85,10 @@ export function findElementSourceRange(
   };
 }
 
-export function getElementPath(element: Element, root: Element): number[] | null {
+export function getElementPath(
+  element: Element,
+  root: Element
+): number[] | null {
   if (element === root) {
     return [];
   }
@@ -115,7 +122,10 @@ export function getElementPath(element: Element, root: Element): number[] | null
   return current === root ? path : null;
 }
 
-export function getElementByPath(root: Element, path: number[]): Element | null {
+export function getElementByPath(
+  root: Element,
+  path: number[]
+): Element | null {
   let element: Element = root;
 
   for (const index of path) {

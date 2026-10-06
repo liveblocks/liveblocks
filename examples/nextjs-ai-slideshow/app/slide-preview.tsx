@@ -26,13 +26,7 @@ import {
   FloatingComposer,
   FloatingThread,
 } from "@liveblocks/react-ui";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 import { EyeIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -345,7 +345,9 @@ export function useVisualEditor({
     } catch {
       // Pointer capture can fail if the iframe loses the pointer mid-gesture.
     }
-    const initialTransform = isHtmlElement(target) ? target.style.transform : "";
+    const initialTransform = isHtmlElement(target)
+      ? target.style.transform
+      : "";
 
     pointerGestureRef.current = {
       context,
@@ -568,7 +570,12 @@ export function useVisualEditor({
     }
 
     const currentHtml = context.ytext.toString();
-    if (!startsWithTagName(currentHtml.slice(start.index, end.index), context.tagName)) {
+    if (
+      !startsWithTagName(
+        currentHtml.slice(start.index, end.index),
+        context.tagName
+      )
+    ) {
       context.dropped = true;
       return;
     }
@@ -901,7 +908,9 @@ function removeEditorAttributes(element: Element) {
 }
 
 function startsWithTagName(html: string, tagName: string): boolean {
-  return new RegExp(`^\\s*<${escapeRegExp(tagName)}(?:\\s|>|/)`, "i").test(html);
+  return new RegExp(`^\\s*<${escapeRegExp(tagName)}(?:\\s|>|/)`, "i").test(
+    html
+  );
 }
 
 function escapeRegExp(value: string): string {
@@ -922,7 +931,10 @@ function applyHtmlDiff(ytext: Y.Text, nextHtml: string) {
   }
 }
 
-function createThrottledAction(delay: number, callback: () => void): ThrottledAction {
+function createThrottledAction(
+  delay: number,
+  callback: () => void
+): ThrottledAction {
   let timer: number | null = null;
   let pending = false;
 

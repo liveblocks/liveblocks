@@ -12,7 +12,10 @@ type TransformSnapshot = {
 // `srcDoc`, which would trigger a full document reload (white flash, lost
 // document-level event listeners). A synthetic "load" event is dispatched so
 // consumers that re-attach on load (e.g. the visual editor) get notified.
-export function patchIframeHtml(iframe: HTMLIFrameElement | null, html: string) {
+export function patchIframeHtml(
+  iframe: HTMLIFrameElement | null,
+  html: string
+) {
   if (!iframe) {
     return;
   }
@@ -173,10 +176,10 @@ function interpolateTransform(
 }
 
 function createTransformAnimation(element: Element, transform: string) {
-  const animation = element.animate(
-    [{ transform }, { transform }],
-    { duration: 1, fill: "forwards" }
-  );
+  const animation = element.animate([{ transform }, { transform }], {
+    duration: 1,
+    fill: "forwards",
+  });
   animation.pause();
   animation.currentTime = 1;
   return animation;

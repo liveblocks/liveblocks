@@ -4,7 +4,12 @@ import { useRoom } from "@liveblocks/react/suspense";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
-import { getSlideIds, getSlideText, slideTextKey, SLIDES_ARRAY_KEY } from "./slide-doc";
+import {
+  getSlideIds,
+  getSlideText,
+  slideTextKey,
+  SLIDES_ARRAY_KEY,
+} from "./slide-doc";
 
 export const VISUAL_EDIT_ORIGIN = "visual-edit";
 
