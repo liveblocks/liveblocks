@@ -1,0 +1,6 @@
+package-lock.json
+.next-*
+playwright-report
+test-results
+coverage
+.lb-dev
