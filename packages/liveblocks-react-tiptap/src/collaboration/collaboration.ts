@@ -212,10 +212,9 @@ export const Collaboration = Extension.create<
     yUndoPluginInstance.spec.view = (view: EditorView) => {
       const { undoManager } = yUndoPluginKey.getState(view.state)!;
 
-      if (
-        "restore" in undoManager &&
-        typeof undoManager.restore === "function"
-      ) {
+      // Match @tiptap/extension-collaboration: call restore when present, then
+      // install a reattach hook unconditionally on destroy (see #3394).
+      if (undoManager.restore) {
         undoManager.restore();
         undoManager.restore = () => {
           // noop
@@ -231,13 +230,6 @@ export const Collaboration = Extension.create<
           const hasUndoManSelf = undoManager.trackedOrigins.has(undoManager);
           const observers = undoManager._observers;
 
-          // Always install the reattach `restore()`, regardless of whether
-          // one already exists on the UndoManager. The previous guarded
-          // version was a no-op for standard `Y.UndoManager` (which has no
-          // `restore` method), causing the UndoManager to be permanently
-          // orphaned after the first plugin reconfigure (e.g. BubbleMenu /
-          // DragHandle / SlashCommand mount). Matches upstream
-          // `@tiptap/extension-collaboration`.
           undoManager.restore = () => {
             if (hasUndoManSelf) {
               undoManager.trackedOrigins.add(undoManager);
