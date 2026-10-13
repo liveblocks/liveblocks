@@ -13,6 +13,11 @@ technical limits.
 
 Each plan has limits that protect your account and your costs.
 
+The Pro and Team monthly active room allowances shown below take effect on
+**November 12, 2026**. See
+[monthly active room limits](#monthly-active-room-limits) for how rooms are
+counted and what happens at the limit.
+
 | Metric                                                                                                                                                                                                                                                                                                          | Free                                               | Pro                                               | Team                                               | Enterprise                                                                                                                                                       |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <LimitLabel tooltip={<>The number of users who used Liveblocks features in a given month. <a href="/docs/pricing/faqs#What-is-a-monthly-active-user" className="font-medium text-product-brand">Learn more.</a></>}>Monthly active users</LimitLabel>                                                           | <Limits.FreeMaxMau />                              | <Limits.ProMaxMau />                              | <Limits.TeamMaxMau />                              | <Limits.EnterpriseMaxMau />                                                                                                                                      |
@@ -41,9 +46,52 @@ dashboard banner as you approach one, then pauses that activity until it resets
 at the start of the next month. Upgrade to [Pro](/dashboard/billing?plan=pro) or
 [Team](/dashboard/billing?plan=team) to lift the cap.
 
-On Pro and Team, there are no hard caps for metered usage. Usage above your
-monthly credits keeps running and is billed as overage, with alerts along the
-way so nothing is interrupted.
+On Pro and Team, metered usage above your monthly credits keeps running and is
+billed as overage. Starting November 12, 2026, reaching your monthly active room
+allowance blocks the creation of new rooms, as described below.
+
+## Monthly active room limits [#monthly-active-room-limits]
+
+Starting **November 12, 2026**, Pro workspaces have an allowance of
+{/* prettier-ignore */} <Limits.ProMaxMonthlyActiveRooms /> monthly active rooms, and Team workspaces have
+{/* prettier-ignore */} <Limits.TeamMaxMonthlyActiveRooms />. These limits apply to the January 2026 and April
+2026 Pro and Team plans, on both monthly and annual billing.
+
+The allowance is shared across all projects and regions in a workspace. Each
+distinct room counts once during the month, using the existing
+[monthly active room definition](/docs/pricing/faqs#What-is-a-monthly-active-room).
+Free plan limits, Enterprise and custom agreements, and monthly active user
+limits are unchanged.
+
+### Reaching the allowance
+
+Once a workspace reaches its monthly active room allowance, creating new rooms
+is blocked. All existing rooms remain usable, including rooms that have not yet
+been active in the current month. Those rooms still count when they become
+active, so monthly active room usage can exceed the allowance.
+
+There is no grace period or pay-as-you-go option for creating new rooms after
+reaching the allowance. To resume creating new rooms before the monthly reset,
+upgrade to a plan with an allowance above your current monthly active room
+usage. Pro workspaces can [upgrade to Team](/dashboard/billing?plan=team) if its
+allowance is sufficient. If Team's allowance is insufficient, whether you are
+currently on Pro or Team,
+[contact sales about an Enterprise allowance](/contact/sales).
+
+Email alerts are sent at 50%, 80%, and 100% of the allowance, once per threshold
+per workspace per month. If usage crosses several thresholds at once, only the
+highest applicable alert is sent.
+
+### Monthly reset and the first allowance
+
+The allowance resets on the first day of each calendar month at 00:00 UTC,
+including for annual plans.
+
+The first allowance covers **November 12–30, 2026**. Workspaces receive the full
+monthly allowance, counting only activity after enforcement is activated on
+November 12. Activity before activation does not count toward this first
+allowance. The next reset is **December 1, 2026, at 00:00 UTC**, followed by the
+regular UTC calendar months.
 
 ## Technical limits
 
