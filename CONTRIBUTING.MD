@@ -78,6 +78,36 @@ Next, add changes to the public changelog:
 7. Click the link in the PR, paste your release note changes into the file and
    save
 
+### Trusted Publishing setup
+
+The package and CLI release workflows use npm Trusted Publishing instead of an
+npm token. They install npm 11.21.0, which supports OIDC authentication for both
+publishing and dist-tag changes.
+
+Before running either workflow, configure a GitHub Actions trusted publisher in
+the npm settings of every package passed to `publish.sh` by that workflow:
+
+| Packages                                                                                                 | Workflow filename       |
+| -------------------------------------------------------------------------------------------------------- | ----------------------- |
+| All packages in [Publish packages](.github/workflows/publish-packages.yml), including `@liveblocks/core` | `publish-packages.yml`  |
+| `create-liveblocks-app` and `@liveblocks/codemod`                                                        | `publish-cli-tools.yml` |
+
+Use `liveblocks` for both the organization and repository. Enter only the
+workflow filename and leave the environment name empty. Enable **Allow npm
+publish** and **Allow npm dist-tag**. Dist-tag permission is disabled by default
+and must be enabled separately from publishing permission. See the
+[npm Trusted Publishing documentation](https://docs.npmjs.com/trusted-publishers/).
+
+The release script still publishes all packages with the temporary
+`privaterollout` tag before assigning the intended tag (`latest`, `beta`, etc.).
+The pinned pnpm 10 version packs workspace dependencies and delegates publishing
+to npm. If publishing fails, rerun with the same version: packages that already
+exist are skipped, and tagging resumes after publishing completes.
+
+After verifying both workflows can publish and update dist-tags, remove the
+unused `NPM_TOKEN` GitHub secret. Revoke the npm token once no other workflows
+or repositories use it.
+
 ### Latest releases
 
 Latest releases are stable and production ready.
