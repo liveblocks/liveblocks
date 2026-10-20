@@ -650,12 +650,26 @@ the guide on
 
 ## Source IP Addresses [#source-ips]
 
-In case your webhook receiving endpoint is behind a firewall or NAT, you may
-need to allow traffic from the following IP addresses.
+Webhooks are not sent from a fixed set of IP addresses, so we don't recommend
+restricting your endpoint by source IP. If your endpoint is behind a firewall or
+NAT, allow incoming traffic from any IP address, and use
+[signature verification](#security-verification) to confirm that requests were
+sent by Liveblocks.
 
-### Global and US
+<details>
+
+<summary>Previously published IP addresses (no longer valid)</summary>
+
+We used to send webhooks from the IP addresses below. They're only listed here
+for reference, and webhooks are no longer guaranteed to come from these sources.
+If your firewall or NAT configuration only allows traffic from these addresses,
+update it to allow traffic from any IP address instead, otherwise future webhook
+deliveries to your endpoint may fail.
+
+Global and US:
 
 ```
+❌ Remove these from your allowlist if you added them in the past
 44.228.126.217
 50.112.21.217
 52.24.126.164
@@ -663,14 +677,17 @@ need to allow traffic from the following IP addresses.
 2600:1f24:64:8000::/56
 ```
 
-### EU
+EU:
 
 ```
+❌ Remove these from your allowlist if you added them in the past
 52.215.16.239
 54.216.8.72
 63.33.109.123
 2a05:d028:17:8000::/56
 ```
+
+</details>
 
 ## Webhook events
 
