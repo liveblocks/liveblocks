@@ -43,6 +43,7 @@ import {
   DefaultMap,
   DerivedSignal,
   getSubscriptionKey,
+  isPlainObject,
   kInternal,
   MutableSignal,
   nanoid,
@@ -290,6 +291,20 @@ export function makeInboxNotificationsQueryKey(
   query: InboxNotificationsQuery | undefined
 ) {
   return stableStringify(query ?? {});
+}
+
+function parseInboxNotificationsQueryKey(
+  queryKey: InboxNotificationsQueryKey
+): InboxNotificationsQuery {
+  const query: unknown = JSON.parse(queryKey);
+  if (
+    !isPlainObject(query) ||
+    (query.roomId !== undefined && typeof query.roomId !== "string") ||
+    (query.kind !== undefined && typeof query.kind !== "string")
+  ) {
+    throw new Error("Invalid inbox notifications query key");
+  }
+  return { roomId: query.roomId, kind: query.kind };
 }
 
 export function makeFeedsQueryKey(
@@ -723,7 +738,10 @@ function createStore_forNotifications() {
   function markRead(notificationId: string, readAt: Date) {
     signal.mutate((lut) => {
       const existing = lut.get(notificationId);
-      if (!existing) {
+      if (
+        !existing ||
+        (existing.readAt !== null && existing.readAt >= readAt)
+      ) {
         return false;
       }
       lut.set(notificationId, { ...existing, readAt });
@@ -819,22 +837,185 @@ function createStore_forNotifications() {
   };
 }
 
-function createStore_forUnreadNotificationsCount() {
-  const baseSignal = new MutableSignal<UnreadInboxNotificationsCountLUT>(
-    new Map()
+function createStore_forUnreadNotificationsCount(
+  notificationsΣ: ISignal<NotificationsLUT>,
+  updatesΣ: ISignal<readonly OptimisticUpdate<BaseMetadata, BaseMetadata>[]>,
+  fetchCount: (
+    query: InboxNotificationsQuery,
+    signal?: AbortSignal
+  ) => Promise<number>
+) {
+  const baseΣ = new MutableSignal<UnreadInboxNotificationsCountLUT>(new Map());
+  const pendingReadsΣ = DerivedSignal.from(
+    updatesΣ,
+    (updates) =>
+      updates.filter(
+        (update) =>
+          update.type === "mark-inbox-notification-as-read" ||
+          update.type === "mark-all-inbox-notifications-as-read"
+      ),
+    shallow
   );
+  // Server deltas can report a read before its mutation response arrives.
+  // Keep the original unread state until all reads for that notification settle.
+  const readSnapshotsΣ = new MutableSignal(
+    new Map<
+      string,
+      { notification: InboxNotificationData | undefined; applied: boolean }
+    >()
+  );
+  let readVersion = 0;
 
-  function update(queryKey: InboxNotificationsQueryKey, count: number): void {
-    baseSignal.mutate((lut) => {
-      lut.set(queryKey, count);
+  updatesΣ.subscribe(() => {
+    const pendingIds = new Set(
+      updatesΣ
+        .get()
+        .filter((update) => update.type === "mark-inbox-notification-as-read")
+        .map((update) => update.inboxNotificationId)
+    );
+    readSnapshotsΣ.mutate((snapshots) => {
+      let changed = false;
+      for (const notificationId of pendingIds) {
+        if (!snapshots.has(notificationId)) {
+          const notification = notificationsΣ.get().get(notificationId);
+          snapshots.set(notificationId, {
+            notification: notification ? { ...notification } : undefined,
+            applied: false,
+          });
+          changed = true;
+        }
+      }
+      for (const notificationId of snapshots.keys()) {
+        if (!pendingIds.has(notificationId)) {
+          snapshots.delete(notificationId);
+          changed = true;
+        }
+      }
+      return changed;
+    });
+  });
+
+  function subtractReadNotification(
+    counts: UnreadInboxNotificationsCountLUT,
+    notification: InboxNotificationData | undefined,
+    readAt: Date
+  ): boolean {
+    if (
+      notification === undefined ||
+      (notification.readAt !== null &&
+        notification.readAt >= notification.notifiedAt) ||
+      readAt < notification.notifiedAt ||
+      readAt <
+        (notificationsΣ.get().get(notification.id)?.notifiedAt ??
+          notification.notifiedAt)
+    ) {
+      return false;
+    }
+
+    for (const [queryKey, count] of counts) {
+      const query = parseInboxNotificationsQueryKey(queryKey);
+      if (makeInboxNotificationsFilter(query)(notification)) {
+        counts.set(queryKey, Math.max(0, count - 1));
+      }
+    }
+    return true;
+  }
+
+  function markRead(notificationId: string, readAt: Date): void {
+    readVersion++;
+    const snapshot = readSnapshotsΣ.get().get(notificationId);
+    if (snapshot === undefined || snapshot.applied) return;
+
+    baseΣ.mutate((counts) => {
+      if (!subtractReadNotification(counts, snapshot.notification, readAt)) {
+        return false;
+      }
+      readSnapshotsΣ.mutate(() => {
+        snapshot.applied = true;
+      });
+      return true;
     });
   }
 
+  function invalidate(): void {
+    readVersion++;
+  }
+
+  async function fetch(
+    queryKey: InboxNotificationsQueryKey,
+    signal?: AbortSignal
+  ): Promise<void> {
+    const query = parseInboxNotificationsQueryKey(queryKey);
+    for (;;) {
+      signal?.throwIfAborted();
+      while (pendingReadsΣ.get().length > 0) {
+        await new Promise<void>((resolve, reject) => {
+          const unsubscribe = updatesΣ.subscribe(() => {
+            unsubscribe();
+            signal?.removeEventListener("abort", onAbort);
+            resolve();
+          });
+          function onAbort() {
+            unsubscribe();
+            reject(signal?.reason);
+          }
+          signal?.addEventListener("abort", onAbort, { once: true });
+        });
+        signal?.throwIfAborted();
+      }
+
+      const version = readVersion;
+      const count = await fetchCount(query, signal);
+
+      // A count fetched during a read may include that read already, or may be
+      // stale. Fetch again after the read settles instead of guessing.
+      if (version !== readVersion || pendingReadsΣ.get().length > 0) {
+        continue;
+      }
+
+      baseΣ.mutate((counts) => {
+        counts.set(queryKey, count);
+      });
+      return;
+    }
+  }
+
   return {
-    signal: DerivedSignal.from(baseSignal, (c) => Object.fromEntries(c)),
+    signal: DerivedSignal.from(
+      baseΣ,
+      pendingReadsΣ,
+      readSnapshotsΣ,
+      (base, updates, snapshots) => {
+        const counts = new Map(base);
+        const markedRead = new Set<string>();
+        for (const update of updates) {
+          if (update.type !== "mark-inbox-notification-as-read") continue;
+          const snapshot = snapshots.get(update.inboxNotificationId);
+          if (
+            snapshot === undefined ||
+            snapshot.applied ||
+            markedRead.has(update.inboxNotificationId)
+          ) {
+            continue;
+          }
+          if (
+            subtractReadNotification(
+              counts,
+              snapshot.notification,
+              update.readAt
+            )
+          ) {
+            markedRead.add(update.inboxNotificationId);
+          }
+        }
+        return Object.fromEntries(counts);
+      }
+    ),
 
     // Mutations
-    update,
+    fetch,
+    markRead,
+    invalidate,
   };
 }
 
@@ -1367,7 +1548,12 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       this.optimisticUpdates.signal
     );
     this.historyVersions = createStore_forHistoryVersions();
-    this.unreadNotificationsCount = createStore_forUnreadNotificationsCount();
+    this.unreadNotificationsCount = createStore_forUnreadNotificationsCount(
+      this.notifications.signal,
+      this.optimisticUpdates.signal,
+      (query, signal) =>
+        this.#client.getUnreadInboxNotificationsCount({ query, signal })
+    );
     this.urlsMetadata = createStore_forUrlsMetadata();
 
     const threadifications = DerivedSignal.from(
@@ -1604,15 +1790,9 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       (
         queryKey: InboxNotificationsQueryKey
       ): LoadableResource<UnreadInboxNotificationsCountAsyncResult> => {
-        const query = JSON.parse(queryKey) as InboxNotificationsQuery;
-
-        const resource = new SinglePageResource(async () => {
-          const result = await this.#client.getUnreadInboxNotificationsCount({
-            query,
-          });
-
-          this.unreadNotificationsCount.update(queryKey, result);
-        });
+        const resource = new SinglePageResource(() =>
+          this.unreadNotificationsCount.fetch(queryKey)
+        );
 
         const signal = DerivedSignal.from(
           (): UnreadInboxNotificationsCountAsyncResult => {
@@ -1988,6 +2168,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     optimisticId: string
   ): void {
     batch(() => {
+      this.unreadNotificationsCount.markRead(inboxNotificationId, readAt);
       this.optimisticUpdates.remove(optimisticId);
       this.notifications.markRead(inboxNotificationId, readAt);
     });
@@ -1998,6 +2179,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     readAt: Date
   ): void {
     batch(() => {
+      this.unreadNotificationsCount.invalidate();
       this.optimisticUpdates.remove(optimisticId);
       this.notifications.markAllRead(readAt);
     });
@@ -2341,14 +2523,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     queryKey: InboxNotificationsQueryKey,
     signal: AbortSignal
   ) {
-    const query = JSON.parse(queryKey) as InboxNotificationsQuery;
-
-    const result = await this.#client.getUnreadInboxNotificationsCount({
-      query,
-      signal,
-    });
-
-    this.unreadNotificationsCount.update(queryKey, result);
+    await this.unreadNotificationsCount.fetch(queryKey, signal);
   }
 
   public async fetchRoomThreadsDeltaUpdate(
@@ -2656,7 +2831,10 @@ function applyOptimisticUpdates_forThreadifications<
         const ibn = notificationsById[optimisticUpdate.inboxNotificationId];
 
         // If the inbox notification doesn't exist, we do not apply the update
-        if (ibn === undefined) {
+        if (
+          ibn === undefined ||
+          (ibn.readAt !== null && ibn.readAt >= optimisticUpdate.readAt)
+        ) {
           break;
         }
 

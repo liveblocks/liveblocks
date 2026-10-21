@@ -93,6 +93,7 @@ import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import {
   createSharedContext,
+  getLiveblocksExtrasForClient,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
 } from "./liveblocks";
@@ -2715,6 +2716,13 @@ function useMarkRoomThreadAsRead(roomId: string) {
               now,
               optimisticId
             );
+
+            const { unreadNotificationsCountPollersByQueryKey } =
+              getLiveblocksExtrasForClient(client);
+            for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+              poller.markAsStale();
+              poller.pollNowIfStale();
+            }
           },
           (err: Error) => {
             onMutationFailure(
