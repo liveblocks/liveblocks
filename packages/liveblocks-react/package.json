@@ -89,7 +89,7 @@
     "date-fns": "^3.6.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "itertools": "^2.3.2",
+    "itertools": "^2.7.1",
     "msw": "^2.10.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
