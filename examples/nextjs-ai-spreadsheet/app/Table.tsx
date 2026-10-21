@@ -21,6 +21,11 @@ import {
 import { colIndexToLetters } from "@/lib/a1";
 import { formatDisplayValue } from "@/lib/format";
 import { useSpreadsheetActions } from "./useSpreadsheetActions";
+import {
+  isHumanEdit,
+  useJevReview,
+  type ReviewableChange,
+} from "./useJevReview";
 import { useSetSelection } from "./SelectionContext";
 import { OrderProvider } from "./OrderContext";
 import { CommentOverlay } from "./CommentOverlay";
@@ -77,6 +82,7 @@ function compareValues(a: string, b: string): number {
 export function Table() {
   const hotRef = useRef<HotTableRef>(null);
   const actions = useSpreadsheetActions();
+  const queueReview = useJevReview();
   const setSelection = useSetSelection();
   const updateMyPresence = useUpdateMyPresence();
 
@@ -355,7 +361,8 @@ export function Table() {
         return;
       }
       const instance = hotRef.current?.hotInstance;
-      for (const [visualRow, prop, , newVal] of changes) {
+      const reviewable: ReviewableChange[] = [];
+      for (const [visualRow, prop, oldVal, newVal] of changes) {
         if (typeof prop !== "number") {
           continue;
         }
@@ -366,15 +373,27 @@ export function Table() {
         }
         // With the Formulas plugin, `newVal` is the *computed* result. Persist
         // the underlying source instead
-        const source = instance?.getSourceDataAtCell(visualRow, prop) ?? newVal;
-        actions.setCellValue(
-          rowId,
-          colId,
-          source === null || source === undefined ? "" : String(source)
-        );
+        const cellSource =
+          instance?.getSourceDataAtCell(visualRow, prop) ?? newVal;
+        const value =
+          cellSource === null || cellSource === undefined
+            ? ""
+            : String(cellSource);
+        actions.setCellValue(rowId, colId, value);
+
+        // Queue the edit for the Jev review — human edits only, and only when
+        // the value actually changed.
+        const previousValue =
+          oldVal === null || oldVal === undefined ? "" : String(oldVal);
+        if (isHumanEdit(source) && previousValue !== value) {
+          reviewable.push({ rowId, colId, previousValue });
+        }
+      }
+      if (reviewable.length > 0) {
+        queueReview(reviewable);
       }
     },
-    [actions]
+    [actions, queueReview]
   );
 
   const onSelection = useCallback(

@@ -5,7 +5,6 @@ import {
   commentsText,
   createSpreadsheetTools,
   readStorage,
-  showAiEditing,
   snapshotText,
 } from "@/lib/spreadsheet-server";
 import type { JsonObject } from "@/liveblocks.config";
@@ -15,8 +14,10 @@ import type { JsonObject } from "@/liveblocks.config";
  * answer into the room's chat feed using `@liveblocks/node`.
  *
  * The model runs with tools that write to Storage via `mutateStorage` and show
- * the AI's live selection via `setPresence` — so everyone connected sees both
- * the chat text and the grid fill in, in realtime, as the model works.
+ * the AI's live selection via `setPresence` while they write — so everyone
+ * connected sees both the chat text and the grid fill in, in realtime, as the
+ * model works. Presence is only published by the edits themselves, never
+ * while the model is merely thinking.
  */
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -171,8 +172,6 @@ async function streamReply(
 ) {
   const { streamText, generateText, Output, stepCountIs } = await import("ai");
   const { z } = await import("zod");
-
-  showAiEditing(liveblocks, roomId, null);
 
   const storage = await readStorage(liveblocks, roomId);
   const comments = await commentsText(liveblocks, roomId, storage);
