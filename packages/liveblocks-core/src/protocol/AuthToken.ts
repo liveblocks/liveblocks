@@ -22,6 +22,17 @@ export type AccessToken = {
   uid: string; // user id
   perms: Record<string, string[]>; // permissions
   ui?: IUserInfo; // user info
+
+  /**
+   * Backend session. Minted server-side, and authorizes a socket held by
+   * a customer's backend rather than by a user's browser. Such a session is
+   * invisible to the other users in the room: it has no presence, and the
+   * server refuses to fan any out on its behalf.
+   *
+   * This is what makes a room connection "headless". It's a property of the
+   * credential, not something a caller chooses.
+   */
+  be?: boolean;
 } & JwtMeta;
 
 /**

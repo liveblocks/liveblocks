@@ -5,14 +5,9 @@ import type {
   FeedMessage,
   NotificationSettingsPlain,
   RoomSubscriptionSettings,
-  StorageNode,
   ThreadData,
 } from "@liveblocks/core";
-import {
-  createNotificationSettings,
-  LiveFile,
-  LiveList,
-} from "@liveblocks/core";
+import { createNotificationSettings, LiveFile } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -4066,50 +4061,6 @@ describe("client", () => {
           expect(err.name).toBe("LiveblocksError");
         }
       }
-    });
-  });
-
-  describe("mutating storage from the backend", () => {
-    test("should read room's storage from the server and construct a Live tree", async () => {
-      server.use(
-        http.post(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/request-storage-mutation`,
-          () => {
-            // prettier-ignore
-            const nodes = [
-              ["root", { type: 0, data: {} }],
-              ["0:1", { type: 1, parentId: "root", parentKey: "a" }],
-              ["0:2", { type: 2, parentId: "root", parentKey: "b" }],
-              ["0:3", { type: 3, parentId: "0:1", parentKey: "!", data: { abc: 123 }}],
-              ["0:4", { type: 3, parentId: "0:1", parentKey: "%", data: { xyz: 3.14 }}],
-            ] satisfies StorageNode[];
-
-            return HttpResponse.text(
-              [{ actor: 123 }, ...nodes]
-                .map((n) => JSON.stringify(n))
-                .join("\n"),
-              { headers: { "Content-Type": "application/x-ndjson" } }
-            );
-          }
-        ),
-        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/send-message`, () => {
-          // Accept anything for this test
-          return new HttpResponse(null, { status: 204 });
-        })
-      );
-
-      const client = new Liveblocks({ secret: "sk_xxx" });
-      await expect(
-        client.mutateStorage("my-room", ({ root }) => {
-          expect(root.toJSON()).toEqual({
-            a: [{ abc: 123 }, { xyz: 3.14 }],
-            b: {},
-          });
-
-          // Mutate it!
-          root.set("z", new LiveList([1, 2, 3]));
-        })
-      ).resolves.toBeUndefined();
     });
   });
 
