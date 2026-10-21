@@ -11,6 +11,7 @@ import {
   type AiEditingPresenceType,
 } from "@/lib/ai-editing-presence-types";
 import { setAiRemotePresenceEditing } from "@/lib/ai-remote-presence";
+import type { BackgroundTasks } from "@/lib/background-tasks";
 
 export type IssuePropertyUpdates = {
   title?: string;
@@ -52,20 +53,30 @@ function editingTypesFromPropertyUpdates(
   return types;
 }
 
-// Updates storage values and sets presence
+// Updates storage values and sets presence.
+//
+// When `background` is given, presence and the room-metadata sync are handed
+// off to it instead of awaited, so only the storage mutation itself (the part
+// users see) sits on the critical path.
 export async function applyIssuePropertyUpdates(
   roomId: string,
-  updates: IssuePropertyUpdates
+  updates: IssuePropertyUpdates,
+  background?: BackgroundTasks
 ): Promise<void> {
   const keys = Object.keys(updates) as (keyof IssuePropertyUpdates)[];
   if (keys.length === 0) {
     return;
   }
 
-  await setAiRemotePresenceEditing(
+  const presence$ = setAiRemotePresenceEditing(
     roomId,
     editingTypesFromPropertyUpdates(updates)
   );
+  if (background) {
+    background.add(presence$);
+  } else {
+    await presence$;
+  }
 
   await liveblocks.mutateStorage(roomId, ({ root }) => {
     if (updates.title !== undefined) {
@@ -94,5 +105,9 @@ export async function applyIssuePropertyUpdates(
     }
   });
 
-  await syncRoomMetadataFromStorage(roomId);
+  if (background) {
+    background.add(syncRoomMetadataFromStorage(roomId));
+  } else {
+    await syncRoomMetadataFromStorage(roomId);
+  }
 }
