@@ -133,6 +133,7 @@ from .open_ai_provider_options import OpenAiProviderOptions
 from .open_ai_provider_options_openai import OpenAiProviderOptionsOpenai
 from .open_ai_provider_options_openai_reasoning_effort import OpenAiProviderOptionsOpenaiReasoningEffort
 from .open_ai_provider_options_openai_web_search import OpenAiProviderOptionsOpenaiWebSearch
+from .recover_failed_webhook_messages_response_200 import RecoverFailedWebhookMessagesResponse200
 from .remove_comment_reaction_request_body import RemoveCommentReactionRequestBody
 from .remove_group_members_request_body import RemoveGroupMembersRequestBody
 from .remove_json_patch_operation import RemoveJsonPatchOperation
@@ -315,6 +316,7 @@ __all__ = (
     "OpenAiProviderOptionsOpenai",
     "OpenAiProviderOptionsOpenaiReasoningEffort",
     "OpenAiProviderOptionsOpenaiWebSearch",
+    "RecoverFailedWebhookMessagesResponse200",
     "RemoveCommentReactionRequestBody",
     "RemoveGroupMembersRequestBody",
     "RemoveJsonPatchOperation",
