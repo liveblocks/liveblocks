@@ -15,6 +15,7 @@ To set up webhooks for your project, you’ll need to create an endpoint,
 subscribe to events, and secure your endpoint.
 
 - [Creating an endpoint](#creating-an-endpoint)
+- [Testing an endpoint](#testing-an-endpoint)
 - [Edit endpoint events](#edit-endpoint-events)
 - [Security verification](#security-verification)
 - [Replaying events](#replaying-events)
@@ -41,16 +42,14 @@ so from within the webhooks dashboard for your project.
 
   <StepCompact>
 
-    Click the **“Create endpoint…”** button.
+    Click the **“Add endpoint…”** button.
 
   </StepCompact>
 
   <StepCompact>
 
-    Enter the URL of the endpoint you would like to use. Configure with your own
-    endpoint or generate a
-    <a href="https://www.svix.com/play/" target="_blank">Svix playground</a> link
-    by clicking on **"use Svix play"**.
+    Enter your endpoint URL, or click **“use a test endpoint”** to generate a
+    URL at `https://webhooks.liveblocks.io/test/<token>`.
 
   </StepCompact>
 
@@ -62,7 +61,7 @@ so from within the webhooks dashboard for your project.
 
   <StepCompact lastStep>
 
-    Click **“Create endpoint”**.
+    Click **“Add endpoint”**.
 
   </StepCompact>
 
@@ -82,6 +81,39 @@ details.
 If all events fail to be delivered to your endpoint for 5 consecutive days, your
 endpoint will automatically be disabled. You can always re-enable it from the
 dashboard.
+
+### Testing an endpoint [#testing-an-endpoint]
+
+To inspect webhook requests without running your own server, create an endpoint
+using **“use a test endpoint”** in the add endpoint form.
+
+<Steps>
+  <StepCompact>
+
+    Select the endpoint, open its top right menu, and choose **“Test endpoint…”**.
+
+  </StepCompact>
+
+  <StepCompact>
+
+    Select an event type and click **“Send example”**.
+
+  </StepCompact>
+
+  <StepCompact lastStep>
+
+    Open the event in the delivery history. Under **“Webhook attempts”**, open
+    the attempt’s menu and choose **“Show response body”**.
+
+  </StepCompact>
+</Steps>
+
+The response body contains a JSON receipt with the request time, method, URL,
+selected request headers, and up to 4 KiB of the request body. The `truncated`
+field indicates whether any part of the receipt was shortened.
+
+Test endpoints don’t forward requests to your local server. To test your own
+webhook handler locally, follow [testing locally](#testing-locally).
 
 ### Edit endpoint events [#edit-endpoint-events]
 
@@ -594,40 +626,9 @@ plug(Plug.Parsers, ...)
 Running webhooks locally can be difficult, but there are several tools that
 allow you to temporarily host your localhost server online.
 
-### Using svix-cli
-
-The [`svix-cli`](https://github.com/svix/svix-webhooks/tree/main/svix-cli)
-provides a `listen` command that creates a publicly accessible URL for testing
-webhooks without requiring any account setup or network configuration changes.
-
-If your project is running on `localhost:3000`, you can run the following
-command to generate a temporary URL:
-
-```bash
-svix listen http://localhost:3000/api/liveblocks-webhook
-```
-
-This will output a unique URL that forwards all POST requests to your local
-endpoint:
-
-```
-Webhook Relay is now listening at:
-https://play.svix.com/in/c_tSdQhb4Q5PTF5m2juiWu8qFREqE/
-
-All requests on this endpoint will be forwarded to your local URL:
-http://localhost:3000/api/liveblocks-webhook
-
-View logs and debug information at:
-https://play.svix.com/view/c_tSdQhb4Q5PTF5m2juiWu8qFREqE/
-```
-
-The generated URL can be placed directly into the Liveblocks webhooks dashboard
-for testing. This approach is particularly useful in enterprise environments
-where tools like `localtunnel` or `ngrok` may be blocked by security policies.
-
 ### Using localtunnel or ngrok
 
-Alternatively, you can use tools such as
+You can use tools such as
 [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
 [`ngrok`](https://www.npmjs.com/package/ngrok) which also allow you to
 temporarily host your localhost server online.
@@ -646,7 +647,7 @@ dashboard for quick testing.
 
 For a full step-by-step guide on testing with `localtunnel` and `ngrok`, read
 the guide on
-[how to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost#Use-your-webhook-event).
+[how to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost).
 
 ## Source IP Addresses [#source-ips]
 
