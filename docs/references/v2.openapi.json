@@ -7951,7 +7951,25 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. The recover task was started."
+            "description": "Success. The recover task was started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": ["ok"],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/401"
@@ -12533,10 +12551,14 @@
             }
           },
           "storageUpdatedThrottleSeconds": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "description": "Throttle in seconds for `storageUpdated` events. Must be at least the minimum allowed by the project's plan, otherwise a `422` error is returned. Defaults to that minimum."
           },
           "yDocUpdatedThrottleSeconds": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "description": "Throttle in seconds for `ydocUpdated` events. Must be at least the minimum allowed by the project's plan, otherwise a `422` error is returned. Defaults to that minimum."
           }
         },
         "required": ["url", "subscribedEvents"],
@@ -12568,10 +12590,14 @@
             "maximum": 65534
           },
           "storageUpdatedThrottleSeconds": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "description": "Throttle in seconds for `storageUpdated` events. Must be at least the minimum allowed by the project's plan, otherwise a `422` error is returned."
           },
           "yDocUpdatedThrottleSeconds": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "description": "Throttle in seconds for `ydocUpdated` events. Must be at least the minimum allowed by the project's plan, otherwise a `422` error is returned."
           },
           "disabled": {
             "type": "boolean"
