@@ -1,0 +1,85 @@
+name: nextjs-ai-slideshow
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  # Job-level filter (not `on.paths`) so the check still reports success on
+  # unrelated PRs and can be marked required.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        id: filter
+        with:
+          filters: |
+            app:
+              - 'examples/nextjs-ai-slideshow/**'
+              - '.github/workflows/nextjs-ai-slideshow.yml'
+
+  check:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/nextjs-ai-slideshow
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+          cache-dependency-path: examples/nextjs-ai-slideshow/package-lock.json
+      - run: npm ci
+      - run: npm run check
+
+  e2e:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: examples/nextjs-ai-slideshow
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+          cache-dependency-path: examples/nextjs-ai-slideshow/package-lock.json
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+      - run: npm run e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: nextjs-ai-slideshow-playwright
+          path: |
+            examples/nextjs-ai-slideshow/playwright-report
+            examples/nextjs-ai-slideshow/test-results
+          retention-days: 7
+
+  # Single status for branch protection: passes when the app didn't change,
+  # fails if any app job failed or was cancelled.
+  nextjs-ai-slideshow:
+    needs: [changes, check, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "an app job failed"; exit 1
+          fi
+          echo "ok"
