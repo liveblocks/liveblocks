@@ -20,6 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 43 (2026-10-23)
 
+## v3.24.5
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating when receiving replies in
+  connected rooms.
+
 ## v3.24.4
 
 ### `@liveblocks/react`
