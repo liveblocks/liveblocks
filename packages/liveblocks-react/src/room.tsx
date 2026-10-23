@@ -530,6 +530,21 @@ function RoomProviderInner<
         subscription: maybeSubscription,
       } = info;
 
+      // A reply can change counts even when this thread isn't cached.
+      if (
+        maybeNotification &&
+        (message.type === ServerMsgCode.COMMENT_CREATED ||
+          message.type === ServerMsgCode.THREAD_UPDATED)
+      ) {
+        store.unreadNotificationsCount.invalidate();
+        const { unreadNotificationsCountPollersByQueryKey } =
+          getLiveblocksExtrasForClient(client);
+        for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+          poller.markAsStale();
+          poller.pollNowIfStale();
+        }
+      }
+
       const existingThread = store.outputs.threads
         .get()
         .getEvenIfDeleted(message.threadId);
