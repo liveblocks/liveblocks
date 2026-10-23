@@ -864,7 +864,7 @@ function createStore_forUnreadNotificationsCount(
       { notification: InboxNotificationData | undefined; applied: boolean }
     >()
   );
-  let readVersion = 0;
+  let countVersion = 0;
 
   updatesΣ.subscribe(() => {
     const pendingIds = new Set(
@@ -922,7 +922,7 @@ function createStore_forUnreadNotificationsCount(
   }
 
   function markRead(notificationId: string, readAt: Date): void {
-    readVersion++;
+    countVersion++;
     const snapshot = readSnapshotsΣ.get().get(notificationId);
     if (snapshot === undefined || snapshot.applied) return;
 
@@ -938,7 +938,7 @@ function createStore_forUnreadNotificationsCount(
   }
 
   function invalidate(): void {
-    readVersion++;
+    countVersion++;
   }
 
   async function fetch(
@@ -964,12 +964,12 @@ function createStore_forUnreadNotificationsCount(
         signal?.throwIfAborted();
       }
 
-      const version = readVersion;
+      const version = countVersion;
       const count = await fetchCount(query, signal);
 
-      // A count fetched during a read may include that read already, or may be
-      // stale. Fetch again after the read settles instead of guessing.
-      if (version !== readVersion || pendingReadsΣ.get().length > 0) {
+      // Notifications may change during a fetch. Retry after pending reads
+      // settle rather than applying a count that may be stale.
+      if (version !== countVersion || pendingReadsΣ.get().length > 0) {
         continue;
       }
 
