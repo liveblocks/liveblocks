@@ -20,7 +20,16 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 43 (2026-10-23)
 
+## v3.24.4
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating immediately when marking a
+  thread as read.
+
 ## Contributors
+
+marcbouchenoire
 
 # Week 40 (2026-10-02)
 
