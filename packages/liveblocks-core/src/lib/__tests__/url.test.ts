@@ -67,6 +67,30 @@ describe("sanitizeUrl", () => {
     );
   });
 
+  test("should not add a trailing slash when only the search or hash ends with one", () => {
+    expect(sanitizeUrl("https://liveblocks.io/docs?redirect=/")).toBe(
+      "https://liveblocks.io/docs?redirect=/"
+    );
+    expect(sanitizeUrl("https://liveblocks.io/report.pdf?path=/a/b/")).toBe(
+      "https://liveblocks.io/report.pdf?path=/a/b/"
+    );
+    expect(sanitizeUrl("https://liveblocks.io/app#/settings/")).toBe(
+      "https://liveblocks.io/app#/settings/"
+    );
+    expect(sanitizeUrl("https://liveblocks.io#/")).toBe(
+      "https://liveblocks.io#/"
+    );
+    expect(sanitizeUrl("/examples?path=/")).toBe("/examples?path=/");
+
+    // A trailing slash on the pathname itself is still preserved
+    expect(sanitizeUrl("https://liveblocks.io/docs/?redirect=/")).toBe(
+      "https://liveblocks.io/docs/?redirect=/"
+    );
+    expect(sanitizeUrl("https://liveblocks.io/app/#/settings/")).toBe(
+      "https://liveblocks.io/app/#/settings/"
+    );
+  });
+
   test("should reject non-HTTP(S) protocols and other invalid URLs", () => {
     expect(sanitizeUrl("javascript:alert('xss')")).toBe(null);
     expect(sanitizeUrl("data:text/html,<script>alert('xss')</script>")).toBe(
