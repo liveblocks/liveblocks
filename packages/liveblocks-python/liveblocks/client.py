@@ -185,8 +185,8 @@ class Liveblocks:
         """Get rooms
 
          This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
-        newest to oldest. You can filter rooms by room ID prefixes, metadata, whether they contain comments,
-        users accesses, and groups accesses. Corresponds to
+        newest to oldest. You can filter rooms by room ID prefixes, metadata, thread presence or resolution
+        state, users accesses, and groups accesses. Corresponds to
         [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
         There is a pagination system where the cursor to the next page is returned in the response as
@@ -210,8 +210,11 @@ class Liveblocks:
             organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
             query (str | Unset): Query to filter rooms. You can filter by `roomId`, `metadata`, and
                 `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND
-                roomId^"liveblocks:engineering" AND hasThreads:true`. The `hasThreads` filter checks
-                whether rooms contain at least one thread. Learn more about [filtering rooms with query
+                roomId^"liveblocks:engineering" AND hasThreads:true`. Use `hasThreads:true` for rooms with
+                threads, `hasThreads:false` for rooms without threads, `hasThreads:"unresolved"` for rooms
+                with at least one unresolved thread, or `hasThreads:"resolved"` for rooms with at least
+                one resolved thread. Deleted threads are excluded. Rooms with both resolved and unresolved
+                threads match either string value. Learn more about [filtering rooms with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
                 Example: metadata["color"]:"blue" AND hasThreads:true.
             user_id (str | Unset): A filter on users accesses. Example: user-123.
@@ -3769,8 +3772,8 @@ class AsyncLiveblocks:
         """Get rooms
 
          This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
-        newest to oldest. You can filter rooms by room ID prefixes, metadata, whether they contain comments,
-        users accesses, and groups accesses. Corresponds to
+        newest to oldest. You can filter rooms by room ID prefixes, metadata, thread presence or resolution
+        state, users accesses, and groups accesses. Corresponds to
         [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
         There is a pagination system where the cursor to the next page is returned in the response as
@@ -3794,8 +3797,11 @@ class AsyncLiveblocks:
             organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
             query (str | Unset): Query to filter rooms. You can filter by `roomId`, `metadata`, and
                 `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND
-                roomId^"liveblocks:engineering" AND hasThreads:true`. The `hasThreads` filter checks
-                whether rooms contain at least one thread. Learn more about [filtering rooms with query
+                roomId^"liveblocks:engineering" AND hasThreads:true`. Use `hasThreads:true` for rooms with
+                threads, `hasThreads:false` for rooms without threads, `hasThreads:"unresolved"` for rooms
+                with at least one unresolved thread, or `hasThreads:"resolved"` for rooms with at least
+                one resolved thread. Deleted threads are excluded. Rooms with both resolved and unresolved
+                threads match either string value. Learn more about [filtering rooms with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
                 Example: metadata["color"]:"blue" AND hasThreads:true.
             user_id (str | Unset): A filter on users accesses. Example: user-123.

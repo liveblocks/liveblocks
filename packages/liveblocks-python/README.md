@@ -46,7 +46,7 @@ async with client:
 
 #### `get_rooms`
 
-This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, whether they contain comments, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
+This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, thread presence or resolution state, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
 There is a pagination system where the cursor to the next page is returned in the response as `nextCursor`, which can be combined with `startingAfter`.
 You can also limit the number of rooms by query.
@@ -76,7 +76,7 @@ print(result)
 | `limit` | `int \| Unset` | No | A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20. *(default: `20`)* |
 | `starting_after` | `str \| Unset` | No | A cursor used for pagination. Get the value from the `nextCursor` response of the previous page. |
 | `organization_id` | `str \| Unset` | No | A filter on organization ID. |
-| `query` | `str \| Unset` | No | Query to filter rooms. You can filter by `roomId`, `metadata`, and `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering" AND hasThreads:true`. The `hasThreads` filter checks whether rooms contain at least one thread. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language). |
+| `query` | `str \| Unset` | No | Query to filter rooms. You can filter by `roomId`, `metadata`, and `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering" AND hasThreads:true`. Use `hasThreads:true` for rooms with threads, `hasThreads:false` for rooms without threads, `hasThreads:"unresolved"` for rooms with at least one unresolved thread, or `hasThreads:"resolved"` for rooms with at least one resolved thread. Deleted threads are excluded. Rooms with both resolved and unresolved threads match either string value. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language). |
 | `user_id` | `str \| Unset` | No | A filter on users accesses. |
 | `group_ids` | `str \| Unset` | No | A filter on groups accesses. Multiple groups can be used. |
 
