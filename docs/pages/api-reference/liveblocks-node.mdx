@@ -664,7 +664,11 @@ The `query` option also allows you to pass a
 [query language](/docs/guides/how-to-filter-rooms-using-query-language) string
 instead of a `query` object.
 
-The `hasThreads` filter checks whether rooms contain at least one thread.
+The `hasThreads` filter accepts `true` for rooms with threads, `false` for rooms
+without threads, `"unresolved"` for rooms with at least one unresolved thread,
+or `"resolved"` for rooms with at least one resolved thread. Deleted threads are
+excluded. Rooms with both resolved and unresolved threads match either string
+value.
 
 ##### Pagination
 
@@ -744,7 +748,11 @@ The `query` option also allows you to pass a
 [query language](/docs/guides/how-to-filter-rooms-using-query-language) string
 instead of a `query` object.
 
-The `hasThreads` filter checks whether rooms contain at least one thread.
+The `hasThreads` filter accepts `true` for rooms with threads, `false` for rooms
+without threads, `"unresolved"` for rooms with at least one unresolved thread,
+or `"resolved"` for rooms with at least one resolved thread. Deleted threads are
+excluded. Rooms with both resolved and unresolved threads match either string
+value.
 
 ##### Mass deleting rooms
 

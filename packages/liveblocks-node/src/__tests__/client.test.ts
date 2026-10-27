@@ -358,55 +358,65 @@ describe("client", () => {
       });
     });
 
-    test("should return a list of room when getRooms with query params receives a successful response", async () => {
-      const expectedQuery =
-        "hasThreads:true roomId^'liveblocks:' metadata['color']:'blue' metadata['size']:'10'";
+    test.each<{
+      hasThreads: boolean | "unresolved" | "resolved";
+      expectedFilter: string;
+    }>([
+      { hasThreads: true, expectedFilter: "hasThreads:true" },
+      { hasThreads: false, expectedFilter: "hasThreads:false" },
+      { hasThreads: "unresolved", expectedFilter: "hasThreads:'unresolved'" },
+      { hasThreads: "resolved", expectedFilter: "hasThreads:'resolved'" },
+    ])(
+      "should filter rooms with hasThreads:$hasThreads in string and object queries",
+      async ({ hasThreads, expectedFilter }) => {
+        const expectedQuery = `${expectedFilter} roomId^'liveblocks:' metadata['color']:'blue' metadata['size']:'10'`;
 
-      server.use(
-        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, (res) => {
-          const url = new URL(res.request.url);
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/rooms`, (res) => {
+            const url = new URL(res.request.url);
 
-          expect(url.searchParams.size).toEqual(1);
-          expect(url.searchParams.get("query")).toEqual(expectedQuery);
-          return HttpResponse.json(
-            {
-              nextCursor: "1",
-              data: [room],
+            expect(url.searchParams.size).toEqual(1);
+            expect(url.searchParams.get("query")).toEqual(expectedQuery);
+            return HttpResponse.json(
+              {
+                nextCursor: "1",
+                data: [room],
+              },
+              { status: 200 }
+            );
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        await expect(
+          client.getRooms({
+            query: expectedQuery,
+          })
+        ).resolves.toEqual({
+          nextCursor: "1",
+          data: [room],
+        });
+
+        await expect(
+          client.getRooms({
+            query: {
+              metadata: {
+                color: "blue",
+                size: "10",
+              },
+              roomId: {
+                startsWith: "liveblocks:",
+              },
+              hasThreads,
             },
-            { status: 200 }
-          );
-        })
-      );
-
-      const client = new Liveblocks({ secret: "sk_xxx" });
-
-      await expect(
-        client.getRooms({
-          query: expectedQuery,
-        })
-      ).resolves.toEqual({
-        nextCursor: "1",
-        data: [room],
-      });
-
-      await expect(
-        client.getRooms({
-          query: {
-            metadata: {
-              color: "blue",
-              size: "10",
-            },
-            roomId: {
-              startsWith: "liveblocks:",
-            },
-            hasThreads: true,
-          },
-        })
-      ).resolves.toEqual({
-        nextCursor: "1",
-        data: [room],
-      });
-    });
+          })
+        ).resolves.toEqual({
+          nextCursor: "1",
+          data: [room],
+        });
+      }
+    );
 
     test("should return a list of room when getRooms with partial params receives a successful response", async () => {
       server.use(

@@ -91,6 +91,33 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
     expectTypeOf(info.nonexisting).toEqualTypeOf<Json | undefined>();
   });
 
+  test("should accept only supported hasThreads filters for rooms", () => {
+    const threadFilters: (boolean | "unresolved" | "resolved")[] = [
+      true,
+      false,
+      "unresolved",
+      "resolved",
+    ];
+
+    for (const hasThreads of threadFilters) {
+      client.getRooms({ query: { hasThreads } });
+      client.iterRooms({ query: { hasThreads } });
+    }
+
+    client.getRooms({
+      query: {
+        // @ts-expect-error unsupported thread filter
+        hasThreads: "pending",
+      },
+    });
+    client.iterRooms({
+      query: {
+        // @ts-expect-error unsupported thread filter
+        hasThreads: "pending",
+      },
+    });
+  });
+
   test("should accept any JSON payload in broadcastEvent()", async () => {
     // @ts-expect-error payload is required
     client.broadcastEvent("my-room");
