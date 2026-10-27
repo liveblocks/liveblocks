@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import { Chat } from "./chat";
+import { collectFontEmbedCss } from "./export-fonts";
 import {
   CollaborativeEditor,
   type EditorHistory,
@@ -49,9 +50,8 @@ function waitForPaint() {
 }
 
 function createOffscreenIframe(html: string) {
-  return new Promise<HTMLIFrameElement>((resolve) => {
+  return new Promise<HTMLIFrameElement>((resolve, reject) => {
     const iframe = document.createElement("iframe");
-    iframe.addEventListener("load", () => resolve(iframe), { once: true });
     iframe.setAttribute("sandbox", "allow-same-origin");
     iframe.width = String(SLIDE_WIDTH);
     iframe.height = String(SLIDE_HEIGHT);
@@ -61,9 +61,39 @@ function createOffscreenIframe(html: string) {
     iframe.style.width = `${SLIDE_WIDTH}px`;
     iframe.style.height = `${SLIDE_HEIGHT}px`;
     iframe.style.border = "0";
-    document.body.appendChild(iframe);
+    // srcDoc must be assigned before the iframe is inserted: an inserted
+    // iframe without a source fires a `load` event for its initial
+    // about:blank document, which would resolve this promise while the real
+    // document is still loading (a race that made exports flaky).
     iframe.srcdoc = html;
+    const timeout = window.setTimeout(() => {
+      iframe.remove();
+      reject(new Error("Timed out preparing a slide for export."));
+    }, 15_000);
+    iframe.addEventListener(
+      "load",
+      () => {
+        window.clearTimeout(timeout);
+        resolve(iframe);
+      },
+      { once: true }
+    );
+    document.body.appendChild(iframe);
   });
+}
+
+// Waits until the document's webfonts (e.g. Google Fonts) are downloaded, so
+// the snapshot isn't taken while text is still rendered with a fallback font.
+// The iframe `load` event guarantees stylesheets are parsed, so all
+// @font-face rules exist by the time this runs; rendering the text kicks off
+// the font loads that `fonts.ready` then awaits.
+async function waitForFonts(document: Document) {
+  try {
+    await document.fonts.ready;
+  } catch {
+    // Font loading failures shouldn't block the export; the slide will
+    // render with fallback fonts instead.
+  }
 }
 
 export default function Page() {
@@ -100,6 +130,7 @@ function SlideshowApp({ roomId }: { roomId: string }) {
   const [codeHistory, setCodeHistory] = useState<EditorHistory | null>(null);
   const [placingComment, setPlacingComment] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportFailed, setExportFailed] = useState(false);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const previousSelectedIndex = useRef(0);
   // The proposal currently shown in the Slide tab instead of the shared
@@ -321,18 +352,22 @@ function SlideshowApp({ roomId }: { roomId: string }) {
         const iframe = await createOffscreenIframe(html);
 
         try {
-          await waitForPaint();
           const document = iframe.contentDocument;
           const element = document?.body ?? document?.documentElement;
-          if (!element) {
+          if (!document || !element) {
             throw new Error("Slide preview is not ready yet.");
           }
+          await waitForFonts(document);
+          await waitForPaint();
 
           const dataUrl = await toPng(element, {
             width: SLIDE_WIDTH,
             height: SLIDE_HEIGHT,
             pixelRatio: 10,
             cacheBust: true,
+            // html-to-image's own webfont detection doesn't work across the
+            // iframe boundary (see export-fonts.ts), so hand it the fonts.
+            fontEmbedCSS: await collectFontEmbedCss(document),
             style: {
               width: `${SLIDE_WIDTH}px`,
               height: `${SLIDE_HEIGHT}px`,
@@ -348,6 +383,11 @@ function SlideshowApp({ roomId }: { roomId: string }) {
       }
 
       await pptx.writeFile({ fileName: "slides.pptx" });
+    } catch (error) {
+      // Surface export failures instead of silently stopping the spinner.
+      console.error("PPTX export failed", error);
+      setExportFailed(true);
+      window.setTimeout(() => setExportFailed(false), 4000);
     } finally {
       setExporting(false);
     }
@@ -448,13 +488,14 @@ function SlideshowApp({ roomId }: { roomId: string }) {
               size="sm"
               onClick={exportPptx}
               disabled={exporting}
+              className={exportFailed ? "text-destructive" : undefined}
             >
               {exporting ? (
                 <Loader2Icon className="size-4 animate-spin" />
               ) : (
                 <DownloadIcon className="size-4" />
               )}
-              Download .pptx
+              {exportFailed ? "Export failed" : "Download .pptx"}
             </Button>
           </div>
         </header>
