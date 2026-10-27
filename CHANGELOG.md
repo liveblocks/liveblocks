@@ -27,7 +27,9 @@
 
 ### `@liveblocks/node`
 
-- Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`.
+- Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`. Use `true`
+  or `false` to filter rooms with or without threads, or `"unresolved"` or
+  `"resolved"` to filter by thread state.
 
 ## v3.24.2
 
