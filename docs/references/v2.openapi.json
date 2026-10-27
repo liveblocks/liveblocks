@@ -12470,8 +12470,9 @@
           },
           "rateLimit": {
             "type": "integer",
+            "description": "The maximum number of messages per second sent to this endpoint.",
             "minimum": 1,
-            "maximum": 65534
+            "maximum": 1000
           },
           "subscribedEvents": {
             "type": "array",
@@ -12541,8 +12542,9 @@
           },
           "rateLimit": {
             "type": "integer",
+            "description": "The maximum number of messages per second sent to this endpoint. Defaults to 1000. Values above 1000 are capped at 1000.",
             "minimum": 1,
-            "maximum": 65534
+            "maximum": 1000
           },
           "additionalHeaders": {
             "type": "object",
@@ -12586,8 +12588,9 @@
           },
           "rateLimit": {
             "type": "integer",
+            "description": "The maximum number of messages per second sent to this endpoint. Values above 1000 are capped at 1000.",
             "minimum": 1,
-            "maximum": 65534
+            "maximum": 1000
           },
           "storageUpdatedThrottleSeconds": {
             "type": "integer",
