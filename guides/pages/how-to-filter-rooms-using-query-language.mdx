@@ -52,7 +52,15 @@ You can also filter rooms by whether they contain threads:
 hasThreads:true
 ```
 
-Use `hasThreads:false` to return rooms with no threads.
+Use `hasThreads:false` to return rooms with no threads, and
+`hasThreads:"unresolved"` or `hasThreads:"resolved"` to return rooms with at
+least one thread in that state. Deleted threads are excluded. Rooms with both
+resolved and unresolved threads match either filter. You can combine these
+filters with room metadata:
+
+```text
+hasThreads:"unresolved" AND metadata["roomType"]:"whiteboard"
+```
 
 ### How to use
 
