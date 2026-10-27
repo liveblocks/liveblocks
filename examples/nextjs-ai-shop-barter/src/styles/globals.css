@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
+
+html,
+body {
+  background: #fff;
+  padding: 0;
+  margin: 0;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    Fira Sans,
+    Droid Sans,
+    Helvetica Neue,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.lb-root {
+  --lb-accent: #44f;
+}
+
+.loading,
+.error {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  place-content: center;
+  place-items: center;
+}
+
+.loading img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
+}
+
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background: #111;
+  }
+
+  .lb-root {
+    --lb-accent: #77f;
+  }
+
+  .loading img {
+    filter: invert(1);
+  }
+
+  .error {
+    color: #fff;
+  }
+}
