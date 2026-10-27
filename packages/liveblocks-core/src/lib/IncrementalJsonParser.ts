@@ -231,7 +231,7 @@ export class IncrementalJsonParser {
       result = result.slice(0, this.#lastUnterminatedString);
     } else {
       // If the last char is a ":", just remove it - e.g. '{"abc"' or '{"abc":'
-      result = stripChar(result, ":");
+      result = stripChar(result, ":").trimEnd();
 
       // If the last char is a '"', remove that last string
       if (result.endsWith('"')) {
@@ -239,8 +239,9 @@ export class IncrementalJsonParser {
       }
     }
 
-    // If the last char now is a trailing comma, strip it
-    result = stripChar(result, ",");
+    // If the last char now is a trailing comma, strip it (ignoring any
+    // whitespace between it and the key we just removed, e.g. '{"a": 1, "b')
+    result = stripChar(result.trimEnd(), ",");
 
     // Re-add the missing brackets/braces
     result += suffix;
