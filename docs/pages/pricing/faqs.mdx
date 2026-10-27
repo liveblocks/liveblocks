@@ -7,13 +7,14 @@ meta:
 
 ## How does pricing work in Liveblocks?
 
-Each plan includes a monthly credit allowance you spend across all features.
+Each plan includes a monthly credit allowance you spend on metered usage.
 Credits reset at the start of each billing cycle and don't roll over. Pro
 includes
 {/* prettier-ignore */} <Limits.ProMonthlyCredits /> of credits, and Team plans start with
 {/* prettier-ignore */} <Limits.TeamAnnualCredits tier={600} /> of credits. Once you've used your
 credits, additional usage on Pro and Team is billed at metered rates. Free hits
-hard limits per feature instead.
+hard limits per feature instead. From November 12, 2026, Pro and Team also have
+separate [monthly active room limits](/docs/pricing/limits#monthly-active-room-limits).
 
 For full per-metric rates and worked examples, see our
 [plans](/docs/pricing/plans).
@@ -80,9 +81,10 @@ Every plan includes the full platform: [Sync](/docs/products/sync),
 [Notifications](/docs/products/notifications/concepts#Custom-notifications), the
 [dashboard](/dashboard), SDKs, and APIs. What changes between plans is your
 monthly credit allowance, seat count, and the security and support features you
-get. After you've used your credits, you keep using Liveblocks. Pro and Team are
-charged for overage at the same metered rates. Free plans hit hard limits per
-feature.
+get. After you've used your credits, metered usage on Pro and Team continues at
+the same rates. Free plans hit hard limits per feature. From November 12, 2026,
+Pro and Team also have separate
+[monthly active room limits](/docs/pricing/limits#monthly-active-room-limits).
 
 For a full plan-by-plan breakdown, see the [plans docs](/docs/pricing/plans).
 
@@ -102,6 +104,12 @@ We offer a discount for early-stage startups. [Learn more and apply](/startups).
 On Free, you'll hit hard limits per metric and the affected feature pauses until
 your credits reset. On Pro and Team, additional usage is billed at metered rates
 with no markup. We send automated email alerts as you approach your limits.
+
+Monthly active room allowances are separate from credits. Starting November 12,
+2026, creating new rooms after reaching your allowance requires upgrading to a
+plan with an allowance above your current monthly active room usage, or waiting
+for the monthly reset. All existing rooms remain usable. See
+[monthly active room limits](/docs/pricing/limits#monthly-active-room-limits).
 
 See [usage limits](/docs/pricing/limits) for full details.
 
@@ -149,6 +157,12 @@ If a room contains content from the previous month, it is not active until it is
 used in the current month. For example, if a text document is created in
 January, it is not active in February until a user connects to the document or
 updates its content.
+
+Starting November 12, 2026, Pro and Team have a monthly active room allowance
+shared across all projects and regions in a workspace. See
+[monthly active room limits](/docs/pricing/limits#monthly-active-room-limits)
+for allowances, alerts, reset dates, and what happens when the allowance is
+reached.
 
 ## What is a monthly active user?
 
@@ -202,6 +216,13 @@ You can monitor your usage at any time in the [dashboard](/dashboard).
 
 Liveblocks returns a different error for each limit that a user might reach.
 That way, you can decide how to best handle those cases in your product.
+
+For Pro and Team, starting November 12, 2026, creating new rooms is blocked once
+the workspace reaches its monthly active room allowance. All existing rooms
+remain usable, even if they have not been active this month. Their activity can
+still increase monthly active room usage beyond the allowance. See
+[monthly active room limits](/docs/pricing/limits#monthly-active-room-limits)
+for upgrade options and reset details.
 
 ## Do you count monthly active rooms during testing?
 
