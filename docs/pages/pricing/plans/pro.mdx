@@ -7,7 +7,8 @@ meta:
 
 The Pro plan is designed for developers shipping collaborative experiences in
 production. It includes everything in Free, but enables you to remove the
-"Powered by Liveblocks" badge, and includes unlimited monthly active rooms.
+"Powered by Liveblocks" badge, and includes <Limits.ProMaxMonthlyActiveRooms />
+monthly active rooms.
 
 ## Pricing
 
@@ -51,6 +52,7 @@ define what's included before you need to upgrade.
 | <LimitLabel tooltip="Total hours rooms stay active across your project each month.">Active room hours per month</LimitLabel>                                                                                                                 | <Limits.ProActiveRoomHoursPerMonth />             |
 | <LimitLabel tooltip="Maximum storage data allowed in a single room.">Realtime data stored per room</LimitLabel>                                                                                                                              | <Limits.ProMaxStorageSizePerRoom />               |
 | <LimitLabel tooltip="Maximum size for a single file upload, such as a comment attachment.">Max file upload size</LimitLabel>                                                                                                                 | <Limits.ProMaxFileUploadSize />                   |
+| <LimitLabel href="/docs/platform/webhooks" tooltip="The number of webhook events sent to your webhook endpoints each month.">Monthly webhook events</LimitLabel>                                                                             | <Limits.ProMaxWebhookEventsPerMonth />            |
 | <LimitLabel href="/docs/api-reference/webhook-events#StorageUpdatedEvent" tooltip="The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Storage) events are sent to your webhook endpoint.">Webhook event frequency</LimitLabel> | <Limits.ProStorageUpdatedWebhookEventThrottle />  |
 | <LimitLabel tooltip="APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.">Version history</LimitLabel>                                                                               | <Limits.ProVersionHistory />                      |
 | <LimitLabel tooltip="How long activity and audit events are retained.">Event log retention</LimitLabel>                                                                                                                                      | <Limits.ProEventLogRetention />                   |
