@@ -21,13 +21,13 @@ import { describe, expect, test } from "vitest";
 describe("liveTextOps", () => {
   test("applyLiveTextOperations formats and inserts text", () => {
     expect(
-      applyLiveTextOperations([["Hello"]], [
-        { type: "format", index: 0, length: 5, attributes: { bold: true } },
-        { type: "insert", index: 5, text: "!" },
-      ])
-    ).toEqual([
-      ["Hello", { bold: true }],
-      ["!"],
-    ]);
+      applyLiveTextOperations(
+        [["Hello"]],
+        [
+          { type: "format", index: 0, length: 5, attributes: { bold: true } },
+          { type: "insert", index: 5, text: "!" },
+        ]
+      )
+    ).toEqual([["Hello", { bold: true }], ["!"]]);
   });
 });
