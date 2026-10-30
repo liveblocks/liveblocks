@@ -1,27 +1,33 @@
 import { AI_USER_INFO, getUsers } from "@/database";
-import {
-  writeFeedComplete,
-  writeFeedStatus,
-} from "@/lib/ai-feed-messages";
+import { writeFeedComplete, writeFeedStatus } from "@/lib/ai-feed-messages";
 import { hideAiPresence, showAiPresence } from "@/lib/ai-remote-presence";
 import {
-  createButtonLabelsTools,
   createButtonLinksTools,
-  createButtonPropertiesTools,
   type AiIssueAssistantToolRunState,
 } from "@/lib/ai-issue-assistant-tools";
 import {
-  buildButtonLabelsSystemPrompt,
+  runJevLabelsButton,
+  runJevPropertiesButton,
+} from "@/lib/ai-issue-button-jev";
+import {
   buildButtonLinksSystemPrompt,
-  buildButtonPropertiesSystemPrompt,
   type AiIssueButtonKind,
 } from "@/lib/ai-issue-button-prompts";
+import { BackgroundTasks } from "@/lib/background-tasks";
 import { buildIssueContextMarkdown } from "@/lib/issue-context-markdown";
 import { getRoomId } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
 import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
 import { ModelMessage, stepCountIs, streamText } from "ai";
 import { nanoid } from "nanoid";
+
+// The three sparkle buttons use two different kinds of model:
+//
+// - "links" needs to *generate* URLs, so it runs a small Claude model with a
+//   tool it can call.
+// - "properties" and "labels" are *classification* problems, so they ask
+//   Jev (TypeSafe's System One model) typed questions and apply the answers
+//   in code. See ai-issue-button-jev.ts.
 
 export type AiIssueButtonRunContext = {
   roomId: string;
@@ -42,8 +48,7 @@ export async function prepareAiIssueButton(input: {
   requestedByUserId: string;
   kind: AiIssueButtonKind;
 }): Promise<
-  | { ok: true; ctx: AiIssueButtonRunContext }
-  | { ok: false; error: string }
+  { ok: true; ctx: AiIssueButtonRunContext } | { ok: false; error: string }
 > {
   const { issueId, requestedByUserId, kind } = input;
 
@@ -55,16 +60,13 @@ export async function prepareAiIssueButton(input: {
   const feedId = `issue-button-${kind}-${nanoid(10)}`;
 
   try {
-    await Promise.all([
-      liveblocks.createFeed({
-        roomId,
-        feedId,
-        metadata: { type: "ai-issue-button", kind },
-      }),
-      showAiPresence(roomId),
-    ]);
-
-    await writeFeedStatus({ roomId, feedId }, "Starting…");
+    // Only the feed is awaited here: the client subscribes to it as soon as
+    // this action returns. Presence and status messages happen in the run.
+    await liveblocks.createFeed({
+      roomId,
+      feedId,
+      metadata: { type: "ai-issue-button", kind },
+    });
 
     return { ok: true, ctx: { roomId, feedId, kind } };
   } catch (err) {
@@ -72,46 +74,10 @@ export async function prepareAiIssueButton(input: {
   }
 }
 
-function statusLabelsForToolInput(toolName: string, input: unknown): string[] {
-  if (toolName === "append_issue_links") {
-    return ["Adding links…"];
-  }
-  if (toolName === "update_issue_labels") {
-    return ["Updating labels…"];
-  }
-  if (toolName === "update_issue_properties") {
-    if (!input || typeof input !== "object") {
-      return ["Updating…"];
-    }
-    const o = input as Record<string, unknown>;
-    const ordered: [string, string][] = [
-      ["assignedTo", "Assigning user…"],
-      ["priority", "Updating priority…"],
-      ["progress", "Updating progress…"],
-    ];
-    const out: string[] = [];
-    for (const [key, label] of ordered) {
-      if (o[key] !== undefined) {
-        out.push(label);
-      }
-    }
-    return out.length > 0 ? out : ["Updating…"];
-  }
-  return [`Running ${toolName}…`];
-}
-
-async function streamButtonToFeed(ctx: AiIssueButtonRunContext) {
-  const { roomId, feedId, kind } = ctx;
+async function streamLinksButtonToFeed(ctx: AiIssueButtonRunContext) {
+  const { roomId, feedId } = ctx;
 
   const issueContextMd = await buildIssueContextMarkdown(roomId);
-
-  const assignableUsersLines = getUsers()
-    .filter((u) => u.id !== AI_USER_INFO.id)
-    .map(
-      (u) =>
-        `- \`${u.id}\` — ${typeof u.info === "object" && u.info && "name" in u.info ? String(u.info.name) : u.id}`
-    )
-    .join("\n");
 
   const toolRunState: AiIssueAssistantToolRunState = {
     editorMarkdownApplied: false,
@@ -119,48 +85,19 @@ async function streamButtonToFeed(ctx: AiIssueButtonRunContext) {
     issueLinksUpdated: false,
   };
 
-  const system =
-    kind === "links"
-      ? buildButtonLinksSystemPrompt(issueContextMd)
-      : kind === "properties"
-        ? buildButtonPropertiesSystemPrompt(
-            issueContextMd,
-            assignableUsersLines
-          )
-        : buildButtonLabelsSystemPrompt(issueContextMd);
-
-  const userMessage: ModelMessage =
-    kind === "links"
-      ? {
-          role: "user",
-          content:
-            "Find and add relevant https links for this issue using your tools.",
-        }
-      : kind === "properties"
-        ? {
-            role: "user",
-            content:
-              "Fill in missing progress, priority, and/or assignee using your tools.",
-          }
-        : {
-            role: "user",
-            content: "Set appropriate labels using your tools.",
-          };
-
-  const tools =
-    kind === "links"
-      ? createButtonLinksTools(roomId, toolRunState)
-      : kind === "properties"
-        ? createButtonPropertiesTools(roomId, toolRunState)
-        : createButtonLabelsTools(roomId, toolRunState);
+  const userMessage: ModelMessage = {
+    role: "user",
+    content:
+      "Find and add relevant https links for this issue using your tools.",
+  };
 
   const result = streamText({
     // Cheap model for small button edits
     model: anthropic("claude-haiku-4-5"),
-    system,
+    system: buildButtonLinksSystemPrompt(issueContextMd),
     messages: [userMessage],
     stopWhen: stepCountIs(8),
-    tools,
+    tools: createButtonLinksTools(roomId, toolRunState),
     providerOptions: {
       anthropic: {
         sendReasoning: true,
@@ -190,10 +127,7 @@ async function streamButtonToFeed(ctx: AiIssueButtonRunContext) {
         continue;
       }
       reportedToolCalls.add(part.toolCallId);
-      const labels = statusLabelsForToolInput(part.toolName, part.input);
-      for (const label of labels) {
-        await writeFeedStatus({ roomId, feedId }, label);
-      }
+      await writeFeedStatus({ roomId, feedId }, "Adding links…");
     }
   }
 
@@ -215,8 +149,26 @@ async function streamButtonToFeed(ctx: AiIssueButtonRunContext) {
 export async function runAiIssueButtonStream(
   ctx: AiIssueButtonRunContext
 ): Promise<{ status: number; error?: string }> {
+  // Presence and feed status writes never block the visible update; they are
+  // collected here and flushed after the work is done.
+  const background = new BackgroundTasks();
+  background.add(showAiPresence(ctx.roomId));
+  background.queue(() => writeFeedStatus(ctx, "Starting…"));
+
   try {
-    await streamButtonToFeed(ctx);
+    switch (ctx.kind) {
+      case "links":
+        await streamLinksButtonToFeed(ctx);
+        break;
+      case "properties":
+        await runJevPropertiesButton(ctx, background);
+        break;
+      case "labels":
+        await runJevLabelsButton(ctx, background);
+        break;
+    }
+
+    await background.flush();
 
     // Let the AI editing-type outlines linger briefly, then clear presence.
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -224,7 +176,15 @@ export async function runAiIssueButtonStream(
 
     return { status: 200 };
   } catch (err) {
+    await background.flush();
     await hideAiPresence(ctx.roomId).catch(() => undefined);
+    // Close the feed so the button stops spinning even when the model call
+    // failed (e.g. a missing API key).
+    await writeFeedComplete(ctx, {
+      response: "",
+      reasoning: "",
+      thinkingTime: 0,
+    }).catch(() => undefined);
     return { status: 400, error: `${err}` };
   }
 }
