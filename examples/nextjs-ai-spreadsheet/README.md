@@ -36,6 +36,33 @@ chat: it edits the spreadsheet from the server with `@liveblocks/node`
 (`mutateStorage`) and shows its live selection with `setPresence`, streaming both
 its reply and the grid edits as it works.
 
+### Jev reviewer
+
+The sheet is also reviewed as you work, using
+[Jev](https://docs.typesafe.ai), TypeSafe's System One model. Every time you
+edit a cell or leave a comment, one Jev request asks ~20 typed yes/no questions
+about the cell in context (typo? wrong number format? broken formula?
+hardcoded total? outlier? …) and the conversation on it (unanswered question?
+agreed value not entered? …), plus one question per check about whether the
+thread already raises it. Jev returns calibrated probabilities; code keeps the
+checks above `0.8` that aren't already open in the thread, and the LLM turns
+those checks' prompts into a single comment on the cell with **Fix it** and
+**Ignore** buttons. Nothing is changed automatically.
+
+- **Fix it** posts a "Fix it" comment. Jev classifies it (`approve_fix`) and
+  the AI applies exactly the recommended change with its tools, then confirms.
+  Typing "yes, go ahead" by hand works the same way; an `@mention` skips Jev
+  and replies directly.
+- **Ignore** resolves the thread.
+- Editing the cell so the issue goes away makes Jev's `thread_resolvable`
+  check fire; the AI confirms and resolves the thread.
+
+Jev routes, the LLM writes: see `lib/jev-review.ts` for the check catalog,
+thresholds, and routing. The reviewer needs `TYPESAFE_API_KEY` and
+`AI_GATEWAY_API_KEY`; comment triggers (including the Fix it button) also
+need the `commentCreated` webhook below. Without them the reviewer is quietly
+disabled.
+
 ## Getting started
 
 Run the following command to try this example locally:
@@ -65,6 +92,12 @@ Alternatively, you can set up your project manually:
 - Add an `AI_GATEWAY_API_KEY` from the
   [Vercel AI Gateway](https://vercel.com/docs/ai-gateway). This is required for
   the AI chat — it needs a real, tool-calling model to edit the spreadsheet.
+- Optionally add a `TYPESAFE_API_KEY` from [TypeSafe](https://typesafe.ai) to
+  enable the Jev reviewer, and point a `commentCreated`
+  [webhook](https://liveblocks.io/dashboard/webhooks) at
+  `/api/liveblocks-webhook` (setting `LIVEBLOCKS_WEBHOOK_SECRET_KEY`) so it
+  can react to comments and the **Fix it** button. Locally, use a tunnel such
+  as `localtunnel` or `ngrok` for the webhook URL.
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To see the realtime sync, open the page in two browser tabs and edit a cell, drag
