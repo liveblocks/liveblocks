@@ -35,7 +35,7 @@ data, such as rooms, Storage, Yjs, comments, and more.
   <Step>
     <StepTitle>Install MCP server</StepTitle>
     <StepContent>
-      To allow AI to inspect and modify data in your project, install the
+      To allow AI to inspect and modify data in your project, connect to the
       [Liveblocks MCP server](/docs/tools/mcp-server).
 
       1. Go to File → Cursor Settings → MCP → Add new server.
@@ -46,10 +46,9 @@ data, such as rooms, Storage, Yjs, comments, and more.
       {
         "mcpServers": {
           "liveblocks": {
-            "command": "npx",
-            "args": ["-y", "github:liveblocks/liveblocks-mcp-server"],
-            "env": {
-              "LIVEBLOCKS_SECRET_KEY": "{{SECRET_KEY}}"
+            "url": "https://mcp.liveblocks.io/mcp",
+            "headers": {
+              "Authorization": "Bearer {{SECRET_KEY}}"
             }
           }
         }
@@ -127,7 +126,7 @@ see the generated plugin files.
 ### MCP returns auth errors
 
 Use a secret key from the same [Liveblocks project](/dashboard) as your app.
-Confirm `LIVEBLOCKS_SECRET_KEY` in the MCP config matches that project.
+Confirm the secret key in the MCP config matches that project.
 
 ### MCP returns incorrect data
 
