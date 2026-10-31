@@ -25,7 +25,7 @@ export function SignIn() {
   }
 
   return (
-    <main className="flex h-dvh w-full items-center justify-center p-6">
+    <main className="flex h-full min-h-full w-full items-center justify-center p-6">
       <section
         aria-labelledby="sign-in-heading"
         className="w-full max-w-sm rounded-lg bg-white p-6 shadow ring-1 ring-neutral-950/5"

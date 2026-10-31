@@ -33,7 +33,6 @@ export type RoomMember = {
 
 export type LessonRoom = {
   id: string;
-  name: string;
   language: string;
   ownerId: string;
   createdAt: string;
@@ -58,9 +57,8 @@ export function isRoomMember(room: RoomData, userId: string) {
 }
 
 export function getRoomInfo(room: RoomData): RoomInfo {
-  const { name, language, ownerId } = room.metadata;
+  const { language, ownerId } = room.metadata;
   return {
-    name: typeof name === "string" ? name : "Untitled room",
     language: typeof language === "string" ? language : "en",
     ownerId: typeof ownerId === "string" ? ownerId : "",
   };

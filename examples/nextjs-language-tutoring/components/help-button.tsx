@@ -163,6 +163,7 @@ export function HelpButton() {
         size="icon-sm"
         onClick={() => setIsOpen(true)}
         aria-label="How to use this example"
+        className="text-neutral-500"
       >
         <HelpIcon />
       </Button>
@@ -230,8 +231,7 @@ export function HelpButton() {
 function HelpIcon() {
   return (
     <svg
-      width={16}
-      height={16}
+      className="size-5"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

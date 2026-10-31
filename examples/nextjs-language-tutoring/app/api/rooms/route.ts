@@ -49,13 +49,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = (await request.json().catch(() => ({}))) as {
-    name?: unknown;
     language?: unknown;
   };
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-  if (!name || name.length > 80) {
-    return new NextResponse("Invalid room name", { status: 400 });
-  }
   const language = isLanguageCode(body.language) ? body.language : "en";
 
   const exampleId = getExampleId(request);
@@ -63,7 +58,6 @@ export async function POST(request: NextRequest) {
     defaultAccesses: [],
     usersAccesses: { [user.id]: ["room:write"] },
     metadata: {
-      name,
       language,
       ownerId: user.id,
       [INVITE_TOKEN_KEY]: nanoid(24),

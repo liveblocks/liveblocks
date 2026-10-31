@@ -19,7 +19,7 @@ export function RoomShell(props: RoomShellProps) {
   const [chatOpen, setChatOpen] = useState(true);
 
   return (
-    <div className="flex h-dvh flex-col gap-3 p-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
       <RoomHeader
         {...props}
         chatOpen={chatOpen}

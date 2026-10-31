@@ -98,6 +98,8 @@ export function WhiteboardDoc({
     <div className="absolute inset-0">
       <Tldraw
         store={store}
+        // Removes the "Made with tldraw" watermark when a license is configured
+        licenseKey={process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY}
         shapeUtils={SHAPE_UTILS}
         components={COMPONENTS}
         onMount={(editor) => {

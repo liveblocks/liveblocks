@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/user-avatar";
 import type { LessonRoom } from "@/lib/api";
 import { getLanguage } from "@/lib/languages";
+import { getRoomTitle } from "@/lib/room-title";
 
 export function RoomCard({ room }: { room: LessonRoom }) {
   const { href, user } = useApp();
@@ -30,7 +31,7 @@ export function RoomCard({ room }: { room: LessonRoom }) {
           </span>
           <div className="min-w-0">
             <h2 className="truncate font-semibold group-hover:underline">
-              {room.name}
+              {getRoomTitle(room.members)}
             </h2>
             <p className="text-sm text-neutral-500">{language.name}</p>
           </div>

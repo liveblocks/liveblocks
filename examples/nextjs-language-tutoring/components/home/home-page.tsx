@@ -3,9 +3,7 @@
 import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useApp } from "@/components/app-context";
-import { HelpButton } from "@/components/help-button";
 import { SignIn } from "@/components/sign-in";
-import { UserMenu } from "@/components/user-menu";
 import type { LessonRoom } from "@/lib/api";
 import { NewRoomDialog } from "./new-room-dialog";
 import { RoomCard } from "./room-card";
@@ -42,7 +40,7 @@ function RoomList() {
   }, [load, user?.id]);
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-6 py-8">
+    <main className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-6 py-8">
       <header className="mb-8 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Your rooms</h1>
@@ -51,11 +49,7 @@ function RoomList() {
             together.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <HelpButton />
-          <NewRoomDialog />
-          <UserMenu />
-        </div>
+        <NewRoomDialog />
       </header>
 
       {error ? (
@@ -92,7 +86,7 @@ function RoomList() {
 
 export function FullPageSpinner() {
   return (
-    <div className="flex h-dvh items-center justify-center">
+    <div className="flex h-full min-h-full items-center justify-center">
       <Loader2Icon className="size-5 animate-spin text-neutral-400" />
     </div>
   );

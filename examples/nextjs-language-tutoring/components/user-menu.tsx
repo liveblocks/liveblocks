@@ -17,14 +17,19 @@ export function UserMenu() {
   const { isPreview, signOut } = useApp();
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger
-        className="inline-flex size-7 items-center justify-center rounded-full p-0 leading-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="inline-flex size-8 items-center justify-center rounded-full p-0 leading-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         aria-label="Account"
       >
-        <UserAvatar info={user.info} size={28} />
+        <UserAvatar info={user.info} size={32} className="ring-0" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent
+        side="right"
+        align="end"
+        sideOffset={8}
+        className="w-56"
+      >
         <DropdownMenuLabel className="flex items-center gap-2">
           <UserAvatar info={user.info} size={28} />
           <span className="flex min-w-0 flex-col">

@@ -35,35 +35,6 @@ export async function GET(request: NextRequest, { params }: Context) {
   });
 }
 
-// Renames the room (tutor only)
-export async function PATCH(request: NextRequest, { params }: Context) {
-  const user = await getRequestUser(request);
-  if (!user) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
-  const { roomId } = await params;
-  const room = await getLessonRoom(roomId, user.id);
-  if (!room) {
-    return new NextResponse("Not found", { status: 404 });
-  }
-  if (getRoomInfo(room).ownerId !== user.id) {
-    return new NextResponse("Only the tutor can rename the room", {
-      status: 403,
-    });
-  }
-
-  const body = (await request.json().catch(() => ({}))) as { name?: unknown };
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-  if (!name || name.length > 80) {
-    return new NextResponse("Invalid room name", { status: 400 });
-  }
-
-  const updated = await liveblocks.updateRoom(roomId, { metadata: { name } });
-  const [lessonRoom] = await toLessonRooms([updated], getExampleId(request));
-  return NextResponse.json(lessonRoom);
-}
-
 // Deletes the room and everything in it (tutor only)
 export async function DELETE(request: NextRequest, { params }: Context) {
   const user = await getRequestUser(request);

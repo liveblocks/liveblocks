@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -37,7 +36,6 @@ export function NewRoomDialog({
   const { api, href } = useApp();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
   const [language, setLanguage] = useState<LanguageCode>("es");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +47,7 @@ export function NewRoomDialog({
     try {
       const room = await api<LessonRoom>("/api/rooms", {
         method: "POST",
-        json: { name, language },
+        json: { language },
       });
       onCreated?.(room);
       setOpen(false);
@@ -68,7 +66,6 @@ export function NewRoomDialog({
       onOpenChange={(next) => {
         setOpen(next);
         if (next) {
-          setName("");
           setPending(false);
           setError(null);
         }
@@ -90,17 +87,6 @@ export function NewRoomDialog({
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 flex flex-col gap-4">
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Room name
-              <Input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Spanish with Marie"
-                maxLength={80}
-                required
-                autoFocus
-              />
-            </label>
             <label className="flex flex-col gap-1.5 text-sm font-medium">
               Language
               <Select
@@ -130,7 +116,7 @@ export function NewRoomDialog({
             ) : null}
           </div>
           <DialogFooter className="mt-6">
-            <Button type="submit" disabled={pending || !name.trim()}>
+            <Button type="submit" disabled={pending}>
               {pending ? <Loader2Icon className="animate-spin" /> : null}
               Create room
             </Button>

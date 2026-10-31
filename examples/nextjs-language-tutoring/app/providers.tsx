@@ -3,6 +3,7 @@
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { type PropsWithChildren, useCallback } from "react";
 import { AppProvider, useApp } from "@/components/app-context";
+import { AppRail } from "@/components/app-rail";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function Providers({
@@ -12,7 +13,14 @@ export function Providers({
   return (
     <AppProvider googleEnabled={googleEnabled}>
       <TooltipProvider>
-        <LiveblocksProviders>{children}</LiveblocksProviders>
+        <LiveblocksProviders>
+          <div className="flex h-full min-h-0">
+            <AppRail />
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+              {children}
+            </div>
+          </div>
+        </LiveblocksProviders>
       </TooltipProvider>
     </AppProvider>
   );

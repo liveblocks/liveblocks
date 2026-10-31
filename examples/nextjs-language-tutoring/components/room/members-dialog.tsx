@@ -37,7 +37,6 @@ export function MembersDialog({
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState(room.name);
 
   const inviteUrl =
     typeof window !== "undefined" && room.inviteToken
@@ -76,23 +75,6 @@ export function MembersDialog({
     }
   }
 
-  async function rename() {
-    if (!name.trim() || name.trim() === room.name) return;
-    setBusy("rename");
-    setError(null);
-    try {
-      const updated = await api<LessonRoomDetails>(
-        `/api/rooms/${encodeURIComponent(room.id)}`,
-        { method: "PATCH", json: { name } }
-      );
-      onRoomChange({ ...updated, inviteToken: room.inviteToken });
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not rename");
-    } finally {
-      setBusy(null);
-    }
-  }
-
   async function deleteRoom() {
     if (!window.confirm("Delete this room and all of its documents?")) return;
     setBusy("delete");
@@ -112,7 +94,6 @@ export function MembersDialog({
       onOpenChange={(open) => {
         if (open) {
           setError(null);
-          setName(room.name);
           void refreshRoom();
         }
       }}
@@ -198,30 +179,6 @@ export function MembersDialog({
                 >
                   {copied ? <CheckIcon /> : <CopyIcon />}
                   {copied ? "Copied" : "Copy"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-2">
-              <p className="mb-1.5 text-sm font-medium">Room name</p>
-              <div className="flex gap-2">
-                <Input
-                  value={name}
-                  maxLength={80}
-                  onChange={(event) => setName(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") void rename();
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => void rename()}
-                  disabled={busy !== null || name.trim() === room.name}
-                >
-                  {busy === "rename" ? (
-                    <Loader2Icon className="animate-spin" />
-                  ) : null}
-                  Save
                 </Button>
               </div>
             </div>

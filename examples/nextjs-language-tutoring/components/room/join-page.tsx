@@ -48,7 +48,7 @@ export function JoinPage({ roomId }: { roomId: string }) {
   }
 
   return (
-    <main className="flex h-dvh items-center justify-center p-6">
+    <main className="flex h-full min-h-full items-center justify-center p-6">
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-lg bg-white p-6 text-center shadow ring-1 ring-neutral-950/5">
         {error ? (
           <>

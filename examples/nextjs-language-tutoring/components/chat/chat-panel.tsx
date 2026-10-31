@@ -240,9 +240,10 @@ export function ChatPanel({
           <Button
             type="button"
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             disabled={sending}
             aria-label="Attach files"
+            className="mb-0.5 text-neutral-500"
             onClick={() => fileInputRef.current?.click()}
           >
             <PaperclipIcon />

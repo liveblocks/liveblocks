@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           type="image/png"
         />
       </head>
-      <body className="absolute inset-0 bg-neutral-50 font-sans text-neutral-900 antialiased">
+      <body className="h-dvh overflow-hidden bg-neutral-50 font-sans text-neutral-900 antialiased">
         <Suspense>
           <Providers googleEnabled={GOOGLE_ENABLED}>{children}</Providers>
         </Suspense>

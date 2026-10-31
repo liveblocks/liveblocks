@@ -127,6 +127,11 @@
   --lb-accent: rgb(253 81 8);
 }
 
+/* The "Powered by Liveblocks" badge would sit on top of the rail's user menu */
+#liveblocks-badge {
+  display: none;
+}
+
 /* Tailwind's preflight resets typography; give the editor and the chat
    snapshots sensible defaults for headings, lists, quotes, and code. */
 .lesson-editor,

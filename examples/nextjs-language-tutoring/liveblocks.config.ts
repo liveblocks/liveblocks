@@ -69,9 +69,9 @@ declare global {
       profiles?: LiveMap<string, LiveObject<Liveblocks["UserMeta"]["info"]>>;
     };
 
-    // Room metadata, set server-side when creating rooms
+    // Room metadata, set server-side when creating rooms. Rooms have no
+    // explicit name; they're titled after their members (see lib/room-title.ts)
     RoomInfo: {
-      name: string;
       language: string;
       ownerId: string;
     };
