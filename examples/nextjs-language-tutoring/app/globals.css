@@ -245,7 +245,9 @@
   font-size: 1.2em;
 }
 
-/* Keep the tldraw canvas inside its rounded panel */
+/* Keep the tldraw canvas inside its rounded panel. tldraw's toolbar and
+   canvas use z-index up to 300, which would paint above app dialogs. */
 .tl-container {
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  isolation: isolate;
 }

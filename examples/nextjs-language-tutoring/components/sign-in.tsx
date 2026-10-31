@@ -57,45 +57,46 @@ export function SignIn() {
             )}
             Continue with Google
           </Button>
-        ) : null}
-
-        <p className="mt-6 text-xs font-medium tracking-wide text-neutral-400 uppercase">
-          {googleEnabled ? "Or try a demo account" : "Try a demo account"}
-        </p>
-        {!googleEnabled ? (
-          <p className="mt-1 text-xs text-neutral-500">
-            Set <code>GOOGLE_CLIENT_ID</code> and{" "}
-            <code>GOOGLE_CLIENT_SECRET</code> to enable Google sign-in.
-          </p>
-        ) : null}
-
-        <ul className="mt-3 flex flex-col gap-1" aria-label="Demo accounts">
-          {getUsers().map((user) => (
-            <li key={user.id}>
-              <button
-                type="button"
-                disabled={pending !== null}
-                aria-busy={pending === user.id || undefined}
-                onClick={() => run(user.id, () => signInDemo(user.id))}
-                className="flex w-full items-center gap-3 rounded-md border border-neutral-200 px-3 py-2 text-left text-sm transition hover:border-neutral-300 hover:bg-neutral-50 disabled:cursor-default disabled:opacity-60"
-              >
-                <UserAvatar info={user.info} size={32} />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate font-medium">{user.info.name}</span>
-                  <span className="truncate text-xs text-neutral-500">
-                    {user.id}
-                  </span>
-                </span>
-                {pending === user.id ? (
-                  <Loader2Icon
-                    className="size-4 shrink-0 animate-spin text-neutral-500"
-                    aria-hidden
-                  />
-                ) : null}
-              </button>
-            </li>
-          ))}
-        </ul>
+        ) : (
+          <>
+            <p className="mt-6 text-xs font-medium tracking-wide text-neutral-400 uppercase">
+              Try a demo account
+            </p>
+            <p className="mt-1 text-xs text-neutral-500">
+              Set <code>GOOGLE_CLIENT_ID</code> and{" "}
+              <code>GOOGLE_CLIENT_SECRET</code> to enable Google sign-in.
+            </p>
+            <ul className="mt-3 flex flex-col gap-1" aria-label="Demo accounts">
+              {getUsers().map((user) => (
+                <li key={user.id}>
+                  <button
+                    type="button"
+                    disabled={pending !== null}
+                    aria-busy={pending === user.id || undefined}
+                    onClick={() => run(user.id, () => signInDemo(user.id))}
+                    className="flex w-full items-center gap-3 rounded-md border border-neutral-200 px-3 py-2 text-left text-sm transition hover:border-neutral-300 hover:bg-neutral-50 disabled:cursor-default disabled:opacity-60"
+                  >
+                    <UserAvatar info={user.info} size={32} />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate font-medium">
+                        {user.info.name}
+                      </span>
+                      <span className="truncate text-xs text-neutral-500">
+                        {user.id}
+                      </span>
+                    </span>
+                    {pending === user.id ? (
+                      <Loader2Icon
+                        className="size-4 shrink-0 animate-spin text-neutral-500"
+                        aria-hidden
+                      />
+                    ) : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
         {error ? (
           <p role="alert" className="mt-4 text-sm text-red-600">

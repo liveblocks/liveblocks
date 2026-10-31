@@ -49,12 +49,12 @@ export async function getPdfPageSizes(pdf: PDFDocumentProxy) {
 // resolver that the shape util can call whenever it needs the file.
 // ---------------------------------------------------------------------------
 
-type UrlResolver = () => Promise<string>;
+type SourceResolver = () => Promise<string | ArrayBuffer>;
 
-const resolvers = new Map<string, UrlResolver>();
+const resolvers = new Map<string, SourceResolver>();
 const documents = new Map<string, Promise<PDFDocumentProxy>>();
 
-export function registerPdfFile(fileId: string, resolve: UrlResolver) {
+export function registerPdfFile(fileId: string, resolve: SourceResolver) {
   resolvers.set(fileId, resolve);
   return () => {
     resolvers.delete(fileId);
@@ -69,7 +69,7 @@ export function getPdfDocument(fileId: string): Promise<PDFDocumentProxy> {
       return Promise.reject(new Error(`Unknown PDF file ${fileId}`));
     }
     document$ = resolve()
-      .then((url) => openPdf(url))
+      .then((source) => openPdf(source))
       .catch((error: unknown) => {
         documents.delete(fileId);
         throw error;

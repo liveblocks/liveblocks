@@ -9,7 +9,7 @@ import {
   useMemo,
 } from "react";
 import { getColorForUserId, getUser, getUsers } from "@/app/database";
-import { type ApiContext, api } from "@/lib/api";
+import { type ApiContext, api, apiBytes } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import {
   type ExampleParams,
@@ -32,6 +32,8 @@ export type AppContextValue = {
   signOut: () => Promise<void>;
   // Fetch helper forwarding gallery params to the API routes
   api: <T>(path: string, init?: Parameters<typeof api>[2]) => Promise<T>;
+  // Same forwarding, for binary responses such as a proxied PDF
+  bytes: (path: string) => Promise<ArrayBuffer>;
   // Preserve gallery params when linking within the app
   href: (path: string) => string;
 };
@@ -120,6 +122,7 @@ export function AppProvider({
       signInGoogle,
       signOut,
       api: (path, init) => api(apiContext, path, init),
+      bytes: (path) => apiBytes(apiContext, path),
       href: (path) => withExampleParams(path, params),
     }),
     [

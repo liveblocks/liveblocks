@@ -1,9 +1,14 @@
 "use client";
 
 import { useOthers } from "@liveblocks/react/suspense";
+import { useState } from "react";
 import { DOC_TYPE_ICONS } from "@/components/chat/snapshot-card";
 import { NewDocMenu } from "@/components/docs/new-doc-menu";
-import { useDocuments } from "@/components/docs/use-documents";
+import {
+  compareDocuments,
+  useDocuments,
+  useReorderDocument,
+} from "@/components/docs/use-documents";
 import { UserAvatar } from "@/components/user-avatar";
 import type { LessonRoomDetails } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -18,8 +23,16 @@ export function DocSidebar({
   onSelect: (docId: string) => void;
 }) {
   const documents = useDocuments();
+  const reorderDocument = useReorderDocument();
   const others = useOthers();
-  const sorted = [...documents].sort((a, b) => b.createdAt - a.createdAt);
+  const sorted = [...documents].sort(compareDocuments);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+
+  function finishDrag() {
+    setDraggingId(null);
+    setDropIndex(null);
+  }
 
   return (
     <nav
@@ -31,20 +44,62 @@ export function DocSidebar({
         <NewDocMenu onCreated={onSelect} />
       </div>
       <ul className="flex-1 overflow-y-auto p-2">
-        {sorted.map((doc) => {
+        {sorted.map((doc, index) => {
           const Icon = DOC_TYPE_ICONS[doc.type];
           const viewers = others.filter(
             (other) => other.presence.docId === doc.id
           );
           const active = doc.id === activeDocId;
+          const showBefore = dropIndex === index && draggingId !== doc.id;
+          const showAfter =
+            dropIndex === sorted.length &&
+            index === sorted.length - 1 &&
+            draggingId !== doc.id;
           return (
-            <li key={doc.id}>
+            <li
+              key={doc.id}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+                const rect = event.currentTarget.getBoundingClientRect();
+                setDropIndex(
+                  event.clientY > rect.top + rect.height / 2 ? index + 1 : index
+                );
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                const docId =
+                  draggingId ?? event.dataTransfer.getData("text/plain");
+                if (docId) {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const next =
+                    event.clientY > rect.top + rect.height / 2
+                      ? index + 1
+                      : index;
+                  reorderDocument(docId, next);
+                }
+                finishDrag();
+              }}
+              className={cn(
+                "rounded-md",
+                draggingId === doc.id && "opacity-40",
+                showBefore && "shadow-[inset_0_2px_0_0_var(--color-neutral-900)]",
+                showAfter && "shadow-[inset_0_-2px_0_0_var(--color-neutral-900)]"
+              )}
+            >
               <button
                 type="button"
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("text/plain", doc.id);
+                  setDraggingId(doc.id);
+                }}
+                onDragEnd={finishDrag}
                 onClick={() => onSelect(doc.id)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition",
+                  "flex w-full cursor-grab items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition active:cursor-grabbing",
                   active
                     ? "bg-neutral-100 font-medium"
                     : "text-neutral-700 hover:bg-neutral-50"

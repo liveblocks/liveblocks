@@ -18,6 +18,9 @@ export type DocumentData = {
   title: string;
   createdAt: number;
   createdBy: string;
+  // Sidebar position. Missing on documents created before reordering, which
+  // then sort newest-first by createdAt.
+  order?: number;
   // Only set for PDF documents: the uploaded file
   pdf?: LiveFile;
   // Only set for PDF documents: number of pages, once known

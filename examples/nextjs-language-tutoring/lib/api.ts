@@ -19,12 +19,10 @@ export class ApiError extends Error {
   }
 }
 
-// Small fetch wrapper that forwards the gallery params to the API routes
-export async function api<T>(
-  ctx: ApiContext,
-  path: string,
-  init?: RequestInit & { json?: unknown }
-): Promise<T> {
+type ApiInit = RequestInit & { json?: unknown };
+
+// Forwards gallery params (example id, preview user) onto an API request.
+async function apiRequest(ctx: ApiContext, path: string, init?: ApiInit) {
   const url = new URL(path, window.location.origin);
   if (ctx.exampleId) {
     url.searchParams.set("exampleId", ctx.exampleId);
@@ -40,15 +38,37 @@ export async function api<T>(
     body = JSON.stringify(init.json);
   }
 
-  const response = await fetch(url, { ...init, headers, body });
+  return fetch(url, { ...init, headers, body });
+}
+
+async function apiError(response: Response) {
+  return new ApiError(
+    response.status,
+    (await response.text()) || response.statusText
+  );
+}
+
+// Small fetch wrapper that forwards the gallery params to the API routes
+export async function api<T>(
+  ctx: ApiContext,
+  path: string,
+  init?: ApiInit
+): Promise<T> {
+  const response = await apiRequest(ctx, path, init);
   if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      (await response.text()) || response.statusText
-    );
+    throw await apiError(response);
   }
   if (response.status === 204) {
     return undefined as T;
   }
   return (await response.json()) as T;
+}
+
+// Same as `api`, but for binary responses such as a proxied PDF.
+export async function apiBytes(ctx: ApiContext, path: string) {
+  const response = await apiRequest(ctx, path);
+  if (!response.ok) {
+    throw await apiError(response);
+  }
+  return response.arrayBuffer();
 }

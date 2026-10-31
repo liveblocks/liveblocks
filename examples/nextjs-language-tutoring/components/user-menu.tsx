@@ -19,7 +19,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="inline-flex size-7 items-center justify-center rounded-full p-0 leading-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         aria-label="Account"
       >
         <UserAvatar info={user.info} size={28} />

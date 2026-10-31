@@ -52,8 +52,8 @@ function RoomList() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <NewRoomDialog />
           <HelpButton />
+          <NewRoomDialog />
           <UserMenu />
         </div>
       </header>

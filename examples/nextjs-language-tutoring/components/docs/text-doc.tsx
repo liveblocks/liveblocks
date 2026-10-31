@@ -15,25 +15,32 @@ import { useEffect } from "react";
 import type { DocumentInfo } from "@/liveblocks.config";
 import type { SnapshotProducer } from "./document-view";
 
-const INITIAL_CONTENT = {
+const EMPTY_CONTENT = {
   type: "doc",
-  content: [
-    {
-      type: "heading",
-      attrs: { level: 1 },
-      content: [{ type: "text", text: "Lesson notes" }],
-    },
-    {
-      type: "paragraph",
-      content: [
-        {
-          type: "text",
-          text: "Write together here. Select text to format it or to leave a comment.",
-        },
-      ],
-    },
-  ],
+  content: [{ type: "paragraph" }],
 };
+
+type DocNode = {
+  type?: string;
+  text?: string;
+  content?: DocNode[];
+};
+
+// The copy this example used to seed into every new text document.
+function isSeededContent(doc: DocNode) {
+  const blocks = doc.content ?? [];
+  if (blocks.length !== 2) return false;
+  const [heading, paragraph] = blocks;
+  return (
+    heading?.type === "heading" &&
+    heading.content?.length === 1 &&
+    heading.content[0]?.text === "Lesson notes" &&
+    paragraph?.type === "paragraph" &&
+    paragraph.content?.length === 1 &&
+    paragraph.content[0]?.text ===
+      "Write together here. Select text to format it or to leave a comment."
+  );
+}
 
 // A LiveText-backed Tiptap document. Several of these live in one room:
 // `field` scopes the document in Storage, and the thread metadata scopes
@@ -48,7 +55,7 @@ export function TextDoc({
   const liveblocks = useLiveblocksExtension({
     collaborationMode: "liveblocks",
     field: doc.id,
-    initialContent: INITIAL_CONTENT,
+    initialContent: EMPTY_CONTENT,
   });
 
   const editor = useEditor({
@@ -66,6 +73,22 @@ export function TextDoc({
       },
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    // Documents created before this change still have the seeded copy.
+    // Clear it once it arrives from storage, and leave anything edited.
+    const clearSeeded = () => {
+      if (!isSeededContent(editor.getJSON())) return;
+      editor.off("update", clearSeeded);
+      editor.commands.setContent(EMPTY_CONTENT);
+    };
+    clearSeeded();
+    editor.on("update", clearSeeded);
+    return () => {
+      editor.off("update", clearSeeded);
+    };
+  }, [editor]);
 
   useEffect(() => {
     if (!editor) return;

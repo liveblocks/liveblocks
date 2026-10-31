@@ -3,6 +3,7 @@
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { type PropsWithChildren, useCallback } from "react";
 import { AppProvider, useApp } from "@/components/app-context";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function Providers({
   googleEnabled,
@@ -10,7 +11,9 @@ export function Providers({
 }: PropsWithChildren<{ googleEnabled: boolean }>) {
   return (
     <AppProvider googleEnabled={googleEnabled}>
-      <LiveblocksProviders>{children}</LiveblocksProviders>
+      <TooltipProvider>
+        <LiveblocksProviders>{children}</LiveblocksProviders>
+      </TooltipProvider>
     </AppProvider>
   );
 }

@@ -3,6 +3,7 @@
 import "tldraw/tldraw.css";
 import { useRoom, useUploadFile } from "@liveblocks/react/suspense";
 import { useEffect, useMemo, useRef } from "react";
+import { useApp } from "@/components/app-context";
 import { Box, type Editor, Tldraw } from "tldraw";
 import { createLiveblocksAssetStore } from "@/components/tldraw/liveblocks-asset-store";
 import { registerPdfFile } from "@/components/tldraw/pdf";
@@ -20,6 +21,9 @@ import type { SnapshotProducer } from "./document-view";
 
 const SHAPE_UTILS = [PdfPageShapeUtil];
 
+// The hamburger in the top-left (pages, preferences, export) isn't used here.
+const COMPONENTS = { MenuPanel: null };
+
 // A tldraw canvas synced through Liveblocks Storage. PDF documents are the
 // same canvas with the PDF's pages laid out as locked background shapes.
 export function WhiteboardDoc({
@@ -30,6 +34,7 @@ export function WhiteboardDoc({
   registerProducer: (producer: SnapshotProducer | null) => void;
 }) {
   const room = useRoom();
+  const { bytes } = useApp();
   const uploadFile = useUploadFile();
   const editorRef = useRef<Editor | null>(null);
 
@@ -43,12 +48,16 @@ export function WhiteboardDoc({
     shapeUtils: SHAPE_UTILS,
   });
 
-  // Let the page shapes find the PDF file (URLs are signed and expire)
+  // Fetch PDFs through our app so R2's CORS policy never reaches the browser.
   const pdfId = doc.pdf?.id;
   useEffect(() => {
     if (!pdfId) return;
-    return registerPdfFile(pdfId, () => room.getFileUrl(pdfId));
-  }, [pdfId, room]);
+    return registerPdfFile(pdfId, () =>
+      bytes(
+        `/api/rooms/${encodeURIComponent(room.id)}/files/${encodeURIComponent(pdfId)}`
+      )
+    );
+  }, [bytes, pdfId, room.id]);
 
   useEffect(() => {
     registerProducer(async ({ page }) => {
@@ -90,6 +99,7 @@ export function WhiteboardDoc({
       <Tldraw
         store={store}
         shapeUtils={SHAPE_UTILS}
+        components={COMPONENTS}
         onMount={(editor) => {
           editorRef.current = editor;
           if (doc.type === "pdf") {
