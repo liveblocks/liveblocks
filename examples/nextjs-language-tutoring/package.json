@@ -16,6 +16,7 @@
     "@liveblocks/react": "^3.24.5",
     "@liveblocks/react-tiptap": "^3.24.5",
     "@liveblocks/react-ui": "^3.24.5",
+    "@tiptap/extension-table": "^3.32.2",
     "@tiptap/pm": "^3.32.2",
     "@tiptap/react": "^3.32.2",
     "@tiptap/starter-kit": "^3.32.2",

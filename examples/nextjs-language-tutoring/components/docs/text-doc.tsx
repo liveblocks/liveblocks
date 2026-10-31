@@ -9,8 +9,17 @@ import {
   useLiveblocksExtension,
 } from "@liveblocks/react-tiptap";
 import { useThreads } from "@liveblocks/react/suspense";
+import { TableKit } from "@tiptap/extension-table";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import {
+  Grid2x2XIcon,
+  MinusIcon,
+  SquareMinusIcon,
+  TableColumnsSplitIcon,
+  TableIcon,
+  TableRowsSplitIcon,
+} from "lucide-react";
 import { useEffect } from "react";
 import type { DocumentInfo } from "@/liveblocks.config";
 import type { SnapshotProducer } from "./document-view";
@@ -65,6 +74,9 @@ export function TextDoc({
         // The Liveblocks extension comes with its own history handling
         undoRedo: false,
       }),
+      TableKit.configure({
+        table: { resizable: true },
+      }),
     ],
     immediatelyRender: false,
     editorProps: {
@@ -99,7 +111,11 @@ export function TextDoc({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="shrink-0 border-b border-neutral-200">
-        <Toolbar editor={editor} className="!border-0 !bg-transparent" />
+        <Toolbar
+          editor={editor}
+          className="!border-0 !bg-transparent"
+          after={TableControls}
+        />
       </div>
       <div className="flex min-h-0 flex-1 justify-center overflow-y-auto">
         <div className="w-full max-w-5xl px-8 py-8 xl:grid xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-8">
@@ -116,6 +132,62 @@ export function TextDoc({
         </div>
       </div>
     </div>
+  );
+}
+
+function TableControls({ editor }: { editor: Editor }) {
+  const inTable = editor.isActive("table");
+
+  return (
+    <>
+      <Toolbar.Separator />
+      <Toolbar.Button
+        name="Insert table"
+        icon={<TableIcon className="size-4" />}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() =>
+          editor
+            .chain()
+            .focus()
+            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+            .run()
+        }
+      />
+      {inTable ? (
+        <>
+          <Toolbar.Button
+            name="Add row below"
+            icon={<TableRowsSplitIcon className="size-4" />}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editor.chain().focus().addRowAfter().run()}
+          />
+          <Toolbar.Button
+            name="Add column after"
+            icon={<TableColumnsSplitIcon className="size-4" />}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editor.chain().focus().addColumnAfter().run()}
+          />
+          <Toolbar.Button
+            name="Delete row"
+            icon={<MinusIcon className="size-4" />}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editor.chain().focus().deleteRow().run()}
+          />
+          <Toolbar.Button
+            name="Delete column"
+            icon={<SquareMinusIcon className="size-4" />}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editor.chain().focus().deleteColumn().run()}
+          />
+          <Toolbar.Button
+            name="Delete table"
+            icon={<Grid2x2XIcon className="size-4" />}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editor.chain().focus().deleteTable().run()}
+          />
+        </>
+      ) : null}
+    </>
   );
 }
 

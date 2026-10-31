@@ -10,15 +10,12 @@ import {
   useReorderDocument,
 } from "@/components/docs/use-documents";
 import { UserAvatar } from "@/components/user-avatar";
-import type { LessonRoomDetails } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export function DocSidebar({
-  room,
   activeDocId,
   onSelect,
 }: {
-  room: LessonRoomDetails;
   activeDocId: string | null;
   onSelect: (docId: string) => void;
 }) {
@@ -34,6 +31,13 @@ export function DocSidebar({
     setDropIndex(null);
   }
 
+  function dropDocument(event: React.DragEvent, index: number) {
+    event.preventDefault();
+    const docId = draggingId ?? event.dataTransfer.getData("text/plain");
+    if (docId) reorderDocument(docId, index);
+    finishDrag();
+  }
+
   return (
     <nav
       aria-label="Documents"
@@ -43,7 +47,19 @@ export function DocSidebar({
         <h2 className="text-sm font-semibold">Documents</h2>
         <NewDocMenu onCreated={onSelect} />
       </div>
-      <ul className="flex-1 overflow-y-auto p-2">
+      <ul
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2"
+        onDragOver={(event) => {
+          if (event.target !== event.currentTarget) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          setDropIndex(sorted.length);
+        }}
+        onDrop={(event) => {
+          if (event.target !== event.currentTarget) return;
+          dropDocument(event, sorted.length);
+        }}
+      >
         {sorted.map((doc, index) => {
           const Icon = DOC_TYPE_ICONS[doc.type];
           const viewers = others.filter(
@@ -51,10 +67,6 @@ export function DocSidebar({
           );
           const active = doc.id === activeDocId;
           const showBefore = dropIndex === index && draggingId !== doc.id;
-          const showAfter =
-            dropIndex === sorted.length &&
-            index === sorted.length - 1 &&
-            draggingId !== doc.id;
           return (
             <li
               key={doc.id}
@@ -67,26 +79,18 @@ export function DocSidebar({
                 );
               }}
               onDrop={(event) => {
-                event.preventDefault();
-                const docId =
-                  draggingId ?? event.dataTransfer.getData("text/plain");
-                if (docId) {
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  const next =
-                    event.clientY > rect.top + rect.height / 2
-                      ? index + 1
-                      : index;
-                  reorderDocument(docId, next);
-                }
-                finishDrag();
+                const rect = event.currentTarget.getBoundingClientRect();
+                dropDocument(
+                  event,
+                  event.clientY > rect.top + rect.height / 2 ? index + 1 : index
+                );
               }}
               className={cn(
-                "rounded-md",
-                draggingId === doc.id && "opacity-40",
-                showBefore && "shadow-[inset_0_2px_0_0_var(--color-neutral-900)]",
-                showAfter && "shadow-[inset_0_-2px_0_0_var(--color-neutral-900)]"
+                "relative",
+                draggingId === doc.id && "opacity-40"
               )}
             >
+              {showBefore ? <DropLine /> : null}
               <button
                 type="button"
                 draggable
@@ -135,12 +139,28 @@ export function DocSidebar({
             No documents yet
           </li>
         ) : null}
+        <li
+          aria-hidden
+          className="relative min-h-6 flex-1"
+          onDragOver={(event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            setDropIndex(sorted.length);
+          }}
+          onDrop={(event) => dropDocument(event, sorted.length)}
+        >
+          {dropIndex === sorted.length ? <DropLine /> : null}
+        </li>
       </ul>
-      <div className="border-t border-neutral-200 px-4 py-3 text-xs text-neutral-500">
-        {room.members.length === 1
-          ? "Invite a student to get started."
-          : `${room.members.length} members · ${others.length + 1} online`}
-      </div>
     </nav>
+  );
+}
+
+function DropLine() {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 rounded-none bg-neutral-900"
+    />
   );
 }

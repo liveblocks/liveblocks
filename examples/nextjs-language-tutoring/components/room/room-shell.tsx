@@ -26,11 +26,7 @@ export function RoomShell(props: RoomShellProps) {
         onToggleChat={() => setChatOpen((open) => !open)}
       />
       <div className="flex min-h-0 flex-1 gap-3">
-        <DocSidebar
-          room={props.room}
-          activeDocId={activeDocId}
-          onSelect={setActiveDocId}
-        />
+        <DocSidebar activeDocId={activeDocId} onSelect={setActiveDocId} />
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
           <DocumentView docId={activeDocId} onDeleted={() => setActiveDocId(null)} />
         </main>

@@ -62,6 +62,8 @@ declare global {
       files: LiveMap<string, LiveFile>;
       // PNG snapshots of documents shared into the chat
       snapshots: LiveMap<string, LiveFile>;
+      // Files shared in the room chat. Created on first upload for older rooms.
+      attachments?: LiveMap<string, LiveFile>;
       // Only present in the user-directory room (see `lib/liveblocks-server.ts`),
       // where profiles of Google users are kept, keyed by user id
       profiles?: LiveMap<string, LiveObject<Liveblocks["UserMeta"]["info"]>>;
@@ -80,6 +82,13 @@ declare global {
           kind: "text";
           userId: string;
           content: string;
+          // Files uploaded with the message. Bytes live in Storage.attachments.
+          attachments?: {
+            fileId: string;
+            name: string;
+            size: number;
+            mimeType: string;
+          }[];
         }
       | {
           kind: "snapshot";

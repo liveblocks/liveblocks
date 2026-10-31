@@ -27,14 +27,15 @@ student with a link; the room is their permanent shared space. Inside it they
 can create as many documents as they like: realtime text documents built with
 [Liveblocks Text Editor](https://liveblocks.io/docs/products/text-editor) and
 [Tiptap](https://tiptap.dev/) (with
-[Comments](https://liveblocks.io/docs/products/comments) threads), collaborative
+[Comments](https://liveblocks.io/docs/products/comments) threads and tables), collaborative
 [tldraw](https://tldraw.dev/) whiteboards synced through
 [Storage](https://liveblocks.io/docs/products/sync/storage), and PDFs uploaded
 with [Files](https://liveblocks.io/docs/products/sync/files) that everyone can
 annotate together on a tldraw canvas. A chat panel built with
 [Feeds](https://liveblocks.io/docs/products/sync/feeds) sits alongside each
 room, and any document page can be sent into the chat as a snapshot that stays
-frozen in that state. Sign-in uses [better-auth](https://www.better-auth.com/)
+frozen in that state. Files dropped into the chat can be downloaded by everyone
+in the room. Sign-in uses [better-auth](https://www.better-auth.com/)
 with Google, falling back to demo accounts when Google isn't configured.
 
 ## Getting started

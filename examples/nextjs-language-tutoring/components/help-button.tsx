@@ -25,7 +25,7 @@ const FEATURES: Feature[] = [
     icon: <DocumentIcon />,
     title: "Three kinds of documents",
     description:
-      "Add rich-text documents (LiveText + Tiptap), tldraw whiteboards, or upload a PDF and annotate it together on top of tldraw.",
+      "Add rich-text documents (LiveText + Tiptap, including tables), tldraw whiteboards, or upload a PDF and annotate it together on top of tldraw.",
   },
   {
     icon: <ZapIcon />,
@@ -37,7 +37,7 @@ const FEATURES: Feature[] = [
     icon: <CommentIcon />,
     title: "Chat with snapshots",
     description:
-      "Send a page of any document into the room chat. The snapshot is frozen at that moment and can be reopened later, next to the live document.",
+      "Send a page of any document into the room chat, or drop a file for everyone in the room to download. A snapshot stays frozen at the moment it was shared.",
   },
 ];
 

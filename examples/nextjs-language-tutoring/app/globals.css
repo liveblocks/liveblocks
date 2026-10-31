@@ -237,6 +237,78 @@
   pointer-events: none;
 }
 
+.lesson-editor .tableWrapper,
+.prose-snapshot .tableWrapper {
+  margin: 1em 0;
+  overflow-x: auto;
+}
+
+.lesson-editor table,
+.prose-snapshot table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0;
+  table-layout: fixed;
+  overflow: hidden;
+}
+
+.lesson-editor td,
+.lesson-editor th,
+.prose-snapshot td,
+.prose-snapshot th {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 4em;
+  border: 1px solid var(--color-neutral-300);
+  padding: 0.4em 0.6em;
+  vertical-align: top;
+}
+
+.lesson-editor th,
+.prose-snapshot th {
+  background: var(--color-neutral-100);
+  font-weight: 600;
+  text-align: left;
+}
+
+.lesson-editor td > * + *,
+.lesson-editor th > * + *,
+.prose-snapshot td > * + *,
+.prose-snapshot th > * + * {
+  margin-top: 0.5em;
+}
+
+.lesson-editor td p,
+.lesson-editor th p,
+.prose-snapshot td p,
+.prose-snapshot th p {
+  margin: 0;
+}
+
+.lesson-editor .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgb(253 81 8 / 0.12);
+  pointer-events: none;
+}
+
+.lesson-editor .column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: -2px;
+  z-index: 3;
+  width: 4px;
+  background: var(--color-primary);
+  pointer-events: none;
+}
+
+.lesson-editor.resize-cursor {
+  cursor: col-resize;
+}
+
 /* The chat snapshot preview is a scaled-down, non-interactive copy */
 .prose-snapshot h1 {
   font-size: 1.4em;

@@ -1,6 +1,6 @@
 "use client";
 
-import type { LiveFile } from "@liveblocks/client";
+import { LiveMap, type LiveFile } from "@liveblocks/client";
 import {
   useCreateFeed,
   useCreateFeedMessage,
@@ -16,6 +16,9 @@ import type { DocumentInfo } from "@/liveblocks.config";
 export const CHAT_FEED_ID = "chat";
 
 type SnapshotMessage = Extract<Liveblocks["FeedMessageData"], { kind: "snapshot" }>;
+type ChatAttachment = NonNullable<
+  Extract<Liveblocks["FeedMessageData"], { kind: "text" }>["attachments"]
+>[number];
 
 // What a document hands over when the user clicks "Send to chat"
 export type SnapshotPayload =
@@ -38,6 +41,15 @@ export function useChat() {
     []
   );
 
+  const storeAttachment = useMutation(({ storage }, file: LiveFile) => {
+    let attachments = storage.get("attachments");
+    if (!attachments) {
+      attachments = new LiveMap<string, LiveFile>();
+      storage.set("attachments", attachments);
+    }
+    attachments.set(file.id, file);
+  }, []);
+
   const ensureFeed = useCallback(async () => {
     if (ensured.current) return;
     try {
@@ -49,18 +61,30 @@ export function useChat() {
   }, [createFeed]);
 
   const sendText = useCallback(
-    async (content: string) => {
+    async (content: string, files: File[] = []) => {
       const trimmed = content.trim();
-      if (!trimmed) return;
+      if (!trimmed && files.length === 0) return;
       await ensureFeed();
+      const attachments: ChatAttachment[] = [];
+      for (const file of files) {
+        const liveFile = await uploadFile(file);
+        storeAttachment(liveFile);
+        attachments.push({
+          fileId: liveFile.id,
+          name: liveFile.name,
+          size: liveFile.size,
+          mimeType: liveFile.mimeType,
+        });
+      }
       const data: Liveblocks["FeedMessageData"] = {
         kind: "text",
         userId: self,
         content: trimmed,
+        ...(attachments.length > 0 ? { attachments } : {}),
       };
       await createFeedMessage(CHAT_FEED_ID, data);
     },
-    [createFeedMessage, ensureFeed, self]
+    [createFeedMessage, ensureFeed, self, storeAttachment, uploadFile]
   );
 
   const sendSnapshot = useCallback(

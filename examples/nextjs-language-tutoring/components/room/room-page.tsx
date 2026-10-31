@@ -83,6 +83,7 @@ function AuthorizedRoom({ roomId }: { roomId: string }) {
         whiteboards: new LiveMap(),
         files: new LiveMap(),
         snapshots: new LiveMap(),
+        attachments: new LiveMap(),
       }}
     >
       <ClientSideSuspense fallback={<FullPageSpinner />}>
