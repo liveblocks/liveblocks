@@ -28,6 +28,286 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe("Room access changes", () => {
+  test.each(["inbox-notifications", "threads"])(
+    "retries a discarded %s delta before advancing its cursor",
+    async (source) => {
+      const initialRequestedAt = "2026-01-01T00:00:00.000Z";
+      const requestedAt = "2026-01-01T00:03:00.000Z";
+      const thread = dummyThreadData({
+        roomId: "room",
+        updatedAt: new Date(initialRequestedAt),
+      });
+      const updatedThread = {
+        ...thread,
+        updatedAt: new Date("2026-01-01T00:02:30.000Z"),
+        metadata: { version: 1 },
+      };
+      const notification = dummyThreadInboxNotificationData({
+        roomId: thread.roomId,
+        threadId: thread.id,
+        notifiedAt: updatedThread.updatedAt,
+      });
+      const started = Promise_withResolvers<void>();
+      const release = Promise_withResolvers<void>();
+      const sinceValues: (string | null)[] = [];
+      let canRead = true;
+      server.use(
+        http.get("https://api.liveblocks.io/v2/c/:resource", () =>
+          HttpResponse.json({
+            threads: canRead ? [thread] : [],
+            inboxNotifications: [],
+            subscriptions: [],
+            groups: [],
+            meta: {
+              requestedAt: initialRequestedAt,
+              nextCursor: null,
+              permissionHints: {},
+            },
+          })
+        ),
+        http.get(
+          "https://api.liveblocks.io/v2/c/:resource/delta",
+          async ({ request, params }) => {
+            const isDelayedPoller = params.resource === source;
+            const since = new URL(request.url).searchParams.get("since");
+            if (isDelayedPoller) {
+              sinceValues.push(since);
+              if (sinceValues.length === 1) {
+                started.resolve();
+                await release.promise;
+              }
+            }
+            const hasUpdate =
+              isDelayedPoller &&
+              since !== null &&
+              new Date(since) <= updatedThread.updatedAt;
+            return HttpResponse.json({
+              threads: hasUpdate ? [updatedThread] : [],
+              inboxNotifications: hasUpdate ? [notification] : [],
+              subscriptions: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              deletedSubscriptions: [],
+              meta: {
+                requestedAt: isDelayedPoller
+                  ? requestedAt
+                  : "2026-01-01T00:02:00.000Z",
+                permissionHints: {},
+                roomAccesses: [{ roomId: thread.roomId, canRead }],
+              },
+            });
+          }
+        )
+      );
+      const { umbrellaStore } = createContextsForTest();
+      await umbrellaStore.outputs.loadingNotifications
+        .getOrCreate("{}")
+        .waitUntilLoaded();
+      await umbrellaStore.outputs.loadingUserThreads
+        .getOrCreate("{}")
+        .waitUntilLoaded();
+      const poll =
+        source === "inbox-notifications"
+          ? umbrellaStore.fetchNotificationsDeltaUpdate
+          : umbrellaStore.fetchUserThreadsDeltaUpdate;
+      const changeAccess =
+        source === "inbox-notifications"
+          ? umbrellaStore.fetchUserThreadsDeltaUpdate
+          : umbrellaStore.fetchNotificationsDeltaUpdate;
+      const signal = new AbortController().signal;
+      canRead = false;
+      await changeAccess(signal);
+      const pending$ = poll(signal);
+      await started.promise;
+      canRead = true;
+      await changeAccess(signal);
+      release.resolve();
+      await pending$;
+      await poll(signal);
+      await poll(signal);
+      expect(sinceValues).toEqual([
+        initialRequestedAt,
+        initialRequestedAt,
+        requestedAt,
+      ]);
+      expect(umbrellaStore.threads.get(thread.id)).toEqual(updatedThread);
+      expect(
+        umbrellaStore.notifications.signal.get().get(notification.id)
+      ).toEqual(notification);
+    }
+  );
+
+  test.each(["page", "delta"])(
+    "a fresh room %s restores access without a user poller",
+    async (source) => {
+      const thread = dummyThreadData({ roomId: "room" });
+      let revoked = false;
+      server.use(
+        mockGetInboxNotifications(() =>
+          HttpResponse.json({
+            threads: revoked ? [] : [thread],
+            inboxNotifications: [],
+            subscriptions: [],
+            groups: [],
+            meta: {
+              requestedAt: "2026-01-01T00:00:00.000Z",
+              nextCursor: null,
+            },
+          })
+        ),
+        mockGetInboxNotificationsDelta(() =>
+          HttpResponse.json({
+            threads: [],
+            inboxNotifications: [],
+            subscriptions: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: "2026-01-01T00:01:00.000Z",
+              roomAccesses: [{ roomId: thread.roomId, canRead: !revoked }],
+            },
+          })
+        ),
+        http.get("https://api.liveblocks.io/v2/c/rooms/room/threads", () => {
+          if (revoked)
+            return HttpResponse.json({ message: "Forbidden" }, { status: 403 });
+          return HttpResponse.json({
+            data: [thread],
+            inboxNotifications: [],
+            subscriptions: [],
+            meta: {
+              requestedAt: "2026-01-01T00:02:00.000Z",
+              nextCursor: null,
+              permissionHints: { room: ["room:write"] },
+            },
+          });
+        }),
+        http.get(
+          "https://api.liveblocks.io/v2/c/rooms/room/threads/delta",
+          () =>
+            HttpResponse.json({
+              data: [],
+              inboxNotifications: [],
+              subscriptions: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              deletedSubscriptions: [],
+              meta: {
+                requestedAt: "2026-01-01T00:03:00.000Z",
+                permissionHints: { room: ["room:write"] },
+              },
+            })
+        )
+      );
+      const { umbrellaStore } = createContextsForTest();
+      await umbrellaStore.outputs.loadingNotifications
+        .getOrCreate("{}")
+        .waitUntilLoaded();
+      const room =
+        umbrellaStore.outputs.loadingRoomThreads.getOrCreate('["room",{}]');
+      if (source === "delta") await room.waitUntilLoaded();
+      revoked = true;
+      const signal = new AbortController().signal;
+      await umbrellaStore.fetchNotificationsDeltaUpdate(signal);
+      expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
+      revoked = false;
+      if (source === "page") {
+        await room.waitUntilLoaded();
+      } else {
+        await umbrellaStore.fetchRoomThreadsDeltaUpdate(thread.roomId, signal);
+      }
+      expect(room.signal.get()).toMatchObject({
+        threads: [{ id: thread.id }],
+      });
+      expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
+    }
+  );
+
+  test.each(["stale", "missing"])(
+    "a %s room response cannot clear a newer denial",
+    async (source) => {
+      const thread = dummyThreadData({ roomId: "room" });
+      const started = Promise_withResolvers<void>();
+      const release = Promise_withResolvers<void>();
+      let revoked = false;
+      server.use(
+        mockGetInboxNotifications(() =>
+          HttpResponse.json({
+            threads: revoked ? [] : [thread],
+            inboxNotifications: [],
+            subscriptions: [],
+            groups: [],
+            meta: { requestedAt: new Date().toISOString(), nextCursor: null },
+          })
+        ),
+        mockGetInboxNotificationsDelta(() =>
+          HttpResponse.json({
+            threads: [],
+            inboxNotifications: [],
+            subscriptions: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              roomAccesses: [{ roomId: thread.roomId, canRead: !revoked }],
+            },
+          })
+        ),
+        http.get(
+          "https://api.liveblocks.io/v2/c/rooms/room/threads",
+          async () => {
+            if (source === "missing")
+              return HttpResponse.json(
+                { message: "Not found" },
+                { status: 404 }
+              );
+            if (revoked)
+              return HttpResponse.json(
+                { message: "Forbidden" },
+                { status: 403 }
+              );
+            started.resolve();
+            await release.promise;
+            return HttpResponse.json({
+              data: [thread],
+              inboxNotifications: [],
+              subscriptions: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: null,
+                permissionHints: { room: ["room:write"] },
+              },
+            });
+          }
+        )
+      );
+      const { umbrellaStore } = createContextsForTest();
+      await umbrellaStore.outputs.loadingNotifications
+        .getOrCreate("{}")
+        .waitUntilLoaded();
+      const room =
+        umbrellaStore.outputs.loadingRoomThreads.getOrCreate('["room",{}]');
+      const load$ = source === "stale" ? room.waitUntilLoaded() : undefined;
+      if (source === "stale") await started.promise;
+      revoked = true;
+      const revoke$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+        new AbortController().signal
+      );
+      await vi.waitFor(() =>
+        expect(umbrellaStore.threads.get(thread.id)).toBeUndefined()
+      );
+      release.resolve();
+      await load$;
+      await revoke$;
+      if (source === "missing") await room.waitUntilLoaded();
+      umbrellaStore.updateThreadifications([thread], [], []);
+      expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
+      expect(room.signal.get()).toMatchObject({ threads: [] });
+    }
+  );
+
   test.each(["inbox", "user threads", "room threads"])(
     "uses the server's first-page cursor to refresh %s",
     async (source) => {

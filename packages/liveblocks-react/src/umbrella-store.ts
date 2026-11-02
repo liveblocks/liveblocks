@@ -43,6 +43,7 @@ import {
   DefaultMap,
   DerivedSignal,
   getSubscriptionKey,
+  hasPermissionAccess,
   HttpError,
   isPlainObject,
   kInternal,
@@ -1544,8 +1545,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   // Ignore responses started before an access change.
   #roomCacheVersion = 0;
+  // Access checks can supersede older responses without changing room access.
+  #roomAccessRequestId = 0;
   #roomAccessesΣ = new MutableSignal(
-    new Map<string, { canRead: boolean; version: number }>()
+    new Map<string, { canRead: boolean; version: number; requestId: number }>()
   );
   #pendingRoomRefresh = new Map<string, number>();
   #roomRefresh$: Promise<void> | undefined;
@@ -1735,6 +1738,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         const resource = new PaginatedResource(
           async (cursor?: string, isRefresh = false) => {
             const requestVersion = this.#roomCacheVersion;
+            const requestId = ++this.#roomAccessRequestId;
             const result = await this.#client[kInternal].httpClient.getThreads({
               roomId,
               cursor:
@@ -1745,21 +1749,29 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
               query,
             });
             this.#refreshCursor = result.refreshCursor ?? this.#refreshCursor;
-            this.updateThreadifications(
-              result.threads,
-              result.inboxNotifications,
-              result.subscriptions,
-              [],
-              [],
-              [],
-              requestVersion
-            );
+            batch(() => {
+              const responseVersion = this.#confirmRoomAccess(
+                roomId,
+                result.permissionHints[roomId],
+                requestVersion,
+                requestId
+              );
+              this.updateThreadifications(
+                result.threads,
+                result.inboxNotifications,
+                result.subscriptions,
+                [],
+                [],
+                [],
+                responseVersion
+              );
 
-            this.permissionHints.update(
-              result.permissionHints,
-              result.requestedAt,
-              [roomId]
-            );
+              this.permissionHints.update(
+                result.permissionHints,
+                result.requestedAt,
+                [roomId]
+              );
+            });
 
             const lastRequestedAt =
               this.#roomThreadsLastRequestedAtByRoom.get(roomId);
@@ -2274,6 +2286,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     autobind(this);
   }
 
+  public get roomCacheVersion(): number {
+    return this.#roomCacheVersion;
+  }
+
   /**
    * Updates an existing inbox notification with a new value, replacing the
    * corresponding optimistic update.
@@ -2357,15 +2373,48 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   }
 
   /**
-   * Creates a new thread, replacing the corresponding optimistic update.
+   * Confirms a new thread, reloading it if room access changed while creating it.
    */
-  public createThread(
+  public async createThread(
     optimisticId: string,
-    thread: Readonly<ThreadDataWithDeleteInfo<TM, CM>>
-  ): void {
+    thread: Readonly<ThreadDataWithDeleteInfo<TM, CM>>,
+    requestVersion = this.#roomCacheVersion
+  ): Promise<void> {
+    let notifications: InboxNotificationData[] = [];
+    let subscriptions: SubscriptionData[] = [];
+    for (;;) {
+      const access = this.#roomAccessesΣ.get().get(thread.roomId);
+      if (access?.canRead === false || (access?.version ?? 0) <= requestVersion)
+        break;
+
+      // Refreshed pages may not include the newly created thread.
+      const responseVersion = this.#roomCacheVersion;
+      const result = await this.#client[kInternal].httpClient.getThread({
+        roomId: thread.roomId,
+        threadId: thread.id,
+      });
+      if (result.thread === undefined) {
+        this.deleteThread(thread.id, optimisticId);
+        return;
+      }
+      thread = result.thread;
+      notifications = result.inboxNotification
+        ? [result.inboxNotification]
+        : [];
+      subscriptions = result.subscription ? [result.subscription] : [];
+      requestVersion = responseVersion;
+    }
     batch(() => {
       this.optimisticUpdates.remove(optimisticId);
-      this.updateThreadifications([thread], [], []);
+      this.updateThreadifications(
+        [thread],
+        notifications,
+        subscriptions,
+        [],
+        [],
+        [],
+        requestVersion
+      );
     });
   }
 
@@ -2602,8 +2651,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     if (lastRequestedAt === null) return;
     let requestedAt = lastRequestedAt;
     let firstBatch = true;
+    let canAdvanceCursor = true;
     for (const roomIds of this.#getRoomIdBatches()) {
       const requestVersion = this.#roomCacheVersion;
+      const requestId = ++this.#roomAccessRequestId;
       const result = await this.#client[
         kInternal
       ].httpClient.getInboxNotificationsSince({
@@ -2613,6 +2664,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         roomIds,
       });
       firstBatch = false;
+      // Replay this delta if an access change can cause updates to be discarded.
+      canAdvanceCursor &&= requestVersion === this.#roomCacheVersion;
       batch(() => {
         this.updateThreadifications(
           result.threads.updated,
@@ -2623,13 +2676,13 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           result.subscriptions.deleted,
           requestVersion
         );
-        this.#applyRoomAccesses(result.roomAccesses, requestVersion);
+        this.#applyRoomAccesses(result.roomAccesses, requestVersion, requestId);
       });
       if (requestedAt === lastRequestedAt || result.requestedAt < requestedAt)
         requestedAt = result.requestedAt;
     }
     await this.#refreshInvalidatedRooms();
-    if (lastRequestedAt < requestedAt) {
+    if (canAdvanceCursor && lastRequestedAt < requestedAt) {
       this.#notificationsLastRequestedAt = requestedAt;
     }
   }
@@ -2657,19 +2710,27 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   #applyRoomAccesses(
     accesses: { roomId: string; canRead: boolean }[],
-    requestVersion: number
+    requestVersion: number,
+    requestId: number
   ): void {
     const roomIds = new Set<string>();
     for (const { roomId, canRead } of accesses) {
       if (!this.#knownRoomIds.has(roomId)) continue;
       const previous = this.#roomAccessesΣ.get().get(roomId);
-      if ((previous?.version ?? 0) > requestVersion) continue;
-      if ((previous?.canRead ?? true) === canRead) continue;
-      const version = ++this.#roomCacheVersion;
-      this.#pendingRoomRefresh.set(roomId, version);
+      if (
+        (previous?.version ?? 0) > requestVersion ||
+        (previous?.requestId ?? 0) > requestId
+      )
+        continue;
+      const changed = (previous?.canRead ?? true) !== canRead;
+      const version = changed
+        ? ++this.#roomCacheVersion
+        : (previous?.version ?? 0);
       this.#roomAccessesΣ.mutate((roomAccesses) => {
-        roomAccesses.set(roomId, { canRead, version });
+        roomAccesses.set(roomId, { canRead, version, requestId });
       });
+      if (!changed) continue;
+      this.#pendingRoomRefresh.set(roomId, version);
       roomIds.add(roomId);
     }
     if (roomIds.size === 0) return;
@@ -2699,6 +2760,35 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           this.notifications.delete(notification.id);
       }
     });
+  }
+
+  // Only permission hints prove access; missing rooms also produce empty pages.
+  #confirmRoomAccess(
+    roomId: string,
+    scopes: RoomPermissions | undefined,
+    requestVersion: number,
+    requestId: number
+  ): number {
+    if (
+      scopes === undefined ||
+      !hasPermissionAccess(
+        permissionMatrixFromScopes(scopes),
+        "comments",
+        "read"
+      )
+    ) {
+      return requestVersion;
+    }
+    const previous = this.#roomAccessesΣ.get().get(roomId);
+    this.#applyRoomAccesses(
+      [{ roomId, canRead: true }],
+      requestVersion,
+      requestId
+    );
+    const current = this.#roomAccessesΣ.get().get(roomId);
+    return previous?.canRead === false && current?.canRead === true
+      ? current.version
+      : requestVersion;
   }
 
   #refreshInvalidatedRooms(): Promise<void> {
@@ -2792,26 +2882,37 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     }
 
     const requestVersion = this.#roomCacheVersion;
+    const requestId = ++this.#roomAccessRequestId;
     const updates = await this.#client[kInternal].httpClient.getThreadsSince({
       roomId,
       since: lastRequestedAt,
       signal,
     });
 
-    this.updateThreadifications(
-      updates.threads.updated,
-      updates.inboxNotifications.updated,
-      updates.subscriptions.updated,
-      updates.threads.deleted,
-      updates.inboxNotifications.deleted,
-      updates.subscriptions.deleted,
-      requestVersion
-    );
+    const canAdvanceCursor = requestVersion === this.#roomCacheVersion;
+    batch(() => {
+      const responseVersion = this.#confirmRoomAccess(
+        roomId,
+        updates.permissionHints?.[roomId],
+        requestVersion,
+        requestId
+      );
+      this.updateThreadifications(
+        updates.threads.updated,
+        updates.inboxNotifications.updated,
+        updates.subscriptions.updated,
+        updates.threads.deleted,
+        updates.inboxNotifications.deleted,
+        updates.subscriptions.deleted,
+        responseVersion
+      );
 
-    // If the delta omits permission hints, keep the hint from the last fetch.
-    this.permissionHints.update(updates.permissionHints, updates.requestedAt);
+      // If the delta omits permission hints, keep the hint from the last fetch.
+      this.permissionHints.update(updates.permissionHints, updates.requestedAt);
+    });
 
-    if (lastRequestedAt < updates.requestedAt) {
+    await this.#refreshInvalidatedRooms();
+    if (canAdvanceCursor && lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       this.#roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
@@ -2823,8 +2924,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
     let requestedAt = lastRequestedAt;
     let firstBatch = true;
+    let canAdvanceCursor = true;
     for (const roomIds of this.#getRoomIdBatches()) {
       const requestVersion = this.#roomCacheVersion;
+      const requestId = ++this.#roomAccessRequestId;
       const result = await this.#client[
         kInternal
       ].httpClient.getUserThreadsSince_experimental({
@@ -2834,6 +2937,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         roomIds,
       });
       firstBatch = false;
+      canAdvanceCursor &&= requestVersion === this.#roomCacheVersion;
       batch(() => {
         this.updateThreadifications(
           result.threads.updated,
@@ -2844,7 +2948,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           result.subscriptions.deleted,
           requestVersion
         );
-        this.#applyRoomAccesses(result.roomAccesses, requestVersion);
+        this.#applyRoomAccesses(result.roomAccesses, requestVersion, requestId);
       });
       this.permissionHints.update(result.permissionHints, result.requestedAt);
       // All batches must catch up before this cursor advances.
@@ -2852,7 +2956,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         requestedAt = result.requestedAt;
     }
     await this.#refreshInvalidatedRooms();
-    if (lastRequestedAt < requestedAt)
+    if (canAdvanceCursor && lastRequestedAt < requestedAt)
       this.#userThreadsLastRequestedAt = requestedAt;
   }
 
