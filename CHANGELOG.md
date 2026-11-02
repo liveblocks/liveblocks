@@ -1,5 +1,10 @@
 ## vNEXT
 
+### `@liveblocks/react`
+
+- Fix inbox notifications remaining visible after room access is revoked or a
+  room is deleted.
+
 ## v3.24.5
 
 ### `@liveblocks/react`
