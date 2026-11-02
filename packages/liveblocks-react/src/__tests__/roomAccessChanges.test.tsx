@@ -28,6 +28,303 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe("Room access changes", () => {
+  test.each(["page", "delta"])(
+    "checks current access before a cached room %s can clear a denial",
+    async (source) => {
+      const thread = dummyThreadData({ roomId: "room" });
+      let revoked = false;
+      const accessChecks: unknown[] = [];
+      server.use(
+        mockGetInboxNotifications(() =>
+          HttpResponse.json({
+            threads: revoked ? [] : [thread],
+            inboxNotifications: [],
+            subscriptions: [],
+            groups: [],
+            meta: { requestedAt: "2026-01-01T00:00:00.000Z", nextCursor: null },
+          })
+        ),
+        mockGetInboxNotificationsDelta(({ request }) => {
+          const query = new URL(request.url).searchParams;
+          if (query.get("roomAccessesOnly") === "true") {
+            accessChecks.push(JSON.parse(query.get("roomIds") ?? "[]"));
+          }
+          return HttpResponse.json({
+            threads: [],
+            inboxNotifications: [],
+            subscriptions: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: "2026-01-01T00:01:00.000Z",
+              roomAccesses: [{ roomId: thread.roomId, canRead: !revoked }],
+            },
+          });
+        }),
+        http.get("https://api.liveblocks.io/v2/c/rooms/room/threads", () => {
+          if (revoked && source === "delta") {
+            return HttpResponse.json({ message: "Forbidden" }, { status: 403 });
+          }
+          return HttpResponse.json({
+            data: [thread],
+            inboxNotifications: [],
+            subscriptions: [],
+            meta: {
+              requestedAt: "2026-01-01T00:02:00.000Z",
+              nextCursor: null,
+              permissionHints: { room: ["room:write"] },
+            },
+          });
+        }),
+        http.get(
+          "https://api.liveblocks.io/v2/c/rooms/room/threads/delta",
+          () =>
+            HttpResponse.json({
+              data: [thread],
+              inboxNotifications: [],
+              subscriptions: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              deletedSubscriptions: [],
+              meta: {
+                requestedAt: "2026-01-01T00:03:00.000Z",
+                permissionHints: { room: ["room:write"] },
+              },
+            })
+        )
+      );
+      const { umbrellaStore } = createContextsForTest();
+      await umbrellaStore.outputs.loadingNotifications
+        .getOrCreate("{}")
+        .waitUntilLoaded();
+      const room =
+        umbrellaStore.outputs.loadingRoomThreads.getOrCreate('["room",{}]');
+      await room.waitUntilLoaded();
+      expect(accessChecks).toEqual([]);
+      revoked = true;
+      const signal = new AbortController().signal;
+      await umbrellaStore.fetchNotificationsDeltaUpdate(signal);
+      expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
+      if (source === "delta") {
+        await umbrellaStore.fetchRoomThreadsDeltaUpdate(thread.roomId, signal);
+      }
+      expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
+      expect(accessChecks).toEqual([[thread.roomId]]);
+
+      revoked = false;
+      if (source === "page") {
+        await room.refresh?.();
+      } else {
+        await umbrellaStore.fetchRoomThreadsDeltaUpdate(thread.roomId, signal);
+      }
+      expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
+      expect(accessChecks).toEqual([[thread.roomId], [thread.roomId]]);
+    }
+  );
+
+  test("a delayed room access check cannot override a newer denial", async () => {
+    const thread = dummyThreadData({ roomId: "room" });
+    const started = Promise_withResolvers<void>();
+    const release = Promise_withResolvers<void>();
+    let revoked = false;
+    server.use(
+      mockGetInboxNotifications(() =>
+        HttpResponse.json({
+          threads: revoked ? [] : [thread],
+          inboxNotifications: [],
+          subscriptions: [],
+          groups: [],
+          meta: { requestedAt: "2026-01-01T00:00:00.000Z", nextCursor: null },
+        })
+      ),
+      mockGetInboxNotificationsDelta(async ({ request }) => {
+        const canRead = !revoked;
+        if (
+          new URL(request.url).searchParams.get("roomAccessesOnly") === "true"
+        ) {
+          started.resolve();
+          await release.promise;
+        }
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: "2026-01-01T00:01:00.000Z",
+            roomAccesses: [{ roomId: thread.roomId, canRead }],
+          },
+        });
+      }),
+      http.get("https://api.liveblocks.io/v2/c/rooms/room/threads", () => {
+        if (revoked)
+          return HttpResponse.json({ message: "Forbidden" }, { status: 403 });
+        return HttpResponse.json({
+          data: [thread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: "2026-01-01T00:00:00.000Z",
+            nextCursor: null,
+            permissionHints: { room: ["room:write"] },
+          },
+        });
+      }),
+      http.get("https://api.liveblocks.io/v2/c/rooms/room/threads/delta", () =>
+        HttpResponse.json({
+          data: [thread],
+          inboxNotifications: [],
+          subscriptions: [],
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: "2026-01-01T00:02:00.000Z",
+            permissionHints: { room: ["room:write"] },
+          },
+        })
+      )
+    );
+    const { umbrellaStore } = createContextsForTest();
+    await umbrellaStore.outputs.loadingNotifications
+      .getOrCreate("{}")
+      .waitUntilLoaded();
+    await umbrellaStore.outputs.loadingRoomThreads
+      .getOrCreate('["room",{}]')
+      .waitUntilLoaded();
+    const signal = new AbortController().signal;
+    revoked = true;
+    await umbrellaStore.fetchNotificationsDeltaUpdate(signal);
+    revoked = false;
+    const pending$ = umbrellaStore.fetchRoomThreadsDeltaUpdate(
+      thread.roomId,
+      signal
+    );
+    await started.promise;
+    revoked = true;
+    await umbrellaStore.fetchNotificationsDeltaUpdate(signal);
+    release.resolve();
+    await pending$;
+    expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
+  });
+
+  test.each(["inbox-notifications", "threads"])(
+    "replays a %s restoration delta outside the refreshed page window",
+    async (source) => {
+      const initialRequestedAt = "2026-01-01T00:00:00.000Z";
+      const deniedRequestedAt = "2026-01-01T00:01:00.000Z";
+      const restoredRequestedAt = "2026-01-01T00:03:00.000Z";
+      const thread = dummyThreadData({
+        roomId: "room",
+        updatedAt: new Date(initialRequestedAt),
+      });
+      const updatedThread = {
+        ...thread,
+        updatedAt: new Date("2026-01-01T00:02:00.000Z"),
+        metadata: { version: 1 },
+      };
+      const notification = dummyThreadInboxNotificationData({
+        threadId: thread.id,
+        roomId: thread.roomId,
+        notifiedAt: updatedThread.updatedAt,
+      });
+      const newerThreads = Array.from({ length: 50 }, () =>
+        dummyThreadData({
+          roomId: "other-room",
+          updatedAt: new Date("2026-01-01T00:02:30.000Z"),
+        })
+      );
+      const newerNotifications = newerThreads.map((newerThread) =>
+        dummyThreadInboxNotificationData({
+          threadId: newerThread.id,
+          roomId: newerThread.roomId,
+          notifiedAt: newerThread.updatedAt,
+        })
+      );
+      let phase: "initial" | "denied" | "restored" = "initial";
+      const sinceValues: (string | null)[] = [];
+      server.use(
+        http.get(`https://api.liveblocks.io/v2/c/${source}`, () => {
+          const threads =
+            phase === "initial"
+              ? [thread]
+              : phase === "restored"
+                ? newerThreads
+                : [];
+          return HttpResponse.json({
+            threads,
+            inboxNotifications: phase === "restored" ? newerNotifications : [],
+            subscriptions: [],
+            groups: [],
+            meta: {
+              requestedAt:
+                phase === "initial"
+                  ? initialRequestedAt
+                  : phase === "denied"
+                    ? deniedRequestedAt
+                    : restoredRequestedAt,
+              nextCursor: phase === "restored" ? "older-page" : null,
+              refreshCursor: "restart-list",
+              permissionHints: {},
+            },
+          });
+        }),
+        http.get(
+          `https://api.liveblocks.io/v2/c/${source}/delta`,
+          ({ request }) => {
+            const since = new URL(request.url).searchParams.get("since");
+            sinceValues.push(since);
+            const hasUpdate =
+              phase === "restored" &&
+              since !== null &&
+              new Date(since) <= updatedThread.updatedAt;
+            return HttpResponse.json({
+              threads: hasUpdate ? [updatedThread] : [],
+              inboxNotifications: hasUpdate ? [notification] : [],
+              subscriptions: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              deletedSubscriptions: [],
+              meta: {
+                requestedAt:
+                  phase === "denied" ? deniedRequestedAt : restoredRequestedAt,
+                roomAccesses: [
+                  { roomId: thread.roomId, canRead: phase === "restored" },
+                ],
+                permissionHints: {},
+              },
+            });
+          }
+        )
+      );
+      const { umbrellaStore } = createContextsForTest();
+      const resource =
+        source === "threads"
+          ? umbrellaStore.outputs.loadingUserThreads.getOrCreate("{}")
+          : umbrellaStore.outputs.loadingNotifications.getOrCreate("{}");
+      const poll =
+        source === "threads"
+          ? umbrellaStore.fetchUserThreadsDeltaUpdate
+          : umbrellaStore.fetchNotificationsDeltaUpdate;
+      await resource.waitUntilLoaded();
+      const signal = new AbortController().signal;
+      phase = "denied";
+      await poll(signal);
+      phase = "restored";
+      await poll(signal);
+      expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
+      await poll(signal);
+      expect(sinceValues[2]).toBe(sinceValues[1]);
+      expect(umbrellaStore.threads.get(thread.id)).toEqual(updatedThread);
+      expect(
+        umbrellaStore.notifications.signal.get().get(notification.id)
+      ).toEqual(notification);
+    }
+  );
+
   test.each(["inbox-notifications", "threads"])(
     "retries a discarded %s delta before advancing its cursor",
     async (source) => {
@@ -915,11 +1212,19 @@ describe("Room access changes", () => {
     await act(() =>
       umbrellaStore.fetchUserThreadsDeltaUpdate(new AbortController().signal)
     );
+    await act(() =>
+      umbrellaStore.fetchUserThreadsDeltaUpdate(new AbortController().signal)
+    );
     expect(sinceValues).toEqual([
+      "2026-01-01T00:00:00.000Z",
       "2026-01-01T00:00:00.000Z",
       "2026-01-01T00:01:00.000Z",
     ]);
-    expect(knownRooms).toEqual([[thread.roomId], [thread.roomId]]);
+    expect(knownRooms).toEqual([
+      [thread.roomId],
+      [thread.roomId],
+      [thread.roomId],
+    ]);
     unmount();
   });
 
