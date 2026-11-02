@@ -28,6 +28,69 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe("Room access changes", () => {
+  test.each(["inbox", "user threads", "room threads"])(
+    "uses the server's first-page cursor to refresh %s",
+    async (source) => {
+      const cursors: (string | null)[] = [];
+      const writerHints: boolean[] = [];
+      const endpoint =
+        source === "inbox"
+          ? "inbox-notifications"
+          : source === "user threads"
+            ? "threads"
+            : "rooms/room/threads";
+      server.use(
+        http.get(
+          `https://api.liveblocks.io/v2/c/${endpoint}`,
+          ({ request }) => {
+            const query = new URL(request.url).searchParams;
+            const cursor = query.get("cursor");
+            cursors.push(cursor);
+            writerHints.push(query.has("readFromWriter"));
+            return HttpResponse.json({
+              data: [],
+              threads: [],
+              inboxNotifications: [],
+              subscriptions: [],
+              groups: [],
+              meta: {
+                requestedAt: "2026-01-01T00:00:00.000Z",
+                nextCursor: cursor === "next-page" ? null : "next-page",
+                refreshCursor: "restart-list",
+                permissionHints: {},
+              },
+            });
+          }
+        )
+      );
+      const { umbrellaStore } = createContextsForTest();
+      const resource =
+        source === "inbox"
+          ? umbrellaStore.outputs.loadingNotifications.getOrCreate("{}")
+          : source === "user threads"
+            ? umbrellaStore.outputs.loadingUserThreads.getOrCreate("{}")
+            : umbrellaStore.outputs.loadingRoomThreads.getOrCreate(
+                '["room",{}]'
+              );
+      await resource.waitUntilLoaded();
+      if (resource.refresh === undefined)
+        throw new Error("Expected a refreshable list");
+      await resource.refresh();
+      const result = resource.signal.get();
+      if (result.isLoading || result.error)
+        throw new Error("Expected a loaded list");
+      result.fetchMore();
+      await vi.waitFor(() =>
+        expect(resource.signal.get()).toMatchObject({
+          hasFetchedAll: true,
+          isFetchingMore: false,
+        })
+      );
+      expect(cursors).toEqual([null, "restart-list", "next-page"]);
+      expect(writerHints).toEqual([false, false, false]);
+    }
+  );
+
   test.each(["page", "delta"])(
     "keeps both pollers working after a roomless custom notification arrives in a %s",
     async (source) => {
@@ -138,12 +201,14 @@ describe("Room access changes", () => {
       threadId: otherThread.id,
     });
     let readable = true;
-    const writerReads: boolean[] = [];
+    const writerHints: boolean[] = [];
+    const cursors: (string | null)[] = [];
     server.use(
       mockGetInboxNotifications(({ request }) => {
-        writerReads.push(
-          new URL(request.url).searchParams.get("readFromWriter") === "true"
+        writerHints.push(
+          new URL(request.url).searchParams.has("readFromWriter")
         );
+        cursors.push(new URL(request.url).searchParams.get("cursor"));
         return HttpResponse.json({
           threads: readable ? [thread, otherThread] : [otherThread],
           inboxNotifications: readable
@@ -151,7 +216,11 @@ describe("Room access changes", () => {
             : [otherNotification],
           subscriptions: [],
           groups: [],
-          meta: { requestedAt: new Date().toISOString(), nextCursor: null },
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            refreshCursor: "restart-list",
+          },
         });
       }),
       mockGetInboxNotificationsDelta(() =>
@@ -194,7 +263,18 @@ describe("Room access changes", () => {
       expect(result.current.inboxNotifications).toHaveLength(2)
     );
     expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
-    expect(writerReads).toEqual([false, true, true]);
+    await act(() =>
+      umbrellaStore.outputs.loadingNotifications
+        .getOrCreate('{"kind":"thread"}')
+        .waitUntilLoaded()
+    );
+    expect(cursors).toEqual([
+      null,
+      "restart-list",
+      "restart-list",
+      "restart-list",
+    ]);
+    expect(writerHints).toEqual([false, false, false, false]);
     unmount();
   });
 
@@ -357,23 +437,20 @@ describe("Room access changes", () => {
     unmount();
   });
 
-  test("keeps later pages on the writer after a revoked room is refreshed", async () => {
+  test("keeps revoked rooms out of later pages after a refresh", async () => {
     const revokedThread = dummyThreadData({ roomId: "revoked-room" });
     const olderThread = dummyThreadData({ roomId: revokedThread.roomId });
     const allowedThread = dummyThreadData({ roomId: "allowed-room" });
     let revoked = false;
-    const reads: boolean[] = [];
+    const writerHints: boolean[] = [];
     server.use(
       mockGetInboxNotifications(({ request }) => {
         const query = new URL(request.url).searchParams;
-        const writer = query.get("readFromWriter") === "true";
-        reads.push(writer);
+        writerHints.push(query.has("readFromWriter"));
         const threads = !revoked
           ? [revokedThread]
           : query.has("cursor")
-            ? writer
-              ? []
-              : [olderThread]
+            ? [olderThread]
             : [allowedThread];
         return HttpResponse.json({
           threads,
@@ -425,7 +502,7 @@ describe("Room access changes", () => {
       })
     );
     expect(umbrellaStore.threads.get(olderThread.id)).toBeUndefined();
-    expect(reads).toEqual([false, true, true]);
+    expect(writerHints).toEqual([false, false, false]);
   });
 
   test("blocks stale data while denied and ignores an older access response", async () => {

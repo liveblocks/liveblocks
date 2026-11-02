@@ -1542,7 +1542,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     >;
   };
 
-  // Access changes fence old responses and keep later pages on the writer.
+  // Ignore responses started before an access change.
   #roomCacheVersion = 0;
   #roomAccessesΣ = new MutableSignal(
     new Map<string, { canRead: boolean; version: number }>()
@@ -1550,6 +1550,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   #pendingRoomRefresh = new Map<string, number>();
   #roomRefresh$: Promise<void> | undefined;
   #knownRoomIds = new Set<string>();
+  #refreshCursor: string | undefined;
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
@@ -1651,17 +1652,20 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         queryKey: UserQueryKey
       ): LoadableResource<ThreadsAsyncResult<TM, CM>> => {
         const query = JSON.parse(queryKey) as ThreadsQuery<TM>;
-
         const resource = new PaginatedResource(
           async (cursor?: string, isRefresh = false) => {
             const requestVersion = this.#roomCacheVersion;
             const result = await this.#client[
               kInternal
             ].httpClient.getUserThreads_experimental({
-              cursor,
-              readFromWriter: isRefresh || this.#roomCacheVersion > 0,
+              cursor:
+                cursor ??
+                (isRefresh || requestVersion > 0
+                  ? this.#refreshCursor
+                  : undefined),
               query,
             });
+            this.#refreshCursor = result.refreshCursor ?? this.#refreshCursor;
             this.updateThreadifications(
               result.threads,
               result.inboxNotifications,
@@ -1728,16 +1732,19 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           roomId: RoomId,
           query: ThreadsQuery<TM>,
         ];
-
         const resource = new PaginatedResource(
           async (cursor?: string, isRefresh = false) => {
             const requestVersion = this.#roomCacheVersion;
             const result = await this.#client[kInternal].httpClient.getThreads({
               roomId,
-              cursor,
-              readFromWriter: isRefresh || this.#roomCacheVersion > 0,
+              cursor:
+                cursor ??
+                (isRefresh || requestVersion > 0
+                  ? this.#refreshCursor
+                  : undefined),
               query,
             });
+            this.#refreshCursor = result.refreshCursor ?? this.#refreshCursor;
             this.updateThreadifications(
               result.threads,
               result.inboxNotifications,
@@ -1824,17 +1831,20 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         queryKey: InboxNotificationsQueryKey
       ): LoadableResource<InboxNotificationsAsyncResult> => {
         const query = JSON.parse(queryKey) as InboxNotificationsQuery;
-
         const resource = new PaginatedResource(
           async (cursor?: string, isRefresh = false) => {
             const requestVersion = this.#roomCacheVersion;
             const result = await this.#client[
               kInternal
             ].httpClient.getInboxNotifications({
-              cursor,
-              readFromWriter: isRefresh || this.#roomCacheVersion > 0,
+              cursor:
+                cursor ??
+                (isRefresh || requestVersion > 0
+                  ? this.#refreshCursor
+                  : undefined),
               query,
             });
+            this.#refreshCursor = result.refreshCursor ?? this.#refreshCursor;
 
             this.updateThreadifications(
               result.threads,

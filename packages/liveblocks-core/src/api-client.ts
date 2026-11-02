@@ -87,7 +87,6 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   getThreads(options: {
     roomId: string;
     cursor?: string;
-    readFromWriter?: boolean;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -100,6 +99,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
+    refreshCursor?: string;
     permissionHints: Record<string, RoomPermissions>;
   }>;
 
@@ -461,13 +461,13 @@ export interface NotificationHttpApi<
 > {
   getInboxNotifications(options?: {
     cursor?: string;
-    readFromWriter?: boolean;
     query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<TM, CM>[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
+    refreshCursor?: string;
     requestedAt: Date;
   }>;
 
@@ -528,7 +528,6 @@ export interface LiveblocksHttpApi<
 
   getUserThreads_experimental(options?: {
     cursor?: string;
-    readFromWriter?: boolean;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -539,6 +538,7 @@ export interface LiveblocksHttpApi<
     inboxNotifications: InboxNotificationData[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
+    refreshCursor?: string;
     requestedAt: Date;
     permissionHints: Record<string, RoomPermissions>;
   }>;
@@ -869,7 +869,6 @@ export function createApiClient<
   async function getThreads(options: {
     roomId: string;
     cursor?: string;
-    readFromWriter?: boolean;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -896,6 +895,7 @@ export function createApiClient<
         meta: {
           requestedAt: string;
           nextCursor: string | null;
+          refreshCursor?: string;
           permissionHints: Record<string, RoomPermissions>;
         };
       }>(
@@ -907,7 +907,6 @@ export function createApiClient<
         }),
         {
           cursor: options.cursor,
-          readFromWriter: options.readFromWriter ? "true" : undefined,
           query,
           limit: PAGE_SIZE,
         }
@@ -920,6 +919,7 @@ export function createApiClient<
         ),
         subscriptions: result.subscriptions.map(convertToSubscriptionData),
         nextCursor: result.meta.nextCursor,
+        refreshCursor: result.meta.refreshCursor,
         requestedAt: new Date(result.meta.requestedAt),
         permissionHints: result.meta.permissionHints,
       };
@@ -1871,7 +1871,6 @@ export function createApiClient<
    * -----------------------------------------------------------------------------------------------*/
   async function getInboxNotifications(options?: {
     cursor?: string;
-    readFromWriter?: boolean;
     query?: { roomId?: string; kind?: string };
   }) {
     const PAGE_SIZE = 50;
@@ -1890,13 +1889,13 @@ export function createApiClient<
       meta: {
         requestedAt: string;
         nextCursor: string | null;
+        refreshCursor?: string;
       };
     }>(
       url`/v2/c/inbox-notifications`,
       await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         cursor: options?.cursor,
-        readFromWriter: options?.readFromWriter ? "true" : undefined,
         limit: PAGE_SIZE,
         query,
       }
@@ -1915,6 +1914,7 @@ export function createApiClient<
       threads: json.threads.map(convertToThreadData),
       subscriptions: json.subscriptions.map(convertToSubscriptionData),
       nextCursor: json.meta.nextCursor,
+      refreshCursor: json.meta.refreshCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };
   }
@@ -2079,7 +2079,6 @@ export function createApiClient<
    */
   async function getUserThreads_experimental(options?: {
     cursor?: string;
-    readFromWriter?: boolean;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -2104,6 +2103,7 @@ export function createApiClient<
       meta: {
         requestedAt: string;
         nextCursor: string | null;
+        refreshCursor?: string;
         permissionHints: Record<string, RoomPermissions>;
       };
     }>(
@@ -2111,7 +2111,6 @@ export function createApiClient<
       await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         cursor: options?.cursor,
-        readFromWriter: options?.readFromWriter ? "true" : undefined,
         query,
         limit: PAGE_SIZE,
       }
@@ -2124,6 +2123,7 @@ export function createApiClient<
       ),
       subscriptions: json.subscriptions.map(convertToSubscriptionData),
       nextCursor: json.meta.nextCursor,
+      refreshCursor: json.meta.refreshCursor,
       requestedAt: new Date(json.meta.requestedAt),
       permissionHints: json.meta.permissionHints,
     };

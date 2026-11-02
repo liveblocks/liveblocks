@@ -273,6 +273,7 @@ export function mockGetInboxNotifications(
       meta: {
         requestedAt: string; // ISO date
         nextCursor: string | null;
+        refreshCursor?: string;
       };
     }
   >
