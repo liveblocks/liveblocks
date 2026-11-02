@@ -1,3 +1,4 @@
+import { Promise_withResolvers } from "@liveblocks/core";
 import { describe, expect, test, vi } from "vitest";
 
 import { PaginatedResource } from "../umbrella-store";
@@ -301,5 +302,58 @@ describe("PaginatedResource", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+test("refresh reloads the loaded page window after it shrinks and grows", async () => {
+  let revoked = false;
+  const fetchPage = vi.fn(async (cursor?: string) =>
+    revoked || cursor !== undefined ? null : "second-page"
+  );
+  const resource = new PaginatedResource(fetchPage);
+  await resource.waitUntilLoaded();
+  await resource.fetchMore();
+  expect(fetchPage).toHaveBeenCalledTimes(2);
+  revoked = true;
+  await resource.refresh();
+  expect(fetchPage).toHaveBeenCalledTimes(3);
+  expect(fetchPage).toHaveBeenNthCalledWith(3, undefined, true);
+  revoked = false;
+  await resource.refresh();
+  expect(fetchPage).toHaveBeenCalledTimes(5);
+  expect(resource.get().data?.hasFetchedAll).toBe(true);
+});
+
+test("fetchMore keeps its non-throwing contract when a pending refresh fails", async () => {
+  const response = Promise_withResolvers<string | null>();
+  const started = Promise_withResolvers<void>();
+  const resource = new PaginatedResource(async (_cursor, refreshing) => {
+    if (refreshing) {
+      started.resolve();
+      return response.promise;
+    }
+    return _cursor === undefined ? "next-page" : null;
+  });
+  await resource.waitUntilLoaded();
+  const refresh$ = resource.refresh();
+  const refreshFailure$ = expect(refresh$).rejects.toThrow(
+    "refresh unavailable"
+  );
+  await started.promise;
+  const more$ = resource.fetchMore();
+  const moreResult$ = expect(more$).resolves.toBeUndefined();
+  const error = new Error("refresh unavailable");
+  response.reject(error);
+  await refreshFailure$;
+  await moreResult$;
+  expect(resource.get().data).toMatchObject({
+    cursor: "next-page",
+    isFetchingMore: false,
+    fetchMoreError: error,
+  });
+  await resource.fetchMore();
+  expect(resource.get().data).toMatchObject({
+    hasFetchedAll: true,
+    fetchMoreError: undefined,
   });
 });

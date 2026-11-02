@@ -405,3 +405,50 @@ describe("ThreadDB", () => {
     }
   });
 });
+
+test("room eviction allows restored threads but keeps permanent tombstones", () => {
+  const database = new ThreadDB();
+  const thread = dummyThreadData({ roomId: "room" });
+  const deletedThread = dummyThreadData({ roomId: "room" });
+  database.upsert(thread);
+  database.upsert(deletedThread);
+  database.delete(deletedThread.id, new Date());
+  database.removeRooms(new Set(["room"]));
+  expect(database.get(thread.id)).toBeUndefined();
+  database.upsert(thread);
+  database.upsert(deletedThread);
+  expect(database.get(thread.id)).toEqual(thread);
+  expect(database.get(deletedThread.id)).toBeUndefined();
+});
+
+test.each(["delta", "delete"])(
+  "remembers deletions from %s after room eviction, including in clones",
+  (source) => {
+    const database = new ThreadDB();
+    const thread = dummyThreadData({ roomId: "revoked-room" });
+    database.upsert(thread);
+    database.removeRooms(new Set([thread.roomId]));
+    const deletedAt = new Date();
+    if (source === "delta") {
+      database.applyDelta(
+        [],
+        [
+          {
+            type: "deletedThread",
+            id: thread.id,
+            roomId: thread.roomId,
+            deletedAt,
+          },
+        ]
+      );
+    } else {
+      database.delete(thread.id, deletedAt);
+    }
+    const clone = database.clone();
+    for (const store of [database, clone]) {
+      store.upsert(thread);
+      expect(store.get(thread.id)).toBeUndefined();
+      expect(store.findMany(undefined, undefined, "asc")).toEqual([]);
+    }
+  }
+);

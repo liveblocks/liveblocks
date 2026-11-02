@@ -35,7 +35,7 @@ function sanitizeThread<TM extends BaseMetadata, CM extends BaseMetadata>(
 export type ReadonlyThreadDB<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-> = Omit<ThreadDB<TM, CM>, "upsert" | "delete" | "signal">;
+> = Omit<ThreadDB<TM, CM>, "upsert" | "delete" | "removeRooms" | "signal">;
 
 /**
  * This class implements a lightweight, in-memory, "database" for all Thread
@@ -47,6 +47,7 @@ export type ReadonlyThreadDB<
  * - upsertIfNewer: To add/update a thread. Only update an existing thread if
  *                  its newer
  * - delete: To mark existing threads as deleted
+ * - removeRooms: To evict cached threads from rooms
  * - get: To get any non-deleted thread
  * - getEvenIfDeleted: To get a thread which is possibly deleted
  * - findMany: To filter an ordered list of non-deleted threads
@@ -56,6 +57,7 @@ export type ReadonlyThreadDB<
  */
 export class ThreadDB<TM extends BaseMetadata, CM extends BaseMetadata> {
   #byId: Map<string, ThreadDataWithDeleteInfo<TM, CM>>;
+  #deletedIds: Set<string>;
   #asc: SortedList<ThreadData<TM, CM>>;
   #desc: SortedList<ThreadData<TM, CM>>;
 
@@ -76,6 +78,7 @@ export class ThreadDB<TM extends BaseMetadata, CM extends BaseMetadata> {
     });
 
     this.#byId = new Map();
+    this.#deletedIds = new Set();
 
     this.signal = new MutableSignal(this);
   }
@@ -87,6 +90,7 @@ export class ThreadDB<TM extends BaseMetadata, CM extends BaseMetadata> {
   public clone(): ThreadDB<TM, CM> {
     const newPool = new ThreadDB<TM, CM>();
     newPool.#byId = new Map(this.#byId);
+    newPool.#deletedIds = new Set(this.#deletedIds);
     newPool.#asc = this.#asc.clone();
     newPool.#desc = this.#desc.clone();
     return newPool;
@@ -108,6 +112,7 @@ export class ThreadDB<TM extends BaseMetadata, CM extends BaseMetadata> {
   /** Adds or updates a thread in the DB. If the newly given thread is a deleted one, it will get deleted. */
   public upsert(thread: ThreadDataWithDeleteInfo<TM, CM>): void {
     this.signal.mutate(() => {
+      if (this.#deletedIds.has(thread.id)) return false;
       thread = sanitizeThread(thread);
 
       const id = thread.id;
@@ -152,8 +157,6 @@ export class ThreadDB<TM extends BaseMetadata, CM extends BaseMetadata> {
 
       // Mark threads in the deletedThreads list as deleted
       for (const { id, deletedAt } of deletedThreads) {
-        const existing = this.getEvenIfDeleted(id);
-        if (!existing) continue;
         this.delete(id, deletedAt);
       }
     });
@@ -161,13 +164,35 @@ export class ThreadDB<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   /**
    * Marks a thread as deleted. It will no longer pop up in .findMany()
-   * queries, but it can still be accessed via `.getEvenIfDeleted()`.
+   * queries, but cached data can still be accessed via `.getEvenIfDeleted()`.
+   * Remember uncached IDs too, so stale responses cannot restore deleted threads.
    */
   public delete(threadId: string, deletedAt: Date): void {
     const existing = this.#byId.get(threadId);
-    if (existing && !existing.deletedAt) {
-      this.upsert({ ...existing, deletedAt, updatedAt: deletedAt });
+    if (existing) {
+      if (!existing.deletedAt)
+        this.upsert({ ...existing, deletedAt, updatedAt: deletedAt });
+      return;
     }
+    if (this.#deletedIds.has(threadId)) return;
+    this.signal.mutate(() => {
+      this.#deletedIds.add(threadId);
+    });
+  }
+
+  public removeRooms(roomIds: ReadonlySet<string>): void {
+    this.signal.mutate(() => {
+      let changed = false;
+      for (const [threadId, thread] of this.#byId) {
+        // Keep real tombstones so an old response cannot restore deleted threads.
+        if (!roomIds.has(thread.roomId) || thread.deletedAt) continue;
+        this.#asc.remove(thread);
+        this.#desc.remove(thread);
+        this.#byId.delete(threadId);
+        changed = true;
+      }
+      return changed;
+    });
   }
 
   /**

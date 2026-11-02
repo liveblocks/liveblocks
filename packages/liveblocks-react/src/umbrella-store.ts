@@ -43,6 +43,7 @@ import {
   DefaultMap,
   DerivedSignal,
   getSubscriptionKey,
+  HttpError,
   isPlainObject,
   kInternal,
   MutableSignal,
@@ -54,6 +55,7 @@ import {
   shallow2,
   Signal,
   stableStringify,
+  tryParseJson,
 } from "@liveblocks/core";
 
 import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
@@ -436,12 +438,14 @@ export class PaginatedResource {
   readonly #signal: Signal<AsyncResult<PaginationState>>;
   public readonly signal: ISignal<AsyncResult<PaginationState>>;
 
-  #fetchPage: (cursor?: string) => Promise<string | null>;
+  #fetchPage: (cursor?: string, isRefresh?: boolean) => Promise<string | null>;
   #pendingFetchMore: Promise<void> | null;
   #autoRetry: boolean;
+  #loadedPages = 0;
+  #refresh$: Promise<void> | undefined;
 
   constructor(
-    fetchPage: (cursor?: string) => Promise<string | null>,
+    fetchPage: (cursor?: string, isRefresh?: boolean) => Promise<string | null>,
     options?: { autoRetry?: boolean }
   ) {
     this.#signal = new Signal<AsyncResult<PaginationState>>(ASYNC_LOADING);
@@ -475,6 +479,7 @@ export class PaginatedResource {
     this.#patch({ isFetchingMore: true });
     try {
       const nextCursor = await this.#fetchPage(state.data.cursor);
+      this.#loadedPages++;
 
       // Clear #pendingFetchMore BEFORE #patch, so that when the signal
       // notification triggers a synchronous React re-render (via
@@ -502,6 +507,17 @@ export class PaginatedResource {
   }
 
   public fetchMore(): Promise<void> {
+    if (this.#refresh$ !== undefined)
+      return this.#refresh$.then(
+        () => this.fetchMore(),
+        (error: unknown) => {
+          this.#patch({
+            isFetchingMore: false,
+            fetchMoreError:
+              error instanceof Error ? error : new Error(String(error)),
+          });
+        }
+      );
     // We do not proceed with fetching more if any of the following is true:
     // 1) the pagination state has not be initialized
     // 2) the cursor is null, i.e., there are no more pages to fetch
@@ -514,6 +530,32 @@ export class PaginatedResource {
       this.#pendingFetchMore = this.#fetchMore();
     }
     return this.#pendingFetchMore;
+  }
+
+  public refresh(): Promise<void> {
+    if (this.#cachedPromise === null) return Promise.resolve();
+    this.#refresh$ ??= this.#refresh().finally(() => {
+      this.#refresh$ = undefined;
+    });
+    return this.#refresh$;
+  }
+
+  async #refresh(): Promise<void> {
+    await this.#cachedPromise;
+    await this.#pendingFetchMore;
+    const pages = this.#loadedPages;
+    let cursor: string | undefined;
+    for (let page = 0; page < pages; page++) {
+      const nextCursor = await this.#fetchPage(cursor, true);
+      this.#patch({
+        cursor: nextCursor,
+        hasFetchedAll: nextCursor === null,
+        fetchMoreError: undefined,
+        isFetchingMore: false,
+      });
+      if (nextCursor === null) break;
+      cursor = nextCursor;
+    }
   }
 
   #cachedPromise: UsablePromise<void> | null = null;
@@ -541,6 +583,7 @@ export class PaginatedResource {
     // still inside the .then() block, the UsablePromise is still in pending status.
     promise.then(
       (cursor) => {
+        this.#loadedPages = 1;
         this.#signal.set(
           ASYNC_OK({
             cursor,
@@ -572,6 +615,7 @@ export class PaginatedResource {
 
 // TODO Find better name?
 type LoadableResource<T> = {
+  refresh?: () => Promise<void>;
   signal: ISignal<T>;
   waitUntilLoaded: () => UsablePromise<void>;
 };
@@ -1498,6 +1542,15 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     >;
   };
 
+  // Access changes fence old responses and keep later pages on the writer.
+  #roomCacheVersion = 0;
+  #roomAccessesΣ = new MutableSignal(
+    new Map<string, { canRead: boolean; version: number }>()
+  );
+  #pendingRoomRefresh = new Map<string, number>();
+  #roomRefresh$: Promise<void> | undefined;
+  #knownRoomIds = new Set<string>();
+
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
 
@@ -1560,8 +1613,17 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       this.threads.signal,
       this.notifications.signal,
       this.optimisticUpdates.signal,
-      (ts, ns, updates) =>
-        applyOptimisticUpdates_forThreadifications(ts, ns, updates)
+      this.#roomAccessesΣ,
+      (ts, ns, updates, roomAccesses) =>
+        applyOptimisticUpdates_forThreadifications(
+          ts,
+          ns,
+          updates.filter(
+            (update) =>
+              update.type !== "create-thread" ||
+              roomAccesses.get(update.roomId)?.canRead !== false
+          )
+        )
     );
 
     const threads = DerivedSignal.from(threadifications, (s) => s.threadsDB);
@@ -1590,31 +1652,39 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       ): LoadableResource<ThreadsAsyncResult<TM, CM>> => {
         const query = JSON.parse(queryKey) as ThreadsQuery<TM>;
 
-        const resource = new PaginatedResource(async (cursor?: string) => {
-          const result = await this.#client[
-            kInternal
-          ].httpClient.getUserThreads_experimental({
-            cursor,
-            query,
-          });
-          this.updateThreadifications(
-            result.threads,
-            result.inboxNotifications,
-            result.subscriptions
-          );
+        const resource = new PaginatedResource(
+          async (cursor?: string, isRefresh = false) => {
+            const requestVersion = this.#roomCacheVersion;
+            const result = await this.#client[
+              kInternal
+            ].httpClient.getUserThreads_experimental({
+              cursor,
+              readFromWriter: isRefresh || this.#roomCacheVersion > 0,
+              query,
+            });
+            this.updateThreadifications(
+              result.threads,
+              result.inboxNotifications,
+              result.subscriptions,
+              [],
+              [],
+              [],
+              requestVersion
+            );
 
-          this.permissionHints.update(
-            result.permissionHints,
-            result.requestedAt
-          );
+            this.permissionHints.update(
+              result.permissionHints,
+              result.requestedAt
+            );
 
-          // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-          if (this.#userThreadsLastRequestedAt === null) {
-            this.#userThreadsLastRequestedAt = result.requestedAt;
+            // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+            if (this.#userThreadsLastRequestedAt === null) {
+              this.#userThreadsLastRequestedAt = result.requestedAt;
+            }
+
+            return result.nextCursor;
           }
-
-          return result.nextCursor;
-        });
+        );
 
         const signal = DerivedSignal.from((): ThreadsAsyncResult<TM, CM> => {
           const result = resource.get();
@@ -1642,7 +1712,11 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           };
         }, shallow2);
 
-        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+        return {
+          signal,
+          waitUntilLoaded: resource.waitUntilLoaded,
+          refresh: resource.refresh,
+        };
       }
     );
 
@@ -1655,45 +1729,53 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           query: ThreadsQuery<TM>,
         ];
 
-        const resource = new PaginatedResource(async (cursor?: string) => {
-          const result = await this.#client[kInternal].httpClient.getThreads({
-            roomId,
-            cursor,
-            query,
-          });
-          this.updateThreadifications(
-            result.threads,
-            result.inboxNotifications,
-            result.subscriptions
-          );
-
-          this.permissionHints.update(
-            result.permissionHints,
-            result.requestedAt,
-            [roomId]
-          );
-
-          const lastRequestedAt =
-            this.#roomThreadsLastRequestedAtByRoom.get(roomId);
-
-          /**
-           * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-           * 1. The `lastRequestedAt` value for the room has not been set
-           * OR
-           * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-           */
-          if (
-            lastRequestedAt === undefined ||
-            lastRequestedAt > result.requestedAt
-          ) {
-            this.#roomThreadsLastRequestedAtByRoom.set(
+        const resource = new PaginatedResource(
+          async (cursor?: string, isRefresh = false) => {
+            const requestVersion = this.#roomCacheVersion;
+            const result = await this.#client[kInternal].httpClient.getThreads({
               roomId,
-              result.requestedAt
+              cursor,
+              readFromWriter: isRefresh || this.#roomCacheVersion > 0,
+              query,
+            });
+            this.updateThreadifications(
+              result.threads,
+              result.inboxNotifications,
+              result.subscriptions,
+              [],
+              [],
+              [],
+              requestVersion
             );
-          }
 
-          return result.nextCursor;
-        });
+            this.permissionHints.update(
+              result.permissionHints,
+              result.requestedAt,
+              [roomId]
+            );
+
+            const lastRequestedAt =
+              this.#roomThreadsLastRequestedAtByRoom.get(roomId);
+
+            /**
+             * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+             * 1. The `lastRequestedAt` value for the room has not been set
+             * OR
+             * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+             */
+            if (
+              lastRequestedAt === undefined ||
+              lastRequestedAt > result.requestedAt
+            ) {
+              this.#roomThreadsLastRequestedAtByRoom.set(
+                roomId,
+                result.requestedAt
+              );
+            }
+
+            return result.nextCursor;
+          }
+        );
 
         const signal = DerivedSignal.from((): ThreadsAsyncResult<TM, CM> => {
           const result = resource.get();
@@ -1718,7 +1800,22 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           };
         }, shallow2);
 
-        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+        return {
+          signal,
+          waitUntilLoaded: resource.waitUntilLoaded,
+          refresh: async () => {
+            try {
+              await resource.refresh();
+            } catch (error) {
+              if (
+                error instanceof HttpError &&
+                [403, 404].includes(error.response.status)
+              )
+                return;
+              throw error;
+            }
+          },
+        };
       }
     );
 
@@ -1728,26 +1825,36 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       ): LoadableResource<InboxNotificationsAsyncResult> => {
         const query = JSON.parse(queryKey) as InboxNotificationsQuery;
 
-        const resource = new PaginatedResource(async (cursor?: string) => {
-          const result = await this.#client.getInboxNotifications({
-            cursor,
-            query,
-          });
+        const resource = new PaginatedResource(
+          async (cursor?: string, isRefresh = false) => {
+            const requestVersion = this.#roomCacheVersion;
+            const result = await this.#client[
+              kInternal
+            ].httpClient.getInboxNotifications({
+              cursor,
+              readFromWriter: isRefresh || this.#roomCacheVersion > 0,
+              query,
+            });
 
-          this.updateThreadifications(
-            result.threads,
-            result.inboxNotifications,
-            result.subscriptions
-          );
+            this.updateThreadifications(
+              result.threads,
+              result.inboxNotifications,
+              result.subscriptions,
+              [],
+              [],
+              [],
+              requestVersion
+            );
 
-          // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-          if (this.#notificationsLastRequestedAt === null) {
-            this.#notificationsLastRequestedAt = result.requestedAt;
+            // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+            if (this.#notificationsLastRequestedAt === null) {
+              this.#notificationsLastRequestedAt = result.requestedAt;
+            }
+
+            const nextCursor = result.nextCursor;
+            return nextCursor;
           }
-
-          const nextCursor = result.nextCursor;
-          return nextCursor;
-        });
+        );
 
         const signal = DerivedSignal.from((): InboxNotificationsAsyncResult => {
           const result = resource.get();
@@ -1782,6 +1889,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         return {
           signal,
           waitUntilLoaded: resource.waitUntilLoaded,
+          refresh: resource.refresh,
         };
       }
     );
@@ -2239,7 +2347,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   }
 
   /**
-   * Creates an new thread, replacing the corresponding optimistic update.
+   * Creates a new thread, replacing the corresponding optimistic update.
    */
   public createThread(
     optimisticId: string,
@@ -2247,7 +2355,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   ): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticId);
-      this.threads.upsert(thread);
+      this.updateThreadifications([thread], [], []);
     });
   }
 
@@ -2333,21 +2441,14 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   }
 
   /**
-   * Soft-deletes an existing thread by setting its `deletedAt` value,
-   * replacing the corresponding optimistic update.
-   *
-   * This will not update anything if:
-   * - The thread ID isn't found; or
-   * - The thread ID was already deleted
+   * Marks a thread as deleted, replacing its optimistic update if any.
+   * Remember the deletion even when the room has left the cache.
    */
   public deleteThread(threadId: string, optimisticId: string | null): void {
-    return this.#updateThread(
-      threadId,
-      optimisticId,
-
-      // A deletion is actually an update of the deletedAt property internally
-      (thread) => ({ ...thread, updatedAt: new Date(), deletedAt: new Date() })
-    );
+    batch(() => {
+      if (optimisticId !== null) this.optimisticUpdates.remove(optimisticId);
+      this.threads.delete(threadId, new Date());
+    });
   }
 
   /**
@@ -2434,8 +2535,36 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     subscriptions: SubscriptionData[],
     deletedThreads: ThreadDeleteInfo[] = [],
     deletedNotifications: InboxNotificationDeleteInfo[] = [],
-    deletedSubscriptions: SubscriptionDeleteInfo[] = []
+    deletedSubscriptions: SubscriptionDeleteInfo[] = [],
+    requestVersion = this.#roomCacheVersion
   ): void {
+    const roomAccesses = this.#roomAccessesΣ.get();
+    const isCurrent = (roomId: string) =>
+      roomAccesses.get(roomId)?.canRead !== false &&
+      (roomAccesses.get(roomId)?.version ?? 0) <= requestVersion;
+    const staleThreadIds = new Set(
+      threads
+        .filter((thread) => !isCurrent(thread.roomId))
+        .map((thread) => thread.id)
+    );
+    subscriptions = subscriptions.filter(
+      (subscription) =>
+        subscription.kind !== "thread" ||
+        !staleThreadIds.has(subscription.subjectId)
+    );
+    threads = threads.filter((thread) => isCurrent(thread.roomId));
+    notifications = notifications.filter(
+      (notification) =>
+        notification.roomId === undefined || isCurrent(notification.roomId)
+    );
+    deletedNotifications = deletedNotifications.filter((notification) =>
+      isCurrent(notification.roomId)
+    );
+    for (const thread of threads) this.#knownRoomIds.add(thread.roomId);
+    for (const notification of notifications) {
+      if (typeof notification.roomId === "string")
+        this.#knownRoomIds.add(notification.roomId);
+    }
     batch(() => {
       this.threads.applyDelta(threads, deletedThreads);
       this.notifications.applyDelta(notifications, deletedNotifications);
@@ -2460,27 +2589,144 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this.#notificationsLastRequestedAt;
-    if (lastRequestedAt === null) {
-      return;
+    if (lastRequestedAt === null) return;
+    let requestedAt = lastRequestedAt;
+    let firstBatch = true;
+    for (const roomIds of this.#getRoomIdBatches()) {
+      const requestVersion = this.#roomCacheVersion;
+      const result = await this.#client[
+        kInternal
+      ].httpClient.getInboxNotificationsSince({
+        since: lastRequestedAt,
+        signal,
+        roomAccessesOnly: !firstBatch,
+        roomIds,
+      });
+      firstBatch = false;
+      batch(() => {
+        this.updateThreadifications(
+          result.threads.updated,
+          result.inboxNotifications.updated,
+          result.subscriptions.updated,
+          result.threads.deleted,
+          result.inboxNotifications.deleted,
+          result.subscriptions.deleted,
+          requestVersion
+        );
+        this.#applyRoomAccesses(result.roomAccesses, requestVersion);
+      });
+      if (requestedAt === lastRequestedAt || result.requestedAt < requestedAt)
+        requestedAt = result.requestedAt;
     }
+    await this.#refreshInvalidatedRooms();
+    if (lastRequestedAt < requestedAt) {
+      this.#notificationsLastRequestedAt = requestedAt;
+    }
+  }
 
-    const result = await this.#client.getInboxNotificationsSince({
-      since: lastRequestedAt,
-      signal,
+  #getRoomIdBatches(): string[][] {
+    for (const update of this.optimisticUpdates.signal.get()) {
+      if (update.type === "create-thread")
+        this.#knownRoomIds.add(update.roomId);
+    }
+    let currentBatch: string[] = [];
+    const batches = [currentBatch];
+    let batchSize = 0;
+    for (const roomId of this.#knownRoomIds) {
+      const size = encodeURIComponent(JSON.stringify(roomId)).length + 3;
+      if (batchSize + size > 4000 || currentBatch.length === 50) {
+        currentBatch = [];
+        batches.push(currentBatch);
+        batchSize = 0;
+      }
+      currentBatch.push(roomId);
+      batchSize += size;
+    }
+    return batches;
+  }
+
+  #applyRoomAccesses(
+    accesses: { roomId: string; canRead: boolean }[],
+    requestVersion: number
+  ): void {
+    const roomIds = new Set<string>();
+    for (const { roomId, canRead } of accesses) {
+      if (!this.#knownRoomIds.has(roomId)) continue;
+      const previous = this.#roomAccessesΣ.get().get(roomId);
+      if ((previous?.version ?? 0) > requestVersion) continue;
+      if ((previous?.canRead ?? true) === canRead) continue;
+      const version = ++this.#roomCacheVersion;
+      this.#pendingRoomRefresh.set(roomId, version);
+      this.#roomAccessesΣ.mutate((roomAccesses) => {
+        roomAccesses.set(roomId, { canRead, version });
+      });
+      roomIds.add(roomId);
+    }
+    if (roomIds.size === 0) return;
+    batch(() => {
+      const threadIds = new Set(
+        this.threads
+          .findMany(undefined, undefined, "asc")
+          .filter((thread) => roomIds.has(thread.roomId))
+          .map((thread) => thread.id)
+      );
+      for (const subscription of Object.values(
+        this.subscriptions.signal.get()
+      )) {
+        if (
+          subscription.kind === "thread" &&
+          threadIds.has(subscription.subjectId)
+        ) {
+          this.subscriptions.delete(getSubscriptionKey(subscription));
+        }
+      }
+      this.threads.removeRooms(roomIds);
+      for (const notification of this.notifications.signal.get().values()) {
+        if (
+          notification.roomId !== undefined &&
+          roomIds.has(notification.roomId)
+        )
+          this.notifications.delete(notification.id);
+      }
     });
+  }
 
-    if (lastRequestedAt < result.requestedAt) {
-      this.#notificationsLastRequestedAt = result.requestedAt;
+  #refreshInvalidatedRooms(): Promise<void> {
+    if (this.#pendingRoomRefresh.size === 0) return Promise.resolve();
+    this.#roomRefresh$ ??= this.#refreshRoomQueries().finally(() => {
+      this.#roomRefresh$ = undefined;
+    });
+    return this.#roomRefresh$;
+  }
+
+  async #refreshRoomQueries(): Promise<void> {
+    while (this.#pendingRoomRefresh.size > 0) {
+      const pending = new Map(this.#pendingRoomRefresh);
+      const refreshes$ = [];
+      for (const resource of [
+        ...this.outputs.loadingNotifications.values(),
+        ...this.outputs.loadingUserThreads.values(),
+      ]) {
+        if (resource.refresh !== undefined) refreshes$.push(resource.refresh());
+      }
+      for (const [queryKey, resource] of this.outputs.loadingRoomThreads) {
+        const query = tryParseJson(queryKey);
+        if (
+          Array.isArray(query) &&
+          typeof query[0] === "string" &&
+          pending.has(query[0]) &&
+          resource.refresh !== undefined
+        ) {
+          refreshes$.push(resource.refresh());
+        }
+      }
+      await Promise.all(refreshes$);
+      for (const [roomId, version] of pending) {
+        if (this.#pendingRoomRefresh.get(roomId) === version)
+          this.#pendingRoomRefresh.delete(roomId);
+      }
+      this.unreadNotificationsCount.invalidate();
     }
-
-    this.updateThreadifications(
-      result.threads.updated,
-      result.inboxNotifications.updated,
-      result.subscriptions.updated,
-      result.threads.deleted,
-      result.inboxNotifications.deleted,
-      result.subscriptions.deleted
-    );
   }
 
   /**
@@ -2535,6 +2781,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       return;
     }
 
+    const requestVersion = this.#roomCacheVersion;
     const updates = await this.#client[kInternal].httpClient.getThreadsSince({
       roomId,
       since: lastRequestedAt,
@@ -2547,7 +2794,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       updates.subscriptions.updated,
       updates.threads.deleted,
       updates.inboxNotifications.deleted,
-      updates.subscriptions.deleted
+      updates.subscriptions.deleted,
+      requestVersion
     );
 
     // If the delta omits permission hints, keep the hint from the last fetch.
@@ -2561,31 +2809,41 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this.#userThreadsLastRequestedAt;
-    if (lastRequestedAt === null) {
-      return;
+    if (lastRequestedAt === null) return;
+
+    let requestedAt = lastRequestedAt;
+    let firstBatch = true;
+    for (const roomIds of this.#getRoomIdBatches()) {
+      const requestVersion = this.#roomCacheVersion;
+      const result = await this.#client[
+        kInternal
+      ].httpClient.getUserThreadsSince_experimental({
+        since: lastRequestedAt,
+        signal,
+        roomAccessesOnly: !firstBatch,
+        roomIds,
+      });
+      firstBatch = false;
+      batch(() => {
+        this.updateThreadifications(
+          result.threads.updated,
+          result.inboxNotifications.updated,
+          result.subscriptions.updated,
+          result.threads.deleted,
+          result.inboxNotifications.deleted,
+          result.subscriptions.deleted,
+          requestVersion
+        );
+        this.#applyRoomAccesses(result.roomAccesses, requestVersion);
+      });
+      this.permissionHints.update(result.permissionHints, result.requestedAt);
+      // All batches must catch up before this cursor advances.
+      if (requestedAt === lastRequestedAt || result.requestedAt < requestedAt)
+        requestedAt = result.requestedAt;
     }
-
-    const result = await this.#client[
-      kInternal
-    ].httpClient.getUserThreadsSince_experimental({
-      since: lastRequestedAt,
-      signal,
-    });
-
-    if (lastRequestedAt < result.requestedAt) {
-      this.#notificationsLastRequestedAt = result.requestedAt;
-    }
-
-    this.updateThreadifications(
-      result.threads.updated,
-      result.inboxNotifications.updated,
-      result.subscriptions.updated,
-      result.threads.deleted,
-      result.inboxNotifications.deleted,
-      result.subscriptions.deleted
-    );
-
-    this.permissionHints.update(result.permissionHints, result.requestedAt);
+    await this.#refreshInvalidatedRooms();
+    if (lastRequestedAt < requestedAt)
+      this.#userThreadsLastRequestedAt = requestedAt;
   }
 
   public async fetchRoomVersionsDeltaUpdate(

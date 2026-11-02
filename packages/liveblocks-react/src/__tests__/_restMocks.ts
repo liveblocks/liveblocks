@@ -11,7 +11,7 @@ import type {
   RoomSubscriptionSettings,
   SubscriptionData,
   ThreadData,
-  ThreadDataWithDeleteInfo,
+  ThreadDeleteInfo,
   ThreadVisibility,
 } from "@liveblocks/core";
 import type { HttpResponseResolver } from "msw";
@@ -307,10 +307,13 @@ export function mockGetInboxNotificationsDelta(
       inboxNotifications: InboxNotificationData[];
       subscriptions: SubscriptionData[];
       deletedInboxNotifications: InboxNotificationData[];
-      deletedThreads: ThreadDataWithDeleteInfo[];
+      deletedThreads: (Omit<ThreadDeleteInfo, "deletedAt"> & {
+        deletedAt: string;
+      })[];
       deletedSubscriptions: SubscriptionData[];
       meta: {
-        requestedAt: string; // ISO date
+        requestedAt: string;
+        roomAccesses?: { roomId: string; canRead: boolean }[];
         nextCursor?: string;
       };
     }

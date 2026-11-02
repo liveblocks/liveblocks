@@ -87,6 +87,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   getThreads(options: {
     roomId: string;
     cursor?: string;
+    readFromWriter?: boolean;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -460,6 +461,7 @@ export interface NotificationHttpApi<
 > {
   getInboxNotifications(options?: {
     cursor?: string;
+    readFromWriter?: boolean;
     query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
@@ -471,6 +473,8 @@ export interface NotificationHttpApi<
 
   getInboxNotificationsSince(options: {
     since: Date;
+    roomAccessesOnly?: boolean;
+    roomIds?: string[];
     query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }): Promise<{
@@ -487,6 +491,7 @@ export interface NotificationHttpApi<
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
+    roomAccesses: { roomId: string; canRead: boolean }[];
   }>;
 
   getUnreadInboxNotificationsCount(options?: {
@@ -523,6 +528,7 @@ export interface LiveblocksHttpApi<
 
   getUserThreads_experimental(options?: {
     cursor?: string;
+    readFromWriter?: boolean;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -539,6 +545,8 @@ export interface LiveblocksHttpApi<
 
   getUserThreadsSince_experimental(options: {
     since: Date;
+    roomAccessesOnly?: boolean;
+    roomIds?: string[];
     signal?: AbortSignal;
   }): Promise<{
     inboxNotifications: {
@@ -554,6 +562,7 @@ export interface LiveblocksHttpApi<
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
+    roomAccesses: { roomId: string; canRead: boolean }[];
     permissionHints: Record<string, RoomPermissions>;
   }>;
 
@@ -860,6 +869,7 @@ export function createApiClient<
   async function getThreads(options: {
     roomId: string;
     cursor?: string;
+    readFromWriter?: boolean;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -897,6 +907,7 @@ export function createApiClient<
         }),
         {
           cursor: options.cursor,
+          readFromWriter: options.readFromWriter ? "true" : undefined,
           query,
           limit: PAGE_SIZE,
         }
@@ -1860,6 +1871,7 @@ export function createApiClient<
    * -----------------------------------------------------------------------------------------------*/
   async function getInboxNotifications(options?: {
     cursor?: string;
+    readFromWriter?: boolean;
     query?: { roomId?: string; kind?: string };
   }) {
     const PAGE_SIZE = 50;
@@ -1884,6 +1896,7 @@ export function createApiClient<
       await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         cursor: options?.cursor,
+        readFromWriter: options?.readFromWriter ? "true" : undefined,
         limit: PAGE_SIZE,
         query,
       }
@@ -1908,6 +1921,8 @@ export function createApiClient<
 
   async function getInboxNotificationsSince(options: {
     since: Date;
+    roomAccessesOnly?: boolean;
+    roomIds?: string[];
     query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }) {
@@ -1926,11 +1941,20 @@ export function createApiClient<
       deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
+        roomAccesses?: { roomId: string; canRead: boolean }[];
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
       await authManager.getAuthValue({ resource: "personal", access: "write" }),
-      { since: options.since.toISOString(), query },
+      {
+        since: options.since.toISOString(),
+        query,
+        roomAccessesOnly: options.roomAccessesOnly ? "true" : undefined,
+        roomIds:
+          options.roomIds === undefined
+            ? undefined
+            : JSON.stringify(options.roomIds),
+      },
       { signal: options.signal }
     );
     return {
@@ -1949,6 +1973,7 @@ export function createApiClient<
         deleted: json.deletedSubscriptions.map(convertToSubscriptionDeleteInfo),
       },
       requestedAt: new Date(json.meta.requestedAt),
+      roomAccesses: json.meta.roomAccesses ?? [],
     };
   }
 
@@ -2054,6 +2079,7 @@ export function createApiClient<
    */
   async function getUserThreads_experimental(options?: {
     cursor?: string;
+    readFromWriter?: boolean;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -2085,6 +2111,7 @@ export function createApiClient<
       await authManager.getAuthValue({ resource: "personal", access: "write" }),
       {
         cursor: options?.cursor,
+        readFromWriter: options?.readFromWriter ? "true" : undefined,
         query,
         limit: PAGE_SIZE,
       }
@@ -2104,6 +2131,8 @@ export function createApiClient<
 
   async function getUserThreadsSince_experimental(options: {
     since: Date;
+    roomAccessesOnly?: boolean;
+    roomIds?: string[];
     signal?: AbortSignal;
   }) {
     const json = await httpClient.get<{
@@ -2115,12 +2144,20 @@ export function createApiClient<
       deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
+        roomAccesses?: { roomId: string; canRead: boolean }[];
         permissionHints: Record<string, RoomPermissions>;
       };
     }>(
       url`/v2/c/threads/delta`,
       await authManager.getAuthValue({ resource: "personal", access: "write" }),
-      { since: options.since.toISOString() },
+      {
+        since: options.since.toISOString(),
+        roomAccessesOnly: options.roomAccessesOnly ? "true" : undefined,
+        roomIds:
+          options.roomIds === undefined
+            ? undefined
+            : JSON.stringify(options.roomIds),
+      },
       { signal: options.signal }
     );
 
@@ -2140,6 +2177,7 @@ export function createApiClient<
         deleted: json.deletedSubscriptions.map(convertToSubscriptionDeleteInfo),
       },
       requestedAt: new Date(json.meta.requestedAt),
+      roomAccesses: json.meta.roomAccesses ?? [],
       permissionHints: json.meta.permissionHints,
     };
   }
