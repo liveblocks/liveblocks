@@ -1,4 +1,4 @@
-import { Promise_withResolvers } from "@liveblocks/core";
+import { kInternal, Promise_withResolvers } from "@liveblocks/core";
 import { act, renderHook } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -28,6 +28,151 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe("Room access changes", () => {
+  test.each(["inbox", "user threads", "room threads"])(
+    "bounds a stalled %s page request without a caller signal",
+    async (source) => {
+      const started = Promise_withResolvers<void>();
+      const release = Promise_withResolvers<void>();
+      const controller = new AbortController();
+      const timeout = vi
+        .spyOn(AbortSignal, "timeout")
+        .mockReturnValue(controller.signal);
+      const endpoint =
+        source === "inbox"
+          ? "inbox-notifications"
+          : source === "user threads"
+            ? "threads"
+            : "rooms/room/threads";
+      server.use(
+        http.get(`https://api.liveblocks.io/v2/c/${endpoint}`, async () => {
+          started.resolve();
+          await release.promise;
+          return HttpResponse.error();
+        })
+      );
+      const { client } = createContextsForTest();
+      const api = client[kInternal].httpClient;
+      const request$ =
+        source === "inbox"
+          ? api.getInboxNotifications()
+          : source === "user threads"
+            ? api.getUserThreads_experimental()
+            : api.getThreads({ roomId: "room" });
+      const outcome$ = request$.then(
+        () => undefined,
+        (error: unknown) => error
+      );
+      await started.promise;
+      try {
+        expect(timeout).toHaveBeenCalledWith(30_000);
+        controller.abort();
+        expect(await outcome$).toBe(controller.signal.reason);
+      } finally {
+        timeout.mockRestore();
+        release.resolve();
+        await outcome$;
+      }
+    }
+  );
+
+  test.each(["inbox-notifications", "threads", "rooms/room/threads"])(
+    "an aborted %s refresh can be retried before its old response arrives",
+    async (resource) => {
+      const thread = dummyThreadData({ roomId: "room" });
+      const started = Promise_withResolvers<void>();
+      const release = Promise_withResolvers<void>();
+      let revoked = false;
+      let refreshSignal: AbortSignal | undefined;
+      let pageCalls = 0;
+      server.use(
+        http.get(
+          `https://api.liveblocks.io/v2/c/${resource}`,
+          async ({ request }) => {
+            const wasRevoked = revoked;
+            if (++pageCalls === 2) {
+              refreshSignal = request.signal;
+              started.resolve();
+              await release.promise;
+            }
+            return HttpResponse.json({
+              data: wasRevoked ? [] : [thread],
+              threads: wasRevoked ? [] : [thread],
+              inboxNotifications: [],
+              subscriptions: [],
+              groups: [],
+              meta: {
+                requestedAt: "2026-01-01T00:00:00.000Z",
+                nextCursor: null,
+                permissionHints: wasRevoked ? {} : { room: ["room:write"] },
+              },
+            });
+          }
+        ),
+        http.get("https://api.liveblocks.io/v2/c/inbox-notifications", () =>
+          HttpResponse.json({
+            threads: revoked ? [] : [thread],
+            inboxNotifications: [],
+            subscriptions: [],
+            groups: [],
+            meta: { requestedAt: "2026-01-01T00:00:00.000Z", nextCursor: null },
+          })
+        ),
+        mockGetInboxNotificationsDelta(() =>
+          HttpResponse.json({
+            threads: [],
+            inboxNotifications: [],
+            subscriptions: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: "2026-01-01T00:01:00.000Z",
+              roomAccesses: [{ roomId: thread.roomId, canRead: !revoked }],
+            },
+          })
+        )
+      );
+      const { umbrellaStore } = createContextsForTest();
+      await umbrellaStore.outputs.loadingNotifications
+        .getOrCreate("{}")
+        .waitUntilLoaded();
+      if (resource === "threads") {
+        await umbrellaStore.outputs.loadingUserThreads
+          .getOrCreate("{}")
+          .waitUntilLoaded();
+      } else if (resource.startsWith("rooms/")) {
+        await umbrellaStore.outputs.loadingRoomThreads
+          .getOrCreate('["room",{}]')
+          .waitUntilLoaded();
+      }
+      revoked = true;
+      const controller = new AbortController();
+      const interrupted$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+        controller.signal
+      );
+      const outcome$ = interrupted$.then(
+        () => undefined,
+        (error: unknown) => error
+      );
+      await started.promise;
+      controller.abort();
+      try {
+        await vi.waitFor(() => expect(refreshSignal?.aborted).toBe(true));
+        expect(await outcome$).toBe(controller.signal.reason);
+        revoked = false;
+        await umbrellaStore.fetchNotificationsDeltaUpdate(
+          new AbortController().signal
+        );
+        expect(pageCalls).toBeGreaterThan(2);
+        expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
+      } finally {
+        release.resolve();
+        await outcome$;
+      }
+      expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
+    }
+  );
+
   test.each(["page", "delta"])(
     "checks current access before a cached room %s can clear a denial",
     async (source) => {

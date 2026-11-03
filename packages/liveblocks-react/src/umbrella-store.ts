@@ -57,6 +57,7 @@ import {
   Signal,
   stableStringify,
   tryParseJson,
+  withAbortSignal,
 } from "@liveblocks/core";
 
 import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
@@ -439,14 +440,22 @@ export class PaginatedResource {
   readonly #signal: Signal<AsyncResult<PaginationState>>;
   public readonly signal: ISignal<AsyncResult<PaginationState>>;
 
-  #fetchPage: (cursor?: string, isRefresh?: boolean) => Promise<string | null>;
+  #fetchPage: (
+    cursor?: string,
+    isRefresh?: boolean,
+    signal?: AbortSignal
+  ) => Promise<string | null>;
   #pendingFetchMore: Promise<void> | null;
   #autoRetry: boolean;
   #loadedPages = 0;
   #refresh$: Promise<void> | undefined;
 
   constructor(
-    fetchPage: (cursor?: string, isRefresh?: boolean) => Promise<string | null>,
+    fetchPage: (
+      cursor?: string,
+      isRefresh?: boolean,
+      signal?: AbortSignal
+    ) => Promise<string | null>,
     options?: { autoRetry?: boolean }
   ) {
     this.#signal = new Signal<AsyncResult<PaginationState>>(ASYNC_LOADING);
@@ -533,21 +542,31 @@ export class PaginatedResource {
     return this.#pendingFetchMore;
   }
 
-  public refresh(): Promise<void> {
+  public refresh(signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted();
     if (this.#cachedPromise === null) return Promise.resolve();
-    this.#refresh$ ??= this.#refresh().finally(() => {
+    if (this.#refresh$ !== undefined)
+      return withAbortSignal(this.#refresh$, signal);
+    this.#refresh$ = this.#refresh(signal).finally(() => {
       this.#refresh$ = undefined;
     });
     return this.#refresh$;
   }
 
-  async #refresh(): Promise<void> {
-    await this.#cachedPromise;
-    await this.#pendingFetchMore;
+  async #refresh(signal?: AbortSignal): Promise<void> {
+    if (this.#cachedPromise !== null)
+      await withAbortSignal(this.#cachedPromise, signal);
+    if (this.#pendingFetchMore !== null)
+      await withAbortSignal(this.#pendingFetchMore, signal);
     const pages = this.#loadedPages;
     let cursor: string | undefined;
     for (let page = 0; page < pages; page++) {
-      const nextCursor = await this.#fetchPage(cursor, true);
+      signal?.throwIfAborted();
+      const nextCursor = await withAbortSignal(
+        this.#fetchPage(cursor, true, signal),
+        signal
+      );
+      signal?.throwIfAborted();
       this.#patch({
         cursor: nextCursor,
         hasFetchedAll: nextCursor === null,
@@ -616,7 +635,7 @@ export class PaginatedResource {
 
 // TODO Find better name?
 type LoadableResource<T> = {
-  refresh?: () => Promise<void>;
+  refresh?: (signal?: AbortSignal) => Promise<void>;
   signal: ISignal<T>;
   waitUntilLoaded: () => UsablePromise<void>;
 };
@@ -1656,7 +1675,12 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       ): LoadableResource<ThreadsAsyncResult<TM, CM>> => {
         const query = JSON.parse(queryKey) as ThreadsQuery<TM>;
         const resource = new PaginatedResource(
-          async (cursor?: string, isRefresh = false) => {
+          async (
+            cursor?: string,
+            isRefresh = false,
+            requestSignal?: AbortSignal
+          ) => {
+            const signal = requestSignal ?? AbortSignal.timeout(30_000);
             const requestVersion = this.#roomCacheVersion;
             const result = await this.#client[
               kInternal
@@ -1667,7 +1691,9 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
                   ? this.#refreshCursor
                   : undefined),
               query,
+              signal,
             });
+            signal.throwIfAborted();
             this.#refreshCursor = result.refreshCursor ?? this.#refreshCursor;
             this.updateThreadifications(
               result.threads,
@@ -1736,7 +1762,12 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           query: ThreadsQuery<TM>,
         ];
         const resource = new PaginatedResource(
-          async (cursor?: string, isRefresh = false) => {
+          async (
+            cursor?: string,
+            isRefresh = false,
+            requestSignal?: AbortSignal
+          ) => {
+            const signal = requestSignal ?? AbortSignal.timeout(30_000);
             const requestVersion = this.#roomCacheVersion;
             const result = await this.#client[kInternal].httpClient.getThreads({
               roomId,
@@ -1746,13 +1777,17 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
                   ? this.#refreshCursor
                   : undefined),
               query,
+              signal,
             });
+            signal.throwIfAborted();
             this.#refreshCursor = result.refreshCursor ?? this.#refreshCursor;
             const responseVersion = await this.#confirmRoomAccess(
               roomId,
               result.permissionHints[roomId],
-              requestVersion
+              requestVersion,
+              signal
             );
+            signal.throwIfAborted();
             batch(() => {
               this.updateThreadifications(
                 result.threads,
@@ -1820,9 +1855,9 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         return {
           signal,
           waitUntilLoaded: resource.waitUntilLoaded,
-          refresh: async () => {
+          refresh: async (signal?: AbortSignal) => {
             try {
-              await resource.refresh();
+              await resource.refresh(signal);
             } catch (error) {
               if (
                 error instanceof HttpError &&
@@ -1842,7 +1877,12 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       ): LoadableResource<InboxNotificationsAsyncResult> => {
         const query = JSON.parse(queryKey) as InboxNotificationsQuery;
         const resource = new PaginatedResource(
-          async (cursor?: string, isRefresh = false) => {
+          async (
+            cursor?: string,
+            isRefresh = false,
+            requestSignal?: AbortSignal
+          ) => {
+            const signal = requestSignal ?? AbortSignal.timeout(30_000);
             const requestVersion = this.#roomCacheVersion;
             const result = await this.#client[
               kInternal
@@ -1853,7 +1893,9 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
                   ? this.#refreshCursor
                   : undefined),
               query,
+              signal,
             });
+            signal.throwIfAborted();
             this.#refreshCursor = result.refreshCursor ?? this.#refreshCursor;
 
             this.updateThreadifications(
@@ -2677,7 +2719,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       if (requestedAt === lastRequestedAt || result.requestedAt < requestedAt)
         requestedAt = result.requestedAt;
     }
-    await this.#refreshInvalidatedRooms();
+    await this.#refreshInvalidatedRooms(signal);
     // Access changes can discard updates, including in this response or its refresh.
     if (
       cacheVersion === this.#roomCacheVersion &&
@@ -2799,23 +2841,28 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       : requestVersion;
   }
 
-  #refreshInvalidatedRooms(): Promise<void> {
+  #refreshInvalidatedRooms(signal: AbortSignal): Promise<void> {
+    signal.throwIfAborted();
     if (this.#pendingRoomRefresh.size === 0) return Promise.resolve();
-    this.#roomRefresh$ ??= this.#refreshRoomQueries().finally(() => {
+    if (this.#roomRefresh$ !== undefined)
+      return withAbortSignal(this.#roomRefresh$, signal);
+    this.#roomRefresh$ = this.#refreshRoomQueries(signal).finally(() => {
       this.#roomRefresh$ = undefined;
     });
     return this.#roomRefresh$;
   }
 
-  async #refreshRoomQueries(): Promise<void> {
+  async #refreshRoomQueries(signal: AbortSignal): Promise<void> {
     while (this.#pendingRoomRefresh.size > 0) {
+      signal.throwIfAborted();
       const pending = new Map(this.#pendingRoomRefresh);
       const refreshes$ = [];
       for (const resource of [
         ...this.outputs.loadingNotifications.values(),
         ...this.outputs.loadingUserThreads.values(),
       ]) {
-        if (resource.refresh !== undefined) refreshes$.push(resource.refresh());
+        if (resource.refresh !== undefined)
+          refreshes$.push(resource.refresh(signal));
       }
       for (const [queryKey, resource] of this.outputs.loadingRoomThreads) {
         const query = tryParseJson(queryKey);
@@ -2825,10 +2872,11 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           pending.has(query[0]) &&
           resource.refresh !== undefined
         ) {
-          refreshes$.push(resource.refresh());
+          refreshes$.push(resource.refresh(signal));
         }
       }
       await Promise.all(refreshes$);
+      signal.throwIfAborted();
       for (const [roomId, version] of pending) {
         if (this.#pendingRoomRefresh.get(roomId) === version)
           this.#pendingRoomRefresh.delete(roomId);
@@ -2917,7 +2965,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       this.permissionHints.update(updates.permissionHints, updates.requestedAt);
     });
 
-    await this.#refreshInvalidatedRooms();
+    await this.#refreshInvalidatedRooms(signal);
     if (
       requestVersion === this.#roomCacheVersion &&
       lastRequestedAt < updates.requestedAt
@@ -2963,7 +3011,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       if (requestedAt === lastRequestedAt || result.requestedAt < requestedAt)
         requestedAt = result.requestedAt;
     }
-    await this.#refreshInvalidatedRooms();
+    await this.#refreshInvalidatedRooms(signal);
     if (
       cacheVersion === this.#roomCacheVersion &&
       lastRequestedAt < requestedAt

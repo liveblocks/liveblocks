@@ -317,7 +317,7 @@ test("refresh reloads the loaded page window after it shrinks and grows", async 
   revoked = true;
   await resource.refresh();
   expect(fetchPage).toHaveBeenCalledTimes(3);
-  expect(fetchPage).toHaveBeenNthCalledWith(3, undefined, true);
+  expect(fetchPage).toHaveBeenNthCalledWith(3, undefined, true, undefined);
   revoked = false;
   await resource.refresh();
   expect(fetchPage).toHaveBeenCalledTimes(5);
@@ -356,4 +356,81 @@ test("fetchMore keeps its non-throwing contract when a pending refresh fails", a
     hasFetchedAll: true,
     fetchMoreError: undefined,
   });
+});
+
+test("an aborted refresh cannot overwrite the pagination from its retry", async () => {
+  const staleResponse = Promise_withResolvers<string | null>();
+  const started = Promise_withResolvers<void>();
+  let refreshes = 0;
+  const resource = new PaginatedResource(async (_cursor, refreshing) => {
+    if (!refreshing) return "next-page";
+    if (++refreshes === 1) {
+      started.resolve();
+      return staleResponse.promise;
+    }
+    return "fresh-page";
+  });
+  await resource.waitUntilLoaded();
+  const controller = new AbortController();
+  const refresh$ = resource.refresh(controller.signal);
+  const outcome$ = refresh$.then(
+    () => undefined,
+    (error: unknown) => error
+  );
+  await started.promise;
+  controller.abort();
+  expect(await outcome$).toBe(controller.signal.reason);
+  await resource.refresh();
+  expect(resource.get().data?.cursor).toBe("fresh-page");
+  staleResponse.resolve("stale-page");
+  await Promise.resolve();
+  expect(resource.get().data?.cursor).toBe("fresh-page");
+});
+
+test("refresh can be aborted while it waits for fetchMore", async () => {
+  const pendingPage = Promise_withResolvers<string | null>();
+  const resource = new PaginatedResource(async (cursor, refreshing) => {
+    if (refreshing) return null;
+    return cursor === undefined ? "next-page" : pendingPage.promise;
+  });
+  await resource.waitUntilLoaded();
+  const more$ = resource.fetchMore();
+  const controller = new AbortController();
+  const refresh$ = resource.refresh(controller.signal);
+  const outcome$ = refresh$.then(
+    () => undefined,
+    (error: unknown) => error
+  );
+  controller.abort();
+  expect(await outcome$).toBe(controller.signal.reason);
+  pendingPage.resolve(null);
+  await more$;
+  await resource.refresh();
+  expect(resource.get().data?.hasFetchedAll).toBe(true);
+});
+
+test("aborting a caller waiting on a shared refresh leaves its owner running", async () => {
+  const response = Promise_withResolvers<string | null>();
+  const started = Promise_withResolvers<void>();
+  const resource = new PaginatedResource(async (_cursor, refreshing) => {
+    if (!refreshing) return "next-page";
+    started.resolve();
+    return response.promise;
+  });
+  await resource.waitUntilLoaded();
+  const owner = new AbortController();
+  const refresh$ = resource.refresh(owner.signal);
+  await started.promise;
+  const caller = new AbortController();
+  const waiting$ = resource.refresh(caller.signal);
+  const outcome$ = waiting$.then(
+    () => undefined,
+    (error: unknown) => error
+  );
+  caller.abort();
+  expect(await outcome$).toBe(caller.signal.reason);
+  expect(owner.signal.aborted).toBe(false);
+  response.resolve(null);
+  await refresh$;
+  expect(resource.get().data?.hasFetchedAll).toBe(true);
 });

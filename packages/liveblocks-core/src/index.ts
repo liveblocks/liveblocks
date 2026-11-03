@@ -221,6 +221,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export { warnOnce, warnOnceIf } from "./lib/warnings";
+export { withAbortSignal } from "./lib/with-abort-signal";
 export type {
   AccessLevel,
   PermissionMatrix,

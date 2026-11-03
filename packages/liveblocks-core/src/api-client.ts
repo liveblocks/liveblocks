@@ -1,4 +1,5 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
+import { AuthForbiddenError } from "./auth-manager";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -87,6 +88,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   getThreads(options: {
     roomId: string;
     cursor?: string;
+    signal?: AbortSignal;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -461,6 +463,7 @@ export interface NotificationHttpApi<
 > {
   getInboxNotifications(options?: {
     cursor?: string;
+    signal?: AbortSignal;
     query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
@@ -528,6 +531,7 @@ export interface LiveblocksHttpApi<
 
   getUserThreads_experimental(options?: {
     cursor?: string;
+    signal?: AbortSignal;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -573,6 +577,7 @@ export interface LiveblocksHttpApi<
 
 const ROOM_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const ROOM_FILE_RETRY_ATTEMPTS = 10;
+const PAGE_REQUEST_TIMEOUT = 30_000;
 const FILE_URL_EXPIRY_BUFFER = 30_000;
 const FILE_URL_ERROR_CACHE_TTL = 1_000;
 const FILE_URL_ERROR_MAX_ATTEMPTS = 3;
@@ -869,6 +874,7 @@ export function createApiClient<
   async function getThreads(options: {
     roomId: string;
     cursor?: string;
+    signal?: AbortSignal;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -876,6 +882,7 @@ export function createApiClient<
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
+    const signal = options.signal ?? AbortSignal.timeout(PAGE_REQUEST_TIMEOUT);
     let query: string | undefined;
 
     if (options.query) {
@@ -900,16 +907,20 @@ export function createApiClient<
         };
       }>(
         url`/v2/c/rooms/${options.roomId}/threads`,
-        await authManager.getAuthValue({
-          roomId: options.roomId,
-          resource: commentsResourceForVisibility(options.query?.visibility),
-          access: "read",
-        }),
+        await authManager.getAuthValue(
+          {
+            roomId: options.roomId,
+            resource: commentsResourceForVisibility(options.query?.visibility),
+            access: "read",
+          },
+          signal
+        ),
         {
           cursor: options.cursor,
           query,
           limit: PAGE_SIZE,
-        }
+        },
+        { signal }
       );
 
       return {
@@ -1871,8 +1882,10 @@ export function createApiClient<
    * -----------------------------------------------------------------------------------------------*/
   async function getInboxNotifications(options?: {
     cursor?: string;
+    signal?: AbortSignal;
     query?: { roomId?: string; kind?: string };
   }) {
+    const signal = options?.signal ?? AbortSignal.timeout(PAGE_REQUEST_TIMEOUT);
     const PAGE_SIZE = 50;
 
     let query: string | undefined;
@@ -1893,12 +1906,16 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ resource: "personal", access: "write" }),
+      await authManager.getAuthValue(
+        { resource: "personal", access: "write" },
+        signal
+      ),
       {
         cursor: options?.cursor,
         limit: PAGE_SIZE,
         query,
-      }
+      },
+      { signal }
     );
 
     const groups = json.groups.map(convertToGroupData);
@@ -1919,6 +1936,93 @@ export function createApiClient<
     };
   }
 
+  async function fetchUserDelta<
+    T extends {
+      meta: {
+        requestedAt: string;
+        roomAccesses?: { roomId: string; canRead: boolean }[];
+      };
+    },
+  >(
+    options: {
+      roomIds?: string[];
+      roomAccessesOnly?: boolean;
+      signal?: AbortSignal;
+    },
+    fetchDelta: (
+      authValue: AuthValue,
+      roomIds: string[] | undefined,
+      roomAccessesOnly: boolean | undefined
+    ) => Promise<T>
+  ): Promise<T> {
+    const personalAuth = await authManager.getAuthValue(
+      { resource: "personal", access: "write" },
+      options.signal
+    );
+    if (options.roomIds === undefined || options.roomIds.length === 0)
+      return fetchDelta(
+        personalAuth,
+        options.roomIds,
+        options.roomAccessesOnly
+      );
+
+    // A user's room tokens can grant different rooms.
+    const authorizations = await Promise.all(
+      options.roomIds.map(async (roomId) => {
+        try {
+          return {
+            roomId,
+            authValue: await authManager.getAuthValue(
+              { roomId, resource: "comments", access: "read" },
+              options.signal
+            ),
+          };
+        } catch (error) {
+          options.signal?.throwIfAborted();
+          if (!(error instanceof AuthForbiddenError)) throw error;
+          // Personal inbox items remain readable after room authorization fails.
+          return { roomId, authValue: personalAuth };
+        }
+      })
+    );
+    const batches = new Map<
+      string,
+      { authValue: AuthValue; roomIds: string[] }
+    >();
+    for (const { roomId, authValue } of authorizations) {
+      const token = getBearerTokenFromAuthValue(authValue);
+      const batch = batches.get(token);
+      if (batch === undefined)
+        batches.set(token, { authValue, roomIds: [roomId] });
+      else batch.roomIds.push(roomId);
+    }
+    const [first, ...remaining] = batches.values();
+    if (first === undefined)
+      return fetchDelta(
+        personalAuth,
+        options.roomIds,
+        options.roomAccessesOnly
+      );
+    const result$ = fetchDelta(
+      first.authValue,
+      first.roomIds,
+      options.roomAccessesOnly
+    );
+    const accesses$ = Promise.all(
+      remaining.map((batch) => fetchDelta(batch.authValue, batch.roomIds, true))
+    );
+    const [result, accessResponses] = await Promise.all([result$, accesses$]);
+    for (const accesses of accessResponses) {
+      result.meta.roomAccesses = [
+        ...(result.meta.roomAccesses ?? []),
+        ...(accesses.meta.roomAccesses ?? []),
+      ];
+      if (accesses.meta.requestedAt < result.meta.requestedAt)
+        result.meta.requestedAt = accesses.meta.requestedAt;
+    }
+    return result;
+  }
+
   async function getInboxNotificationsSince(options: {
     since: Date;
     roomAccessesOnly?: boolean;
@@ -1932,7 +2036,7 @@ export function createApiClient<
       query = objectToQuery(options.query);
     }
 
-    const json = await httpClient.get<{
+    const json = await fetchUserDelta<{
       threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
@@ -1943,19 +2047,18 @@ export function createApiClient<
         requestedAt: string;
         roomAccesses?: { roomId: string; canRead: boolean }[];
       };
-    }>(
-      url`/v2/c/inbox-notifications/delta`,
-      await authManager.getAuthValue({ resource: "personal", access: "write" }),
-      {
-        since: options.since.toISOString(),
-        query,
-        roomAccessesOnly: options.roomAccessesOnly ? "true" : undefined,
-        roomIds:
-          options.roomIds === undefined
-            ? undefined
-            : JSON.stringify(options.roomIds),
-      },
-      { signal: options.signal }
+    }>(options, (authValue, roomIds, roomAccessesOnly) =>
+      httpClient.get(
+        url`/v2/c/inbox-notifications/delta`,
+        authValue,
+        {
+          since: options.since.toISOString(),
+          query,
+          roomAccessesOnly: roomAccessesOnly ? "true" : undefined,
+          roomIds: roomIds === undefined ? undefined : JSON.stringify(roomIds),
+        },
+        { signal: options.signal }
+      )
     );
     return {
       inboxNotifications: {
@@ -2079,12 +2182,14 @@ export function createApiClient<
    */
   async function getUserThreads_experimental(options?: {
     cursor?: string;
+    signal?: AbortSignal;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
+    const signal = options?.signal ?? AbortSignal.timeout(PAGE_REQUEST_TIMEOUT);
     let query: string | undefined;
 
     if (options?.query) {
@@ -2108,12 +2213,16 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads`,
-      await authManager.getAuthValue({ resource: "personal", access: "write" }),
+      await authManager.getAuthValue(
+        { resource: "personal", access: "write" },
+        signal
+      ),
       {
         cursor: options?.cursor,
         query,
         limit: PAGE_SIZE,
-      }
+      },
+      { signal }
     );
 
     return {
@@ -2135,7 +2244,7 @@ export function createApiClient<
     roomIds?: string[];
     signal?: AbortSignal;
   }) {
-    const json = await httpClient.get<{
+    const json = await fetchUserDelta<{
       threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
@@ -2147,18 +2256,17 @@ export function createApiClient<
         roomAccesses?: { roomId: string; canRead: boolean }[];
         permissionHints: Record<string, RoomPermissions>;
       };
-    }>(
-      url`/v2/c/threads/delta`,
-      await authManager.getAuthValue({ resource: "personal", access: "write" }),
-      {
-        since: options.since.toISOString(),
-        roomAccessesOnly: options.roomAccessesOnly ? "true" : undefined,
-        roomIds:
-          options.roomIds === undefined
-            ? undefined
-            : JSON.stringify(options.roomIds),
-      },
-      { signal: options.signal }
+    }>(options, (authValue, roomIds, roomAccessesOnly) =>
+      httpClient.get(
+        url`/v2/c/threads/delta`,
+        authValue,
+        {
+          since: options.since.toISOString(),
+          roomAccessesOnly: roomAccessesOnly ? "true" : undefined,
+          roomIds: roomIds === undefined ? undefined : JSON.stringify(roomIds),
+        },
+        { signal: options.signal }
+      )
     );
 
     return {
