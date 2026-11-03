@@ -38,6 +38,8 @@ frozen in that state. Files dropped into the chat can be downloaded by everyone
 in the room. Sign-in uses [better-auth](https://www.better-auth.com/)
 with Google, falling back to demo accounts when Google isn't configured.
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/nextjs-language-tutoring.png" width="536" alt="Language Tutoring" />
+
 ## Getting started
 
 Run the following command to try this example locally:
