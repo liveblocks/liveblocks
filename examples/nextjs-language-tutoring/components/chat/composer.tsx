@@ -64,7 +64,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         Text,
         HardBreak,
         Placeholder.configure({
-          placeholder: `Write a message, or ${AI_MENTION} for help…`,
+          placeholder: `Write a message…`,
         }),
         Mention.configure({
           HTMLAttributes: { class: "chat-mention" },
@@ -91,7 +91,8 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
               onKeyDown: ({ event }) => {
                 const current = suggestionRef.current;
                 if (!current || current.items.length === 0) return false;
-                if (event.key === "Enter" || event.key === "Tab") {
+                // Enter is handled by the chat keymap below
+                if (event.key === "Tab") {
                   current.command(current.items[0]);
                   return true;
                 }
@@ -104,14 +105,21 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             }),
           },
         }),
-        // Enter sends, Shift+Enter adds a line break. Registered after the
-        // mention extension so the suggestion popover gets Enter first.
+        // Enter sends, Shift+Enter adds a line break. Keymaps run in priority
+        // order and Tiptap's built-in one (priority 100) would otherwise
+        // turn Enter into a new paragraph first, so this one goes on top.
         Extension.create({
           name: "chatKeymap",
-          priority: 50,
+          priority: 1000,
           addKeyboardShortcuts() {
             return {
               Enter: () => {
+                // With the mention popover open, Enter picks the suggestion
+                const current = suggestionRef.current;
+                if (current && current.items.length > 0) {
+                  current.command(current.items[0]);
+                  return true;
+                }
                 onSubmitRef.current();
                 return true;
               },

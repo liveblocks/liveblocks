@@ -3,7 +3,10 @@
 import { Loader2Icon, SendIcon, Trash2Icon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { type ReactNode, useCallback, useRef, useState } from "react";
-import { DOC_TYPE_ICONS, DOC_TYPE_LABELS } from "@/components/chat/snapshot-card";
+import {
+  DOC_TYPE_ICONS,
+  DOC_TYPE_LABELS,
+} from "@/components/chat/snapshot-card";
 import { type SnapshotPayload, useChat } from "@/components/chat/use-chat";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,11 +100,15 @@ function Document({
     <>
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-neutral-200 px-3">
         <Icon className="size-4 shrink-0 text-neutral-500" aria-hidden />
-        <DocTitle doc={doc} />
-        <span className="hidden text-xs text-neutral-400 sm:inline">
-          {DOC_TYPE_LABELS[doc.type]}
-          {doc.pageCount ? ` · ${doc.pageCount} pages` : ""}
-        </span>
+        {/* Baseline-align the title and the smaller type label: centering
+            two font sizes would leave the label floating slightly high */}
+        <div className="flex min-w-0 flex-1 items-baseline gap-2">
+          <DocTitle doc={doc} />
+          <span className="hidden shrink-0 text-xs text-neutral-400 sm:inline">
+            {DOC_TYPE_LABELS[doc.type]}
+            {doc.pageCount ? ` · ${doc.pageCount} pages` : ""}
+          </span>
+        </div>
         <div className="ml-auto flex items-center gap-1">
           <Button
             variant="outline"

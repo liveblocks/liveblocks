@@ -407,7 +407,7 @@ function MessageText({ text }: { text: string }) {
     part.mention ? (
       <span
         key={index}
-        className="mx-0.5 inline-block rounded-md bg-violet-100 px-1.5 py-0.5 leading-none font-medium whitespace-nowrap text-violet-700"
+        className="mx-0.5 inline-block rounded-md bg-violet-100 px-1 py-0.5 leading-none font-medium whitespace-nowrap text-violet-700"
       >
         {part.text}
       </span>
