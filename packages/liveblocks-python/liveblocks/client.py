@@ -185,9 +185,9 @@ class Liveblocks:
         """Get rooms
 
          This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
-        newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups
-        accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-
-        reference/liveblocks-node#get-rooms).
+        newest to oldest. You can filter rooms by room ID prefixes, metadata, thread presence or resolution
+        state, users accesses, and groups accesses. Corresponds to
+        [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
         There is a pagination system where the cursor to the next page is returned in the response as
         `nextCursor`, which can be combined with `startingAfter`.
@@ -208,10 +208,15 @@ class Liveblocks:
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
                 `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
             organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
-            query (str | Unset): Query to filter rooms. You can filter by `roomId` and `metadata`, for
-                example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn
-                more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-
-                filter-rooms-using-query-language). Example: metadata["color"]:"blue".
+            query (str | Unset): Query to filter rooms. You can filter by `roomId`, `metadata`, and
+                `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND
+                roomId^"liveblocks:engineering" AND hasThreads:true`. Use `hasThreads:true` for rooms with
+                threads, `hasThreads:false` for rooms without threads, `hasThreads:"unresolved"` for rooms
+                with at least one unresolved thread, or `hasThreads:"resolved"` for rooms with at least
+                one resolved thread. Deleted threads are excluded. Rooms with both resolved and unresolved
+                threads match either string value. Learn more about [filtering rooms with query
+                language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
+                Example: metadata["color"]:"blue" AND hasThreads:true.
             user_id (str | Unset): A filter on users accesses. Example: user-123.
             group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
                 Example: group1,group2.
@@ -3767,9 +3772,9 @@ class AsyncLiveblocks:
         """Get rooms
 
          This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
-        newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups
-        accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-
-        reference/liveblocks-node#get-rooms).
+        newest to oldest. You can filter rooms by room ID prefixes, metadata, thread presence or resolution
+        state, users accesses, and groups accesses. Corresponds to
+        [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
         There is a pagination system where the cursor to the next page is returned in the response as
         `nextCursor`, which can be combined with `startingAfter`.
@@ -3790,10 +3795,15 @@ class AsyncLiveblocks:
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
                 `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
             organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
-            query (str | Unset): Query to filter rooms. You can filter by `roomId` and `metadata`, for
-                example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn
-                more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-
-                filter-rooms-using-query-language). Example: metadata["color"]:"blue".
+            query (str | Unset): Query to filter rooms. You can filter by `roomId`, `metadata`, and
+                `hasThreads`, for example, `metadata["roomType"]:"whiteboard" AND
+                roomId^"liveblocks:engineering" AND hasThreads:true`. Use `hasThreads:true` for rooms with
+                threads, `hasThreads:false` for rooms without threads, `hasThreads:"unresolved"` for rooms
+                with at least one unresolved thread, or `hasThreads:"resolved"` for rooms with at least
+                one resolved thread. Deleted threads are excluded. Rooms with both resolved and unresolved
+                threads match either string value. Learn more about [filtering rooms with query
+                language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
+                Example: metadata["color"]:"blue" AND hasThreads:true.
             user_id (str | Unset): A filter on users accesses. Example: user-123.
             group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
                 Example: group1,group2.

@@ -43,9 +43,7 @@ const initialTextsArb = fc.array(
  * attached to it (under keys text0, text1, ...).
  */
 function makeNodeStream(texts: InitialText[]): StorageNode[] {
-  const nodes: StorageNode[] = [
-    ["root", { type: CrdtType.OBJECT, data: {} }],
-  ];
+  const nodes: StorageNode[] = [["root", { type: CrdtType.OBJECT, data: {} }]];
   for (const [i, { data, version }] of texts.entries()) {
     nodes.push([
       `text:${i}`,
@@ -88,15 +86,18 @@ describe("Storage LiveText (model-based test)", () => {
             // also predicts the result action (accepted / rectified / ignored
             // / rejected) and runs the internal-consistency selfCheck.
 
-            runWithStorage(makeNodeStream(initialTexts), ({ storage: real }) => {
-              selfCheck(real);
+            runWithStorage(
+              makeNodeStream(initialTexts),
+              ({ storage: real }) => {
+                selfCheck(real);
 
-              const model = new Model(real.driver.iter_nodes());
+                const model = new Model(real.driver.iter_nodes());
 
-              // Tries running randomized sequences of UpdateTextOps (normal,
-              // stale, too-old, duplicate, empty, and future-based ops)
-              fc.modelRun(() => ({ model, real }), commands);
-            })
+                // Tries running randomized sequences of UpdateTextOps (normal,
+                // stale, too-old, duplicate, empty, and future-based ops)
+                fc.modelRun(() => ({ model, real }), commands);
+              }
+            )
         ),
         {
           numRuns: 200, // Stop after 200 iterations, or...
