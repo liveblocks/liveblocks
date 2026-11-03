@@ -41,9 +41,9 @@ const FEATURES: Feature[] = [
   },
   {
     icon: <SparklesIcon />,
-    title: "An AI assistant that edits with you",
+    title: "An assistant that edits with you",
     description:
-      "Mention @ai in the chat to add a conjugation table, translate a paragraph, or circle something on a PDF. It edits the documents directly and shows up in presence while it works.",
+      "Mention @AI Assistant in the chat to add a conjugation table, translate a paragraph, set up documents for a lesson, or circle something on a PDF. It edits the documents directly and shows up in presence while it works.",
   },
 ];
 

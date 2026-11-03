@@ -1,15 +1,20 @@
-// Typing "@ai" anywhere in a chat message asks the assistant for help.
-// Shared by the composer (to trigger a request) and the message list (to
-// highlight the mention).
-export const AI_MENTION = "@ai";
+// Typing "@AI Assistant" anywhere in a chat message asks the assistant for
+// help. Shared by the composer (popover and trigger) and the message list
+// (highlighting).
+export const AI_NAME = "AI Assistant";
+export const AI_MENTION = `@${AI_NAME}`;
 
-const MENTION_PATTERN = /(^|[^\w@])(@ai)(?![\w-])/i;
+const MENTION_PATTERN = /(^|[^\w@])(@AI Assistant)(?![\w-])/i;
 
 export function mentionsAi(text: string) {
   return MENTION_PATTERN.test(text);
 }
 
-// Splits a message into plain text and "@ai" mention parts, for rendering
+export function matchesAiMention(query: string) {
+  return AI_NAME.toLowerCase().startsWith(query.toLowerCase());
+}
+
+// Splits a message into plain text and mention parts, for rendering
 export function splitAiMentions(text: string) {
   const parts: { text: string; mention: boolean }[] = [];
   const pattern = new RegExp(MENTION_PATTERN.source, "gi");

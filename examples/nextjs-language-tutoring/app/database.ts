@@ -58,7 +58,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
 export const AI_USER: Liveblocks["UserMeta"] = {
   id: "ai-assistant",
   info: {
-    name: "Liveblocks AI",
+    name: "AI Assistant",
     color: "#b282fa",
     avatar: "https://liveblocks.io/api/avatar?u=ai-assistant&agent=true",
   },

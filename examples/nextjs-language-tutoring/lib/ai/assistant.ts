@@ -10,6 +10,11 @@ import {
   drawOnCanvas,
   readCanvas,
 } from "./canvas";
+import {
+  createDocument,
+  listDocuments,
+  type DocumentSummary,
+} from "./documents";
 import { hideAiPresence, showAiPresence } from "./presence";
 import {
   describeTextDocument,
@@ -22,20 +27,18 @@ import {
 // contents of the documents are read from Liveblocks on the server.
 export type AssistantRequest = {
   roomId: string;
+  // The lesson's title, as shown in the room header (the members' names)
+  title: string;
+  // Language code of the language being taught, see `lib/languages.ts`
   language: string;
+  // When the lesson room was created
+  createdAt: string;
   // The document the person asking is looking at, if any
   activeDocId: string | null;
   // The most recent chat messages, oldest first, ending with the request
   history: { userId: string; name: string; content: string }[];
   // People in the room, for the system prompt
   members: { id: string; name: string; role: "tutor" | "student" }[];
-};
-
-type DocumentSummary = {
-  id: string;
-  type: DocumentType;
-  title: string;
-  pageCount?: number;
 };
 
 // How long the AI keeps hanging around its last edit before leaving
@@ -80,6 +83,7 @@ export async function runAssistant(request: AssistantRequest) {
     }
     await reply.finish();
   } catch (error) {
+    console.error("[ai] Assistant run failed", error);
     const reason = error instanceof Error ? error.message : "Unknown error";
     await reply.finish(`Sorry, something went wrong.\n\n${reason}`);
   } finally {
@@ -173,7 +177,10 @@ function createTools(
   function getDocument(docId: string, types: DocumentType[]) {
     const doc = documents.find((candidate) => candidate.id === docId);
     if (!doc) {
-      throw new Error(`Unknown document "${docId}"`);
+      const known = documents.map((d) => `"${d.title}" = ${d.id}`).join(", ");
+      throw new Error(
+        `Unknown document id "${docId}". Ids are opaque; use one of the existing ids (${known || "none"}) or create the document first with createDocument and use the id it returns.`
+      );
     }
     if (!types.includes(doc.type)) {
       throw new Error(
@@ -188,6 +195,28 @@ function createTools(
     .describe("The document id, from the list of documents in the room");
 
   return {
+    createDocument: {
+      description:
+        "Create a new, empty text document or whiteboard in the lesson. A document must exist before you can write to or draw on it: call this first and use the id it returns (ids are generated; never make one up). Create one document per topic when asked for several (e.g. vocabulary, grammar, homework). PDFs can't be created.",
+      inputSchema: z.object({
+        type: z.enum(["text", "whiteboard"]),
+        title: z.string().min(1).max(80),
+      }),
+      execute: async ({
+        type,
+        title,
+      }: {
+        type: "text" | "whiteboard";
+        title: string;
+      }) => {
+        await reply.setStatus(`Creating ${title}…`);
+        const doc = await createDocument(roomId, type, title);
+        documents.push(doc);
+        await showAiPresence(roomId, { docId: doc.id });
+        await reply.addAction({ docId: doc.id, label: `Created ${doc.title}` });
+        return `Created ${type} document "${doc.title}" with id ${doc.id}.`;
+      },
+    },
     readTextDocument: {
       description:
         "Read a text document. Returns its blocks, numbered from 0; use these numbers with writeTextDocument.",
@@ -324,12 +353,13 @@ async function streamRealReply(
           : `${message.name}: ${message.content}`,
     })),
     tools: {
+      createDocument: tool(tools.createDocument),
       readTextDocument: tool(tools.readTextDocument),
       writeTextDocument: tool(tools.writeTextDocument),
       readCanvas: tool(tools.readCanvas),
       drawOnCanvas: tool(tools.drawOnCanvas),
     },
-    stopWhen: stepCountIs(8),
+    stopWhen: stepCountIs(12),
     providerOptions: {
       openai: { reasoningEffort: "low" },
     },
@@ -338,6 +368,16 @@ async function streamRealReply(
   for await (const part of result.fullStream) {
     if (part.type === "text-delta") {
       await reply.append(part.text);
+    } else if (part.type === "tool-call") {
+      console.log("[ai] tool call", part.toolName, JSON.stringify(part.input));
+    } else if (part.type === "tool-error") {
+      console.error(
+        "[ai] tool error",
+        part.toolName,
+        part.error instanceof Error ? part.error.message : part.error
+      );
+    } else if (part.type === "finish-step") {
+      console.log("[ai] step finished:", part.finishReason);
     } else if (part.type === "error") {
       throw part.error instanceof Error
         ? part.error
@@ -352,12 +392,37 @@ function buildSystemPrompt(
 ) {
   const language = getLanguage(request.language);
   const active = documents.find((doc) => doc.id === request.activeDocId);
+  const tutors = request.members.filter((member) => member.role === "tutor");
+  const students = request.members.filter(
+    (member) => member.role === "student"
+  );
+  const asker = request.history.at(-1);
+  const names = (members: typeof request.members) =>
+    members.length > 0 ? members.map((m) => m.name).join(", ") : "(none yet)";
+  const date = (value: string | number) =>
+    new Date(value).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
   return [
-    `You are the AI assistant in a ${language.name} lesson between a tutor and their student. You're mentioned with @ai in the lesson chat and can edit the lesson documents directly.`,
+    `You are the AI assistant in a ${language.name} lesson between a tutor and their student. You're mentioned as @AI Assistant in the lesson chat. You have tools to create documents in the lesson (createDocument), write Markdown into text documents (writeTextDocument), and draw on whiteboards and PDFs (drawOnCanvas), and you're expected to use them: people mention you to get work done in the documents, not to be told how to do it themselves.`,
+    "",
+    "The lesson:",
+    `- Title: "${request.title}"`,
+    `- Language being taught: ${language.name} (${language.code})`,
+    `- Tutor: ${names(tutors)}`,
+    `- Student: ${names(students)}`,
+    `- Lesson room created on ${date(request.createdAt)}; today is ${date(Date.now())}`,
+    ...(asker ? [`- You were just mentioned by ${asker.name}`] : []),
     "",
     "Guidelines:",
-    `- The language being learned is ${language.name}. Explanations go in the language people write to you in.`,
+    `- The language being learned is ${language.name}. Lesson material (exercises, examples, vocabulary, conjugations) is in ${language.name}, with translations or explanations in the language the person wrote to you in.`,
+    "- Your chat replies are in the language of the message that mentioned you: if it was written in English, reply in English, even though the lesson is about another language.",
     "- When asked to add, write, translate, correct, or explain something, edit the relevant document with the tools instead of only replying in chat. Read a document before changing or translating existing content.",
+    "- You can create new text documents and whiteboards. When asked to set up or prepare a lesson, or for material on several topics, create one document per topic (e.g. Lesson plan, Vocabulary, Grammar, Homework), give each a short clear title, and fill each one in.",
+    "- Act rather than ask. If a request is open-ended, make sensible choices for a lesson at the student's likely level and do the work; mention your assumptions in one short sentence afterwards. Only ask a question when the request can't be acted on at all.",
     "- Conjugations and vocabulary go in tables (pronoun | form, or word | translation).",
     "- Drawings should be simple and legible: a few shapes, short labels. To point something out on a PDF, circle it with an ellipse or draw an arrow, and add a short text label next to it.",
     "- Once the edits are done, reply in one or two short sentences saying what you did. Don't repeat the content you wrote into a document. Plain text only, no Markdown.",
@@ -370,7 +435,9 @@ function buildSystemPrompt(
     "",
     "Documents in the room:",
     ...(documents.length === 0
-      ? ["- (none yet; say so and suggest creating one)"]
+      ? [
+          "- none yet. Create whatever the request needs with createDocument; never ask the user to create a document for you.",
+        ]
       : documents.map(
           (doc) =>
             `- "${doc.title}" (${doc.type}${doc.pageCount ? `, ${doc.pageCount} pages` : ""}, id ${doc.id})${doc.id === active?.id ? " ← currently open, use this one unless told otherwise" : ""}`
@@ -458,18 +525,16 @@ async function streamMockReply(
   tools: Tools,
   reply: StreamingReply
 ) {
-  const doc =
-    documents.find((candidate) => candidate.id === request.activeDocId) ??
-    documents[0];
   const note =
     "I'm running in demo mode, without an AI_GATEWAY_API_KEY, so I can only show you what I'd do. ";
 
+  // Work on the open document, or create one if the room has none yet
+  let doc =
+    documents.find((candidate) => candidate.id === request.activeDocId) ??
+    documents[0];
   if (!doc) {
-    await streamWords(
-      reply,
-      `${note}Add a text document, whiteboard, or PDF to the room and mention me again.`
-    );
-    return;
+    await tools.createDocument.execute({ type: "text", title: "Lesson notes" });
+    doc = documents[documents.length - 1];
   }
 
   if (doc.type === "text") {
@@ -519,30 +584,6 @@ async function streamWords(reply: StreamingReply, text: string) {
 }
 
 // ---------------------------------------------------------------------------
-
-async function listDocuments(roomId: string): Promise<DocumentSummary[]> {
-  const storage = await liveblocks.getStorageDocument(roomId, "json");
-  const documents =
-    typeof storage === "object" && storage !== null && "documents" in storage
-      ? storage.documents
-      : undefined;
-  if (!Array.isArray(documents)) return [];
-
-  const result: DocumentSummary[] = [];
-  for (const doc of documents) {
-    if (typeof doc !== "object" || doc === null || Array.isArray(doc)) continue;
-    const { id, type, title, pageCount } = doc;
-    if (typeof id !== "string" || typeof title !== "string") continue;
-    if (type !== "text" && type !== "whiteboard" && type !== "pdf") continue;
-    result.push({
-      id,
-      type,
-      title,
-      ...(typeof pageCount === "number" ? { pageCount } : {}),
-    });
-  }
-  return result;
-}
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

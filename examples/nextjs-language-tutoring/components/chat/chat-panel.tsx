@@ -16,17 +16,16 @@ import {
 import {
   type DragEvent,
   type FormEvent,
-  type KeyboardEvent,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user-avatar";
 import { AI_MENTION, splitAiMentions } from "@/lib/ai-mention";
 import { cn } from "@/lib/utils";
+import { ChatComposer, type ChatComposerHandle } from "./composer";
 import { SnapshotCard } from "./snapshot-card";
 import { CHAT_FEED_ID, useChat } from "./use-chat";
 
@@ -54,10 +53,11 @@ export function ChatPanel({
   const { isLoading, hasFetchedAll, fetchMore, isFetchingMore } = result;
   const { sendText } = useChat();
   const listRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const composerRef = useRef<ChatComposerHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
   const stickToBottom = useRef(true);
+  // Plain-text mirror of the composer, for the send button and submit
   const [draft, setDraft] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [draggingFiles, setDraggingFiles] = useState(false);
@@ -142,6 +142,7 @@ export function ChatPanel({
         .map(({ userId, content }) => ({ userId, content }));
       await sendText(draft, files, { activeDocId, history });
       setDraft("");
+      composerRef.current?.clear();
       setPendingFiles([]);
       stickToBottom.current = true;
     } catch (caught) {
@@ -153,21 +154,9 @@ export function ChatPanel({
     }
   }
 
-  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      void submit();
-    }
-  }
-
   // Starts a message to the assistant
   function askAi() {
-    setDraft((current) =>
-      current.toLowerCase().includes(AI_MENTION)
-        ? current
-        : `${AI_MENTION} ${current.trimStart()}`
-    );
-    textareaRef.current?.focus();
+    composerRef.current?.mentionAi();
   }
 
   return (
@@ -199,9 +188,10 @@ export function ChatPanel({
           <p className="mt-6 text-center text-sm text-neutral-500">
             No messages yet. Say hi, drop a file, or send a document page here
             with the <span className="font-medium">Send to chat</span> button.
-            Mention <span className="font-medium text-violet-600">@ai</span> to
-            have the assistant add a conjugation table, translate a paragraph,
-            or draw on the whiteboard.
+            Mention{" "}
+            <span className="font-medium text-violet-600">{AI_MENTION}</span> to
+            have it add a conjugation table, translate a paragraph, or draw on
+            the whiteboard.
           </p>
         ) : (
           <ol className="flex flex-col gap-3">
@@ -287,18 +277,10 @@ export function ChatPanel({
           >
             <SparklesIcon />
           </Button>
-          {/* One line is exactly 36px (20px text + 14px padding + 2px border),
-              matching the 36px send button and the 32px icon buttons with
-              their 2px bottom offset. Grows from there for longer messages. */}
-          <Textarea
-            ref={textareaRef}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder="Write a message…"
-            rows={1}
-            className="max-h-32 min-h-9 flex-1 resize-none py-[7px] text-sm leading-5"
-            aria-label="Message"
+          <ChatComposer
+            ref={composerRef}
+            onChange={setDraft}
+            onSubmit={() => void submit()}
           />
           <Button
             type="submit"
@@ -419,13 +401,13 @@ function TextMessageBody({
   );
 }
 
-// Message text with "@ai" mentions highlighted
+// Message text with assistant mentions highlighted
 function MessageText({ text }: { text: string }) {
   return splitAiMentions(text).map((part, index) =>
     part.mention ? (
       <span
         key={index}
-        className="rounded bg-violet-100 px-0.5 font-medium text-violet-700"
+        className="mx-0.5 inline-block rounded-md bg-violet-100 px-1.5 py-0.5 leading-none font-medium whitespace-nowrap text-violet-700"
       >
         {part.text}
       </span>

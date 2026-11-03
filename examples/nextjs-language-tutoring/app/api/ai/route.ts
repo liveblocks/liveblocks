@@ -6,6 +6,7 @@ import {
   toLessonRooms,
 } from "@/lib/liveblocks-server";
 import { getExampleId, getRequestUser } from "@/lib/request-user";
+import { getRoomTitle } from "@/lib/room-title";
 
 // Editing documents and streaming the reply can take a while
 export const maxDuration = 60;
@@ -16,7 +17,7 @@ type Body = {
   history: { userId: string; content: string }[];
 };
 
-// Called by the chat when a message mentions @ai. The assistant replies in
+// Called by the chat when a message mentions @AI Assistant. It replies in
 // the room's chat feed and edits documents through the Liveblocks REST API,
 // so this request only resolves once it's done; the client doesn't wait.
 export async function POST(request: NextRequest) {
@@ -45,7 +46,9 @@ export async function POST(request: NextRequest) {
 
   const assistantRequest: AssistantRequest = {
     roomId: room.id,
+    title: getRoomTitle(lessonRoom.members),
     language: getRoomInfo(room).language,
+    createdAt: lessonRoom.createdAt,
     activeDocId: body.activeDocId,
     history: body.history.map((message) => ({
       ...message,

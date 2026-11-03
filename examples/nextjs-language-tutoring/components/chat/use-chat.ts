@@ -98,7 +98,7 @@ export function useChat() {
       };
       await createFeedMessage(CHAT_FEED_ID, data);
 
-      // Mentioning @ai hands the message to the assistant, which replies in
+      // Mentioning @AI Assistant hands the message over; it replies in
       // this feed and edits documents from the server. Don't wait for it.
       if (mentionsAi(trimmed)) {
         void api("/api/ai", {

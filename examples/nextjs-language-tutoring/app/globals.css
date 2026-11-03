@@ -76,7 +76,7 @@
 
 @theme inline {
   --font-sans: var(--font-inter);
-    --color-background: var(--background);
+  --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -234,12 +234,31 @@
   text-decoration: underline;
 }
 
-.lesson-editor p.is-editor-empty:first-child::before {
+.lesson-editor p.is-editor-empty:first-child::before,
+.chat-composer p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: var(--color-neutral-400);
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+/* Chat composer: "@AI Assistant" mention pill, matching the one in messages */
+.chat-composer .chat-mention {
+  display: inline-block;
+  margin: 0 0.125rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  background: var(--color-violet-100);
+  color: var(--color-violet-700);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chat-composer .chat-mention::selection,
+.chat-composer .chat-mention.ProseMirror-selectednode {
+  background: var(--color-violet-200);
 }
 
 .lesson-editor .tableWrapper,
