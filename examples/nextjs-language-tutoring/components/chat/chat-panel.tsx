@@ -287,14 +287,17 @@ export function ChatPanel({
           >
             <SparklesIcon />
           </Button>
+          {/* One line is exactly 36px (20px text + 14px padding + 2px border),
+              matching the 36px send button and the 32px icon buttons with
+              their 2px bottom offset. Grows from there for longer messages. */}
           <Textarea
             ref={textareaRef}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Write a message, or @ai for help…"
+            placeholder="Write a message…"
             rows={1}
-            className="max-h-32 min-h-9 flex-1 resize-none"
+            className="max-h-32 min-h-9 flex-1 resize-none py-[7px] text-sm leading-5"
             aria-label="Message"
           />
           <Button
