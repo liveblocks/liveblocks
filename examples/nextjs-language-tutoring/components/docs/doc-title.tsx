@@ -32,6 +32,9 @@ export function DocTitle({ doc }: { doc: DocumentInfo }) {
         <input
           autoFocus
           value={draft}
+          // An input is ~20 characters wide by default and the grid cell
+          // would never shrink below that; let the text alone set the width
+          size={1}
           maxLength={80}
           placeholder="Untitled"
           onFocus={(event) => event.target.select()}
