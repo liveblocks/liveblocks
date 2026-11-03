@@ -7,6 +7,7 @@ import type {
   LiveObject,
   LsonObject,
 } from "@liveblocks/client";
+import type { LiveblocksProsemirrorNode } from "@liveblocks/prosemirror";
 
 // Each lesson room holds several documents. A document is either a LiveText
 // Tiptap document, a tldraw whiteboard, or a PDF annotated on top of tldraw.
@@ -25,6 +26,12 @@ export type DocumentData = {
   pdf?: LiveFile;
   // Only set for PDF documents: number of pages, once known
   pageCount?: number;
+};
+
+// An edit the AI assistant made to a document, listed under its chat reply
+export type AiAction = {
+  docId: string;
+  label: string;
 };
 
 declare global {
@@ -49,10 +56,12 @@ declare global {
     };
 
     // The room's Storage: the documents list plus the per-document data.
-    // Text documents are stored under `_tiptap_docs[docId]` automatically
-    // by `@liveblocks/react-tiptap` in LiveText mode.
     Storage: {
       documents: LiveList<LiveObject<DocumentData>>;
+      // Text documents, written by `@liveblocks/react-tiptap` in LiveText
+      // mode (one ProseMirror tree per document, keyed by document id). The
+      // AI assistant edits these from the server, see `lib/ai/text-doc.ts`.
+      _tiptap_docs?: LiveMap<string, LiveblocksProsemirrorNode>;
       // One tldraw record map per whiteboard / PDF document
       whiteboards: LiveMap<
         string,
@@ -76,7 +85,8 @@ declare global {
       ownerId: string;
     };
 
-    // Chat messages: regular text messages, or snapshots of a document
+    // Chat messages: regular text messages (from people or the AI
+    // assistant), or snapshots of a document
     FeedMessageData:
       | {
           kind: "text";
@@ -89,6 +99,12 @@ declare global {
             size: number;
             mimeType: string;
           }[];
+          // Only on AI replies: true while the reply is being written
+          streaming?: boolean;
+          // Only on AI replies: what the assistant is doing right now
+          status?: string;
+          // Only on AI replies: the document edits it made
+          actions?: AiAction[];
         }
       | {
           kind: "snapshot";

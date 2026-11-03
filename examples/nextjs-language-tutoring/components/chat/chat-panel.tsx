@@ -4,11 +4,13 @@
 import { useFeedMessages, useFileUrl } from "@liveblocks/react";
 import { useSelf, useUser } from "@liveblocks/react/suspense";
 import {
+  ArrowUpRightIcon,
   DownloadIcon,
   FileIcon,
   Loader2Icon,
   PaperclipIcon,
   SendHorizonalIcon,
+  SparklesIcon,
   XIcon,
 } from "lucide-react";
 import {
@@ -23,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user-avatar";
+import { AI_MENTION, splitAiMentions } from "@/lib/ai-mention";
 import { cn } from "@/lib/utils";
 import { SnapshotCard } from "./snapshot-card";
 import { CHAT_FEED_ID, useChat } from "./use-chat";
@@ -33,13 +36,17 @@ type Message = {
   data: Liveblocks["FeedMessageData"];
 };
 
-type ChatAttachment = NonNullable<
-  Extract<Liveblocks["FeedMessageData"], { kind: "text" }>["attachments"]
->[number];
+type TextMessage = Extract<Liveblocks["FeedMessageData"], { kind: "text" }>;
+type ChatAttachment = NonNullable<TextMessage["attachments"]>[number];
+
+// How much of the conversation the AI assistant gets to see
+const AI_HISTORY_LENGTH = 12;
 
 export function ChatPanel({
+  activeDocId,
   onOpenDocument,
 }: {
+  activeDocId: string | null;
   onOpenDocument: (docId: string) => void;
 }) {
   const result = useFeedMessages(CHAT_FEED_ID);
@@ -47,6 +54,7 @@ export function ChatPanel({
   const { isLoading, hasFetchedAll, fetchMore, isFetchingMore } = result;
   const { sendText } = useChat();
   const listRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
   const stickToBottom = useRef(true);
@@ -115,6 +123,10 @@ export function ChatPanel({
     addFiles(event.dataTransfer.files);
   }
 
+  const sorted = [...(messages as Message[])].sort(
+    (a, b) => a.createdAt - b.createdAt
+  );
+
   async function submit(event?: FormEvent) {
     event?.preventDefault();
     const files = pendingFiles;
@@ -122,7 +134,13 @@ export function ChatPanel({
     setSending(true);
     setError(null);
     try {
-      await sendText(draft, files);
+      const history = sorted
+        .map((message) => message.data)
+        .filter((data): data is TextMessage => data.kind === "text")
+        .filter((data) => data.content && !data.streaming)
+        .slice(-AI_HISTORY_LENGTH)
+        .map(({ userId, content }) => ({ userId, content }));
+      await sendText(draft, files, { activeDocId, history });
       setDraft("");
       setPendingFiles([]);
       stickToBottom.current = true;
@@ -142,9 +160,15 @@ export function ChatPanel({
     }
   }
 
-  const sorted = [...(messages as Message[])].sort(
-    (a, b) => a.createdAt - b.createdAt
-  );
+  // Starts a message to the assistant
+  function askAi() {
+    setDraft((current) =>
+      current.toLowerCase().includes(AI_MENTION)
+        ? current
+        : `${AI_MENTION} ${current.trimStart()}`
+    );
+    textareaRef.current?.focus();
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -175,6 +199,9 @@ export function ChatPanel({
           <p className="mt-6 text-center text-sm text-neutral-500">
             No messages yet. Say hi, drop a file, or send a document page here
             with the <span className="font-medium">Send to chat</span> button.
+            Mention <span className="font-medium text-violet-600">@ai</span> to
+            have the assistant add a conjugation table, translate a paragraph,
+            or draw on the whiteboard.
           </p>
         ) : (
           <ol className="flex flex-col gap-3">
@@ -248,11 +275,24 @@ export function ChatPanel({
           >
             <PaperclipIcon />
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            disabled={sending}
+            aria-label="Ask the AI assistant"
+            title="Ask the AI assistant"
+            className="mb-0.5 -ml-1 text-neutral-500"
+            onClick={askAi}
+          >
+            <SparklesIcon />
+          </Button>
           <Textarea
+            ref={textareaRef}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Write a message…"
+            placeholder="Write a message, or @ai for help…"
             rows={1}
             className="max-h-32 min-h-9 flex-1 resize-none"
             aria-label="Message"
@@ -311,21 +351,93 @@ function ChatMessage({
       ) : null}
       <div className="pl-7">
         {message.data.kind === "text" ? (
-          <>
-            {message.data.content ? (
-              <p className="text-sm break-words whitespace-pre-wrap">
-                {message.data.content}
-              </p>
-            ) : null}
-            {message.data.attachments?.map((file) => (
-              <ChatAttachmentCard key={file.fileId} file={file} />
-            ))}
-          </>
+          <TextMessageBody
+            data={message.data}
+            onOpenDocument={onOpenDocument}
+          />
         ) : (
           <SnapshotCard data={message.data} onOpenDocument={onOpenDocument} />
         )}
       </div>
     </li>
+  );
+}
+
+function TextMessageBody({
+  data,
+  onOpenDocument,
+}: {
+  data: TextMessage;
+  onOpenDocument: (docId: string) => void;
+}) {
+  return (
+    <>
+      {data.content ? (
+        <p className="text-sm break-words whitespace-pre-wrap">
+          <MessageText text={data.content} />
+          {data.streaming ? <StreamingCursor /> : null}
+        </p>
+      ) : data.streaming ? (
+        <p className="flex items-center gap-1.5 text-sm text-neutral-500">
+          <Loader2Icon className="size-3.5 animate-spin" />
+          {data.status ?? "Thinking…"}
+        </p>
+      ) : null}
+      {data.content && data.streaming && data.status ? (
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
+          <Loader2Icon className="size-3 animate-spin" />
+          {data.status}
+        </p>
+      ) : null}
+      {data.actions && data.actions.length > 0 ? (
+        <ul className="mt-1.5 flex flex-col gap-1">
+          {data.actions.map((action, index) => (
+            <li key={`${action.docId}-${index}`}>
+              <button
+                type="button"
+                onClick={() => onOpenDocument(action.docId)}
+                className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-xs text-violet-800 hover:bg-violet-100"
+              >
+                <SparklesIcon className="size-3 shrink-0" aria-hidden />
+                <span className="truncate">{action.label}</span>
+                <ArrowUpRightIcon
+                  className="size-3 shrink-0 text-violet-500"
+                  aria-hidden
+                />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {data.attachments?.map((file) => (
+        <ChatAttachmentCard key={file.fileId} file={file} />
+      ))}
+    </>
+  );
+}
+
+// Message text with "@ai" mentions highlighted
+function MessageText({ text }: { text: string }) {
+  return splitAiMentions(text).map((part, index) =>
+    part.mention ? (
+      <span
+        key={index}
+        className="rounded bg-violet-100 px-0.5 font-medium text-violet-700"
+      >
+        {part.text}
+      </span>
+    ) : (
+      <span key={index}>{part.text}</span>
+    )
+  );
+}
+
+function StreamingCursor() {
+  return (
+    <span
+      aria-hidden
+      className="ml-0.5 inline-block h-3.5 w-0.5 translate-y-0.5 animate-pulse bg-neutral-400"
+    />
   );
 }
 

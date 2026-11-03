@@ -205,7 +205,8 @@ export function useStorageStore({
         })
       );
 
-      // Others' Presence → tldraw, only for people on this document
+      // Others' Presence → tldraw, only for people on this document. This
+      // includes the AI assistant, whose presence is set from the server.
       function syncOthers() {
         const others = room.getOthers();
         const toPut: TLInstancePresence[] = [];
@@ -217,7 +218,8 @@ export function useStorageStore({
           if (other.presence.docId !== docId) continue;
           const record = getTldrawRecord(other.presence.tldraw);
           if (record?.typeName === "instance_presence") {
-            toPut.push(record);
+            // Key the record by connection, whatever id the sender used
+            toPut.push({ ...record, id });
             keep.add(id);
           }
         }

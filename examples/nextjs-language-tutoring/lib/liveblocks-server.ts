@@ -6,12 +6,8 @@ import {
   type RoomData,
 } from "@liveblocks/node";
 import { nanoid } from "nanoid";
-import { getUser, getUsers } from "@/app/database";
-import {
-  getDirectoryRoomId,
-  getRoomScope,
-  isExampleRoomId,
-} from "./example";
+import { AI_USER, getUser, getUsers } from "@/app/database";
+import { getDirectoryRoomId, getRoomScope, isExampleRoomId } from "./example";
 import type { SessionUser } from "./auth";
 import type { RoomInfo, UserInfo, UserMeta } from "@/liveblocks.config";
 
@@ -151,7 +147,9 @@ export async function resolveUserInfos(
 
   for (const id of userIds) {
     const demoUser = getUser(id);
-    if (demoUser) {
+    if (id === AI_USER.id) {
+      result.set(id, AI_USER.info);
+    } else if (demoUser) {
       result.set(id, demoUser.info);
     } else {
       unknown.push(id);

@@ -10,15 +10,28 @@ import {
   useUploadFile,
 } from "@liveblocks/react/suspense";
 import { useCallback, useRef } from "react";
+import { useApp } from "@/components/app-context";
+import { mentionsAi } from "@/lib/ai-mention";
 import type { DocumentInfo } from "@/liveblocks.config";
+import { CHAT_FEED_ID } from "./feed";
 
-// Every room has one chat feed
-export const CHAT_FEED_ID = "chat";
+export { CHAT_FEED_ID };
 
-type SnapshotMessage = Extract<Liveblocks["FeedMessageData"], { kind: "snapshot" }>;
+type SnapshotMessage = Extract<
+  Liveblocks["FeedMessageData"],
+  { kind: "snapshot" }
+>;
 type ChatAttachment = NonNullable<
   Extract<Liveblocks["FeedMessageData"], { kind: "text" }>["attachments"]
 >[number];
+
+// Context the AI assistant gets when a message mentions it
+export type AiContext = {
+  // The document open next to the chat, which the request is probably about
+  activeDocId: string | null;
+  // Recent text messages, oldest first, for follow-up questions
+  history: { userId: string; content: string }[];
+};
 
 // What a document hands over when the user clicks "Send to chat"
 export type SnapshotPayload =
@@ -28,6 +41,7 @@ export type SnapshotPayload =
 // Posts messages to the room chat, creating the feed on first use
 export function useChat() {
   const room = useRoom();
+  const { api } = useApp();
   const self = useSelf((me) => me.id);
   const createFeed = useCreateFeed();
   const createFeedMessage = useCreateFeedMessage();
@@ -61,7 +75,7 @@ export function useChat() {
   }, [createFeed]);
 
   const sendText = useCallback(
-    async (content: string, files: File[] = []) => {
+    async (content: string, files: File[], ai: AiContext) => {
       const trimmed = content.trim();
       if (!trimmed && files.length === 0) return;
       await ensureFeed();
@@ -83,8 +97,31 @@ export function useChat() {
         ...(attachments.length > 0 ? { attachments } : {}),
       };
       await createFeedMessage(CHAT_FEED_ID, data);
+
+      // Mentioning @ai hands the message to the assistant, which replies in
+      // this feed and edits documents from the server. Don't wait for it.
+      if (mentionsAi(trimmed)) {
+        void api("/api/ai", {
+          method: "POST",
+          json: {
+            roomId: room.id,
+            activeDocId: ai.activeDocId,
+            history: [...ai.history, { userId: self, content: trimmed }],
+          },
+        }).catch(() => {
+          // Once started, the assistant reports its own errors in the chat
+        });
+      }
     },
-    [createFeedMessage, ensureFeed, self, storeAttachment, uploadFile]
+    [
+      api,
+      createFeedMessage,
+      ensureFeed,
+      room.id,
+      self,
+      storeAttachment,
+      uploadFile,
+    ]
   );
 
   const sendSnapshot = useCallback(

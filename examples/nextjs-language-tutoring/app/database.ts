@@ -53,6 +53,17 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
   },
 ];
 
+// The AI assistant. It can't sign in, but it shows up in the chat and, while
+// it edits a document, in Presence like any other member (see `lib/ai`).
+export const AI_USER: Liveblocks["UserMeta"] = {
+  id: "ai-assistant",
+  info: {
+    name: "Liveblocks AI",
+    color: "#b282fa",
+    avatar: "https://liveblocks.io/api/avatar?u=ai-assistant&agent=true",
+  },
+};
+
 export function getUser(id: string) {
   return USER_INFO.find((u) => u.id === id) || undefined;
 }

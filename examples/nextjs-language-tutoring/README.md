@@ -35,8 +35,12 @@ annotate together on a tldraw canvas. A chat panel built with
 [Feeds](https://liveblocks.io/docs/products/sync/feeds) sits alongside each
 room, and any document page can be sent into the chat as a snapshot that stays
 frozen in that state. Files dropped into the chat can be downloaded by everyone
-in the room. Sign-in uses [better-auth](https://www.better-auth.com/)
-with Google, falling back to demo accounts when Google isn't configured.
+in the room. Mentioning `@ai` in the chat brings in an AI assistant, built with
+the [Vercel AI SDK](https://ai-sdk.dev/), that edits the documents directly: it
+adds conjugation tables and translations to text documents and draws on
+whiteboards and PDFs, showing up in Presence while it works. Sign-in uses
+[better-auth](https://www.better-auth.com/) with Google, falling back to demo
+accounts when Google isn't configured.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/nextjs-language-tutoring.png" width="536" alt="Language Tutoring" />
 
@@ -71,6 +75,10 @@ Alternatively, you can set up your project manually:
   to enable Google sign-in, with
   `http://localhost:3000/api/auth/callback/google` as an authorized redirect
   URI. Without them, the sign-in page offers demo accounts instead.
+- Optionally add an `AI_GATEWAY_API_KEY` from the
+  [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to let the `@ai` chat
+  assistant answer and edit documents. Without it, the assistant runs in a demo
+  mode with canned edits.
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To see realtime sync, sign in as two different users in two browsers (or a
@@ -123,7 +131,8 @@ After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-language-tutoring)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets). Add `GOOGLE_CLIENT_ID` and
-`GOOGLE_CLIENT_SECRET` if you want Google sign-in instead of the demo accounts.
+`GOOGLE_CLIENT_SECRET` if you want Google sign-in instead of the demo
+accounts, and `AI_GATEWAY_API_KEY` to enable the `@ai` assistant.
 
 </details>
 

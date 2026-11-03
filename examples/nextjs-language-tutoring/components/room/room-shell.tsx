@@ -28,11 +28,17 @@ export function RoomShell(props: RoomShellProps) {
       <div className="flex min-h-0 flex-1 gap-3">
         <DocSidebar activeDocId={activeDocId} onSelect={setActiveDocId} />
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
-          <DocumentView docId={activeDocId} onDeleted={() => setActiveDocId(null)} />
+          <DocumentView
+            docId={activeDocId}
+            onDeleted={() => setActiveDocId(null)}
+          />
         </main>
         {chatOpen ? (
           <aside className="flex w-[380px] shrink-0 flex-col overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
-            <ChatPanel onOpenDocument={setActiveDocId} />
+            <ChatPanel
+              activeDocId={activeDocId}
+              onOpenDocument={setActiveDocId}
+            />
           </aside>
         ) : null}
       </div>

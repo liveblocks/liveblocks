@@ -39,6 +39,12 @@ const FEATURES: Feature[] = [
     description:
       "Send a page of any document into the room chat, or drop a file for everyone in the room to download. A snapshot stays frozen at the moment it was shared.",
   },
+  {
+    icon: <SparklesIcon />,
+    title: "An AI assistant that edits with you",
+    description:
+      "Mention @ai in the chat to add a conjugation table, translate a paragraph, or circle something on a PDF. It edits the documents directly and shows up in presence while it works.",
+  },
 ];
 
 const styles: Record<string, CSSProperties> = {
@@ -314,6 +320,15 @@ function ZapIcon() {
   return (
     <FeatureIconBase>
       <path d="M13 2L3 14h7l-1 8 10-12h-7z" />
+    </FeatureIconBase>
+  );
+}
+
+function SparklesIcon() {
+  return (
+    <FeatureIconBase>
+      <path d="M12 3l1.9 5.6L19.5 10.5l-5.6 1.9L12 18l-1.9-5.6L4.5 10.5l5.6-1.9L12 3z" />
+      <path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16z" />
     </FeatureIconBase>
   );
 }
