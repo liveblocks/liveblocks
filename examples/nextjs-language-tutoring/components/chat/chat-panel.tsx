@@ -23,7 +23,11 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
-import { AI_MENTION, splitAiMentions } from "@/lib/ai-mention";
+import {
+  AI_MENTION,
+  AI_MENTION_CLASS,
+  splitAiMentions,
+} from "@/lib/ai-mention";
 import { cn } from "@/lib/utils";
 import { ChatComposer, type ChatComposerHandle } from "./composer";
 import { SnapshotCard } from "./snapshot-card";
@@ -405,10 +409,7 @@ function TextMessageBody({
 function MessageText({ text }: { text: string }) {
   return splitAiMentions(text).map((part, index) =>
     part.mention ? (
-      <span
-        key={index}
-        className="mx-0.5 inline-block rounded-md bg-violet-100 px-1 py-0.5 leading-none font-medium whitespace-nowrap text-violet-700"
-      >
+      <span key={index} className={AI_MENTION_CLASS}>
         {part.text}
       </span>
     ) : (

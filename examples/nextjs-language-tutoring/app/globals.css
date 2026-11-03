@@ -243,19 +243,8 @@
   pointer-events: none;
 }
 
-/* Chat composer: "@AI Assistant" mention pill, matching the one in messages */
-.chat-composer .chat-mention {
-  display: inline-block;
-  margin: 0 0.125rem;
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.375rem;
-  background: var(--color-violet-100);
-  color: var(--color-violet-700);
-  font-weight: 500;
-  line-height: 1;
-  white-space: nowrap;
-}
-
+/* Chat composer: the "@AI Assistant" pill is styled with the shared Tailwind
+   classes; this only covers the node-selected state */
 .chat-composer .chat-mention::selection,
 .chat-composer .chat-mention.ProseMirror-selectednode {
   background: var(--color-violet-200);
@@ -351,5 +340,5 @@
 /* Remove this and get a license key before making a commercial product
    https://tldraw.dev/sdk-features/license-key */
 .tl-watermark_SEE-LICENSE {
-  display: none;
+  display: none !important;
 }

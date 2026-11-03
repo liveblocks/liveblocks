@@ -18,7 +18,12 @@ import {
 } from "react";
 import { AI_USER } from "@/app/database";
 import { UserAvatar } from "@/components/user-avatar";
-import { AI_MENTION, AI_NAME, matchesAiMention } from "@/lib/ai-mention";
+import {
+  AI_MENTION,
+  AI_MENTION_CLASS,
+  AI_NAME,
+  matchesAiMention,
+} from "@/lib/ai-mention";
 import { cn } from "@/lib/utils";
 
 // The chat input: a one-paragraph Tiptap editor rather than a textarea, so
@@ -67,7 +72,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
           placeholder: `Write a message…`,
         }),
         Mention.configure({
-          HTMLAttributes: { class: "chat-mention" },
+          HTMLAttributes: { class: `chat-mention ${AI_MENTION_CLASS}` },
           deleteTriggerWithBackspace: true,
           suggestion: {
             char: "@",

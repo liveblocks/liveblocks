@@ -18,23 +18,36 @@ export function DocTitle({ doc }: { doc: DocumentInfo }) {
   }
 
   if (editing) {
+    // The input is as wide as its text and grows/shrinks while typing: an
+    // invisible copy of the text sizes the grid cell, and the input fills it.
     return (
-      <input
-        autoFocus
-        value={draft}
-        maxLength={80}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={commit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") commit();
-          if (event.key === "Escape") {
-            setDraft(doc.title);
-            setEditing(false);
-          }
-        }}
-        className="h-7 min-w-0 flex-1 rounded-md border border-neutral-300 px-2 text-sm font-medium outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-        aria-label="Document title"
-      />
+      <span className="inline-grid max-w-full shrink">
+        <span
+          aria-hidden
+          // Same box as the input (padding + border), text centered like it
+          className="invisible col-start-1 row-start-1 flex h-7 items-center overflow-hidden border border-transparent px-2 text-sm font-medium whitespace-pre"
+        >
+          {draft || "Untitled"}
+        </span>
+        <input
+          autoFocus
+          value={draft}
+          maxLength={80}
+          placeholder="Untitled"
+          onFocus={(event) => event.target.select()}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={commit}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") commit();
+            if (event.key === "Escape") {
+              setDraft(doc.title);
+              setEditing(false);
+            }
+          }}
+          className="col-start-1 row-start-1 h-7 w-full min-w-0 rounded-md border border-neutral-300 px-2 text-sm font-medium outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          aria-label="Document title"
+        />
+      </span>
     );
   }
 

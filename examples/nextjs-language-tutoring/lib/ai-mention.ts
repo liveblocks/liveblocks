@@ -4,6 +4,12 @@
 export const AI_NAME = "AI Assistant";
 export const AI_MENTION = `@${AI_NAME}`;
 
+// The "@AI Assistant" pill, shared by chat messages and the composer. It's a
+// plain inline span (not inline-block) so the text sits exactly on the
+// surrounding baseline; the padding only paints the background around it.
+export const AI_MENTION_CLASS =
+  "box-decoration-clone rounded-md bg-violet-100 px-1 py-0.5 font-medium whitespace-nowrap text-violet-700";
+
 const MENTION_PATTERN = /(^|[^\w@])(@AI Assistant)(?![\w-])/i;
 
 export function mentionsAi(text: string) {
