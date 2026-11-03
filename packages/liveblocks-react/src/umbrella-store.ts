@@ -45,7 +45,6 @@ import {
   DerivedSignal,
   getSubscriptionKey,
   hasPermissionAccess,
-  HttpError,
   isPlainObject,
   kInternal,
   MutableSignal,
@@ -1859,18 +1858,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         return {
           signal,
           waitUntilLoaded: resource.waitUntilLoaded,
-          refresh: async (signal?: AbortSignal) => {
-            try {
-              await resource.refresh(signal);
-            } catch (error) {
-              if (
-                error instanceof HttpError &&
-                [403, 404].includes(error.response.status)
-              )
-                return;
-              throw error;
-            }
-          },
+          refresh: resource.refresh,
         };
       }
     );
@@ -2418,52 +2406,15 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     });
   }
 
-  /**
-   * Confirms a new thread, reloading it if room access changed while creating it.
-   */
-  public async createThread(
+  /** Creates a thread, replacing its optimistic update. */
+  public createThread(
     optimisticId: string,
     thread: Readonly<ThreadDataWithDeleteInfo<TM, CM>>,
     requestVersion = this.#roomCacheVersion
-  ): Promise<void> {
-    let notifications: InboxNotificationData[] = [];
-    let subscriptions: SubscriptionData[] = [];
-    for (;;) {
-      const access = this.#roomAccessesΣ.get().get(thread.roomId);
-      if (
-        (access?.access ?? "room") !== "room" ||
-        (access?.version ?? 0) <= requestVersion
-      )
-        break;
-
-      // Refreshed pages may not include the newly created thread.
-      const responseVersion = this.#roomCacheVersion;
-      const result = await this.#client[kInternal].httpClient.getThread({
-        roomId: thread.roomId,
-        threadId: thread.id,
-      });
-      if (result.thread === undefined) {
-        this.deleteThread(thread.id, optimisticId);
-        return;
-      }
-      thread = result.thread;
-      notifications = result.inboxNotification
-        ? [result.inboxNotification]
-        : [];
-      subscriptions = result.subscription ? [result.subscription] : [];
-      requestVersion = responseVersion;
-    }
+  ): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticId);
-      this.updateThreadifications(
-        [thread],
-        notifications,
-        subscriptions,
-        [],
-        [],
-        [],
-        requestVersion
-      );
+      this.updateThreadifications([thread], [], [], [], [], [], requestVersion);
     });
   }
 

@@ -1122,6 +1122,68 @@ describe("Room access changes", () => {
     unmount();
   });
 
+  test("retries a room refresh denied after access is restored", async () => {
+    const thread = dummyThreadData({
+      roomId: "room",
+      createdAt: new Date("2025-12-31T00:00:00.000Z"),
+      updatedAt: new Date("2025-12-31T00:00:00.000Z"),
+    });
+    let revoked = false;
+    let denyRefresh = false;
+    const page = {
+      threads: [],
+      inboxNotifications: [],
+      subscriptions: [],
+      groups: [],
+      meta: { requestedAt: "2026-01-01T00:00:00.000Z", nextCursor: null },
+    };
+    server.use(
+      mockGetInboxNotifications(() => HttpResponse.json(page)),
+      mockGetInboxNotificationsDelta(() =>
+        HttpResponse.json({
+          ...page,
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: "2026-01-01T00:01:00.000Z",
+            roomAccesses: [
+              { roomId: "room", access: revoked ? "none" : "room" },
+            ],
+          },
+        })
+      ),
+      http.get("https://api.liveblocks.io/v2/c/rooms/room/threads", () =>
+        denyRefresh
+          ? new HttpResponse(null, { status: 403 })
+          : HttpResponse.json({
+              ...page,
+              data: [thread],
+              meta: { ...page.meta, permissionHints: { room: ["room:write"] } },
+            })
+      )
+    );
+    const { umbrellaStore } = createContextsForTest();
+    await umbrellaStore.outputs.loadingRoomThreads
+      .getOrCreate('["room",{}]')
+      .waitUntilLoaded();
+    await umbrellaStore.outputs.loadingNotifications
+      .getOrCreate("{}")
+      .waitUntilLoaded();
+    const signal = new AbortController().signal;
+    revoked = true;
+    await umbrellaStore.fetchNotificationsDeltaUpdate(signal);
+    expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
+    revoked = false;
+    denyRefresh = true;
+    await expect(
+      umbrellaStore.fetchNotificationsDeltaUpdate(signal)
+    ).rejects.toThrow();
+    denyRefresh = false;
+    await umbrellaStore.fetchNotificationsDeltaUpdate(signal);
+    expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
+  });
+
   test("discards an older page that arrives after room invalidation", async () => {
     const thread = dummyThreadData({ roomId: "revoked-room" });
     const notification = dummyThreadInboxNotificationData({

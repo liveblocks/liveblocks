@@ -1951,77 +1951,85 @@ export function createApiClient<
   }): Promise<boolean> {
     if (options.roomIds.length === 0) return true;
     let allRoomsChecked = true;
+    const signal = options.signal ?? AbortSignal.timeout(PAGE_REQUEST_TIMEOUT);
     const personalAuth = await authManager.getAuthValue(
       { resource: "personal", access: "write" },
-      options.signal
+      signal
     );
-    // Leave time for data updates within the poller's 30-second deadline.
-    const timeout = AbortSignal.timeout(ROOM_ACCESS_CHECK_TIMEOUT);
-    const signal = options.signal
-      ? AbortSignal.any([options.signal, timeout])
-      : timeout;
     for (const roomIds of chunk(options.roomIds, 50)) {
-      options.signal?.throwIfAborted();
-      if (signal.aborted) return false;
-      const byToken = new Map<
-        string,
-        { requests: Batch<void, string>; size: number }
-      >();
-      const checked = await Promise.all(
+      // A stalled authorization must not cancel checks for the other rooms.
+      const authSignal = AbortSignal.any([
+        signal,
+        AbortSignal.timeout(ROOM_ACCESS_CHECK_TIMEOUT),
+      ]);
+      const authorizations = await Promise.allSettled(
         roomIds.map(async (roomId) => {
-          try {
-            const authValue = await authManager
-              .getAuthValue(
-                { roomId, resource: "comments", access: "read" },
-                signal
-              )
-              .catch((error: unknown) => {
-                // Personal inbox items remain readable after room authorization fails.
-                if (error instanceof AuthForbiddenError) return personalAuth;
-                throw error;
-              });
-            const token = getBearerTokenFromAuthValue(authValue);
-            const size = encodeURIComponent(JSON.stringify(roomId)).length + 3;
-            let batch = byToken.get(token);
-            if (batch === undefined || batch.size + size > 4000) {
-              batch = {
-                size: 0,
-                // Flush ready rooms together without waiting for stalled authentication.
-                requests: new Batch<void, string>(
-                  async (roomIds) => {
-                    const result = await httpClient.get<{
-                      meta: { roomAccesses?: RoomAccess[] };
-                    }>(
-                      url`/v2/c/inbox-notifications/delta`,
-                      authValue,
-                      {
-                        since: new Date().toISOString(),
-                        roomAccessesOnly: "true",
-                        roomIds: JSON.stringify(roomIds),
-                      },
-                      { signal }
-                    );
-                    options.signal?.throwIfAborted();
-                    options.onAccesses(result.meta.roomAccesses ?? []);
-                    return roomIds.map(() => undefined);
-                  },
-                  { delay: 0 }
-                ),
-              };
-              byToken.set(token, batch);
-            }
-            batch.size += size;
-            await batch.requests.get(roomId);
-            return true;
-          } catch {
-            options.signal?.throwIfAborted();
-            return false;
-          }
+          const authValue = await authManager
+            .getAuthValue(
+              { roomId, resource: "comments", access: "read" },
+              authSignal
+            )
+            .catch((error: unknown) => {
+              // Personal inbox items remain readable after room authorization fails.
+              if (error instanceof AuthForbiddenError) return personalAuth;
+              throw error;
+            });
+          return { roomId, authValue };
         })
       );
-      allRoomsChecked &&= checked.every(Boolean);
+      signal.throwIfAborted();
+
+      type AccessBatch = {
+        authValue: AuthValue;
+        roomIds: string[];
+        size: number;
+      };
+      const batches: AccessBatch[] = [];
+      const byToken = new Map<string, AccessBatch>();
+      for (const authorization of authorizations) {
+        if (authorization.status === "rejected") {
+          allRoomsChecked = false;
+          continue;
+        }
+        const { roomId, authValue } = authorization.value;
+        const token = getBearerTokenFromAuthValue(authValue);
+        const size = encodeURIComponent(JSON.stringify(roomId)).length + 3;
+        let batch = byToken.get(token);
+        if (batch === undefined || batch.size + size > 4000) {
+          batch = { authValue, roomIds: [], size: 0 };
+          batches.push(batch);
+          byToken.set(token, batch);
+        }
+        batch.roomIds.push(roomId);
+        batch.size += size;
+      }
+
+      const requestSignal = AbortSignal.any([
+        signal,
+        AbortSignal.timeout(ROOM_ACCESS_CHECK_TIMEOUT),
+      ]);
+      const checks = await Promise.allSettled(
+        batches.map(async (batch) => {
+          const result = await httpClient.get<{
+            meta: { roomAccesses?: RoomAccess[] };
+          }>(
+            url`/v2/c/inbox-notifications/delta`,
+            batch.authValue,
+            {
+              since: new Date().toISOString(),
+              roomAccessesOnly: "true",
+              roomIds: JSON.stringify(batch.roomIds),
+            },
+            { signal: requestSignal }
+          );
+          signal.throwIfAborted();
+          options.onAccesses(result.meta.roomAccesses ?? []);
+        })
+      );
+      signal.throwIfAborted();
+      allRoomsChecked &&= checks.every((check) => check.status === "fulfilled");
     }
-    return allRoomsChecked && !signal.aborted;
+    return allRoomsChecked;
   }
 
   async function getInboxNotificationsSince(options: {
