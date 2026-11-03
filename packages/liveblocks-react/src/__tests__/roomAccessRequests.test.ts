@@ -358,7 +358,7 @@ test.each([403, 404, 503])(
     await store.fetchNotificationsDeltaUpdate(new AbortController().signal);
     expect(sinceValues).toEqual([
       "2026-01-01T00:00:00.000Z",
-      status === 403 ? "2026-01-01T00:01:00.000Z" : "2026-01-01T00:00:00.000Z",
+      status === 503 ? "2026-01-01T00:00:00.000Z" : "2026-01-01T00:01:00.000Z",
       "2026-01-01T00:01:00.000Z",
     ]);
   }

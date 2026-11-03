@@ -362,7 +362,7 @@ async function fetchAuthEndpoint(
       (await res.text()).trim() || "reason not provided in auth response"
     } (${res.status} returned by POST ${endpoint})`;
 
-    if (res.status === 403) {
+    if (res.status === 403 || res.status === 404) {
       throw new AuthForbiddenError(`Unauthorized: ${reason}`);
     } else if (NON_RETRY_STATUS_CODES.includes(res.status)) {
       // Throw a special error instance, which the connection manager will
