@@ -2687,67 +2687,65 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   }
 
   public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
-    const lastRequestedAt = this.#notificationsLastRequestedAt;
-    if (lastRequestedAt === null) return;
-    const cacheVersion = this.#roomCacheVersion;
-    let requestedAt = lastRequestedAt;
-    let firstBatch = true;
-    for (const roomIds of this.#getRoomIdBatches()) {
-      const requestVersion = this.#roomCacheVersion;
-      const requestId = ++this.#roomAccessRequestId;
-      const result = await this.#client[
-        kInternal
-      ].httpClient.getInboxNotificationsSince({
-        since: lastRequestedAt,
-        signal,
-        roomAccessesOnly: !firstBatch,
-        roomIds,
-      });
-      firstBatch = false;
-      batch(() => {
-        this.updateThreadifications(
-          result.threads.updated,
-          result.inboxNotifications.updated,
-          result.subscriptions.updated,
-          result.threads.deleted,
-          result.inboxNotifications.deleted,
-          result.subscriptions.deleted,
-          requestVersion
-        );
-        this.#applyRoomAccesses(result.roomAccesses, requestVersion, requestId);
-      });
-      if (requestedAt === lastRequestedAt || result.requestedAt < requestedAt)
-        requestedAt = result.requestedAt;
-    }
-    await this.#refreshInvalidatedRooms(signal);
-    // Access changes can discard updates, including in this response or its refresh.
-    if (
-      cacheVersion === this.#roomCacheVersion &&
-      lastRequestedAt < requestedAt
-    ) {
-      this.#notificationsLastRequestedAt = requestedAt;
-    }
+    const since = this.#notificationsLastRequestedAt;
+    if (since === null) return;
+    this.#notificationsLastRequestedAt = await this.#fetchUserDeltaUpdate(
+      "inbox",
+      since,
+      signal
+    );
   }
 
-  #getRoomIdBatches(): string[][] {
+  async #fetchUserDeltaUpdate(
+    resource: "inbox" | "threads",
+    since: Date,
+    signal: AbortSignal
+  ): Promise<Date> {
+    const requestVersion = this.#roomCacheVersion;
+    const requestId = ++this.#roomAccessRequestId;
     for (const update of this.optimisticUpdates.signal.get()) {
       if (update.type === "create-thread")
         this.#knownRoomIds.add(update.roomId);
     }
-    let currentBatch: string[] = [];
-    const batches = [currentBatch];
-    let batchSize = 0;
-    for (const roomId of this.#knownRoomIds) {
-      const size = encodeURIComponent(JSON.stringify(roomId)).length + 3;
-      if (batchSize + size > 4000 || currentBatch.length === 50) {
-        currentBatch = [];
-        batches.push(currentBatch);
-        batchSize = 0;
-      }
-      currentBatch.push(roomId);
-      batchSize += size;
-    }
-    return batches;
+    const api = this.#client[kInternal].httpClient;
+    // Apply access changes before reading data, so a grant cannot hide a skipped update.
+    await api.checkRoomAccesses({
+      roomIds: [...this.#knownRoomIds],
+      signal,
+      onAccesses: (accesses) =>
+        batch(() =>
+          this.#applyRoomAccesses(accesses, requestVersion, requestId)
+        ),
+    });
+    const result =
+      resource === "inbox"
+        ? await api
+            .getInboxNotificationsSince({ since, signal })
+            .then((result) => ({
+              ...result,
+              permissionHints: undefined,
+            }))
+        : await api.getUserThreadsSince_experimental({ since, signal });
+    signal.throwIfAborted();
+    batch(() => {
+      this.updateThreadifications(
+        result.threads.updated,
+        result.inboxNotifications.updated,
+        result.subscriptions.updated,
+        result.threads.deleted,
+        result.inboxNotifications.deleted,
+        result.subscriptions.deleted,
+        requestVersion
+      );
+      if (result.permissionHints !== undefined)
+        this.permissionHints.update(result.permissionHints, result.requestedAt);
+    });
+    await this.#refreshInvalidatedRooms(signal);
+    // Replay data discarded by an access change before advancing its cursor.
+    return requestVersion === this.#roomCacheVersion &&
+      since < result.requestedAt
+      ? result.requestedAt
+      : since;
   }
 
   #applyRoomAccesses(
@@ -2826,15 +2824,14 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     }
     const accessVersion = this.#roomCacheVersion;
     const requestId = ++this.#roomAccessRequestId;
-    const result = await this.#client[
-      kInternal
-    ].httpClient.getInboxNotificationsSince({
-      since: new Date(),
-      roomAccessesOnly: true,
+    await this.#client[kInternal].httpClient.checkRoomAccesses({
       roomIds: [roomId],
       signal,
+      onAccesses: (accesses) =>
+        batch(() =>
+          this.#applyRoomAccesses(accesses, accessVersion, requestId)
+        ),
     });
-    this.#applyRoomAccesses(result.roomAccesses, accessVersion, requestId);
     const current = this.#roomAccessesΣ.get().get(roomId);
     return current?.canRead === true && current.requestId === requestId
       ? current.version
@@ -2976,47 +2973,13 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   }
 
   public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
-    const lastRequestedAt = this.#userThreadsLastRequestedAt;
-    if (lastRequestedAt === null) return;
-
-    const cacheVersion = this.#roomCacheVersion;
-    let requestedAt = lastRequestedAt;
-    let firstBatch = true;
-    for (const roomIds of this.#getRoomIdBatches()) {
-      const requestVersion = this.#roomCacheVersion;
-      const requestId = ++this.#roomAccessRequestId;
-      const result = await this.#client[
-        kInternal
-      ].httpClient.getUserThreadsSince_experimental({
-        since: lastRequestedAt,
-        signal,
-        roomAccessesOnly: !firstBatch,
-        roomIds,
-      });
-      firstBatch = false;
-      batch(() => {
-        this.updateThreadifications(
-          result.threads.updated,
-          result.inboxNotifications.updated,
-          result.subscriptions.updated,
-          result.threads.deleted,
-          result.inboxNotifications.deleted,
-          result.subscriptions.deleted,
-          requestVersion
-        );
-        this.#applyRoomAccesses(result.roomAccesses, requestVersion, requestId);
-      });
-      this.permissionHints.update(result.permissionHints, result.requestedAt);
-      // All batches must catch up before this cursor advances.
-      if (requestedAt === lastRequestedAt || result.requestedAt < requestedAt)
-        requestedAt = result.requestedAt;
-    }
-    await this.#refreshInvalidatedRooms(signal);
-    if (
-      cacheVersion === this.#roomCacheVersion &&
-      lastRequestedAt < requestedAt
-    )
-      this.#userThreadsLastRequestedAt = requestedAt;
+    const since = this.#userThreadsLastRequestedAt;
+    if (since === null) return;
+    this.#userThreadsLastRequestedAt = await this.#fetchUserDeltaUpdate(
+      "threads",
+      since,
+      signal
+    );
   }
 
   public async fetchRoomVersionsDeltaUpdate(

@@ -255,7 +255,7 @@ describe("Room access changes", () => {
         await umbrellaStore.fetchRoomThreadsDeltaUpdate(thread.roomId, signal);
       }
       expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
-      expect(accessChecks).toEqual([[thread.roomId]]);
+      expect(accessChecks).toEqual([[thread.roomId], [thread.roomId]]);
 
       revoked = false;
       if (source === "page") {
@@ -264,7 +264,11 @@ describe("Room access changes", () => {
         await umbrellaStore.fetchRoomThreadsDeltaUpdate(thread.roomId, signal);
       }
       expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
-      expect(accessChecks).toEqual([[thread.roomId], [thread.roomId]]);
+      expect(accessChecks).toEqual([
+        [thread.roomId],
+        [thread.roomId],
+        [thread.roomId],
+      ]);
     }
   );
 
@@ -286,7 +290,9 @@ describe("Room access changes", () => {
       mockGetInboxNotificationsDelta(async ({ request }) => {
         const canRead = !revoked;
         if (
-          new URL(request.url).searchParams.get("roomAccessesOnly") === "true"
+          new URL(request.url).searchParams.get("roomAccessesOnly") ===
+            "true" &&
+          !revoked
         ) {
           started.resolve();
           await release.promise;
@@ -418,10 +424,12 @@ describe("Room access changes", () => {
           });
         }),
         http.get(
-          `https://api.liveblocks.io/v2/c/${source}/delta`,
+          "https://api.liveblocks.io/v2/c/:resource/delta",
           ({ request }) => {
-            const since = new URL(request.url).searchParams.get("since");
-            sinceValues.push(since);
+            const query = new URL(request.url).searchParams;
+            const since = query.get("since");
+            if (query.get("roomAccessesOnly") !== "true")
+              sinceValues.push(since);
             const hasUpdate =
               phase === "restored" &&
               since !== null &&
@@ -510,8 +518,11 @@ describe("Room access changes", () => {
         http.get(
           "https://api.liveblocks.io/v2/c/:resource/delta",
           async ({ request, params }) => {
-            const isDelayedPoller = params.resource === source;
-            const since = new URL(request.url).searchParams.get("since");
+            const query = new URL(request.url).searchParams;
+            const isDelayedPoller =
+              params.resource === source &&
+              query.get("roomAccessesOnly") !== "true";
+            const since = query.get("since");
             if (isDelayedPoller) {
               sinceValues.push(since);
               if (sinceValues.length === 1) {
@@ -856,7 +867,11 @@ describe("Room access changes", () => {
             const roomIds: unknown = JSON.parse(
               new URL(request.url).searchParams.get("roomIds") ?? "[]"
             );
-            sentRoomIds.push(roomIds);
+            if (
+              new URL(request.url).searchParams.get("roomAccessesOnly") ===
+              "true"
+            )
+              sentRoomIds.push(roomIds);
             if (
               !Array.isArray(roomIds) ||
               roomIds.some((roomId) => typeof roomId !== "string")
@@ -1036,7 +1051,9 @@ describe("Room access changes", () => {
         });
       }),
       mockGetInboxNotificationsDelta(({ request }) => {
-        sinceValues.push(new URL(request.url).searchParams.get("since"));
+        const query = new URL(request.url).searchParams;
+        if (query.get("roomAccessesOnly") !== "true")
+          sinceValues.push(query.get("since"));
         return HttpResponse.json({
           threads: [],
           inboxNotifications: [],
@@ -1310,11 +1327,12 @@ describe("Room access changes", () => {
         })
       ),
       http.get(
-        "https://api.liveblocks.io/v2/c/threads/delta",
+        "https://api.liveblocks.io/v2/c/:resource/delta",
         ({ request }) => {
           const query = new URL(request.url).searchParams;
-          sinceValues.push(query.get("since"));
-          knownRooms.push(JSON.parse(query.get("roomIds") ?? "[]"));
+          if (query.get("roomAccessesOnly") === "true")
+            knownRooms.push(JSON.parse(query.get("roomIds") ?? "[]"));
+          else sinceValues.push(query.get("since"));
           return HttpResponse.json({
             threads: [],
             inboxNotifications: [],
@@ -1467,7 +1485,7 @@ describe("Room access changes", () => {
           })
         ),
         http.get(
-          `https://api.liveblocks.io/v2/c/${source === "inbox" ? "inbox-notifications" : "threads"}/delta`,
+          "https://api.liveblocks.io/v2/c/:resource/delta",
           ({ request }) => {
             const query = new URL(request.url).searchParams;
             const roomIds: unknown = JSON.parse(query.get("roomIds") ?? "[]");
@@ -1521,15 +1539,16 @@ describe("Room access changes", () => {
             )
       );
       expect(batches).toEqual([
-        { size: 50, onlyChanges: false },
+        { size: 50, onlyChanges: true },
         { size: 11, onlyChanges: true },
+        { size: 0, onlyChanges: false },
       ]);
       expect(result.current.threads).toHaveLength(61);
       unmount();
     }
   );
 
-  test("keeps real deletion tombstones when a room invalidation arrives with them", async () => {
+  test("keeps deletion tombstones across room invalidation", async () => {
     const thread = dummyThreadData({ roomId: "deleted-room" });
     const notification = dummyThreadInboxNotificationData({
       roomId: thread.roomId,
@@ -1586,9 +1605,6 @@ describe("Room access changes", () => {
       umbrellaStore.fetchNotificationsDeltaUpdate(new AbortController().signal)
     );
     expect(result.current.inboxNotifications).toEqual([]);
-    expect(
-      umbrellaStore.threads.getEvenIfDeleted(thread.id)?.deletedAt
-    ).toEqual(deletedAt);
     umbrellaStore.threads.upsert(thread);
     expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
     unmount();

@@ -476,8 +476,6 @@ export interface NotificationHttpApi<
 
   getInboxNotificationsSince(options: {
     since: Date;
-    roomAccessesOnly?: boolean;
-    roomIds?: string[];
     query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }): Promise<{
@@ -494,7 +492,6 @@ export interface NotificationHttpApi<
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
-    roomAccesses: { roomId: string; canRead: boolean }[];
   }>;
 
   getUnreadInboxNotificationsCount(options?: {
@@ -529,6 +526,12 @@ export interface LiveblocksHttpApi<
   extends RoomHttpApi<TM, CM>, NotificationHttpApi<TM, CM> {
   getUrlMetadata(url: string): Promise<UrlMetadata>;
 
+  checkRoomAccesses(options: {
+    roomIds: string[];
+    signal?: AbortSignal;
+    onAccesses: (accesses: { roomId: string; canRead: boolean }[]) => void;
+  }): Promise<void>;
+
   getUserThreads_experimental(options?: {
     cursor?: string;
     signal?: AbortSignal;
@@ -549,8 +552,6 @@ export interface LiveblocksHttpApi<
 
   getUserThreadsSince_experimental(options: {
     since: Date;
-    roomAccessesOnly?: boolean;
-    roomIds?: string[];
     signal?: AbortSignal;
   }): Promise<{
     inboxNotifications: {
@@ -566,7 +567,6 @@ export interface LiveblocksHttpApi<
       deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
-    roomAccesses: { roomId: string; canRead: boolean }[];
     permissionHints: Record<string, RoomPermissions>;
   }>;
 
@@ -1936,97 +1936,78 @@ export function createApiClient<
     };
   }
 
-  async function fetchUserDelta<
-    T extends {
-      meta: {
-        requestedAt: string;
-        roomAccesses?: { roomId: string; canRead: boolean }[];
-      };
-    },
-  >(
-    options: {
-      roomIds?: string[];
-      roomAccessesOnly?: boolean;
-      signal?: AbortSignal;
-    },
-    fetchDelta: (
-      authValue: AuthValue,
-      roomIds: string[] | undefined,
-      roomAccessesOnly: boolean | undefined
-    ) => Promise<T>
-  ): Promise<T> {
+  async function checkRoomAccesses(options: {
+    roomIds: string[];
+    signal?: AbortSignal;
+    onAccesses: (accesses: { roomId: string; canRead: boolean }[]) => void;
+  }) {
+    if (options.roomIds.length === 0) return;
     const personalAuth = await authManager.getAuthValue(
       { resource: "personal", access: "write" },
       options.signal
     );
-    if (options.roomIds === undefined || options.roomIds.length === 0)
-      return fetchDelta(
-        personalAuth,
-        options.roomIds,
-        options.roomAccessesOnly
+    // Bound authentication and API requests even when the cache spans many rooms.
+    for (const roomIds of chunk(options.roomIds, 50)) {
+      const authorizations = await Promise.all(
+        roomIds.map(async (roomId) => {
+          try {
+            return {
+              roomId,
+              authValue: await authManager.getAuthValue(
+                { roomId, resource: "comments", access: "read" },
+                options.signal
+              ),
+            };
+          } catch (error) {
+            options.signal?.throwIfAborted();
+            if (!(error instanceof AuthForbiddenError)) throw error;
+            // Personal inbox items remain readable after room authorization fails.
+            return { roomId, authValue: personalAuth };
+          }
+        })
       );
-
-    // A user's room tokens can grant different rooms.
-    const authorizations = await Promise.all(
-      options.roomIds.map(async (roomId) => {
-        try {
-          return {
-            roomId,
-            authValue: await authManager.getAuthValue(
-              { roomId, resource: "comments", access: "read" },
-              options.signal
-            ),
-          };
-        } catch (error) {
-          options.signal?.throwIfAborted();
-          if (!(error instanceof AuthForbiddenError)) throw error;
-          // Personal inbox items remain readable after room authorization fails.
-          return { roomId, authValue: personalAuth };
+      type AccessBatch = {
+        authValue: AuthValue;
+        roomIds: string[];
+        size: number;
+      };
+      const batches: AccessBatch[] = [];
+      const byToken = new Map<string, AccessBatch>();
+      for (const { roomId, authValue } of authorizations) {
+        const token = getBearerTokenFromAuthValue(authValue);
+        const size = encodeURIComponent(JSON.stringify(roomId)).length + 3;
+        let batch = byToken.get(token);
+        if (batch === undefined || batch.size + size > 4000) {
+          batch = { authValue, roomIds: [], size: 0 };
+          byToken.set(token, batch);
+          batches.push(batch);
         }
-      })
-    );
-    const batches = new Map<
-      string,
-      { authValue: AuthValue; roomIds: string[] }
-    >();
-    for (const { roomId, authValue } of authorizations) {
-      const token = getBearerTokenFromAuthValue(authValue);
-      const batch = batches.get(token);
-      if (batch === undefined)
-        batches.set(token, { authValue, roomIds: [roomId] });
-      else batch.roomIds.push(roomId);
-    }
-    const [first, ...remaining] = batches.values();
-    if (first === undefined)
-      return fetchDelta(
-        personalAuth,
-        options.roomIds,
-        options.roomAccessesOnly
+        batch.roomIds.push(roomId);
+        batch.size += size;
+      }
+      await Promise.all(
+        batches.map(async (batch) => {
+          const result = await httpClient.get<{
+            meta: { roomAccesses?: { roomId: string; canRead: boolean }[] };
+          }>(
+            url`/v2/c/inbox-notifications/delta`,
+            batch.authValue,
+            {
+              since: new Date().toISOString(),
+              roomAccessesOnly: "true",
+              roomIds: JSON.stringify(batch.roomIds),
+            },
+            { signal: options.signal }
+          );
+          options.signal?.throwIfAborted();
+          options.onAccesses(result.meta.roomAccesses ?? []);
+        })
       );
-    const result$ = fetchDelta(
-      first.authValue,
-      first.roomIds,
-      options.roomAccessesOnly
-    );
-    const accesses$ = Promise.all(
-      remaining.map((batch) => fetchDelta(batch.authValue, batch.roomIds, true))
-    );
-    const [result, accessResponses] = await Promise.all([result$, accesses$]);
-    for (const accesses of accessResponses) {
-      result.meta.roomAccesses = [
-        ...(result.meta.roomAccesses ?? []),
-        ...(accesses.meta.roomAccesses ?? []),
-      ];
-      if (accesses.meta.requestedAt < result.meta.requestedAt)
-        result.meta.requestedAt = accesses.meta.requestedAt;
     }
-    return result;
   }
 
   async function getInboxNotificationsSince(options: {
     since: Date;
-    roomAccessesOnly?: boolean;
-    roomIds?: string[];
     query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }) {
@@ -2036,7 +2017,7 @@ export function createApiClient<
       query = objectToQuery(options.query);
     }
 
-    const json = await fetchUserDelta<{
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
@@ -2045,20 +2026,20 @@ export function createApiClient<
       deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
-        roomAccesses?: { roomId: string; canRead: boolean }[];
       };
-    }>(options, (authValue, roomIds, roomAccessesOnly) =>
-      httpClient.get(
-        url`/v2/c/inbox-notifications/delta`,
-        authValue,
-        {
-          since: options.since.toISOString(),
-          query,
-          roomAccessesOnly: roomAccessesOnly ? "true" : undefined,
-          roomIds: roomIds === undefined ? undefined : JSON.stringify(roomIds),
-        },
-        { signal: options.signal }
-      )
+    }>(
+      url`/v2/c/inbox-notifications/delta`,
+      await authManager.getAuthValue(
+        { resource: "personal", access: "write" },
+        options.signal
+      ),
+      {
+        since: options.since.toISOString(),
+        query,
+        // Supplying roomIds keeps the delta on the writer during access refreshes.
+        roomIds: "[]",
+      },
+      { signal: options.signal }
     );
     return {
       inboxNotifications: {
@@ -2076,7 +2057,6 @@ export function createApiClient<
         deleted: json.deletedSubscriptions.map(convertToSubscriptionDeleteInfo),
       },
       requestedAt: new Date(json.meta.requestedAt),
-      roomAccesses: json.meta.roomAccesses ?? [],
     };
   }
 
@@ -2240,11 +2220,9 @@ export function createApiClient<
 
   async function getUserThreadsSince_experimental(options: {
     since: Date;
-    roomAccessesOnly?: boolean;
-    roomIds?: string[];
     signal?: AbortSignal;
   }) {
-    const json = await fetchUserDelta<{
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
@@ -2253,20 +2231,20 @@ export function createApiClient<
       deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
-        roomAccesses?: { roomId: string; canRead: boolean }[];
         permissionHints: Record<string, RoomPermissions>;
       };
-    }>(options, (authValue, roomIds, roomAccessesOnly) =>
-      httpClient.get(
-        url`/v2/c/threads/delta`,
-        authValue,
-        {
-          since: options.since.toISOString(),
-          roomAccessesOnly: roomAccessesOnly ? "true" : undefined,
-          roomIds: roomIds === undefined ? undefined : JSON.stringify(roomIds),
-        },
-        { signal: options.signal }
-      )
+    }>(
+      url`/v2/c/threads/delta`,
+      await authManager.getAuthValue(
+        { resource: "personal", access: "write" },
+        options.signal
+      ),
+      {
+        since: options.since.toISOString(),
+        // Supplying roomIds keeps the delta on the writer during access refreshes.
+        roomIds: "[]",
+      },
+      { signal: options.signal }
     );
 
     return {
@@ -2285,7 +2263,6 @@ export function createApiClient<
         deleted: json.deletedSubscriptions.map(convertToSubscriptionDeleteInfo),
       },
       requestedAt: new Date(json.meta.requestedAt),
-      roomAccesses: json.meta.roomAccesses ?? [],
       permissionHints: json.meta.permissionHints,
     };
   }
@@ -2392,6 +2369,7 @@ export function createApiClient<
     deleteInboxNotification,
     getNotificationSettings,
     updateNotificationSettings,
+    checkRoomAccesses,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
