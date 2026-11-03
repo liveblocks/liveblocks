@@ -127,7 +127,9 @@ describe("Room access changes", () => {
             deletedSubscriptions: [],
             meta: {
               requestedAt: "2026-01-01T00:01:00.000Z",
-              roomAccesses: [{ roomId: thread.roomId, canRead: !revoked }],
+              roomAccesses: [
+                { roomId: thread.roomId, access: !revoked ? "room" : "none" },
+              ],
             },
           })
         )
@@ -146,6 +148,12 @@ describe("Room access changes", () => {
           .waitUntilLoaded();
       }
       revoked = true;
+      if (resource.startsWith("rooms/")) {
+        await umbrellaStore.fetchNotificationsDeltaUpdate(
+          new AbortController().signal
+        );
+        revoked = false;
+      }
       const controller = new AbortController();
       const interrupted$ = umbrellaStore.fetchNotificationsDeltaUpdate(
         controller.signal
@@ -203,7 +211,9 @@ describe("Room access changes", () => {
             deletedSubscriptions: [],
             meta: {
               requestedAt: "2026-01-01T00:01:00.000Z",
-              roomAccesses: [{ roomId: thread.roomId, canRead: !revoked }],
+              roomAccesses: [
+                { roomId: thread.roomId, access: !revoked ? "room" : "none" },
+              ],
             },
           });
         }),
@@ -255,7 +265,9 @@ describe("Room access changes", () => {
         await umbrellaStore.fetchRoomThreadsDeltaUpdate(thread.roomId, signal);
       }
       expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
-      expect(accessChecks).toEqual([[thread.roomId], [thread.roomId]]);
+      expect(accessChecks).toEqual(
+        Array.from({ length: source === "page" ? 1 : 2 }, () => [thread.roomId])
+      );
 
       revoked = false;
       if (source === "page") {
@@ -264,11 +276,9 @@ describe("Room access changes", () => {
         await umbrellaStore.fetchRoomThreadsDeltaUpdate(thread.roomId, signal);
       }
       expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
-      expect(accessChecks).toEqual([
-        [thread.roomId],
-        [thread.roomId],
-        [thread.roomId],
-      ]);
+      expect(accessChecks).toEqual(
+        Array.from({ length: source === "page" ? 2 : 3 }, () => [thread.roomId])
+      );
     }
   );
 
@@ -306,7 +316,9 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: "2026-01-01T00:01:00.000Z",
-            roomAccesses: [{ roomId: thread.roomId, canRead }],
+            roomAccesses: [
+              { roomId: thread.roomId, access: canRead ? "room" : "none" },
+            ],
           },
         });
       }),
@@ -445,7 +457,10 @@ describe("Room access changes", () => {
                 requestedAt:
                   phase === "denied" ? deniedRequestedAt : restoredRequestedAt,
                 roomAccesses: [
-                  { roomId: thread.roomId, canRead: phase === "restored" },
+                  {
+                    roomId: thread.roomId,
+                    access: phase === "restored" ? "room" : "none",
+                  },
                 ],
                 permissionHints: {},
               },
@@ -546,7 +561,9 @@ describe("Room access changes", () => {
                   ? requestedAt
                   : "2026-01-01T00:02:00.000Z",
                 permissionHints: {},
-                roomAccesses: [{ roomId: thread.roomId, canRead }],
+                roomAccesses: [
+                  { roomId: thread.roomId, access: canRead ? "room" : "none" },
+                ],
               },
             });
           }
@@ -618,7 +635,9 @@ describe("Room access changes", () => {
             deletedSubscriptions: [],
             meta: {
               requestedAt: "2026-01-01T00:01:00.000Z",
-              roomAccesses: [{ roomId: thread.roomId, canRead: !revoked }],
+              roomAccesses: [
+                { roomId: thread.roomId, access: !revoked ? "room" : "none" },
+              ],
             },
           })
         ),
@@ -704,7 +723,9 @@ describe("Room access changes", () => {
             deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
-              roomAccesses: [{ roomId: thread.roomId, canRead: !revoked }],
+              roomAccesses: [
+                { roomId: thread.roomId, access: !revoked ? "room" : "none" },
+              ],
             },
           })
         ),
@@ -894,7 +915,7 @@ describe("Room access changes", () => {
               meta: {
                 requestedAt: readAt,
                 permissionHints: {},
-                roomAccesses: [{ roomId: thread.roomId, canRead: true }],
+                roomAccesses: [{ roomId: thread.roomId, access: "room" }],
               },
             });
           }
@@ -970,7 +991,9 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: new Date().toISOString(),
-            roomAccesses: [{ roomId: thread.roomId, canRead: readable }],
+            roomAccesses: [
+              { roomId: thread.roomId, access: readable ? "room" : "none" },
+            ],
           },
         })
       )
@@ -1063,7 +1086,7 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: "2026-01-01T00:01:00.000Z",
-            roomAccesses: [{ roomId: thread.roomId, canRead: false }],
+            roomAccesses: [{ roomId: thread.roomId, access: "none" }],
           },
         });
       })
@@ -1139,7 +1162,7 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: new Date().toISOString(),
-            roomAccesses: [{ roomId: thread.roomId, canRead: false }],
+            roomAccesses: [{ roomId: thread.roomId, access: "none" }],
           },
         })
       )
@@ -1217,7 +1240,7 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: new Date().toISOString(),
-            roomAccesses: [{ roomId: revokedThread.roomId, canRead: false }],
+            roomAccesses: [{ roomId: revokedThread.roomId, access: "none" }],
           },
         })
       )
@@ -1279,7 +1302,9 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: new Date().toISOString(),
-            roomAccesses: [{ roomId: thread.roomId, canRead }],
+            roomAccesses: [
+              { roomId: thread.roomId, access: canRead ? "room" : "none" },
+            ],
           },
         });
       })
@@ -1346,7 +1371,7 @@ describe("Room access changes", () => {
               roomAccesses: [
                 {
                   roomId: thread.roomId,
-                  canRead: false,
+                  access: "none",
                 },
               ],
             },
@@ -1422,7 +1447,7 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: new Date().toISOString(),
-            roomAccesses: [{ roomId: "large-room", canRead: false }],
+            roomAccesses: [{ roomId: "large-room", access: "none" }],
           },
         })
       )
@@ -1583,7 +1608,7 @@ describe("Room access changes", () => {
           ],
           meta: {
             requestedAt: new Date().toISOString(),
-            roomAccesses: [{ roomId: thread.roomId, canRead: false }],
+            roomAccesses: [{ roomId: thread.roomId, access: "none" }],
           },
         })
       )
@@ -1638,7 +1663,7 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: new Date().toISOString(),
-            roomAccesses: [{ roomId: existing.roomId, canRead: false }],
+            roomAccesses: [{ roomId: existing.roomId, access: "none" }],
           },
         })
       )
@@ -1704,7 +1729,10 @@ describe("Room access changes", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               roomAccesses: [
-                { roomId: thread.roomId, canRead: phase === "restored" },
+                {
+                  roomId: thread.roomId,
+                  access: phase === "restored" ? "room" : "none",
+                },
               ],
             },
           })
@@ -1757,7 +1785,7 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: new Date().toISOString(),
-            roomAccesses: roomIds.map((roomId) => ({ roomId, canRead: false })),
+            roomAccesses: roomIds.map((roomId) => ({ roomId, access: "none" })),
           },
         });
       })
@@ -1811,7 +1839,7 @@ describe("Room access changes", () => {
               requestedAt: new Date().toISOString(),
               roomAccesses: roomIds.map((roomId) => ({
                 roomId,
-                canRead: roomId !== existing.roomId,
+                access: roomId !== existing.roomId ? "room" : "none",
               })),
             },
           });

@@ -23,6 +23,7 @@ import type {
   Patchable,
   PermissionMatrix,
   Resolve,
+  RoomAccess,
   RoomPermissions,
   RoomSubscriptionSettings,
   SubscriptionData,
@@ -1567,7 +1568,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   // Access checks can supersede older responses without changing room access.
   #roomAccessRequestId = 0;
   #roomAccessesΣ = new MutableSignal(
-    new Map<string, { canRead: boolean; version: number; requestId: number }>()
+    new Map<
+      string,
+      { access: RoomAccess["access"]; version: number; requestId: number }
+    >()
   );
   #pendingRoomRefresh = new Map<string, number>();
   #roomRefresh$: Promise<void> | undefined;
@@ -1644,7 +1648,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           updates.filter(
             (update) =>
               update.type !== "create-thread" ||
-              roomAccesses.get(update.roomId)?.canRead !== false
+              (roomAccesses.get(update.roomId)?.access ?? "room") === "room"
           )
         )
     );
@@ -2370,6 +2374,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     batch(() => {
       this.optimisticUpdates.remove(optimisticId);
       this.notifications.delete(inboxNotificationId);
+      this.#removeInaccessibleRoomData();
     });
   }
 
@@ -2381,6 +2386,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     batch(() => {
       this.optimisticUpdates.remove(optimisticId);
       this.notifications.clear();
+      this.#removeInaccessibleRoomData();
     });
   }
 
@@ -2424,7 +2430,10 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     let subscriptions: SubscriptionData[] = [];
     for (;;) {
       const access = this.#roomAccessesΣ.get().get(thread.roomId);
-      if (access?.canRead === false || (access?.version ?? 0) <= requestVersion)
+      if (
+        (access?.access ?? "room") !== "room" ||
+        (access?.version ?? 0) <= requestVersion
+      )
         break;
 
       // Refreshed pages may not include the newly created thread.
@@ -2639,19 +2648,18 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   ): void {
     const roomAccesses = this.#roomAccessesΣ.get();
     const isCurrent = (roomId: string) =>
-      roomAccesses.get(roomId)?.canRead !== false &&
       (roomAccesses.get(roomId)?.version ?? 0) <= requestVersion;
     const staleThreadIds = new Set(
       threads
         .filter((thread) => !isCurrent(thread.roomId))
         .map((thread) => thread.id)
     );
+    threads = threads.filter((thread) => isCurrent(thread.roomId));
     subscriptions = subscriptions.filter(
       (subscription) =>
         subscription.kind !== "thread" ||
         !staleThreadIds.has(subscription.subjectId)
     );
-    threads = threads.filter((thread) => isCurrent(thread.roomId));
     notifications = notifications.filter(
       (notification) =>
         notification.roomId === undefined || isCurrent(notification.roomId)
@@ -2668,6 +2676,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       this.threads.applyDelta(threads, deletedThreads);
       this.notifications.applyDelta(notifications, deletedNotifications);
       this.subscriptions.applyDelta(subscriptions, deletedSubscriptions);
+      this.#removeInaccessibleRoomData();
     });
   }
 
@@ -2708,8 +2717,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         this.#knownRoomIds.add(update.roomId);
     }
     const api = this.#client[kInternal].httpClient;
-    // Apply access changes before reading data, so a grant cannot hide a skipped update.
-    await api.checkRoomAccesses({
+    // Check access first so grants cannot hide data omitted by an earlier query.
+    const allRoomsChecked = await api.checkRoomAccesses({
       roomIds: [...this.#knownRoomIds],
       signal,
       onAccesses: (accesses) =>
@@ -2721,10 +2730,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       resource === "inbox"
         ? await api
             .getInboxNotificationsSince({ since, signal })
-            .then((result) => ({
-              ...result,
-              permissionHints: undefined,
-            }))
+            .then((result) => ({ ...result, permissionHints: undefined }))
         : await api.getUserThreadsSince_experimental({ since, signal });
     signal.throwIfAborted();
     batch(() => {
@@ -2741,20 +2747,21 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         this.permissionHints.update(result.permissionHints, result.requestedAt);
     });
     await this.#refreshInvalidatedRooms(signal);
-    // Replay data discarded by an access change before advancing its cursor.
-    return requestVersion === this.#roomCacheVersion &&
+    // Keep the cursor until access checks succeed and discarded data can be replayed.
+    return allRoomsChecked &&
+      requestVersion === this.#roomCacheVersion &&
       since < result.requestedAt
       ? result.requestedAt
       : since;
   }
 
   #applyRoomAccesses(
-    accesses: { roomId: string; canRead: boolean }[],
+    accesses: RoomAccess[],
     requestVersion: number,
     requestId: number
   ): void {
-    const roomIds = new Set<string>();
-    for (const { roomId, canRead } of accesses) {
+    let changed = false;
+    for (const { roomId, access } of accesses) {
       if (!this.#knownRoomIds.has(roomId)) continue;
       const previous = this.#roomAccessesΣ.get().get(roomId);
       if (
@@ -2762,23 +2769,41 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         (previous?.requestId ?? 0) > requestId
       )
         continue;
-      const changed = (previous?.canRead ?? true) !== canRead;
-      const version = changed
+      const accessChanged = (previous?.access ?? "room") !== access;
+      const version = accessChanged
         ? ++this.#roomCacheVersion
         : (previous?.version ?? 0);
       this.#roomAccessesΣ.mutate((roomAccesses) => {
-        roomAccesses.set(roomId, { canRead, version, requestId });
+        roomAccesses.set(roomId, { access, version, requestId });
       });
-      if (!changed) continue;
+      if (!accessChanged) continue;
       this.#pendingRoomRefresh.set(roomId, version);
-      roomIds.add(roomId);
+      changed = true;
     }
-    if (roomIds.size === 0) return;
+    if (changed) this.#removeInaccessibleRoomData();
+  }
+
+  #removeInaccessibleRoomData(): void {
+    const roomAccesses = this.#roomAccessesΣ.get();
+    if (![...roomAccesses.values()].some(({ access }) => access !== "room"))
+      return;
     batch(() => {
-      const threadIds = new Set(
+      const retainedThreadIds = new Set<string>();
+      for (const notification of this.notifications.signal.get().values()) {
+        if (notification.roomId === undefined) continue;
+        const access = roomAccesses.get(notification.roomId)?.access;
+        if (access === "none") this.notifications.delete(notification.id);
+        else if (access === "inbox" && notification.kind === "thread")
+          retainedThreadIds.add(notification.threadId);
+      }
+      const removedThreadIds = new Set(
         this.threads
           .findMany(undefined, undefined, "asc")
-          .filter((thread) => roomIds.has(thread.roomId))
+          .filter(
+            (thread) =>
+              (roomAccesses.get(thread.roomId)?.access ?? "room") !== "room" &&
+              !retainedThreadIds.has(thread.id)
+          )
           .map((thread) => thread.id)
       );
       for (const subscription of Object.values(
@@ -2786,19 +2811,12 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       )) {
         if (
           subscription.kind === "thread" &&
-          threadIds.has(subscription.subjectId)
+          removedThreadIds.has(subscription.subjectId)
         ) {
           this.subscriptions.delete(getSubscriptionKey(subscription));
         }
       }
-      this.threads.removeRooms(roomIds);
-      for (const notification of this.notifications.signal.get().values()) {
-        if (
-          notification.roomId !== undefined &&
-          roomIds.has(notification.roomId)
-        )
-          this.notifications.delete(notification.id);
-      }
+      this.threads.remove(removedThreadIds);
     });
   }
 
@@ -2811,7 +2829,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   ): Promise<number> {
     const previous = this.#roomAccessesΣ.get().get(roomId);
     if (
-      previous?.canRead !== false ||
+      previous === undefined ||
+      previous.access === "room" ||
       previous.version > requestVersion ||
       scopes === undefined ||
       !hasPermissionAccess(
@@ -2833,7 +2852,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         ),
     });
     const current = this.#roomAccessesΣ.get().get(roomId);
-    return current?.canRead === true && current.requestId === requestId
+    return current?.access === "room" && current.requestId === requestId
       ? current.version
       : requestVersion;
   }
@@ -2867,6 +2886,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           Array.isArray(query) &&
           typeof query[0] === "string" &&
           pending.has(query[0]) &&
+          this.#roomAccessesΣ.get().get(query[0])?.access === "room" &&
           resource.refresh !== undefined
         ) {
           refreshes$.push(resource.refresh(signal));

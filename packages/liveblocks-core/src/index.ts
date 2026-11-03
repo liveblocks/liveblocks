@@ -28,7 +28,7 @@ export type {
   WithNavigation,
 } from "./ai";
 export { defineAiTool } from "./ai";
-export type { FileUrlData } from "./api-client";
+export type { FileUrlData, RoomAccess } from "./api-client";
 export type {
   Client,
   ClientOptions,

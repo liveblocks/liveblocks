@@ -3,6 +3,7 @@ import {
   isPlainObject,
   kInternal,
   Promise_withResolvers,
+  type RoomAccess,
 } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -123,9 +124,11 @@ test.each(["inbox-notifications", "threads"])(
               permissionHints: {},
               roomAccesses: roomIds.map((roomId) => ({
                 roomId,
-                canRead:
+                access:
                   bearer === `Bearer ${tokens.get(roomId)}` &&
-                  !(deleted && roomId === "room-a"),
+                  !(deleted && roomId === "room-a")
+                    ? "room"
+                    : "none",
               })),
             },
           });
@@ -208,14 +211,14 @@ test("access checks bound URLs containing long encoded room IDs", async () => {
         batches.push(rooms);
         return HttpResponse.json({
           meta: {
-            roomAccesses: rooms.map((roomId) => ({ roomId, canRead: true })),
+            roomAccesses: rooms.map((roomId) => ({ roomId, access: "room" })),
           },
         });
       }
     )
   );
   const { client } = createContextsForTest();
-  const accesses: { roomId: string; canRead: boolean }[] = [];
+  const accesses: RoomAccess[] = [];
   await client[kInternal].httpClient.checkRoomAccesses({
     roomIds,
     onAccesses: (batch) => accesses.push(...batch),
@@ -223,7 +226,7 @@ test("access checks bound URLs containing long encoded room IDs", async () => {
   expect(batches).toHaveLength(2);
   expect(batches.flat()).toEqual(roomIds);
   expect(accesses).toEqual(
-    roomIds.map((roomId) => ({ roomId, canRead: true }))
+    roomIds.map((roomId) => ({ roomId, access: "room" }))
   );
 });
 
@@ -266,7 +269,7 @@ test.each(["denied", "unavailable"])(
           deletedSubscriptions: [],
           meta: {
             requestedAt: "2026-01-01T00:01:00.000Z",
-            roomAccesses: [{ roomId: thread.roomId, canRead: true }],
+            roomAccesses: [{ roomId: thread.roomId, access: "room" }],
           },
         })
       )
@@ -275,11 +278,7 @@ test.each(["denied", "unavailable"])(
     await store.outputs.loadingNotifications
       .getOrCreate("{}")
       .waitUntilLoaded();
-    const update$ = store.fetchNotificationsDeltaUpdate(
-      new AbortController().signal
-    );
-    if (failure === "unavailable") await expect(update$).rejects.toBe(error);
-    else await update$;
+    await store.fetchNotificationsDeltaUpdate(new AbortController().signal);
     expect(store.threads.get(thread.id)).toEqual(thread);
     expect(store.notifications.signal.get().get(notification.id)).toEqual(
       notification
@@ -295,13 +294,25 @@ test.each([403, 404, 503])(
       roomId: thread.roomId,
       threadId: thread.id,
     });
+    let authenticationUnavailable = true;
+    const sinceValues: (string | null)[] = [];
     const client = createClient({ authEndpoint: "https://example.com/auth" });
     server.use(
       http.post("https://example.com/auth", async ({ request }) => {
         const body: unknown = await request.json();
-        if (isPlainObject(body) && body.room === thread.roomId)
+        if (
+          authenticationUnavailable &&
+          isPlainObject(body) &&
+          body.room === thread.roomId
+        )
           return new HttpResponse("room authentication failed", { status });
-        return HttpResponse.json({ token: makeAccessToken("other-room") });
+        return HttpResponse.json({
+          token: makeAccessToken(
+            isPlainObject(body) && typeof body.room === "string"
+              ? body.room
+              : "other-room"
+          ),
+        });
       }),
       http.get("https://api.liveblocks.io/v2/c/inbox-notifications", () =>
         HttpResponse.json({
@@ -312,36 +323,182 @@ test.each([403, 404, 503])(
           meta: { requestedAt: "2026-01-01T00:00:00.000Z", nextCursor: null },
         })
       ),
-      http.get("https://api.liveblocks.io/v2/c/inbox-notifications/delta", () =>
-        HttpResponse.json({
-          threads: [],
-          inboxNotifications: [],
-          subscriptions: [],
-          deletedThreads: [],
-          deletedInboxNotifications: [],
-          deletedSubscriptions: [],
-          meta: {
-            requestedAt: "2026-01-01T00:01:00.000Z",
-            roomAccesses: [{ roomId: thread.roomId, canRead: true }],
-          },
-        })
+      http.get(
+        "https://api.liveblocks.io/v2/c/inbox-notifications/delta",
+        ({ request }) => {
+          const query = new URL(request.url).searchParams;
+          if (query.get("roomAccessesOnly") !== "true")
+            sinceValues.push(query.get("since"));
+          return HttpResponse.json({
+            threads:
+              query.get("roomAccessesOnly") === "true"
+                ? []
+                : [{ ...thread, metadata: { updated: true } }],
+            inboxNotifications: [],
+            subscriptions: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: "2026-01-01T00:01:00.000Z",
+              roomAccesses: [{ roomId: thread.roomId, access: "room" }],
+            },
+          });
+        }
       )
     );
     const { store } = getLiveblocksExtrasForClient(client);
     await store.outputs.loadingNotifications
       .getOrCreate("{}")
       .waitUntilLoaded();
-    const update$ = store.fetchNotificationsDeltaUpdate(
-      new AbortController().signal
-    );
-    if (status === 403) await update$;
-    else await expect(update$).rejects.toThrow("room authentication failed");
-    expect(store.threads.get(thread.id)).toEqual(thread);
+    await store.fetchNotificationsDeltaUpdate(new AbortController().signal);
+    expect(store.threads.get(thread.id)).toEqual({
+      ...thread,
+      metadata: { updated: true },
+    });
     expect(store.notifications.signal.get().get(notification.id)).toEqual(
       notification
     );
+    authenticationUnavailable = false;
+    await store.fetchNotificationsDeltaUpdate(new AbortController().signal);
+    await store.fetchNotificationsDeltaUpdate(new AbortController().signal);
+    expect(sinceValues).toEqual([
+      "2026-01-01T00:00:00.000Z",
+      status === 403 ? "2026-01-01T00:01:00.000Z" : "2026-01-01T00:00:00.000Z",
+      "2026-01-01T00:01:00.000Z",
+    ]);
   }
 );
+
+test.each(["error", "timeout"])(
+  "room authentication %s leaves other room checks running",
+  async (failure) => {
+    const started = Promise_withResolvers<void>();
+    const release = Promise_withResolvers<void>();
+    const client = createClient({
+      authEndpoint: async (roomId) => {
+        if (roomId === "unavailable-room") {
+          if (failure === "error") throw new Error("Unavailable");
+          started.resolve();
+          await release.promise;
+        }
+        return {
+          token: makeAccessToken(roomId === undefined ? "personal" : "*"),
+        };
+      },
+    });
+    const accesses: RoomAccess[] = [
+      { roomId: "readable-room", access: "room" },
+      { roomId: "revoked-room", access: "none" },
+    ];
+    server.use(
+      http.get(
+        "https://api.liveblocks.io/v2/c/inbox-notifications/delta",
+        ({ request }) => {
+          expect(new URL(request.url).searchParams.get("roomIds")).toBe(
+            JSON.stringify(accesses.map(({ roomId }) => roomId))
+          );
+          return delta([], accesses);
+        }
+      )
+    );
+    const onAccesses = vi.fn();
+    if (failure === "timeout") vi.useFakeTimers();
+    const timeout =
+      failure === "timeout"
+        ? vi
+            .spyOn(AbortSignal, "timeout")
+            .mockImplementation((milliseconds) => {
+              const controller = new AbortController();
+              setTimeout(() => controller.abort(), milliseconds);
+              return controller.signal;
+            })
+        : undefined;
+    try {
+      const checks$ = client[kInternal].httpClient.checkRoomAccesses({
+        roomIds: ["unavailable-room", ...accesses.map(({ roomId }) => roomId)],
+        onAccesses,
+      });
+      if (failure === "timeout") {
+        await started.promise;
+        await vi.advanceTimersByTimeAsync(1);
+        expect(onAccesses).toHaveBeenCalledExactlyOnceWith(accesses);
+        await vi.advanceTimersByTimeAsync(5_000);
+      }
+      expect(await checks$).toBe(false);
+      expect(onAccesses).toHaveBeenCalledExactlyOnceWith(accesses);
+    } finally {
+      release.resolve();
+      timeout?.mockRestore();
+      if (failure === "timeout") vi.useRealTimers();
+    }
+  }
+);
+
+test("a confirmed denial skips room page refreshes after authentication is revoked", async () => {
+  const thread = dummyThreadData({ roomId: "room" });
+  let revoked = false;
+  const roomAuth = vi.fn(async () =>
+    revoked
+      ? { error: "forbidden", reason: "Revoked" }
+      : { token: makeAccessToken(thread.roomId) }
+  );
+  const client = createClient({
+    authEndpoint: async (roomId) =>
+      roomId === thread.roomId
+        ? roomAuth()
+        : { token: makeAccessToken("personal") },
+  });
+  const sinceValues: (string | null)[] = [];
+  server.use(
+    http.get("https://api.liveblocks.io/v2/c/rooms/room/threads", () =>
+      HttpResponse.json({
+        data: [thread],
+        inboxNotifications: [],
+        subscriptions: [],
+        meta: {
+          requestedAt: "2026-01-01T00:00:00.000Z",
+          nextCursor: null,
+          permissionHints: { room: ["room:write"] },
+        },
+      })
+    ),
+    http.get("https://api.liveblocks.io/v2/c/inbox-notifications", () =>
+      HttpResponse.json({
+        threads: [],
+        inboxNotifications: [],
+        subscriptions: [],
+        groups: [],
+        meta: { requestedAt: "2026-01-01T00:00:00.000Z", nextCursor: null },
+      })
+    ),
+    http.get(
+      "https://api.liveblocks.io/v2/c/inbox-notifications/delta",
+      ({ request }) => {
+        const query = new URL(request.url).searchParams;
+        if (query.get("roomAccessesOnly") !== "true")
+          sinceValues.push(query.get("since"));
+        return delta([], [{ roomId: thread.roomId, access: "none" }]);
+      }
+    )
+  );
+  const { store } = getLiveblocksExtrasForClient(client);
+  await store.outputs.loadingRoomThreads
+    .getOrCreate('["room",{}]')
+    .waitUntilLoaded();
+  await store.outputs.loadingNotifications.getOrCreate("{}").waitUntilLoaded();
+  revoked = true;
+  client.logout();
+  for (let pollIndex = 0; pollIndex < 3; pollIndex++)
+    await store.fetchNotificationsDeltaUpdate(new AbortController().signal);
+  expect(store.threads.get(thread.id)).toBeUndefined();
+  expect(roomAuth).toHaveBeenCalledTimes(4);
+  expect(sinceValues).toEqual([
+    "2026-01-01T00:00:00.000Z",
+    "2026-01-01T00:00:00.000Z",
+    "2026-01-01T00:02:00.000Z",
+  ]);
+});
 
 test("an initial room page deadline also bounds its access confirmation", async () => {
   const thread = dummyThreadData({ roomId: "room" });
@@ -394,7 +551,9 @@ test("an initial room page deadline also bounds its access confirmation", async 
           deletedSubscriptions: [],
           meta: {
             requestedAt: "2026-01-01T00:01:00.000Z",
-            roomAccesses: [{ roomId: thread.roomId, canRead: restored }],
+            roomAccesses: [
+              { roomId: thread.roomId, access: restored ? "room" : "none" },
+            ],
           },
         });
       }
@@ -426,7 +585,7 @@ test("an initial room page deadline also bounds its access confirmation", async 
   try {
     expect(timeout).toHaveBeenCalledWith(30_000);
     expect(confirmationSignal?.aborted).toBe(true);
-    await vi.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_001);
     expect(await outcome$).toBeUndefined();
     expect(confirmations).toBe(2);
     expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
@@ -509,7 +668,7 @@ test.each(["inbox", "user threads", "room threads"])(
 
 function delta(
   threads: ReturnType<typeof dummyThreadData>[],
-  roomAccesses: { roomId: string; canRead: boolean }[]
+  roomAccesses: RoomAccess[]
 ) {
   return HttpResponse.json({
     threads,
@@ -566,7 +725,10 @@ test.each(["inbox-notifications", "threads"])(
           if (query.get("roomAccessesOnly") === "true") {
             return delta(
               [],
-              rooms.map((roomId) => ({ roomId, canRead: readable }))
+              rooms.map((roomId) => ({
+                roomId,
+                access: readable ? "room" : "none",
+              }))
             );
           }
           const snapshot = readable;
@@ -579,7 +741,10 @@ test.each(["inbox-notifications", "threads"])(
           readable = true;
           return delta(
             updates,
-            rooms.map((roomId) => ({ roomId, canRead: snapshot }))
+            rooms.map((roomId) => ({
+              roomId,
+              access: snapshot ? "room" : "none",
+            }))
           );
         }
       )
@@ -638,7 +803,10 @@ test.each(["inbox-notifications", "threads"])(
             );
           return delta(
             [],
-            rooms.map((roomId) => ({ roomId, canRead: roomId !== "room-0" }))
+            rooms.map((roomId) => ({
+              roomId,
+              access: roomId !== "room-0" ? "room" : "none",
+            }))
           );
         }
       )
@@ -654,18 +822,23 @@ test.each(["inbox-notifications", "threads"])(
         ? umbrellaStore.fetchNotificationsDeltaUpdate
         : umbrellaStore.fetchUserThreadsDeltaUpdate;
     umbrellaStore.updateThreadifications(threads, [], []);
-    await expect(poll(new AbortController().signal)).rejects.toThrow();
+    await poll(new AbortController().signal);
     expect(umbrellaStore.threads.get(threads[0]!.id)).toBeUndefined();
-    expect(dataCursors).toEqual([]);
+    expect(dataCursors).toEqual(["2026-01-01T00:00:00.000Z"]);
     unavailable = false;
     await poll(new AbortController().signal);
-    expect(dataCursors).toEqual(["2026-01-01T00:00:00.000Z"]);
+    await poll(new AbortController().signal);
+    expect(dataCursors).toEqual([
+      "2026-01-01T00:00:00.000Z",
+      "2026-01-01T00:00:00.000Z",
+      "2026-01-01T00:02:00.000Z",
+    ]);
   }
 );
 
 test("a confirmed denial is delivered before another token's check fails", async () => {
   const delivered = Promise_withResolvers<void>();
-  const accesses: { roomId: string; canRead: boolean }[] = [];
+  const accesses: RoomAccess[] = [];
   const client = createClient({
     authEndpoint: async (roomId) => ({
       token: makeAccessToken(roomId ?? "personal"),
@@ -679,7 +852,7 @@ test("a confirmed denial is delivered before another token's check fails", async
           new URL(request.url).searchParams.get("roomIds") ?? "[]"
         );
         if (rooms.includes("room-a"))
-          return delta([], [{ roomId: "room-a", canRead: false }]);
+          return delta([], [{ roomId: "room-a", access: "none" }]);
         await delivered.promise;
         return HttpResponse.json({ message: "Unavailable" }, { status: 503 });
       }
@@ -693,6 +866,194 @@ test("a confirmed denial is delivered before another token's check fails", async
         delivered.resolve();
       },
     })
-  ).rejects.toThrow();
-  expect(accesses).toEqual([{ roomId: "room-a", canRead: false }]);
+  ).resolves.toBe(false);
+  expect(accesses).toEqual([{ roomId: "room-a", access: "none" }]);
 });
+
+test.each([
+  { resource: "inbox-notifications", stalledRequest: "authentication" },
+  { resource: "threads", stalledRequest: "authentication" },
+  { resource: "inbox-notifications", stalledRequest: "access check" },
+  { resource: "threads", stalledRequest: "access check" },
+])(
+  "$resource updates survive stalled room $stalledRequest",
+  async ({ resource, stalledRequest }) => {
+    const stalled = dummyThreadData({ roomId: "stalled-room" });
+    const healthy = dummyThreadData({ roomId: "healthy-room" });
+    const started = Promise_withResolvers<void>();
+    const release = Promise_withResolvers<void>();
+    const client = createClient({
+      authEndpoint: async (roomId) => {
+        if (stalledRequest === "authentication" && roomId === stalled.roomId) {
+          started.resolve();
+          await release.promise;
+        }
+        return { token: makeAccessToken(roomId ?? healthy.roomId) };
+      },
+    });
+    let version = 0;
+    server.use(
+      http.get("https://api.liveblocks.io/v2/c/:resource", () =>
+        HttpResponse.json({
+          threads: [stalled, healthy],
+          inboxNotifications: [],
+          subscriptions: [],
+          groups: [],
+          meta: {
+            requestedAt: "2026-01-01T00:00:00.000Z",
+            nextCursor: null,
+            permissionHints: {},
+          },
+        })
+      ),
+      http.get(
+        "https://api.liveblocks.io/v2/c/:resource/delta",
+        async ({ request }) => {
+          const query = new URL(request.url).searchParams;
+          if (query.get("roomAccessesOnly") === "true") {
+            if (
+              stalledRequest === "access check" &&
+              query.get("roomIds")?.includes(stalled.roomId)
+            ) {
+              started.resolve();
+              await release.promise;
+            }
+            return delta([], []);
+          }
+          return delta([{ ...healthy, metadata: { version: ++version } }], []);
+        }
+      )
+    );
+    const { store } = getLiveblocksExtrasForClient(client);
+    const list =
+      resource === "inbox-notifications"
+        ? store.outputs.loadingNotifications
+        : store.outputs.loadingUserThreads;
+    const poll =
+      resource === "inbox-notifications"
+        ? store.fetchNotificationsDeltaUpdate
+        : store.fetchUserThreadsDeltaUpdate;
+    await list.getOrCreate("{}").waitUntilLoaded();
+    vi.useFakeTimers();
+    const timeout = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockImplementation((milliseconds) => {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), milliseconds);
+        return controller.signal;
+      });
+    try {
+      for (let pollIndex = 1; pollIndex <= 2; pollIndex++) {
+        const controller = new AbortController();
+        const outcome$ = poll(controller.signal);
+        try {
+          await vi.advanceTimersByTimeAsync(1);
+          await started.promise;
+          await vi.advanceTimersByTimeAsync(5_000);
+          await outcome$;
+          expect(controller.signal.aborted).toBe(false);
+          expect(store.threads.get(healthy.id)?.metadata).toEqual({
+            version: pollIndex,
+          });
+        } finally {
+          controller.abort();
+          await outcome$.catch(() => undefined);
+        }
+      }
+    } finally {
+      release.resolve();
+      timeout.mockRestore();
+      vi.useRealTimers();
+    }
+  }
+);
+
+test.each(["delta", "delete", "delete all"])(
+  "inbox-only access prunes other threads and handles notification %s",
+  async (deletion) => {
+    const notified = dummyThreadData({ roomId: "room" });
+    const unrelated = dummyThreadData({ roomId: "room" });
+    const notification = dummyThreadInboxNotificationData({
+      roomId: notified.roomId,
+      threadId: notified.id,
+    });
+    let revoked = false;
+    let notificationDeleted = false;
+    const client = createClient({
+      authEndpoint: async (roomId) => {
+        if (revoked && roomId === notified.roomId)
+          return { error: "forbidden", reason: "Room revoked" };
+        return { token: makeAccessToken(roomId ?? "other-room") };
+      },
+    });
+    server.use(
+      http.get("https://api.liveblocks.io/v2/c/rooms/room/threads", () =>
+        HttpResponse.json({
+          data: [notified, unrelated],
+          inboxNotifications: notificationDeleted ? [] : [notification],
+          subscriptions: [],
+          meta: {
+            requestedAt: "2026-01-01T00:00:00.000Z",
+            nextCursor: null,
+            permissionHints: { room: ["room:write"] },
+          },
+        })
+      ),
+      http.get("https://api.liveblocks.io/v2/c/inbox-notifications", () =>
+        HttpResponse.json({
+          threads: notificationDeleted ? [] : [notified],
+          inboxNotifications: notificationDeleted ? [] : [notification],
+          subscriptions: [],
+          groups: [],
+          meta: { requestedAt: "2026-01-01T00:00:00.000Z", nextCursor: null },
+        })
+      ),
+      http.get("https://api.liveblocks.io/v2/c/inbox-notifications/delta", () =>
+        delta([], [{ roomId: "room", access: revoked ? "inbox" : "room" }])
+      )
+    );
+    const { store } = getLiveblocksExtrasForClient(client);
+    await store.outputs.loadingRoomThreads
+      .getOrCreate('["room",{}]')
+      .waitUntilLoaded();
+    await store.outputs.loadingNotifications
+      .getOrCreate("{}")
+      .waitUntilLoaded();
+    revoked = true;
+    client.logout();
+    await store.fetchNotificationsDeltaUpdate(new AbortController().signal);
+    expect(store.threads.get(notified.id)).toEqual(notified);
+    expect(store.threads.get(unrelated.id)).toBeUndefined();
+    store.updateThreadifications([unrelated], [], []);
+    expect(store.threads.get(unrelated.id)).toBeUndefined();
+    const updated = { ...notified, metadata: { updated: true } };
+    store.updateThreadifications([updated], [notification], []);
+    expect(store.threads.get(notified.id)).toEqual(updated);
+    notificationDeleted = true;
+    if (deletion === "delta") {
+      store.updateThreadifications(
+        [],
+        [],
+        [],
+        [],
+        [
+          {
+            type: "deletedInboxNotification",
+            id: notification.id,
+            roomId: notification.roomId,
+            deletedAt: new Date(),
+          },
+        ]
+      );
+    } else if (deletion === "delete") {
+      store.deleteInboxNotification(notification.id, "delete-notification");
+    } else {
+      store.deleteAllInboxNotifications("delete-notifications");
+    }
+    expect(store.threads.get(notified.id)).toBeUndefined();
+    revoked = false;
+    client.logout();
+    await store.fetchNotificationsDeltaUpdate(new AbortController().signal);
+    expect(store.threads.get(unrelated.id)).toEqual(unrelated);
+  }
+);

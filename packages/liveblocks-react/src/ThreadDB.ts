@@ -35,7 +35,7 @@ function sanitizeThread<TM extends BaseMetadata, CM extends BaseMetadata>(
 export type ReadonlyThreadDB<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-> = Omit<ThreadDB<TM, CM>, "upsert" | "delete" | "removeRooms" | "signal">;
+> = Omit<ThreadDB<TM, CM>, "upsert" | "delete" | "remove" | "signal">;
 
 /**
  * This class implements a lightweight, in-memory, "database" for all Thread
@@ -47,7 +47,7 @@ export type ReadonlyThreadDB<
  * - upsertIfNewer: To add/update a thread. Only update an existing thread if
  *                  its newer
  * - delete: To mark existing threads as deleted
- * - removeRooms: To evict cached threads from rooms
+ * - remove: To evict cached threads without deleting them
  * - get: To get any non-deleted thread
  * - getEvenIfDeleted: To get a thread which is possibly deleted
  * - findMany: To filter an ordered list of non-deleted threads
@@ -180,12 +180,13 @@ export class ThreadDB<TM extends BaseMetadata, CM extends BaseMetadata> {
     });
   }
 
-  public removeRooms(roomIds: ReadonlySet<string>): void {
+  public remove(threadIds: ReadonlySet<string>): void {
     this.signal.mutate(() => {
       let changed = false;
-      for (const [threadId, thread] of this.#byId) {
+      for (const threadId of threadIds) {
+        const thread = this.#byId.get(threadId);
         // Keep real tombstones so an old response cannot restore deleted threads.
-        if (!roomIds.has(thread.roomId) || thread.deletedAt) continue;
+        if (thread === undefined || thread.deletedAt) continue;
         this.#asc.remove(thread);
         this.#desc.remove(thread);
         this.#byId.delete(threadId);

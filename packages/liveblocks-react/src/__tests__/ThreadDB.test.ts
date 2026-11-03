@@ -413,7 +413,7 @@ test("room eviction allows restored threads but keeps permanent tombstones", () 
   database.upsert(thread);
   database.upsert(deletedThread);
   database.delete(deletedThread.id, new Date());
-  database.removeRooms(new Set(["room"]));
+  database.remove(new Set([thread.id, deletedThread.id]));
   expect(database.get(thread.id)).toBeUndefined();
   database.upsert(thread);
   database.upsert(deletedThread);
@@ -427,7 +427,7 @@ test.each(["delta", "delete"])(
     const database = new ThreadDB();
     const thread = dummyThreadData({ roomId: "revoked-room" });
     database.upsert(thread);
-    database.removeRooms(new Set([thread.roomId]));
+    database.remove(new Set([thread.id]));
     const deletedAt = new Date();
     if (source === "delta") {
       database.applyDelta(

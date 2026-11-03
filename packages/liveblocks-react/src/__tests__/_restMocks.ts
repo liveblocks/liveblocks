@@ -7,6 +7,7 @@ import type {
   InboxNotificationData,
   NotificationSettingsPlain,
   PartialNotificationSettings,
+  RoomAccess,
   RoomPermissions,
   RoomSubscriptionSettings,
   SubscriptionData,
@@ -314,7 +315,7 @@ export function mockGetInboxNotificationsDelta(
       deletedSubscriptions: SubscriptionData[];
       meta: {
         requestedAt: string;
-        roomAccesses?: { roomId: string; canRead: boolean }[];
+        roomAccesses?: RoomAccess[];
         nextCursor?: string;
       };
     }
