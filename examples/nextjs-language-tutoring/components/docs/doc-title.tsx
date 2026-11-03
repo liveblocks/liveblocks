@@ -61,7 +61,9 @@ export function DocTitle({ doc }: { doc: DocumentInfo }) {
         setDraft(doc.title);
         setEditing(true);
       }}
-      className="h-7 min-w-0 max-w-full truncate rounded-md px-2 text-left text-sm font-medium hover:bg-neutral-100"
+      // Same box as the rename input (incl. a border) so the text doesn't
+      // shift when switching between the two
+      className="h-7 min-w-0 max-w-full truncate rounded-md border border-transparent px-2 text-left text-sm font-medium hover:bg-neutral-100"
       title="Rename"
     >
       {doc.title}
