@@ -44,7 +44,7 @@ import {
 } from "./liveTextOps";
 import type { LiveNode } from "./Lson";
 import type { OpSource, StorageUpdate, UpdateSource } from "./StorageUpdates";
-import { LOCAL_EDIT, toUpdateSource } from "./StorageUpdates";
+import { LOCAL_EDIT, REMOTE, toUpdateSource } from "./StorageUpdates";
 
 export type LiveTextAttributes = TextAttributes;
 export type LiveTextAttributesPatch = JsonObject;
@@ -151,6 +151,13 @@ export {
  * the pending ops are re-expressed over the remote op in turn ("after"
  * order), keeping them in server coordinates at all times.
  *
+ * Reconnect replay: keep the pre-disconnect confirmed state and re-send only
+ * the in-flight op at that version. The server returns the intervening
+ * accepted operations with its acknowledgement, including the original op
+ * if it was already stored. Replaying that history through the normal OT
+ * paths rebases the pending edits exactly, without applying them twice to a
+ * snapshot. Queued edits stay queued until their predecessor is acknowledged.
+ *
  * @example
  * const text = new LiveText("Hello");
  * text.insert(5, " world");
@@ -194,6 +201,11 @@ export class LiveText extends AbstractCrdt {
   #queuedOps: TextOperation[] = [];
 
   #acceptedOps: AcceptedTextOperations[] = [];
+
+  /** Wait for replay history before applying post-snapshot remote ops. */
+  #reconnecting = false;
+  #deferredHistorylessAck = false;
+  #bufferedRemoteOps: UpdateTextOp[] = [];
 
   /**
    * Creates a new LiveText document.
@@ -284,6 +296,23 @@ export class LiveText extends AbstractCrdt {
   /** @internal */
   _detachChild(_crdt: LiveNode): ApplyResult {
     throw new Error("LiveText cannot contain child nodes");
+  }
+
+  /** @internal */
+  _deferAckWithoutHistory(op: UpdateTextOp): boolean {
+    if (
+      this.#reconnecting &&
+      !this.#deferredHistorylessAck &&
+      op.opId !== undefined &&
+      op.opId === this.#inFlightOpId &&
+      op.history === undefined
+    ) {
+      // The original ack can arrive after a snapshot but before the replay
+      // ack. Keep the op pending so the latter can reconcile the timeline.
+      this.#deferredHistorylessAck = true;
+      return true;
+    }
+    return false;
   }
 
   /** @internal */
@@ -550,14 +579,15 @@ export class LiveText extends AbstractCrdt {
    * unacknowledged op re-sent after a reconnect.
    */
   #applyLocal(op: UpdateTextOp, source: UpdateSource): ApplyResult {
-    const mutableOp = op as { baseVersion: number; ops: TextOperation[] };
+    // Replay updates the readonly wire envelope before the room sends it.
+    const mutableOp = op as {
+      baseVersion: number;
+      ops: TextOperation[];
+    };
 
-    // Re-sent offline op (reconnect): its content is already applied
-    // locally. Compose any queued ops into it and refresh its authoritative
-    // fields so the server sees current server-state coordinates.
+    // Never compose the queue into an existing opId: the server may already
+    // have stored that op and will deduplicate any additional content.
     if (op.opId !== undefined && op.opId === this.#inFlightOpId) {
-      this.#inFlightOps = [...this.#inFlightOps, ...this.#queuedOps];
-      this.#queuedOps = [];
       mutableOp.baseVersion = this.#version;
       mutableOp.ops = [...this.#inFlightOps];
       return { modified: false };
@@ -611,6 +641,10 @@ export class LiveText extends AbstractCrdt {
 
   /** Server acknowledgement of our in-flight op. */
   #applyAck(op: UpdateTextOp, source: UpdateSource): ApplyResult {
+    if (this.#reconnecting) {
+      return this.#reconcileAck(op, source);
+    }
+
     const ackedVersion =
       op.version ?? Math.max(this.#version, op.baseVersion + 1);
     const predicted = this.#inFlightOps;
@@ -622,12 +656,7 @@ export class LiveText extends AbstractCrdt {
 
     let appliedOps: TextOperation[] = [];
     let result: ApplyResult = { modified: false };
-
     if (!textOperationsEqual(op.ops, predicted)) {
-      // The authoritative ops differ from our continuously re-expressed
-      // prediction. This should not happen as long as client and server run
-      // the same transform; recover by rebuilding the local document from
-      // the confirmed state.
       console.error(
         "LiveText: acknowledgement did not match the local prediction; resynchronizing"
       );
@@ -641,7 +670,9 @@ export class LiveText extends AbstractCrdt {
             node: this,
             version: ackedVersion,
             updates: rebuilt.changes,
-            source,
+            // A correction was not applied by the originating editor. It
+            // must not be filtered out as an echo of a local edit.
+            source: REMOTE,
           },
         };
       }
@@ -653,10 +684,83 @@ export class LiveText extends AbstractCrdt {
     return result;
   }
 
+  /** Recover the missing server timeline, preserving the normal OT invariants. */
+  #reconcileAck(op: UpdateTextOp, source: UpdateSource): ApplyResult {
+    const history = op.history;
+    if (history === undefined) {
+      // A second historyless ack cannot reconcile the timeline. Drop pending
+      // state and request an authoritative snapshot instead of throwing.
+      this._rejectPendingOp(nn(op.opId));
+      return { modified: false, needsStorageResync: true };
+    }
+    this.#reconnecting = false;
+    this.#deferredHistorylessAck = false;
+    const buffered = this.#bufferedRemoteOps;
+    this.#bufferedRemoteOps = [];
+    const changes: LiveTextChange[] = [];
+    const collect = (result: ApplyResult) => {
+      if (result.modified && result.modified.type === "LiveText") {
+        changes.push(...result.modified.updates);
+      }
+    };
+
+    for (const entry of history) {
+      if (entry.version <= this.#version) continue;
+      if (entry.version === op.version) {
+        // A lost acknowledgement: its effect is in the returned history.
+        // Acknowledge it at its original position, not after later edits.
+        collect(this.#applyAck(op, source));
+      } else {
+        collect(
+          this.#applyRemote(
+            {
+              type: OpCode.UPDATE_TEXT,
+              id: op.id,
+              baseVersion: entry.version - 1,
+              version: entry.version,
+              ops: entry.ops,
+            },
+            REMOTE
+          )
+        );
+      }
+    }
+
+    if (this.#inFlightOpId === op.opId) {
+      // The replay was newly accepted, so its ack follows the history.
+      collect(this.#applyAck(op, source));
+    }
+    for (const remote of buffered) {
+      collect(this.#applyRemote(remote, REMOTE));
+    }
+
+    return changes.length === 0
+      ? { modified: false }
+      : {
+          reverse: [],
+          modified: {
+            type: "LiveText",
+            node: this,
+            version: this.#version,
+            updates: changes,
+            source: REMOTE,
+          },
+        };
+  }
+
   /** An accepted op from another client (or a server-fabricated fix op). */
   #applyRemote(op: UpdateTextOp, source: UpdateSource): ApplyResult {
     const version = op.version ?? this.#version + 1;
 
+    if (op.version !== undefined && op.version <= this.#version) {
+      return { modified: false };
+    }
+    if (this.#reconnecting) {
+      // These ops are expressed after the snapshot, whereas the local view
+      // is still expressed before it. Replay history closes that gap first.
+      this.#bufferedRemoteOps.push(op);
+      return { modified: false };
+    }
     // Advance the confirmed state with the authoritative ops as-is.
     this.#confirmed = applyTextOperationsToSegments(this.#confirmed, op.ops);
 
@@ -787,10 +891,9 @@ export class LiveText extends AbstractCrdt {
   }
 
   /**
-   * Reconcile this node against an authoritative storage snapshot (e.g.
-   * after a reconnect). The confirmed state and version are replaced by the
-   * snapshot's; pending (in-flight + queued) ops are preserved on top and
-   * will be re-sent by the offline-ops replay.
+   * Reconcile against an authoritative snapshot. With pending edits, retain
+   * the current document and confirmed version until replay history arrives:
+   * a snapshot alone cannot re-express the queue over unseen operations.
    *
    * @internal
    */
@@ -799,10 +902,14 @@ export class LiveText extends AbstractCrdt {
     version: number,
     source: UpdateSource
   ): LiveTextUpdates | undefined {
+    if (this.#inFlightOpId !== undefined) {
+      this.#reconnecting = true;
+      this.#deferredHistorylessAck = false;
+      return undefined;
+    }
+
     this.#confirmed = dataToSegments(data);
     this.#version = version;
-    // Accepted-op history is expressed against the pre-snapshot timeline and
-    // is no longer meaningful.
     this.#acceptedOps = [];
 
     const rebuilt = this.#rebuildLocalFromConfirmed();
@@ -833,6 +940,9 @@ export class LiveText extends AbstractCrdt {
     this.#inFlightOpId = undefined;
     this.#inFlightOps = [];
     this.#queuedOps = [];
+    this.#bufferedRemoteOps = [];
+    this.#reconnecting = false;
+    this.#deferredHistorylessAck = false;
   }
 
   #recordAccepted(

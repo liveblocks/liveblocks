@@ -93,6 +93,7 @@ import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import {
   createSharedContext,
+  getLiveblocksExtrasForClient,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
 } from "./liveblocks";
@@ -528,6 +529,21 @@ function RoomProviderInner<
         inboxNotification: maybeNotification,
         subscription: maybeSubscription,
       } = info;
+
+      // A reply can change counts even when this thread isn't cached.
+      if (
+        maybeNotification &&
+        (message.type === ServerMsgCode.COMMENT_CREATED ||
+          message.type === ServerMsgCode.THREAD_UPDATED)
+      ) {
+        store.unreadNotificationsCount.invalidate();
+        const { unreadNotificationsCountPollersByQueryKey } =
+          getLiveblocksExtrasForClient(client);
+        for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+          poller.markAsStale();
+          poller.pollNowIfStale();
+        }
+      }
 
       const existingThread = store.outputs.threads
         .get()
@@ -2715,6 +2731,13 @@ function useMarkRoomThreadAsRead(roomId: string) {
               now,
               optimisticId
             );
+
+            const { unreadNotificationsCountPollersByQueryKey } =
+              getLiveblocksExtrasForClient(client);
+            for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+              poller.markAsStale();
+              poller.pollNowIfStale();
+            }
           },
           (err: Error) => {
             onMutationFailure(

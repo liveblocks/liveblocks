@@ -18,6 +18,81 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 43 (2026-10-23)
+
+## v3.24.5
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating when receiving replies in
+  connected rooms.
+
+## v3.24.4
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating immediately when marking a
+  thread as read.
+
+## Contributors
+
+marcbouchenoire
+
+# Week 40 (2026-10-02)
+
+## v3.24.3
+
+### `@liveblocks/client`
+
+- Fix `LiveText` reconnect convergence with pending edits, including lost
+  acknowledgements, repeated reconnects, and queued edits. Recovery updates now
+  reach editor integrations instead of being filtered as local echoes.
+
+
+## Contributors
+
+jrowny
+
+# Week 39 (2026-09-25)
+
+## v3.24.2
+
+### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
+
+- Fix edge cases in return types of `.toJSON()`, `useStorage()` selectors, and
+  `getStorageDocument(roomId, "json")`:
+  - a `LiveObject` whose properties are all optional no longer loses its keys
+    when nested inside another Live structure.
+  - a value typed as `Record<string, T>` no longer loses `T`.
+  - an object carrying both a string index signature and named keys no longer
+    loses the named keys.
+  - a `LiveObject` converts to the same type whether you reach it directly or
+    through a parent.
+
+### `@liveblocks/chat-sdk-adapter`
+
+- Allow `apiKey` and `webhookSecret` to be resolved per request, and add custom
+  `webhookVerifier` support for rotated credentials and webhook-forwarding
+  infrastructure such as Vercel Connect.
+
+## Documentation
+
+- Info on disconnecting users on the fly in the share dialog use case page.
+
+## Contributors
+
+nvie, bensabic, ctnicholas
+
+# Week 38 (2026-09-18)
+
+## Website
+
+- New blog post: [Healthcare is collaborative: how Seen Health coordinates care with Liveblocks](https://liveblocks.io/blog/healthcare-is-collaborative-how-seen-health-coordinates-care-with-liveblocks).
+
+## Contributors
+
+stacyschmitz
+
 # Week 37 (2026-09-11)
 
 ## Dashboard
@@ -1127,7 +1202,7 @@ nperez0111, marcbouchenoire, ctnicholas
 ## Zen Router
 
 - Zen Router was released, our open-source HTTP router.
-- [Documentation website for Zen Router](https://zenrouter.liveblocks.io)
+- [Documentation for Zen Router](https://zenrouter.liveblocks.io/docs)
   was published.
 - [Repo for Zen Router](https://github.com/liveblocks/zenrouter) was published.
 

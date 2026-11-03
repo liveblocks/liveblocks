@@ -988,8 +988,8 @@ importers:
         specifier: ^5.2.0
         version: 5.2.0(eslint@9.39.4(jiti@2.6.1))
       itertools:
-        specifier: ^2.3.2
-        version: 2.3.2
+        specifier: ^2.7.1
+        version: 2.7.1
       msw:
         specifier: ^2.10.4
         version: 2.10.4(@types/node@24.12.2)(typescript@5.9.3)
@@ -8062,8 +8062,9 @@ packages:
     resolution: {integrity: sha512-H0dkQoCa3b2VEeKQBOxFph+JAbcrQdE7KC0UkqwpLmv2EC4P41QXP+rqo9wYodACiG5/WM5s9oDApTU8utwj9g==}
     engines: {node: '>= 0.4'}
 
-  itertools@2.3.2:
-    resolution: {integrity: sha512-urRg24zOOKt4qQHm3gzQLK5Mima/kMSP3DUfcVw05W3veUHxxqHPTEW08aKY9GIZm9CKvnULVqXdjZWNYalJHQ==}
+  itertools@2.7.1:
+    resolution: {integrity: sha512-xrbTDDdUfkJhM4EzYOwwzEf2ksPT5WLgQ5i2X9X5yUpcmXJPEjeAnpMl1tIrYDzuCD19/AEH+cbLunQHGn8v7w==}
+    engines: {node: '>=22'}
 
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
@@ -18761,7 +18762,7 @@ snapshots:
       has-symbols: 1.1.0
       set-function-name: 2.0.2
 
-  itertools@2.3.2: {}
+  itertools@2.7.1: {}
 
   jackspeak@3.4.3:
     dependencies:

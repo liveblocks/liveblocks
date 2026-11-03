@@ -1,0 +1,10 @@
+{
+  "vitest": {
+    "files": 42,
+    "tests": 254
+  },
+  "playwright": {
+    "files": 8,
+    "tests": 43
+  }
+}

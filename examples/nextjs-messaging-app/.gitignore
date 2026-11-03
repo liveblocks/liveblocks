@@ -1,0 +1,17 @@
+.DS_Store
+node_modules
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.vercel
+.next
+.next-e2e
+.next-local
+out
+# Playwright
+test-results
+playwright-report
+next-env.d.ts
+# Turborepo
+.turbo

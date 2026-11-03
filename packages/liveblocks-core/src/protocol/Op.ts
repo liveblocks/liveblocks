@@ -174,6 +174,11 @@ export type UpdateTextOp = {
   readonly baseVersion: number;
   readonly version?: number;
   readonly ops: TextOperation[];
+  /** Server-only: accepted ops after the requested base version when reconciling. */
+  readonly history?: {
+    readonly version: number;
+    readonly ops: TextOperation[];
+  }[];
 };
 
 export type DeleteCrdtOp = {

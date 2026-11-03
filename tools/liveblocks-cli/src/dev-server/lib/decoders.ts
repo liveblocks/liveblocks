@@ -32,7 +32,7 @@ import {
 // repo. The shape is "fl_" plus 21 nanoid characters.
 export const storageFileId = sized(startsWith("fl_"), { size: 24 });
 
-export const storageFileIds = sized(array(storageFileId), { max: 500 });
+export const storageFileIds = array(storageFileId, { max: 500 });
 
 // Multipart upload ids are minted by the blob store as UUIDs. Unlike a real
 // object store, which treats them as opaque tokens, the dev server's

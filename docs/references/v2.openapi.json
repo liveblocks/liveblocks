@@ -7729,7 +7729,7 @@
       "post": {
         "summary": "Patch webhook headers",
         "x-badge": "Beta",
-        "description": "Upsert additional headers for a webhook. Provided headers are merged with existing headers, and existing values are overwritten when names match. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
+        "description": "Upsert additional headers for a webhook. Provided headers are merged with existing headers, and existing values are overwritten when names match case-insensitively. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
         "tags": ["Management"],
         "parameters": [
           {
@@ -7951,7 +7951,25 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. The recover task was started."
+            "description": "Success. The recover task was started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": ["ok"],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/401"
@@ -12452,8 +12470,9 @@
           },
           "rateLimit": {
             "type": "integer",
+            "description": "The maximum number of messages per second sent to this endpoint.",
             "minimum": 1,
-            "maximum": 65534
+            "maximum": 1000
           },
           "subscribedEvents": {
             "type": "array",
@@ -12523,8 +12542,9 @@
           },
           "rateLimit": {
             "type": "integer",
+            "description": "The maximum number of messages per second sent to this endpoint. Defaults to 1000. Values above 1000 are capped at 1000.",
             "minimum": 1,
-            "maximum": 65534
+            "maximum": 1000
           },
           "additionalHeaders": {
             "type": "object",
@@ -12533,10 +12553,14 @@
             }
           },
           "storageUpdatedThrottleSeconds": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "description": "Throttle in seconds for `storageUpdated` events. Must be at least the minimum allowed by the project's plan, otherwise a `422` error is returned. Defaults to that minimum."
           },
           "yDocUpdatedThrottleSeconds": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "description": "Throttle in seconds for `ydocUpdated` events. Must be at least the minimum allowed by the project's plan, otherwise a `422` error is returned. Defaults to that minimum."
           }
         },
         "required": ["url", "subscribedEvents"],
@@ -12564,14 +12588,19 @@
           },
           "rateLimit": {
             "type": "integer",
+            "description": "The maximum number of messages per second sent to this endpoint. Values above 1000 are capped at 1000.",
             "minimum": 1,
-            "maximum": 65534
+            "maximum": 1000
           },
           "storageUpdatedThrottleSeconds": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "description": "Throttle in seconds for `storageUpdated` events. Must be at least the minimum allowed by the project's plan, otherwise a `422` error is returned."
           },
           "yDocUpdatedThrottleSeconds": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "description": "Throttle in seconds for `ydocUpdated` events. Must be at least the minimum allowed by the project's plan, otherwise a `422` error is returned."
           },
           "disabled": {
             "type": "boolean"
@@ -12586,12 +12615,15 @@
       },
       "ManagementWebhookAdditionalHeaders": {
         "title": "ManagementWebhookAdditionalHeaders",
+        "description": "Additional headers sent with every webhook request. Header names are case-insensitive and returned lowercased. Values can be at most 4096 bytes. Headers we set ourselves, like `Content-Type`, `User-Agent` and `webhook-*`, and names starting with reserved prefixes, like `x-amz-` or `svix-`, are not allowed.",
         "type": "object",
+        "maxProperties": 5,
         "additionalProperties": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 4096
         },
         "example": {
-          "X-Custom-Header": "value"
+          "x-custom-header": "value"
         }
       },
       "UpsertManagementWebhookHeadersRequestBody": {

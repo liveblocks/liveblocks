@@ -338,7 +338,7 @@ zen.route(
   "POST /v2/rooms/<roomId>/storage",
 
   object({
-    liveblocksType: constant("LiveObject" as const),
+    liveblocksType: constant("LiveObject"),
     data: jsonObjectYolo,
   }).refineType<PlainLsonObject>(),
 

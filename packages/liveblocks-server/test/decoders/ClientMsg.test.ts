@@ -21,6 +21,36 @@ import { describe, expect, test } from "vitest";
 import { clientMsgDecoder } from "~/decoders";
 
 describe("clientMsgDecoder", () => {
+  test("accepts message-level text history requests", () => {
+    const request = {
+      type: ClientMsgCode.UPDATE_STORAGE,
+      includeTextHistory: true,
+      ops: [
+        {
+          type: OpCode.UPDATE_TEXT,
+          opId: "1:2",
+          id: "1:1",
+          baseVersion: 0,
+          ops: [{ type: "insert", index: 0, text: "Hello" }],
+        },
+      ],
+    };
+    expect(clientMsgDecoder.verify(request)).toEqual(request);
+  });
+
+  test.each([false, "true", 1, null])(
+    "rejects invalid storage includeTextHistory flag %s",
+    (includeTextHistory) => {
+      expect(
+        clientMsgDecoder.decode({
+          type: ClientMsgCode.UPDATE_STORAGE,
+          includeTextHistory,
+          ops: [],
+        }).ok
+      ).toBe(false);
+    }
+  );
+
   test("accepts valid CREATE_FILE storage file ids", () => {
     expect(() =>
       clientMsgDecoder.verify({

@@ -1,0 +1,127 @@
+---
+meta:
+  title: "Liveblocks vs. Electric Sync: documents and Postgres data"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Electric Sync (ElectricSQL) for shared documents,
+    Postgres data, writes, Yjs editing, and self-hosting."
+---
+
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more.
+Electric Sync (ElectricSQL) is a read-path sync engine that streams subsets of
+Postgres data, called shapes, to clients over HTTP, while writes go through your
+own API.
+
+<Banner title="Electric Cloud is shutting down" type="warning">
+  Electric was acquired in 2026 and [its cloud services are winding
+  down](https://electric.ax/blog/2026/08/11/electric-joining-databricks#what-this-means-for-you).
+</Banner>
+
+## Which should you choose? [#which-should-you-choose]
+
+Electric and Liveblocks solve different problems. Electric is how Postgres rows
+reach your clients, whereas Liveblocks is how people edit artifacts together.
+
+Choose Liveblocks when several people work on the same canvas, document, or
+workflow at once, and their edits need to merge without overwriting each other.
+Choose Electric when Postgres is your source of truth and clients need a live
+local copy of selected rows, such as an issue list that updates as assignments
+change, while writes keep going through your existing API. Issue trackers often
+use both: business records in Postgres delivered by Electric, and the editable
+specification in a Liveblocks document.
+
+## Compare what gets synchronized [#compare-what-gets-synchronized]
+
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Electric Sync                                                                                                                                                                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core data model     | Shared documents in Storage. <InfoTooltip>A CRDT-based document store. Concurrent edits merge automatically, and data is kept until you delete it. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                          | Shapes. Subsets of Postgres tables. <InfoTooltip>A shape is a table, optionally filtered by a where clause, that clients subscribe to. <a href="https://electric-sql.com/docs/guides/shapes" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                    |
+| Read path           | Subscribe to a room. Document changes, presence, and broadcast events arrive over WebSocket. <InfoTooltip>Presence is short-lived per-user state such as cursor position or selection. <a href="/docs/products/sync/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                     | Shape logs streamed to clients over HTTP, with CDN caching. <InfoTooltip>Clients fetch an initial snapshot and then long-poll for changes. <a href="https://electric-sql.com/docs/intro" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                        |
+| Write path          | Edit the document from the client or from your server. <InfoTooltip>The same document can be edited from the browser and from your back end. <a href="/docs/api-reference/liveblocks-client" className="font-medium text-product-brand">Client API</a>, <a href="/docs/products/sync/server-side-editing" className="font-medium text-product-brand">server-side editing</a>.</InfoTooltip>                                                                                                | Not included. Your API validates and writes to Postgres. <InfoTooltip>Electric documents several write patterns, from plain online writes to persistent optimistic state. <a href="https://electric-sql.com/docs/guides/writes" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> |
+| Conflict resolution | CRDT-based. Concurrent edits to objects, lists, maps, and text merge automatically. <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                     | Your server decides. Postgres serializes writes, so the last write to a row wins.                                                                                                                                                                                                                        |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more. <InfoTooltip>Official packages for popular editors, plus Yjs guides for others. <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                   | Not built in. Electric publishes examples that pair it with Yjs. <InfoTooltip>Yjs merges the text; Electric moves the Yjs updates through Postgres. <a href="https://electric-sql.com/docs/integrations/yjs" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                    |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications. <InfoTooltip>React components you can drop in, plus hooks for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | None.                                                                                                                                                                                                                                                                                                    |
+| Authentication      | Your server issues access tokens using your existing auth. <InfoTooltip>Works with any auth provider. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                         | Your proxy or API gateway authorizes each shape request. <InfoTooltip>Electric itself has no user accounts; you put it behind your own auth. <a href="https://electric-sql.com/docs/guides/auth" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                |
+| Self-hosting        | Paid add-on on the Enterprise plan. <InfoTooltip>Covers Sync; you run the servers and storage. <a href="/docs/platform/data-storage#Self-hosting" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                                                 | Open source. Run Electric next to your Postgres. <InfoTooltip>Deploy the Electric service alongside your database and your write API. <a href="https://electric-sql.com/docs/guides/deployment" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                 |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                       | Which Postgres rows should each client keep a live copy of?                                                                                                                                                                                                                                              |
+
+## Follow a change from the client back to the client [#follow-a-change-from-the-client-back-to-the-client]
+
+Electric only handles the read path, so the write route stays with your
+application. Liveblocks applies edits to a shared document and sends them on.
+The two paths look like this:
+
+| Stage                 | Electric-based application                                   | Liveblocks document                                          |
+| --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| User makes a change   | Your app applies an optimistic update locally.               | Storage or an editor integration applies the edit locally.   |
+| Source-of-truth write | Your API validates the write and commits it to Postgres.     | The Liveblocks server applies the operation to the document. |
+| Other clients update  | Electric streams the changed rows to every subscribed shape. | Liveblocks sends the change to everyone in the room.         |
+| Reporting             | Query Postgres directly.                                     | Read the document, or keep a copy in your own database.      |
+
+Electric's [write guide](https://electric-sql.com/docs/guides/writes) covers
+online writes, optimistic updates, and persistent local state. What users see
+while a write is pending is up to your implementation. In
+[Liveblocks Storage](/docs/products/sync/storage), the local edit shows
+immediately and the server confirms it.
+
+## Does Electric handle writes back to Postgres? [#does-electric-handle-writes-back-to-postgres]
+
+No. Electric is a read-path sync engine: it streams data out of Postgres but
+does not write into it. Its
+[write guide](https://electric-sql.com/docs/guides/writes) documents several
+patterns, including online writes and persistent optimistic state, but your
+application builds and runs that write path.
+
+For an issue tracker, you might keep accounts, issues, and assignments in
+Postgres, use Electric to deliver the relevant rows, and keep your existing API
+for updates. Check the full loop from a local edit through validation to the
+updated row arriving back at the client.
+
+For a shared canvas, start with the operations on shapes, lists, and text. Check
+whether Liveblocks Storage represents those interactions directly, then decide
+how that document connects to your business records.
+
+## Can Electric work with Yjs? [#can-electric-work-with-yjs]
+
+Yes, by adding Yjs yourself. Syncing a row that contains a paragraph does not
+define how two people's edits to that paragraph merge. Electric publishes
+[examples that combine its sync with Yjs](https://electric-sql.com/docs/integrations/yjs):
+Yjs merges the text, and Electric carries the Yjs updates through Postgres.
+Liveblocks ships
+[Yjs-based editor integrations](/docs/products/sync/text-editing) that handle
+the same merging without a separate transport.
+
+With either design, decide which representation of the content is the source of
+truth. If you also keep a searchable or reportable copy, define how that copy
+updates and how much delay your app can tolerate.
+
+## Pricing and deployment [#pricing-and-deployment]
+
+[Electric Cloud](https://electric-sql.com/pricing) charges for writes and
+retention; reads, egress, and concurrent users are free. Pay-as-you-go is $1 per
+million writes and $0.10 per GB-month of retention, with monthly bills under $5
+waived. Live Postgres changes add $2 per million writes on top. Pro is $249 per
+month, which acts as prepaid usage credit at a 10% discount. Your Postgres
+hosting, your write API, and any editor layer such as Yjs come on top of that.
+
+For Liveblocks, include the collaboration usage plus your application back end.
+Your [plan's credits](/docs/pricing/plans) apply once across all Liveblocks
+usage.
+
+Electric is open source and can be
+[self-hosted](https://electric-sql.com/docs/guides/deployment) alongside your
+Postgres. Liveblocks offers
+[self-hosting](/docs/platform/data-storage#Self-hosting) as a paid add-on on the
+Enterprise plan. Either way, your own servers, database, backups, and operations
+are part of the budget.
+
+## Get started [#get-started]
+
+Explore the
+[whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage),
+then use the [canvas guide](/docs/use-cases/canvas) to see where document state,
+presence, and application tools fit.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard). For
+self-hosting, [contact sales](/contact/sales).

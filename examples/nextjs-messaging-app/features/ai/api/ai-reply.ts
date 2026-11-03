@@ -1,0 +1,267 @@
+import { Liveblocks } from "@liveblocks/node";
+import { streamText } from "ai";
+import { NextRequest, NextResponse } from "next/server";
+import { AI_USER_ID, AI_USER_NAME, getUser, getUsers } from "@/lib/database";
+import { getThreadParticipantIds } from "@/lib/threads";
+import {
+  getActivityFeedId,
+  isDmFeedId,
+  isThreadFeedId,
+  type ActivityItemData,
+} from "@/lib/feeds";
+
+type FeedMessage = { userId: string; content: string };
+type ChatMessage = { role: "user" | "assistant"; content: string };
+
+const ROOM_ID_PREFIX = "liveblocks:examples:nextjs-messaging-app";
+
+const SYSTEM_PROMPT = [
+  "You are a helpful AI teammate in a Slack-like team chat.",
+  "You may be replying in a public channel, a thread, or a direct message.",
+  "Keep replies SHORT and conversational.",
+  "Use only basic markdown: **bold**, *italic*, `inline code`, and fenced code blocks.",
+  "You may mention users with `<@userId>` tokens when relevant.",
+  "",
+  "Known users:",
+  ...getUsers().map((user) => `- ${user.info.name} (<@${user.id}>)`),
+  `- ${AI_USER_NAME} (<@${AI_USER_ID}>)`,
+].join("\n");
+
+export async function POST(request: NextRequest) {
+  if (!process.env.LIVEBLOCKS_SECRET_KEY) {
+    return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
+  }
+
+  if (!process.env.AI_GATEWAY_API_KEY) {
+    return new NextResponse("Missing AI_GATEWAY_API_KEY", { status: 403 });
+  }
+
+  const liveblocks = new Liveblocks({
+    secret: process.env.LIVEBLOCKS_SECRET_KEY,
+    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+  });
+
+  const body: unknown = await request.json();
+  if (!isRecord(body)) {
+    return new NextResponse("Invalid request", { status: 400 });
+  }
+
+  const roomId = typeof body.roomId === "string" ? body.roomId : "";
+  const feedId = typeof body.feedId === "string" ? body.feedId : "";
+  const messages = isFeedMessages(body.messages) ? body.messages : [];
+
+  if (!roomId.startsWith(ROOM_ID_PREFIX) || !feedId) {
+    return new NextResponse("Invalid room or feed", { status: 400 });
+  }
+
+  const isThreadFeed = isThreadFeedId(feedId);
+  const isDmFeed = isDmFeedId(feedId);
+
+  if (!isThreadFeed) {
+    try {
+      await liveblocks.createFeed({
+        roomId,
+        feedId,
+        metadata: isDmFeed ? { type: "dm" } : { name: feedId, type: "channel" },
+      });
+    } catch {}
+  }
+
+  const created = await liveblocks.createFeedMessage({
+    roomId,
+    feedId,
+    data: {
+      userId: AI_USER_ID,
+      content: "",
+      streaming: true,
+    },
+  });
+  const messageId = created.id;
+
+  if (isThreadFeed) {
+    try {
+      const feed = await liveblocks.getFeed({ roomId, feedId });
+      const metadata = getFeedMetadata(feed.metadata);
+      const parsedReplyCount = Number.parseInt(
+        typeof metadata.replyCount === "string" ? metadata.replyCount : "0",
+        10
+      );
+      const replyCount = Number.isNaN(parsedReplyCount) ? 0 : parsedReplyCount;
+      const existingParticipantIds = Array.isArray(metadata.participantIds)
+        ? metadata.participantIds
+        : [];
+
+      await liveblocks.updateFeed({
+        roomId,
+        feedId,
+        metadata: {
+          ...metadata,
+          replyCount: String(replyCount + 1),
+          participantIds: [...new Set([...existingParticipantIds, AI_USER_ID])],
+        },
+      });
+
+      const parentFeedId = metadata.channelId;
+      const parentMessageId = metadata.parentMessageId;
+      if (
+        typeof parentFeedId === "string" &&
+        typeof parentMessageId === "string"
+      ) {
+        await notifyThreadParticipants(liveblocks, roomId, messages, {
+          kind: "activity",
+          type: "thread_reply",
+          fromUserId: AI_USER_ID,
+          feedId,
+          messageId,
+          parentFeedId,
+          parentMessageId,
+        });
+      }
+    } catch {}
+  }
+
+  const update = (data: { content: string; streaming: boolean }) =>
+    liveblocks.updateFeedMessage({
+      roomId,
+      feedId,
+      messageId,
+      data: {
+        userId: AI_USER_ID,
+        content: data.content,
+        streaming: data.streaming,
+      },
+    });
+
+  try {
+    await streamReply(messages, update);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unknown error";
+    await update({
+      content:
+        created.data.content ||
+        `Sorry, something went wrong while generating a reply.\n\n\`${reason}\``,
+      streaming: false,
+    }).catch(() => {});
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
+type UpdateFn = (data: {
+  content: string;
+  streaming: boolean;
+}) => Promise<unknown>;
+
+async function notifyThreadParticipants(
+  liveblocks: Liveblocks,
+  roomId: string,
+  history: FeedMessage[],
+  item: ActivityItemData
+) {
+  const recipients = getThreadParticipantIds(history).filter(
+    (userId) => userId !== AI_USER_ID && getUser(userId) !== undefined
+  );
+
+  await Promise.all(
+    recipients.map(async (userId) => {
+      const feedId = getActivityFeedId(userId);
+      try {
+        await liveblocks.createFeed({
+          roomId,
+          feedId,
+          metadata: { type: "activity" },
+        });
+      } catch {}
+      await liveblocks.createFeedMessage({ roomId, feedId, data: item });
+    })
+  );
+}
+
+async function streamReply(messages: FeedMessage[], update: UpdateFn) {
+  const result = streamText({
+    model: "openai/gpt-5.4-mini",
+    system: SYSTEM_PROMPT,
+    messages: toChatMessages(messages),
+  });
+
+  let content = "";
+  let lastFlush = 0;
+
+  const flush = async (force = false) => {
+    const now = Date.now();
+    if (!force && now - lastFlush < 100) {
+      return;
+    }
+    lastFlush = now;
+    await update({ content, streaming: true });
+  };
+
+  for await (const part of result.fullStream) {
+    if (part.type === "text-delta") {
+      content += part.text;
+      await flush();
+    }
+  }
+
+  await update({ content, streaming: false });
+}
+
+function toChatMessages(messages: FeedMessage[]): ChatMessage[] {
+  return messages.map((message) => {
+    if (message.userId === AI_USER_ID) {
+      return {
+        role: "assistant",
+        content: replaceMentions(message.content),
+      };
+    }
+
+    const author = getUser(message.userId)?.info.name ?? "Unknown";
+    return {
+      role: "user",
+      content: `${author}: ${replaceMentions(message.content)}`,
+    };
+  });
+}
+
+function replaceMentions(content: string) {
+  return content.replace(/<@([^>]+)>/g, (_, userId: string) => {
+    const user = getUser(userId);
+    return user ? `@${user.info.name}` : `@${userId}`;
+  });
+}
+
+function isFeedMessages(value: unknown): value is FeedMessage[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.userId === "string" &&
+        typeof item.content === "string"
+    )
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function getFeedMetadata(value: unknown): Record<string, string | string[]> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const metadata: Record<string, string | string[]> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof item === "string" || isStringArray(item)) {
+      metadata[key] = item;
+    }
+  }
+  return metadata;
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
+}

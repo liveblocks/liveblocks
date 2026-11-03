@@ -1,4 +1,26 @@
-## vNEXT (not yet released)
+## vNEXT
+
+## v3.24.5
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating when receiving replies in
+  connected rooms.
+
+## v3.24.4
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating immediately when marking a
+  thread as read.
+
+## v3.24.3
+
+### `@liveblocks/client`
+
+- Fix `LiveText` reconnect convergence with pending edits, including lost
+  acknowledgements, repeated reconnects, and queued edits. Recovery updates now
+  reach editor integrations instead of being filtered as local echoes.
 
 ## v3.25.0
 

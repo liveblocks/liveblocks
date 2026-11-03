@@ -1,0 +1,112 @@
+---
+meta:
+  title: "Liveblocks vs. Pusher Channels for collaborative apps"
+  parentTitle: "Compare"
+  description:
+    "Compare Liveblocks and Pusher Channels for realtime events and shared
+    documents. Understand persistence, presence, and the application logic you
+    need."
+---
+
+Liveblocks is a realtime collaboration platform that allows you to build
+multiplayer applications where users and agents can work together. It provides a
+sync engine that powers shared documents, text editing, presence, and more.
+Pusher Channels is a hosted pub/sub service that delivers events from your
+server to connected clients over WebSockets.
+
+## Which should you choose? [#which-should-you-choose]
+
+Pusher Channels and Liveblocks solve different problems. Pusher is how your
+server tells clients that something happened, whereas Liveblocks is how people
+edit artifacts together.
+
+Choose Liveblocks when several people work on the same document, canvas, or
+board at once, and their edits need to merge and persist without you writing the
+merge logic. Choose Pusher Channels when your back end already owns the state
+and clients only need to hear about changes, such as a progress bar for a job
+running on your server or a message arriving in a chat room. Some products use
+both: Pusher for server-driven notifications and Liveblocks for the documents
+people edit.
+
+## Compare the responsibilities [#compare-the-responsibilities]
+
+| Area                | Liveblocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Pusher Channels                                                                                                                                                                                                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Core model          | Shared documents and collaboration. <InfoTooltip>Rooms hold documents, presence, and comments. Clients connect to a room and edit the same data. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                            | Channels and events. <InfoTooltip>Your server publishes events to named channels; subscribed clients receive them. <a href="https://pusher.com/docs/channels" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                     |
+| Presence            | Built in, per room. <InfoTooltip>Short-lived per-user state such as cursor position or selection, with no fixed cap on members beyond your plan's connection limits. <a href="/docs/products/sync/presence" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                       | Presence channels, capped at 100 members. <InfoTooltip>Each member carries a small metadata payload; the member list is delivered on subscribe. <a href="https://pusher.com/docs/channels/using_channels/presence-channels" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                       |
+| Persistence         | Shared documents in Storage. <InfoTooltip>A CRDT-based document store. Concurrent edits merge automatically, and data is kept until you delete it. <a href="/docs/products/sync/storage" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                          | None. Events are not stored. Cache channels keep only the latest event. <InfoTooltip>A client that subscribes to a cache channel receives the most recent event, nothing earlier. <a href="https://pusher.com/docs/channels/using_channels/cache-channels" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>        |
+| Conflict resolution | CRDT-based. Concurrent edits to objects, lists, maps, and text merge automatically. <InfoTooltip>Writes to the same single value are last-write-wins. <a href="/docs/guides/how-conflict-resolution-works-in-liveblocks-sync" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                     | None. Events are relayed as published, and your server decides the resulting state.                                                                                                                                                                                                                                                        |
+| Text editing        | Built in, with Tiptap, BlockNote, Lexical, and more. <InfoTooltip>Official packages for popular editors, plus Yjs guides for others. <a href="/docs/products/sync/integrations" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                                   | Not built in. Requires a CRDT library, your own persistence, and Channels to relay the updates.                                                                                                                                                                                                                                            |
+| Ready-made UI       | Cursors, avatar stacks, comments, and notifications. <InfoTooltip>React components you can drop in, plus hooks for building your own. <a href="/docs/api-reference/liveblocks-react-ui#Cursors" className="font-medium text-product-brand">Cursors</a>, <a href="/docs/api-reference/liveblocks-react-ui#AvatarStack" className="font-medium text-product-brand">AvatarStack</a>, <a href="/docs/products/comments" className="font-medium text-product-brand">Comments</a>.</InfoTooltip> | None. Client SDKs deliver events, and you build the UI.                                                                                                                                                                                                                                                                                    |
+| Authentication      | Your server issues access tokens using your existing auth. <InfoTooltip>Works with any auth provider. Tokens grant access to specific rooms. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></InfoTooltip>                                                                                                                                                                                                                         | Your server authorizes each private or presence channel subscription. <InfoTooltip>Public channels need no authorization; private and presence channels call an endpoint on your server. <a href="https://pusher.com/docs/channels/server_api/authorizing-users/" className="font-medium text-product-brand">Learn more.</a></InfoTooltip> |
+| The main question   | Which parts of your app should people edit together?                                                                                                                                                                                                                                                                                                                                                                                                                                       | Which state does your server own, and which clients need to hear when it changes?                                                                                                                                                                                                                                                          |
+
+## Is a cache channel a persistent document? [#is-a-cache-channel-a-persistent-document]
+
+No. A
+[cache channel](https://pusher.com/docs/channels/using_channels/cache-channels)
+hands a new subscriber the most recent event and nothing else. What that event
+means is up to your app. You can publish a full board snapshot as an event, but
+that does not decide how two people's concurrent edits are merged or where the
+source of truth for the board lives.
+
+| Published payload            | Good fit                             | Work your app still owns                                     |
+| ---------------------------- | ------------------------------------ | ------------------------------------------------------------ |
+| Latest processing percentage | A progress bar.                      | Compute the percentage on the server.                        |
+| Full board snapshot          | Refreshing a view from server state. | Persist the board and resolve overlapping writes.            |
+| Individual text operations   | A custom collaborative editor.       | Pick a CRDT, replay missed operations, and store the result. |
+
+Liveblocks covers the third case out of the box: Storage persists the document
+and merges concurrent edits. Pusher Channels fits the first two, where your
+server already owns the state and clients mainly display it.
+
+## How do presence limits affect the design? [#how-do-presence-limits-affect-the-design]
+
+Pusher caps each
+[presence channel](https://pusher.com/docs/channels/using_channels/presence-channels)
+at 100 members and limits the size of each member's metadata. Its
+subscription-counting feature answers a different question: how many subscribers
+a channel has, not who they are.
+
+Liveblocks has plan-specific [limits](/docs/pricing/limits) on simultaneous
+connections per room. When comparing the two, start from the number of people
+you expect in one room or channel at the same time.
+
+## Hosted events vs. shared documents [#hosted-events-vs-shared-documents]
+
+For a server-side job, an event is enough: your back end publishes the new
+progress value and connected clients show it. Pusher Channels is a natural fit
+when the server has already decided the state and clients only display it.
+
+For a shared whiteboard or planning board, clients edit the same data at the
+same time. Liveblocks Storage merges those edits and keeps the document, while
+Comments and Notifications support the review workflow around it. Building the
+same thing on Pusher means adding a CRDT, a database, and the replay logic that
+connects them.
+
+## Pricing and deployment [#pricing-and-deployment]
+
+Pusher Channels is [priced by plan](https://pusher.com/pricing). The free
+[Sandbox](https://pusher.com/channels/pricing) plan includes 200,000 messages
+per day and 100 concurrent connections; the Startup plan is $49 per month for 1
+million messages per day and 500 concurrent connections. One event published to
+50 subscribers counts as 51 messages. If you build shared editing on Channels,
+add the database and sync layer you write to that estimate.
+
+Liveblocks is billed on usage: time people spend collaborating in a room, stored
+data, comments, and so on. Compare the same editing workload on both sides. Your
+[plan's credits](/docs/pricing/plans) apply once across all Liveblocks usage.
+
+Pusher Channels is a hosted service only. Liveblocks offers
+[self-hosting](/docs/platform/data-storage#Self-hosting) as a paid add-on on the
+Enterprise plan; if you take it, your own servers, database, backups, and
+operations are part of the budget.
+
+## Get started [#get-started]
+
+Explore the
+[whiteboard example](/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage)
+to see the editable document that sits behind everyone's updates.
+
+[Start building with Liveblocks for free](https://liveblocks.io/dashboard).
+Follow the [setup guide](/docs/get-started) for your project.
