@@ -34,7 +34,7 @@ export function WhiteboardDoc({
   registerProducer: (producer: SnapshotProducer | null) => void;
 }) {
   const room = useRoom();
-  const { bytes, tldrawLicenseKey } = useApp();
+  const { bytes } = useApp();
   const uploadFile = useUploadFile();
   const editorRef = useRef<Editor | null>(null);
 
@@ -99,7 +99,7 @@ export function WhiteboardDoc({
       <Tldraw
         store={store}
         // Removes the "Made with tldraw" watermark when a license is configured
-        licenseKey={tldrawLicenseKey}
+        licenseKey={process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY}
         shapeUtils={SHAPE_UTILS}
         components={COMPONENTS}
         onMount={(editor) => {

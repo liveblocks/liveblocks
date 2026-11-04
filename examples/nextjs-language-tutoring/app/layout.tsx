@@ -32,13 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="h-dvh overflow-hidden bg-neutral-50 font-sans text-neutral-900 antialiased">
         <Suspense>
-          <Providers
-            googleEnabled={GOOGLE_ENABLED}
-            // Server-only env var, handed to the client here
-            tldrawLicenseKey={process.env.TLDRAW_LICENSE_KEY}
-          >
-            {children}
-          </Providers>
+          <Providers googleEnabled={GOOGLE_ENABLED}>{children}</Providers>
         </Suspense>
       </body>
     </html>
