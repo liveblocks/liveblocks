@@ -6,11 +6,19 @@ import { getUsers } from "@/app/database";
 import { useApp } from "./app-context";
 import { HelpButton } from "./help-button";
 import { Button } from "./ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { UserAvatar } from "./user-avatar";
 
 export function SignIn() {
   const { googleEnabled, signInDemo, signInGoogle } = useApp();
   const [pending, setPending] = useState<string | null>(null);
+  const [demoUser, setDemoUser] = useState(() => getUsers()[0].id);
   const [error, setError] = useState<string | null>(null);
 
   async function run(key: string, action: () => Promise<void>) {
@@ -36,8 +44,8 @@ export function SignIn() {
               Language tutoring
             </h1>
             <p className="mt-1 text-sm text-neutral-500">
-              Private lesson rooms with shared documents, whiteboards, PDFs,
-              and chat.
+              Private lesson rooms with shared documents, whiteboards, PDFs, and
+              chat.
             </p>
           </div>
           <HelpButton />
@@ -58,44 +66,43 @@ export function SignIn() {
             Continue with Google
           </Button>
         ) : (
-          <>
-            <p className="mt-6 text-xs font-medium tracking-wide text-neutral-400 uppercase">
-              Try a demo account
-            </p>
-            <p className="mt-1 text-xs text-neutral-500">
-              Set <code>GOOGLE_CLIENT_ID</code> and{" "}
-              <code>GOOGLE_CLIENT_SECRET</code> to enable Google sign-in.
-            </p>
-            <ul className="mt-3 flex flex-col gap-1" aria-label="Demo accounts">
-              {getUsers().map((user) => (
-                <li key={user.id}>
-                  <button
-                    type="button"
-                    disabled={pending !== null}
-                    aria-busy={pending === user.id || undefined}
-                    onClick={() => run(user.id, () => signInDemo(user.id))}
-                    className="flex w-full items-center gap-3 rounded-md border border-neutral-200 px-3 py-2 text-left text-sm transition hover:border-neutral-300 hover:bg-neutral-50 disabled:cursor-default disabled:opacity-60"
-                  >
-                    <UserAvatar info={user.info} size={32} />
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate font-medium">
-                        {user.info.name}
-                      </span>
+          <form
+            className="mt-6 flex flex-col gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void run(demoUser, () => signInDemo(demoUser));
+            }}
+          >
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="font-medium">Demo account</span>
+              <Select value={demoUser} onValueChange={setDemoUser}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {getUsers().map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      <UserAvatar info={user.info} size={20} />
+                      <span className="truncate">{user.info.name}</span>
                       <span className="truncate text-xs text-neutral-500">
                         {user.id}
                       </span>
-                    </span>
-                    {pending === user.id ? (
-                      <Loader2Icon
-                        className="size-4 shrink-0 animate-spin text-neutral-500"
-                        aria-hidden
-                      />
-                    ) : null}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={pending !== null}
+            >
+              {pending === demoUser ? (
+                <Loader2Icon className="animate-spin" />
+              ) : null}
+              Sign in
+            </Button>
+          </form>
         )}
 
         {error ? (
