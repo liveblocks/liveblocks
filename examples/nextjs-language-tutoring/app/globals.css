@@ -336,9 +336,3 @@
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   isolation: isolate;
 }
-
-/* Remove this and get a license key before making a commercial product
-   https://tldraw.dev/sdk-features/license-key */
-.tl-watermark_SEE-LICENSE {
-  display: none !important;
-}
