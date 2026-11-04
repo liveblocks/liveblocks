@@ -3,6 +3,7 @@ import { isPlainObject } from "./lib/guards";
 import type { Json } from "./lib/Json";
 import type { Relax } from "./lib/Relax";
 import { stringifyOrLog as stringify } from "./lib/stringify";
+import { withAbortSignal } from "./lib/with-abort-signal";
 import type {
   PermissionResources,
   RequiredAccessLevel,
@@ -25,6 +26,8 @@ export type AuthValue =
   | { type: "secret"; token: ParsedAuthToken }
   | { type: "public"; publicApiKey: string };
 
+export class AuthForbiddenError extends StopRetrying {}
+
 type RoomAuthResource = Exclude<PermissionResources, "personal">;
 
 export type AuthRequest = Relax<
@@ -42,7 +45,10 @@ export type AuthRequest = Relax<
 
 export type AuthManager = {
   reset(): void;
-  getAuthValue(requestOptions: AuthRequest): Promise<AuthValue>;
+  getAuthValue(
+    requestOptions: AuthRequest,
+    signal?: AbortSignal
+  ): Promise<AuthValue>;
 };
 
 type AuthEndpoint =
@@ -149,7 +155,7 @@ export function createAuthManager(
 
           // istanbul ignore else
           if (response.error === "forbidden") {
-            throw new StopRetrying(reason);
+            throw new AuthForbiddenError(reason);
           } else {
             throw new Error(reason);
           }
@@ -167,7 +173,11 @@ export function createAuthManager(
     );
   }
 
-  async function getAuthValue(requestOptions: AuthRequest): Promise<AuthValue> {
+  async function getAuthValue(
+    requestOptions: AuthRequest,
+    signal?: AbortSignal
+  ): Promise<AuthValue> {
+    signal?.throwIfAborted();
     if (authentication.type === "public") {
       return { type: "public", publicApiKey: authentication.publicApiKey };
     }
@@ -177,24 +187,25 @@ export function createAuthManager(
       return { type: "secret", token: cachedToken };
     }
 
-    let currentPromise;
+    let currentPromise$;
     const requestKey = getAuthRequestKey(requestOptions);
     if (requestKey !== undefined) {
-      currentPromise = requestPromises.get(requestKey);
-      if (currentPromise === undefined) {
-        currentPromise = makeAuthRequest(requestOptions);
-        requestPromises.set(requestKey, currentPromise);
+      currentPromise$ = requestPromises.get(requestKey);
+      if (currentPromise$ === undefined) {
+        currentPromise$ = makeAuthRequest(requestOptions);
+        requestPromises.set(requestKey, currentPromise$);
       }
     } else {
-      currentPromise = requestPromises.get("liveblocks-user-token");
-      if (currentPromise === undefined) {
-        currentPromise = makeAuthRequest(requestOptions);
-        requestPromises.set("liveblocks-user-token", currentPromise);
+      currentPromise$ = requestPromises.get("liveblocks-user-token");
+      if (currentPromise$ === undefined) {
+        currentPromise$ = makeAuthRequest(requestOptions);
+        requestPromises.set("liveblocks-user-token", currentPromise$);
       }
     }
 
     try {
-      const token = await currentPromise;
+      const token = await withAbortSignal(currentPromise$, signal);
+      signal?.throwIfAborted();
       // Translate "server timestamps" to "local timestamps" in case clocks aren't in sync
       const BUFFER = 30; // Expire tokens 30 seconds sooner than they have to
       const expiresAt =
@@ -208,11 +219,9 @@ export function createAuthManager(
 
       return { type: "secret", token };
     } finally {
-      if (requestKey !== undefined) {
-        requestPromises.delete(requestKey);
-      } else {
-        requestPromises.delete("liveblocks-user-token");
-      }
+      const key = requestKey ?? "liveblocks-user-token";
+      if (requestPromises.get(key) === currentPromise$)
+        requestPromises.delete(key);
     }
   }
 
@@ -353,7 +362,9 @@ async function fetchAuthEndpoint(
       (await res.text()).trim() || "reason not provided in auth response"
     } (${res.status} returned by POST ${endpoint})`;
 
-    if (NON_RETRY_STATUS_CODES.includes(res.status)) {
+    if (res.status === 403 || res.status === 404) {
+      throw new AuthForbiddenError(`Unauthorized: ${reason}`);
+    } else if (NON_RETRY_STATUS_CODES.includes(res.status)) {
       // Throw a special error instance, which the connection manager will
       // recognize and understand that retrying will have no effect
       throw new StopRetrying(`Unauthorized: ${reason}`);

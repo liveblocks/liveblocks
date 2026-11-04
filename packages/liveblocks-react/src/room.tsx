@@ -517,6 +517,7 @@ function RoomProviderInner<
       }
 
       // TODO: Error handling
+      const requestVersion = store.roomCacheVersion;
       const info = await room.getThread(message.threadId);
 
       // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
@@ -550,6 +551,9 @@ function RoomProviderInner<
         .getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
+        case ServerMsgCode.COMMENT_CREATED:
+          break;
+
         case ServerMsgCode.COMMENT_EDITED:
         case ServerMsgCode.THREAD_METADATA_UPDATED:
         case ServerMsgCode.THREAD_UPDATED:
@@ -558,25 +562,22 @@ function RoomProviderInner<
         case ServerMsgCode.COMMENT_DELETED:
         case ServerMsgCode.COMMENT_METADATA_UPDATED:
           // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
-          if (!existingThread) break;
-
-          store.updateThreadifications(
-            [thread],
-            maybeNotification ? [maybeNotification] : [],
-            maybeSubscription ? [maybeSubscription] : []
-          );
+          if (!existingThread) return;
           break;
 
-        case ServerMsgCode.COMMENT_CREATED:
-          store.updateThreadifications(
-            [thread],
-            maybeNotification ? [maybeNotification] : [],
-            maybeSubscription ? [maybeSubscription] : []
-          );
-          break;
         default:
-          break;
+          return;
       }
+
+      store.updateThreadifications(
+        [thread],
+        maybeNotification ? [maybeNotification] : [],
+        maybeSubscription ? [maybeSubscription] : [],
+        [],
+        [],
+        [],
+        requestVersion
+      );
     }
 
     return room.events.comments.subscribe(
@@ -2036,6 +2037,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
       });
 
       const attachmentIds = attachments?.map((attachment) => attachment.id);
+      const requestVersion = store.roomCacheVersion;
 
       client[kInternal].httpClient
         .createThread({
@@ -2048,26 +2050,24 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
           commentMetadata,
           attachmentIds,
         })
-        .then(
-          (thread) => {
-            // Replace the optimistic update by the real thing
-            store.createThread(optimisticId, thread);
-          },
-          (err: Error) =>
-            onMutationFailure(
-              optimisticId,
-              {
-                type: "CREATE_THREAD_ERROR",
-                roomId,
-                threadId,
-                commentId,
-                body,
-                visibility,
-                metadata,
-                commentMetadata,
-              },
-              err
-            )
+        .then((thread) =>
+          store.createThread(optimisticId, thread, requestVersion)
+        )
+        .catch((err: Error) =>
+          onMutationFailure(
+            optimisticId,
+            {
+              type: "CREATE_THREAD_ERROR",
+              roomId,
+              threadId,
+              commentId,
+              body,
+              visibility,
+              metadata,
+              commentMetadata,
+            },
+            err
+          )
         );
 
       return newThread;

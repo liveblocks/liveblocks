@@ -1,27 +1,5 @@
 ## vNEXT
 
-## v3.24.5
-
-### `@liveblocks/react`
-
-- Fix unread inbox notification counts not updating when receiving replies in
-  connected rooms.
-
-## v3.24.4
-
-### `@liveblocks/react`
-
-- Fix unread inbox notification counts not updating immediately when marking a
-  thread as read.
-
-## v3.24.3
-
-### `@liveblocks/client`
-
-- Fix `LiveText` reconnect convergence with pending edits, including lost
-  acknowledgements, repeated reconnects, and queued edits. Recovery updates now
-  reach editor integrations instead of being filtered as local echoes.
-
 ## v3.25.0
 
 ### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
@@ -52,6 +30,33 @@
 - Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`. Use `true`
   or `false` to filter rooms with or without threads, or `"unresolved"` or
   `"resolved"` to filter by thread state.
+
+### `@liveblocks/react`
+
+- Fix inbox notifications remaining visible after room access is revoked or a
+  room is deleted.
+
+## v3.24.5
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating when receiving replies in
+  connected rooms.
+
+## v3.24.4
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating immediately when marking a
+  thread as read.
+
+## v3.24.3
+
+### `@liveblocks/client`
+
+- Fix `LiveText` reconnect convergence with pending edits, including lost
+  acknowledgements, repeated reconnects, and queued edits. Recovery updates now
+  reach editor integrations instead of being filtered as local echoes.
 
 ## v3.24.2
 

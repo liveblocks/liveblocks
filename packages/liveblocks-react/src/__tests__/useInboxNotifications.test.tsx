@@ -557,8 +557,11 @@ describe("useInboxNotifications: polling", () => {
           },
         });
       }),
-      mockGetInboxNotificationsDelta(() => {
-        pollerCount++;
+      mockGetInboxNotificationsDelta(({ request }) => {
+        if (
+          new URL(request.url).searchParams.get("roomAccessesOnly") !== "true"
+        )
+          pollerCount++;
         return HttpResponse.json({
           threads,
           inboxNotifications,
@@ -763,8 +766,11 @@ describe("useInboxNotifications: polling", () => {
           },
         });
       }),
-      mockGetInboxNotificationsDelta(() => {
-        pollerCount++;
+      mockGetInboxNotificationsDelta(({ request }) => {
+        if (
+          new URL(request.url).searchParams.get("roomAccessesOnly") !== "true"
+        )
+          pollerCount++;
         return HttpResponse.json({
           threads,
           inboxNotifications,
@@ -854,8 +860,11 @@ describe("useInboxNotifications: polling", () => {
           },
         });
       }),
-      mockGetInboxNotificationsDelta(() => {
-        pollerCount++;
+      mockGetInboxNotificationsDelta(({ request }) => {
+        if (
+          new URL(request.url).searchParams.get("roomAccessesOnly") !== "true"
+        )
+          pollerCount++;
         return HttpResponse.json({
           threads,
           inboxNotifications,

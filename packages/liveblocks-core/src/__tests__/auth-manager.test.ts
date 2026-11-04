@@ -14,6 +14,7 @@ import {
 import { createApiClient } from "../api-client";
 import { type AuthRequest, createAuthManager } from "../auth-manager";
 import { DEFAULT_BASE_URL } from "../constants";
+import { Promise_withResolvers } from "../lib/controlledPromise";
 import { Permission, type RoomPermissions } from "../permissions";
 import type { ParsedAuthToken } from "../protocol/AuthToken";
 import type {
@@ -46,6 +47,40 @@ function makeAccessToken(permissions: Record<string, RoomPermissions>): string {
 function encodeJwtPart(value: unknown): string {
   return btoa(JSON.stringify(value));
 }
+
+test("cancelled authentication can retry without an older request clearing the retry", async () => {
+  const first = Promise_withResolvers<{ token: string }>();
+  const second = Promise_withResolvers<{ token: string }>();
+  const authenticate = vi
+    .fn<() => Promise<{ token: string }>>()
+    .mockReturnValueOnce(first.promise)
+    .mockReturnValueOnce(second.promise);
+  const authManager = createAuthManager({ authEndpoint: authenticate });
+  const request: AuthRequest = {
+    roomId: "room",
+    resource: "comments",
+    access: "read",
+  };
+  const controller = new AbortController();
+  const interrupted$ = authManager.getAuthValue(request, controller.signal);
+  const shared$ = authManager.getAuthValue(request);
+  const outcome$ = interrupted$.then(
+    () => undefined,
+    (error: unknown) => error
+  );
+  controller.abort();
+  expect(await outcome$).toBe(controller.signal.reason);
+  const retry$ = authManager.getAuthValue(request);
+  expect(authenticate).toHaveBeenCalledTimes(2);
+  const error = new Error("old request failed");
+  first.reject(error);
+  await expect(shared$).rejects.toBe(error);
+  const joined$ = authManager.getAuthValue(request);
+  expect(authenticate).toHaveBeenCalledTimes(2);
+  second.resolve({ token: makeAccessToken({ room: [Permission.RoomWrite] }) });
+  const [retry, joined] = await Promise.all([retry$, joined$]);
+  expect(joined).toEqual(retry);
+});
 
 describe("auth-manager - public api key", () => {
   test("should return public api key", async () => {
