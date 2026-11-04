@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChatPanel } from "@/components/chat/chat-panel";
+import { DocErrorBoundary } from "@/components/docs/doc-error-boundary";
 import { DocumentView } from "@/components/docs/document-view";
 import { useActiveDocId } from "@/components/docs/use-documents";
 import type { LessonRoomDetails } from "@/lib/api";
@@ -28,10 +29,12 @@ export function RoomShell(props: RoomShellProps) {
       <div className="flex min-h-0 flex-1 gap-3">
         <DocSidebar activeDocId={activeDocId} onSelect={setActiveDocId} />
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
-          <DocumentView
-            docId={activeDocId}
-            onDeleted={() => setActiveDocId(null)}
-          />
+          <DocErrorBoundary docId={activeDocId}>
+            <DocumentView
+              docId={activeDocId}
+              onDeleted={() => setActiveDocId(null)}
+            />
+          </DocErrorBoundary>
         </main>
         {chatOpen ? (
           <aside className="flex w-[380px] shrink-0 flex-col overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
