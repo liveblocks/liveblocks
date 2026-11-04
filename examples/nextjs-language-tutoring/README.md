@@ -142,4 +142,5 @@ and `AI_GATEWAY_API_KEY` to enable the `@AI Assistant`.
 The `tldraw` library is provided under the
 [tldraw license](https://github.com/tldraw/tldraw/blob/main/LICENSE.md). To
 remove the "Made with tldraw" watermark, you must
-[purchase a license](https://tldraw.dev/community/license).
+[purchase a license](https://tldraw.dev/community/license) and set it as
+`TLDRAW_LICENSE_KEY`.

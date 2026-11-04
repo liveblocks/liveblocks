@@ -25,6 +25,8 @@ export type AppContextValue = {
   user: CurrentUser | null | undefined;
   // Whether "Sign in with Google" is configured on the server
   googleEnabled: boolean;
+  // tldraw license key (TLDRAW_LICENSE_KEY), undefined when not set
+  tldrawLicenseKey: string | undefined;
   // In gallery preview mode the pane is signed in as a fixed demo user
   isPreview: boolean;
   signInDemo: (userId: string) => Promise<void>;
@@ -42,8 +44,9 @@ const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({
   googleEnabled,
+  tldrawLicenseKey,
   children,
-}: PropsWithChildren<{ googleEnabled: boolean }>) {
+}: PropsWithChildren<{ googleEnabled: boolean; tldrawLicenseKey?: string }>) {
   const searchParams = useSearchParams();
   const params = useMemo(
     () => parseExampleParams(searchParams),
@@ -117,6 +120,7 @@ export function AppProvider({
       params,
       user,
       googleEnabled,
+      tldrawLicenseKey,
       isPreview: previewUser !== null,
       signInDemo,
       signInGoogle,
@@ -129,6 +133,7 @@ export function AppProvider({
       params,
       user,
       googleEnabled,
+      tldrawLicenseKey,
       previewUser,
       signInDemo,
       signInGoogle,

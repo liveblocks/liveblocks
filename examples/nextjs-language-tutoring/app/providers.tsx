@@ -8,10 +8,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function Providers({
   googleEnabled,
+  tldrawLicenseKey,
   children,
-}: PropsWithChildren<{ googleEnabled: boolean }>) {
+}: PropsWithChildren<{ googleEnabled: boolean; tldrawLicenseKey?: string }>) {
   return (
-    <AppProvider googleEnabled={googleEnabled}>
+    <AppProvider
+      googleEnabled={googleEnabled}
+      tldrawLicenseKey={tldrawLicenseKey}
+    >
       <TooltipProvider>
         <LiveblocksProviders>
           <div className="flex h-full min-h-0">
