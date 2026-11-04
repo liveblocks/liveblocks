@@ -1,0 +1,15 @@
+.tiptapTaskItem {
+  display: flex;
+  margin: var(--space-2) 0 var(--space-2) var(--space-8);
+}
+
+.tiptipTaskItemCheckbox {
+  flex: 0 0 auto;
+  margin: var(--space-1) var(--space-6) 0 0;
+  padding-top: 1px;
+  user-select: none;
+}
+
+.tiptipTaskItemContent {
+  flex: 1 1 auto;
+}
