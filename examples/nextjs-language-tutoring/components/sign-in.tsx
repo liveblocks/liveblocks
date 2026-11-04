@@ -19,6 +19,7 @@ export function SignIn() {
   const { googleEnabled, signInDemo, signInGoogle } = useApp();
   const [pending, setPending] = useState<string | null>(null);
   const [demoUser, setDemoUser] = useState(() => getUsers()[0].id);
+  const selected = getUsers().find((user) => user.id === demoUser);
   const [error, setError] = useState<string | null>(null);
 
   async function run(key: string, action: () => Promise<void>) {
@@ -74,19 +75,19 @@ export function SignIn() {
             }}
           >
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium">Demo account</span>
+              <span className="font-medium">Login as a demo user</span>
               <Select value={demoUser} onValueChange={setDemoUser}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
+                {/* Two lines per account, in the trigger as well (it has a
+                    fixed height by default) */}
+                <SelectTrigger className="h-auto! w-full py-1.5">
+                  <SelectValue>
+                    {selected ? <DemoAccount user={selected} /> : null}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {getUsers().map((user) => (
                     <SelectItem key={user.id} value={user.id}>
-                      <UserAvatar info={user.info} size={20} />
-                      <span className="truncate">{user.info.name}</span>
-                      <span className="truncate text-xs text-neutral-500">
-                        {user.id}
-                      </span>
+                      <DemoAccount user={user} />
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -112,6 +113,18 @@ export function SignIn() {
         ) : null}
       </section>
     </main>
+  );
+}
+
+function DemoAccount({ user }: { user: Liveblocks["UserMeta"] }) {
+  return (
+    <>
+      <UserAvatar info={user.info} size={32} />
+      <span className="flex min-w-0 flex-col text-left leading-tight">
+        <span className="truncate font-medium">{user.info.name}</span>
+        <span className="truncate text-xs text-neutral-500">{user.id}</span>
+      </span>
+    </>
   );
 }
 
