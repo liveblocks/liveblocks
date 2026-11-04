@@ -25,6 +25,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { AI_USER } from "@/app/database";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 import {
@@ -328,12 +329,21 @@ function ChatMessage({
     <li className={grouped ? "-mt-2" : undefined}>
       {!grouped ? (
         <div className="mb-1 flex items-center gap-2">
-          {/* Resolving the author suspends; keep it to this one header */}
-          <ClientSideSuspense
-            fallback={<MessageAuthor userId={message.data.userId} />}
-          >
-            <ResolvedMessageAuthor userId={message.data.userId} />
-          </ClientSideSuspense>
+          {message.data.userId === AI_USER.id ? (
+            // The assistant's info is static; no lookup (and no suspense)
+            <MessageAuthor
+              userId={AI_USER.id}
+              info={AI_USER.info}
+              name={AI_USER.info.name}
+            />
+          ) : (
+            // Resolving a person suspends; keep it to this one header
+            <ClientSideSuspense
+              fallback={<MessageAuthor userId={message.data.userId} />}
+            >
+              <ResolvedMessageAuthor userId={message.data.userId} />
+            </ClientSideSuspense>
+          )}
           <time
             dateTime={new Date(message.createdAt).toISOString()}
             className="text-xs text-neutral-400"
