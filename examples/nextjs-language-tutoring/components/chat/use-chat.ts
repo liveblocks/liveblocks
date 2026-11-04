@@ -13,9 +13,7 @@ import { useCallback, useRef } from "react";
 import { useApp } from "@/components/app-context";
 import { mentionsAi } from "@/lib/ai-mention";
 import type { DocumentInfo } from "@/liveblocks.config";
-import { CHAT_FEED_ID } from "./feed";
-
-export { CHAT_FEED_ID };
+import { getChatFeedId } from "./feed";
 
 type SnapshotMessage = Extract<
   Liveblocks["FeedMessageData"],
@@ -47,6 +45,7 @@ export function useChat() {
   const createFeedMessage = useCreateFeedMessage();
   const uploadFile = useUploadFile();
   const ensured = useRef(false);
+  const feedId = getChatFeedId(room.id);
 
   const storeSnapshot = useMutation(
     ({ storage }, id: string, file: LiveFile) => {
@@ -67,12 +66,12 @@ export function useChat() {
   const ensureFeed = useCallback(async () => {
     if (ensured.current) return;
     try {
-      await createFeed(CHAT_FEED_ID, { metadata: { type: "chat" } });
+      await createFeed(feedId, { metadata: { type: "chat" } });
     } catch {
       // Already exists
     }
     ensured.current = true;
-  }, [createFeed]);
+  }, [createFeed, feedId]);
 
   const sendText = useCallback(
     async (content: string, files: File[], ai: AiContext) => {
@@ -96,7 +95,7 @@ export function useChat() {
         content: trimmed,
         ...(attachments.length > 0 ? { attachments } : {}),
       };
-      await createFeedMessage(CHAT_FEED_ID, data);
+      await createFeedMessage(feedId, data);
 
       // Mentioning @AI Assistant hands the message over; it replies in
       // this feed and edits documents from the server. Don't wait for it.
@@ -117,6 +116,7 @@ export function useChat() {
       api,
       createFeedMessage,
       ensureFeed,
+      feedId,
       room.id,
       self,
       storeAttachment,
@@ -156,9 +156,9 @@ export function useChat() {
           ...(payload.page ? { page: payload.page } : {}),
         };
       }
-      await createFeedMessage(CHAT_FEED_ID, data);
+      await createFeedMessage(feedId, data);
     },
-    [createFeedMessage, ensureFeed, self, storeSnapshot, uploadFile]
+    [createFeedMessage, ensureFeed, feedId, self, storeSnapshot, uploadFile]
   );
 
   return { roomId: room.id, sendText, sendSnapshot };

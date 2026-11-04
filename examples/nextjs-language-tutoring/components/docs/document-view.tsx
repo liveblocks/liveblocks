@@ -88,11 +88,19 @@ function Document({
   let body: ReactNode;
   switch (doc.type) {
     case "text":
-      body = <TextDoc doc={doc} registerProducer={registerProducer} />;
+      body = (
+        <TextDoc key={doc.id} doc={doc} registerProducer={registerProducer} />
+      );
       break;
     case "whiteboard":
     case "pdf":
-      body = <WhiteboardDoc doc={doc} registerProducer={registerProducer} />;
+      body = (
+        <WhiteboardDoc
+          key={doc.id}
+          doc={doc}
+          registerProducer={registerProducer}
+        />
+      );
       break;
   }
 

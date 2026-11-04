@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { AI_USER } from "@/app/database";
-import { CHAT_FEED_ID } from "@/components/chat/feed";
+import { getChatFeedId } from "@/components/chat/feed";
 import { getLanguage } from "@/lib/languages";
 import { liveblocks } from "@/lib/liveblocks-server";
 import type { AiAction, DocumentType } from "@/liveblocks.config";
@@ -48,12 +48,13 @@ const FLUSH_INTERVAL_MS = 100;
 
 export async function runAssistant(request: AssistantRequest) {
   const { roomId } = request;
+  const feedId = getChatFeedId(roomId);
   const documents = await listDocuments(roomId);
 
   // The reply is a regular chat message from the AI user that gets updated
   // as the answer streams in and as edits are made.
   await liveblocks
-    .createFeed({ roomId, feedId: CHAT_FEED_ID, metadata: { type: "chat" } })
+    .createFeed({ roomId, feedId: feedId, metadata: { type: "chat" } })
     .catch(() => {
       // Already exists
     });
@@ -62,7 +63,7 @@ export async function runAssistant(request: AssistantRequest) {
     (
       await liveblocks.createFeedMessage({
         roomId,
-        feedId: CHAT_FEED_ID,
+        feedId: feedId,
         data: {
           kind: "text",
           userId: AI_USER.id,
@@ -148,7 +149,7 @@ class StreamingReply {
     return liveblocks
       .updateFeedMessage({
         roomId: this.roomId,
-        feedId: CHAT_FEED_ID,
+        feedId: getChatFeedId(this.roomId),
         messageId: this.messageId,
         data: {
           kind: "text",

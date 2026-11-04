@@ -8,7 +8,7 @@ import {
   Toolbar,
   useLiveblocksExtension,
 } from "@liveblocks/react-tiptap";
-import { useThreads } from "@liveblocks/react/suspense";
+import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
 import { TableKit } from "@tiptap/extension-table";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -128,7 +128,10 @@ export function TextDoc({
               style={{ width: 350 }}
             />
           </div>
-          <Threads editor={editor} docId={doc.id} />
+          {/* Threads load per document; don't blank the editor meanwhile */}
+          <ClientSideSuspense fallback={null}>
+            <Threads editor={editor} docId={doc.id} />
+          </ClientSideSuspense>
         </div>
       </div>
     </div>

@@ -120,9 +120,27 @@ export function useStorageStore({
         return result;
       }
 
-      // Initialize tldraw with records from Storage
-      store.clear();
-      store.put(getRecordsFromStorage(), "initialize");
+      // Initialize tldraw with the records from Storage. Only the document
+      // records are swapped: `store.clear()` would also drop the session
+      // records (instance, camera…) that a mounted editor reads while this
+      // effect re-runs, and crash it.
+      function replaceDocumentRecords(toPut: TLRecord[]) {
+        const ids = new Set(toPut.map((record) => record.id));
+        const toRemove = store
+          .allRecords()
+          .filter(
+            (record) =>
+              store.scopedTypes.document.has(record.typeName) &&
+              !ids.has(record.id)
+          )
+          .map((record) => record.id);
+
+        store.mergeRemoteChanges(() => {
+          if (toRemove.length) store.remove(toRemove);
+          if (toPut.length) store.put(toPut);
+        });
+      }
+      replaceDocumentRecords(getRecordsFromStorage());
 
       // tldraw → Storage
       unsubs.push(
@@ -153,23 +171,7 @@ export function useStorageStore({
       unsubs.push(
         room.subscribe(
           records,
-          () => {
-            const toPut = getRecordsFromStorage();
-            const ids = new Set(toPut.map((record) => record.id));
-            const toRemove = store
-              .allRecords()
-              .filter(
-                (record) =>
-                  store.scopedTypes.document.has(record.typeName) &&
-                  !ids.has(record.id)
-              )
-              .map((record) => record.id);
-
-            store.mergeRemoteChanges(() => {
-              if (toRemove.length) store.remove(toRemove);
-              if (toPut.length) store.put(toPut);
-            });
-          },
+          () => replaceDocumentRecords(getRecordsFromStorage()),
           { isDeep: true }
         )
       );

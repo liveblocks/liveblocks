@@ -2,7 +2,11 @@
 
 // Non-suspense variant so the loading state renders inside the panel
 import { useFeedMessages, useFileUrl } from "@liveblocks/react";
-import { useSelf, useUser } from "@liveblocks/react/suspense";
+import {
+  ClientSideSuspense,
+  useSelf,
+  useUser,
+} from "@liveblocks/react/suspense";
 import {
   ArrowUpRightIcon,
   DownloadIcon,
@@ -31,7 +35,8 @@ import {
 import { cn } from "@/lib/utils";
 import { ChatComposer, type ChatComposerHandle } from "./composer";
 import { SnapshotCard } from "./snapshot-card";
-import { CHAT_FEED_ID, useChat } from "./use-chat";
+import { getChatFeedId } from "./feed";
+import { useChat } from "./use-chat";
 
 type Message = {
   id: string;
@@ -52,10 +57,10 @@ export function ChatPanel({
   activeDocId: string | null;
   onOpenDocument: (docId: string) => void;
 }) {
-  const result = useFeedMessages(CHAT_FEED_ID);
+  const { roomId, sendText } = useChat();
+  const result = useFeedMessages(getChatFeedId(roomId));
   const messages = result.messages ?? [];
   const { isLoading, hasFetchedAll, fetchMore, isFetchingMore } = result;
-  const { sendText } = useChat();
   const listRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<ChatComposerHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -314,9 +319,6 @@ function ChatMessage({
   previous: Message | undefined;
   onOpenDocument: (docId: string) => void;
 }) {
-  const selfId = useSelf((me) => me.id);
-  const { user } = useUser(message.data.userId);
-  const isMine = message.data.userId === selfId;
   const grouped =
     previous !== undefined &&
     previous.data.userId === message.data.userId &&
@@ -326,10 +328,12 @@ function ChatMessage({
     <li className={grouped ? "-mt-2" : undefined}>
       {!grouped ? (
         <div className="mb-1 flex items-center gap-2">
-          <UserAvatar info={user} size={20} />
-          <span className="text-xs font-medium">
-            {isMine ? "You" : (user?.name ?? message.data.userId)}
-          </span>
+          {/* Resolving the author suspends; keep it to this one header */}
+          <ClientSideSuspense
+            fallback={<MessageAuthor userId={message.data.userId} />}
+          >
+            <ResolvedMessageAuthor userId={message.data.userId} />
+          </ClientSideSuspense>
           <time
             dateTime={new Date(message.createdAt).toISOString()}
             className="text-xs text-neutral-400"
@@ -349,6 +353,35 @@ function ChatMessage({
         )}
       </div>
     </li>
+  );
+}
+
+function ResolvedMessageAuthor({ userId }: { userId: string }) {
+  const selfId = useSelf((me) => me.id);
+  const { user } = useUser(userId);
+  return (
+    <MessageAuthor
+      userId={userId}
+      info={user}
+      name={userId === selfId ? "You" : user?.name}
+    />
+  );
+}
+
+function MessageAuthor({
+  userId,
+  info,
+  name,
+}: {
+  userId: string;
+  info?: Liveblocks["UserMeta"]["info"];
+  name?: string;
+}) {
+  return (
+    <>
+      <UserAvatar info={info} size={20} />
+      <span className="text-xs font-medium">{name ?? userId}</span>
+    </>
   );
 }
 
