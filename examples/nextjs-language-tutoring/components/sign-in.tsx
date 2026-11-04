@@ -68,14 +68,16 @@ export function SignIn() {
           </Button>
         ) : (
           <form
-            className="mt-6 flex flex-col gap-3"
+            className="mt-4 flex flex-col gap-3"
             onSubmit={(event) => {
               event.preventDefault();
               void run(demoUser, () => signInDemo(demoUser));
             }}
           >
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium">Login as a demo user</span>
+              <span className="font-medium opacity-70">
+                Login as a demo user
+              </span>
               <Select value={demoUser} onValueChange={setDemoUser}>
                 {/* Two lines per account, in the trigger as well (it has a
                     fixed height by default) */}
