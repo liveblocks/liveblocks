@@ -20,28 +20,8 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build an online language tutoring tool, in the style
-of Preply, with [Liveblocks](https://liveblocks.io) and
-[Next.js](https://nextjs.org/). A tutor creates a lesson room and invites a
-student with a link; the room is their permanent shared space. Inside it they
-can create as many documents as they like: realtime text documents built with
-[Liveblocks Text Editor](https://liveblocks.io/docs/products/text-editor) and
-[Tiptap](https://tiptap.dev/) (with
-[Comments](https://liveblocks.io/docs/products/comments) threads and tables),
-collaborative [tldraw](https://tldraw.dev/) whiteboards synced through
-[Storage](https://liveblocks.io/docs/products/sync/storage), and PDFs uploaded
-with [Files](https://liveblocks.io/docs/products/sync/files) that everyone can
-annotate together on a tldraw canvas. A chat panel built with
-[Feeds](https://liveblocks.io/docs/products/sync/feeds) sits alongside each
-room, and any document page can be sent into the chat as a snapshot that stays
-frozen in that state. Files dropped into the chat can be downloaded by everyone
-in the room. Mentioning `@AI Assistant` in the chat brings in an assistant,
-built with the [Vercel AI SDK](https://ai-sdk.dev/), that edits the documents
-directly: it creates documents for a lesson, adds conjugation tables and
-translations to text documents, and draws on whiteboards and PDFs, showing up in
-Presence while it works. Sign-in uses
-[better-auth](https://www.better-auth.com/) with Google, falling back to demo
-accounts when Google isn't configured.
+This example shows how to build an online language tutoring tool with [Liveblocks](https://liveblocks.io) and
+[Next.js](https://nextjs.org/). Tutors and students can read and edit PDFs, documents, and whiteboards together. In the chat you can talk or ask an AI assistant to make changes.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/nextjs-language-tutoring.png" width="536" alt="Language Tutoring" />
 
