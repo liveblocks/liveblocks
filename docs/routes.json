@@ -831,11 +831,7 @@
         "path": "/pricing/billing"
       },
       {
-        "title": "Fair use guidelines",
-        "path": "/pricing/limits/fair-use-guidelines"
-      },
-      {
-        "title": "Pricing FAQs",
+        "title": "FAQs",
         "path": "/pricing/faqs"
       }
     ]
