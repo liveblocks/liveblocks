@@ -3702,6 +3702,80 @@ describe("client", () => {
     });
   });
 
+  describe("mark inbox notification as read", () => {
+    test("should mark the specified inbox notification as read", async () => {
+      const inboxNotificationId = "in_123";
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/inbox-notifications/:inboxNotificationId/read`,
+          async ({ params, request }) => {
+            expect(params.inboxNotificationId).toBe(inboxNotificationId);
+            expect(request.headers.get("Authorization")).toBe("Bearer sk_xxx");
+            expect(await request.text()).toBe("");
+            return HttpResponse.json({});
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.markInboxNotificationAsRead({ inboxNotificationId })
+      ).resolves.toBeUndefined();
+    });
+
+    test("should throw a LiveblocksError when the inbox notification is not found", async () => {
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/inbox-notifications/:inboxNotificationId/read`,
+          () => {
+            return HttpResponse.json(
+              {
+                error: "RESOURCE_NOT_FOUND",
+                message: "Inbox notification not found",
+              },
+              { status: 404 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.markInboxNotificationAsRead({ inboxNotificationId: "in_123" })
+      ).rejects.toMatchObject({
+        name: "LiveblocksError",
+        status: 404,
+        message: "Inbox notification not found",
+      });
+    });
+
+    test("should support aborting the request", async () => {
+      const abortController = new AbortController();
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/inbox-notifications/:inboxNotificationId/read`,
+          () => {
+            abortController.abort();
+            return HttpResponse.json({});
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.markInboxNotificationAsRead(
+          { inboxNotificationId: "in_123" },
+          { signal: abortController.signal }
+        )
+      ).rejects.toMatchObject({ name: "AbortError" });
+    });
+  });
+
   describe("delete user's inbox notification", () => {
     test("should delete user's inbox notification", async () => {
       const userId = "user1";

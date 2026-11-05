@@ -27,6 +27,7 @@
 
 ### `@liveblocks/node`
 
+- Add `markInboxNotificationAsRead()` method.
 - Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`. Use `true`
   or `false` to filter rooms with or without threads, or `"unresolved"` or
   `"resolved"` to filter by thread state.

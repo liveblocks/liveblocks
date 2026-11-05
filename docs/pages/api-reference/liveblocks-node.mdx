@@ -3320,6 +3320,19 @@ console.log(inboxNotifications[0]);
 An inbox notification can have up to 50 activities, if you exceed this number, a
 new inbox notification will be created.
 
+#### Liveblocks.markInboxNotificationAsRead [#post-inbox-notifications-inboxNotificationId-read]
+
+Marks an inbox notification as read. This is a wrapper around the
+[Mark Inbox Notification as Read API](/docs/api-reference/rest-api-endpoints#post-inbox-notifications-inboxNotificationId-read).
+
+```ts
+await liveblocks.markInboxNotificationAsRead({
+  inboxNotificationId: "in_3dH7sF3...",
+});
+```
+
+This sets `readAt` to the current server time without removing any activities.
+
 #### Liveblocks.deleteInboxNotification [#delete-users-userId-inboxNotifications-inboxNotificationId]
 
 Deletes a user’s inbox notification. This is a wrapper around the
