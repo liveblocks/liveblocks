@@ -3,8 +3,8 @@ meta:
   title: "Plans"
   parentTitle: "Pricing"
   description:
-    "Compare the Liveblocks Free, Pro, Team, and Enterprise plans: prices,
-    included credits and allowances, metered rates, and what each plan includes."
+    "Compare the Liveblocks Pro, Team, and Enterprise plans, and the Free plan:
+    prices, included credits, metered rates, plan inclusions, and plan limits."
 ---
 
 Liveblocks provides the realtime infrastructure to power collaborative
@@ -13,35 +13,106 @@ experiences for human and agentic users.
 Pricing is usage-based, metered on the infrastructure your app actually uses,
 like collaboration time, storage, comments, and notifications. Pro and Team
 include a monthly credit allowance that your usage draws from, so your cost
-aligns with how your app uses Liveblocks. Free includes fixed monthly usage
-allowances instead.
+aligns with how your app uses Liveblocks. The [Free plan](#Free-plan) includes
+fixed monthly usage allowances instead.
 
-Four plans scale from prototype to production: Free, Pro, Team, and Enterprise.
+## Comparison
 
-## Compare plans
+|                      | Pro                                                                                                      | Team                                                                                                                  | Enterprise                                                 |
+| -------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| **Description**      | Developers shipping collaborative features.                                                              | Teams shipping collaborative features at scale.                                                                       | Organizations with premium security and partnership needs. |
+| **Base price**       | <Limits.ProMonthlyPrice /> per month, or <Limits.ProAnnualPricePerMonth /> per month with annual billing | <a href="/docs/pricing/billing#Team-credit-packages">from <Limits.TeamMonthlyPriceForTier tier={600} /> per month</a> | Custom                                                     |
+| **Included credits** | <Limits.ProMonthlyCredits /> per month                                                                   | <a href="/docs/pricing/billing#Team-credit-packages">from <Limits.TeamAnnualCredits tier={600} /> per month</a>       | Custom                                                     |
 
-|                      | [Free](#Free)                                   | [Pro](#Pro)                                 | [Team](#Team)                                                                                                         | [Enterprise](#Enterprise)                                  |
-| -------------------- | ----------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| **Best for**         | Personal development, prototyping, and testing. | Developers shipping collaborative features. | Teams shipping collaborative features at scale.                                                                       | Organizations with premium security and partnership needs. |
-| **Monthly base**     | $0                                              | <Limits.ProMonthlyPrice /> per month        | <a href="/docs/pricing/billing#Team-credit-packages">from <Limits.TeamMonthlyPriceForTier tier={600} /> per month</a> | Custom                                                     |
-| **Included credits** | [Monthly allowances](#Free-monthly-allowances)  | <Limits.ProMonthlyCredits />                | <a href="/docs/pricing/billing#Team-credit-packages">from <Limits.TeamAnnualCredits tier={600} /></a>                 | Custom                                                     |
-| **Annual billing**   | —                                               | <Limits.ProAnnualPricePerMonth /> per month | from <Limits.TeamAnnualPricePerMonth tier={600} /> per month                                                          | Custom                                                     |
-
-Annual billing gives you two months free. See
-[Billing](/docs/pricing/billing#Annual-billing) for details.
-
-## Credits and Free allowances
-
-Pro and Team include a monthly credit allowance that covers your metered usage
-first. Credits are denominated in US dollars and reset at the start of each
-billing cycle. Usage above your credits is billed at the
-[metered rates](#Metered-usage) below. Team offers several
+Credits are denominated in US dollars, cover your
+[metered usage](#Metered-usage) first, and reset at the start of each billing
+cycle. Team offers several
 [credit packages](/docs/pricing/billing#Team-credit-packages) that include more
-credit value than they cost. Enterprise plans include a custom credit allowance
-negotiated for your workload.
+credit value than they cost, and annual billing gives you two months free. See
+[Billing](/docs/pricing/billing) for details, or [contact sales](/contact/sales)
+for Enterprise pricing.
 
-The Free plan doesn't use credits. Instead, it includes fixed monthly usage
-allowances for each metered unit.
+## Metered usage
+
+Metered usage is billed per unit, only for what you actually use. Your monthly
+credits cover this usage first, so you only pay for anything above them. The
+same rates apply on Pro and Team; Enterprise contracts may include volume
+discounts or custom allocations.
+
+| Metric                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Pro                                          | Team                                         | Enterprise |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------------- | ---------- |
+| <LimitLabel tooltip={<>Cumulative time spent by two or more people or agents actively together in the same room, measured in seconds. Solo sessions cost $0. A user counts as connected when they have an open connection to a room. Metering pauses when a room is inactive for <Limits.RoomInactivityTimeout />. <a href="/docs/pricing/faqs#What-counts-as-a-realtime-collaboration-minute" className="font-medium text-product-brand">Learn more.</a></>}>Realtime collaboration minutes</LimitLabel> | <Limits.RealtimeCollaborationMinutesPrice /> | <Limits.RealtimeCollaborationMinutesPrice /> | Custom     |
+| <LimitLabel tooltip="Each change written to stored data, billed per million updates.">Realtime data storage updates</LimitLabel>                                                                                                                                                                                                                                                                                                                                                                          | <Limits.RealtimeDataStorageUpdatesPrice />   | <Limits.RealtimeDataStorageUpdatesPrice />   | Custom     |
+| <LimitLabel tooltip="Total data kept in storage, billed per GB.">Realtime data stored</LimitLabel>                                                                                                                                                                                                                                                                                                                                                                                                        | <Limits.RealtimeDataStoredPrice />           | <Limits.RealtimeDataStoredPrice />           | Custom     |
+| <LimitLabel tooltip="Number of net new comments created.">Comments created</LimitLabel>                                                                                                                                                                                                                                                                                                                                                                                                                   | <Limits.CommentsCreatedPrice />              | <Limits.CommentsCreatedPrice />              | Custom     |
+| <LimitLabel tooltip="Notifications you trigger from your own code. Notifications automatically triggered from collaborative features like comment thread updates and @ mentions are free and unlimited.">Monthly custom notifications</LimitLabel>                                                                                                                                                                                                                                                        | <Limits.CustomNotificationsPrice />          | <Limits.CustomNotificationsPrice />          | Custom     |
+| <LimitLabel tooltip="Total amount of files stored, such as comment attachments.">File storage</LimitLabel>                                                                                                                                                                                                                                                                                                                                                                                                | <Limits.FileStoragePrice />                  | <Limits.FileStoragePrice />                  | Custom     |
+
+## Plan inclusions
+
+Every plan includes the full platform: Sync, Comments, Notifications, the
+dashboard, SDKs, and APIs. The amounts below are included in each plan; where an
+overage rate is shown, you can go beyond the included amount at that rate.
+
+| Item                                                                                                                                                                                                                                                                              | Pro                                 | Team                                                                             | Enterprise                                                                                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| <LimitLabel tooltip={<>Dashboard members with Owner or Member role. They can configure projects, roll keys, and more. <a href="/docs/platform/account-management/manage-team-members" className="font-medium text-product-brand">Learn more.</a></>}>Dashboard seats</LimitLabel> | <Limits.ProTeamMembersPerAccount /> | <Limits.TeamTeamMembersPerAccount />, then <Limits.DashboardSeatsOveragePrice /> | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxTeamMembersPerAccount /></>}><Limits.EnterpriseTeamMembersPerAccount /></LimitHint> |
+| <LimitLabel tooltip={<>Separate environments for organizing your Liveblocks integration. <a href="/docs/platform/projects" className="font-medium text-product-brand">Learn more.</a></>}>Projects</LimitLabel>                                                                   | <Limits.ProProjectsIncluded />      | <Limits.TeamProjectsIncluded />                                                  | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxProjects /></>}><Limits.EnterpriseProjectsIncluded /></LimitHint>                   |
+| <LimitLabel tooltip="Environments available in each project.">Project environments</LimitLabel>                                                                                                                                                                                   | <Limits.ProEnvironments />          | <Limits.TeamEnvironments />                                                      | <Limits.EnterpriseEnvironments />                                                                                                    |
+| <LimitLabel tooltip="APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.">Version history</LimitLabel>                                                                                                                    | <Limits.ProVersionHistory />        | <Limits.TeamVersionHistory />                                                    | <Limits.EnterpriseVersionHistory />                                                                                                  |
+| <LimitLabel tooltip="How long activity and audit events are retained.">Event log retention</LimitLabel>                                                                                                                                                                           | <Limits.ProEventLogRetention />     | <Limits.TeamEventLogRetention />                                                 | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxEventLogRetention /></>}><Limits.EnterpriseEventLogRetention /></LimitHint>         |
+| <LimitLabel tooltip="HIPAA Business Associate Agreement, billed annually on Team.">HIPAA BAA</LimitLabel>                                                                                                                                                                         | —                                   | <Limits.HipaaBaaPricePerMonth /> per month add-on                                | Included                                                                                                                             |
+| Uptime SLA                                                                                                                                                                                                                                                                        | —                                   | —                                                                                | <Limits.EnterpriseUptimeSla />                                                                                                       |
+
+For the full feature comparison, including security, compliance, and support
+features, see the [pricing page](/pricing#collaboration-features).
+
+## Plan limits
+
+Each plan has non-metered limits that protect your account and your costs. They
+are not billed; they define what's included before you need to upgrade.
+Liveblocks emails your account owners and shows a dashboard banner as you
+approach one. For what happens when you reach a limit, see the FAQs:
+
+- [What happens when limits are reached?](/docs/pricing/faqs#What-happens-when-limits-are-reached)
+- [What happens when I run out of Liveblocks credits?](/docs/pricing/faqs#What-happens-when-I-run-out-of-Liveblocks-credits)
+- [What happens when I reach the monthly active room limit?](/docs/pricing/faqs#What-happens-when-I-reach-the-monthly-active-room-limit)
+
+| Metric                                                                                                                                                                                                                                                                                                          | Pro                                               | Team                                               | Enterprise                                                                                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <LimitLabel tooltip={<>The number of users who used Liveblocks features in a given month. <a href="/docs/pricing/faqs#What-is-a-monthly-active-user" className="font-medium text-product-brand">Learn more.</a></>}>Monthly active users</LimitLabel>                                                           | <Limits.ProMaxMau />                              | <Limits.TeamMaxMau />                              | <Limits.EnterpriseMaxMau />                                                                                                                                      |
+| <LimitLabel tooltip={<>The number of rooms used in a given month. <a href="/docs/pricing/faqs#What-is-a-monthly-active-room" className="font-medium text-product-brand">Learn more.</a></>}>Monthly active rooms</LimitLabel>                                                                                   | <Limits.ProComparePlansMonthlyActiveRoomsLabel /> | <Limits.TeamComparePlansMonthlyActiveRoomsLabel /> | <Limits.EnterpriseComparePlansMonthlyActiveRoomsLabel />                                                                                                         |
+| <LimitLabel tooltip={<>Users connected to the same room at the same time. <a href="/docs/pricing/faqs#What's-a-simultaneous-connection-per-room" className="font-medium text-product-brand">Learn more.</a></>}>Simultaneous connections per room</LimitLabel>                                                  | <Limits.ProMaxConnectionsPerRoom />               | <Limits.TeamMaxConnectionsPerRoom />               | <Limits.EnterpriseMaxConnectionsPerRoom />                                                                                                                       |
+| <LimitLabel tooltip={<>Users connected to rooms in the same project at the same time. <a href="/docs/pricing/faqs#What's-a-simultaneous-connection-per-project" className="font-medium text-product-brand">Learn more.</a></>}>Simultaneous connections per project</LimitLabel>                                | <Limits.ProMaxConnectionsPerProject />            | <Limits.TeamMaxConnectionsPerProject />            | <Limits.EnterpriseMaxConnectionsPerProject />                                                                                                                    |
+| <LimitLabel tooltip="Average number of simultaneous connections per monthly active user.">Average connections per user</LimitLabel>                                                                                                                                                                             | <Limits.ProAvgConnectionsPerMau />                | <Limits.TeamAvgConnectionsPerMau />                | <Limits.EnterpriseAvgConnectionsPerMau />                                                                                                                        |
+| <LimitLabel tooltip="Total hours rooms stay active across your project each month.">Active room hours per month</LimitLabel>                                                                                                                                                                                    | <Limits.ProActiveRoomHoursPerMonth />             | <Limits.TeamActiveRoomHoursPerMonth />             | <Limits.EnterpriseActiveRoomHoursPerMonth />                                                                                                                     |
+| <LimitLabel tooltip={<>Public key only recommended for prototyping. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></>}>Monthly anonymous connections</LimitLabel>                                                                                      | <Limits.ProMaxAnonymousConnections />             | <Limits.TeamMaxAnonymousConnections />             | <Limits.EnterpriseMaxAnonymousConnections />                                                                                                                     |
+| <LimitLabel tooltip="Maximum storage data allowed in a single room.">Realtime data stored per room</LimitLabel>                                                                                                                                                                                                 | <Limits.ProMaxStorageSizePerRoom />               | <Limits.TeamMaxStorageSizePerRoom />               | <Limits.EnterpriseMaxStorageSizePerRoom />                                                                                                                       |
+| <LimitLabel tooltip="Total comments stored across all rooms.">Comments stored</LimitLabel>                                                                                                                                                                                                                      | <Limits.ProMaxComments />                         | <Limits.TeamMaxComments />                         | <Limits.EnterpriseMaxComments />                                                                                                                                 |
+| <LimitLabel tooltip="Notifications automatically triggered from collaborative features like comment thread updates and @ mentions.">Monthly collaboration notifications</LimitLabel>                                                                                                                            | <Limits.ProMaxCollaborationNotifications />       | <Limits.TeamMaxCollaborationNotifications />       | <Limits.EnterpriseMaxCollaborationNotifications />                                                                                                               |
+| <LimitLabel tooltip="Maximum size for a single file upload, such as a LiveFile or comment attachment.">Max file upload size</LimitLabel>                                                                                                                                                                        | <Limits.ProMaxFileUploadSize />                   | <Limits.TeamMaxFileUploadSize />                   | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxFileUploadSize /></>}><Limits.EnterpriseFileUploadSize /></LimitHint>                                           |
+| <LimitLabel tooltip={<>The number of webhook events sent to your webhook endpoints each month. <a href="/docs/platform/webhooks" className="font-medium text-product-brand">Learn more.</a></>}>Monthly webhook events</LimitLabel>                                                                             | <Limits.ProMaxWebhookEventsPerMonth />            | <Limits.TeamMaxWebhookEventsPerMonth />            | <Limits.EnterpriseMaxWebhookEventsPerMonth />                                                                                                                    |
+| <LimitLabel tooltip={<>The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Storage) events are sent to your webhook endpoint. <a href="/docs/api-reference/webhook-events#StorageUpdatedEvent" className="font-medium text-product-brand">Learn more.</a></>}>Webhook event frequency</LimitLabel> | <Limits.ProStorageUpdatedWebhookEventThrottle />  | <Limits.TeamStorageUpdatedWebhookEventThrottle />  | <LimitHint tooltip={<>Down to <Limits.EnterpriseMaxStorageUpdatedWebhookEventThrottle /></>}><Limits.EnterpriseStorageUpdatedWebhookEventThrottle /></LimitHint> |
+
+Usage is also subject to the
+[fair use guidelines](/docs/pricing/limits/fair-use-guidelines). Limits on the
+size of individual values, such as `roomId` or `LiveObject`, apply on every plan
+and are listed under [technical limits](/docs/platform/technical-limits).
+
+## Free plan
+
+The Free plan is for personal development, prototyping, and testing. It includes
+the full platform at no cost and requires no credit card. It doesn't use
+credits: instead, each metered unit has a fixed monthly allowance. The "Powered
+by Liveblocks" badge is displayed in your application, and usage is limited to
+non-commercial, personal projects per the
+[fair use guidelines](/docs/pricing/limits/fair-use-guidelines#Commercial-usage).
+
+|                      | Free                                            |
+| -------------------- | ----------------------------------------------- |
+| **Description**      | Personal development, prototyping, and testing. |
+| **Base price**       | $0                                              |
+| **Included credits** | [Monthly allowances](#Free-monthly-allowances)  |
 
 ### Free monthly allowances
 
@@ -52,124 +123,39 @@ allowances reset at the start of the next calendar month or you
 | Metric                                                                                                                                                           | Included amount                                     |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | <LimitLabel tooltip="When 2+ people or agents are in the same room, each user-minute counts. Solo sessions cost $0.">Realtime collaboration minutes</LimitLabel> | <Limits.FreeRealtimeCollaborationMinutesIncluded /> |
-| <LimitLabel tooltip="Each change written to stored data, billed per million updates.">Realtime data storage updates</LimitLabel>                                 | <Limits.FreeRealtimeDataStorageUpdatesIncluded />   |
-| <LimitLabel tooltip="Total data kept in storage, billed per GB.">Realtime data stored</LimitLabel>                                                               | <Limits.FreeRealtimeDataStoredIncluded />           |
+| <LimitLabel tooltip="Each change written to stored data.">Realtime data storage updates</LimitLabel>                                                             | <Limits.FreeRealtimeDataStorageUpdatesIncluded />   |
+| <LimitLabel tooltip="Total data kept in storage.">Realtime data stored</LimitLabel>                                                                              | <Limits.FreeRealtimeDataStoredIncluded />           |
 | <LimitLabel tooltip="Number of net new comments created.">Comments created</LimitLabel>                                                                          | <Limits.FreeCommentsCreatedIncluded />              |
 | <LimitLabel tooltip="Notifications you trigger from your own code.">Monthly custom notifications</LimitLabel>                                                    | <Limits.FreeCustomNotificationsCompareIncluded />   |
 | <LimitLabel tooltip="Total amount of files stored, such as comment attachments.">File storage</LimitLabel>                                                       | <Limits.FreeMaxFileStorage />                       |
 
-## Metered usage
+### Free plan limits
 
-Metered usage is billed per unit, only for what you actually use. The same rates
-apply on Pro and Team: your monthly credits cover this usage first, so you only
-pay for anything above them. On Free, each metered unit has a fixed
-[monthly allowance](#Free-monthly-allowances) instead. Enterprise contracts may
-include volume discounts or custom allocations.
+On Free, limits are hard caps: when you reach one, the affected feature pauses
+until limits reset at the start of the next calendar month, or you
+[upgrade](/dashboard/billing) to a paid plan.
 
-<Table columns={["22%", "58%", "20%"]}>
+| Metric                                                                                                                                                                                                                                                                                                          | Free                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| <LimitLabel tooltip={<>The number of users who used Liveblocks features in a given month. <a href="/docs/pricing/faqs#What-is-a-monthly-active-user" className="font-medium text-product-brand">Learn more.</a></>}>Monthly active users</LimitLabel>                                                           | <Limits.FreeMaxMau />                              |
+| <LimitLabel tooltip={<>The number of rooms used in a given month. <a href="/docs/pricing/faqs#What-is-a-monthly-active-room" className="font-medium text-product-brand">Learn more.</a></>}>Monthly active rooms</LimitLabel>                                                                                   | <Limits.FreeComparePlansMonthlyActiveRoomsLabel /> |
+| <LimitLabel tooltip={<>Users connected to the same room at the same time. <a href="/docs/pricing/faqs#What's-a-simultaneous-connection-per-room" className="font-medium text-product-brand">Learn more.</a></>}>Simultaneous connections per room</LimitLabel>                                                  | <Limits.FreeMaxConnectionsPerRoom />               |
+| <LimitLabel tooltip={<>Users connected to rooms in the same project at the same time. <a href="/docs/pricing/faqs#What's-a-simultaneous-connection-per-project" className="font-medium text-product-brand">Learn more.</a></>}>Simultaneous connections per project</LimitLabel>                                | <Limits.FreeMaxConnectionsPerProject />            |
+| <LimitLabel tooltip="Average number of simultaneous connections per monthly active user.">Average connections per user</LimitLabel>                                                                                                                                                                             | <Limits.FreeAvgConnectionsPerMau />                |
+| <LimitLabel tooltip="Total hours rooms stay active across your project each month.">Active room hours per month</LimitLabel>                                                                                                                                                                                    | <Limits.FreeActiveRoomHoursPerMonth />             |
+| <LimitLabel tooltip={<>Public key only recommended for prototyping. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></>}>Monthly anonymous connections</LimitLabel>                                                                                      | <Limits.FreeMaxAnonymousConnections />             |
+| <LimitLabel tooltip={<>Separate environments for organizing your Liveblocks integration. <a href="/docs/platform/projects" className="font-medium text-product-brand">Learn more.</a></>}>Projects</LimitLabel>                                                                                                 | <Limits.FreeProjectsIncluded />                    |
+| <LimitLabel tooltip="Environments available in each project.">Project environments</LimitLabel>                                                                                                                                                                                                                 | <Limits.FreeEnvironments />                        |
+| <LimitLabel tooltip={<>Dashboard members with Owner or Member role. They can configure projects, roll keys, and more. <a href="/docs/platform/account-management/manage-team-members" className="font-medium text-product-brand">Learn more.</a></>}>Dashboard seats</LimitLabel>                               | <Limits.FreeTeamMembersPerAccount />               |
+| <LimitLabel tooltip="Maximum storage data allowed in a single room.">Realtime data stored per room</LimitLabel>                                                                                                                                                                                                 | <Limits.FreeMaxStorageSizePerRoom />               |
+| <LimitLabel tooltip="Total comments stored across all rooms.">Comments stored</LimitLabel>                                                                                                                                                                                                                      | <Limits.FreeMaxComments />                         |
+| <LimitLabel tooltip="Notifications automatically triggered from collaborative features like comment thread updates and @ mentions.">Monthly collaboration notifications</LimitLabel>                                                                                                                            | <Limits.FreeMaxCollaborationNotifications />       |
+| <LimitLabel tooltip="Maximum size for a single file upload, such as a LiveFile or comment attachment.">Max file upload size</LimitLabel>                                                                                                                                                                        | <Limits.FreeMaxFileUploadSize />                   |
+| <LimitLabel tooltip={<>The number of webhook events sent to your webhook endpoints each month. <a href="/docs/platform/webhooks" className="font-medium text-product-brand">Learn more.</a></>}>Monthly webhook events</LimitLabel>                                                                             | <Limits.FreeMaxWebhookEventsPerMonth />            |
+| <LimitLabel tooltip={<>The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Storage) events are sent to your webhook endpoint. <a href="/docs/api-reference/webhook-events#StorageUpdatedEvent" className="font-medium text-product-brand">Learn more.</a></>}>Webhook event frequency</LimitLabel> | <Limits.FreeStorageUpdatedWebhookEventThrottle />  |
+| <LimitLabel tooltip="APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.">Version history</LimitLabel>                                                                                                                                                  | <Limits.FreeVersionHistory />                      |
+| <LimitLabel tooltip="How long activity and audit events are retained.">Event log retention</LimitLabel>                                                                                                                                                                                                         | <Limits.FreeEventLogRetention />                   |
 
-| Metric                         | Description                                                                                                                                                                                                                                                                                                                                                                                                                          | Rate                                         |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
-| Realtime collaboration minutes | <LimitLabel tooltip={<>Measured in cumulative seconds. Solo sessions cost $0. If only one person or agent is in a room, it is not billed.<br /><br />A user counts as connected when they have an open connection to a room.<br /><br />Metering pauses when a room is inactive for <Limits.RoomInactivityTimeout />.</>}>Cumulative time spent by two or more people or agents are actively together in the same room.</LimitLabel> | <Limits.RealtimeCollaborationMinutesPrice /> |
-| Realtime data storage updates  | Each change written to stored data, billed per million updates.                                                                                                                                                                                                                                                                                                                                                                      | <Limits.RealtimeDataStorageUpdatesPrice />   |
-| Realtime data stored           | Total data kept in storage, billed per GB.                                                                                                                                                                                                                                                                                                                                                                                           | <Limits.RealtimeDataStoredPrice />           |
-| Comments created               | Number of net new comments created.                                                                                                                                                                                                                                                                                                                                                                                                  | <Limits.CommentsCreatedPrice />              |
-| Monthly custom notifications   | <LimitLabel tooltip="Notifications automatically triggered from collaborative features like comment thread updates and @ mentions are free and unlimited.">Notifications you trigger from your own code.</LimitLabel>                                                                                                                                                                                                                | <Limits.CustomNotificationsPrice />          |
-| File storage                   | Total amount of files stored, such as comment attachments.                                                                                                                                                                                                                                                                                                                                                                           | <Limits.FileStoragePrice />                  |
-
-</Table>
-
-Notifications automatically triggered from collaborative features like comment
-thread updates and @ mentions are free and unlimited on every plan.
-
-## Plan features
-
-Every plan includes the full platform: Sync, Comments, Notifications, the
-dashboard, SDKs, and APIs. What changes between plans is your monthly credit
-allowance, seat count, and the security and support features you get.
-
-|                                                                           | Free | Pro      | Team                                              | Enterprise                     |
-| ------------------------------------------------------------------------- | ---- | -------- | ------------------------------------------------- | ------------------------------ |
-| Remove "Powered by Liveblocks" badge                                      | —    | Included | Included                                          | Included                       |
-| Multi-region hosting                                                      | —    | —        | —                                                 | Included                       |
-| SOC 2 report                                                              | —    | —        | Annual billing only                               | Included                       |
-| [SAML SSO](/docs/platform/account-management/saml)                        | —    | —        | Included                                          | Included                       |
-| [SCIM / directory sync](/docs/platform/account-management/directory-sync) | —    | —        | —                                                 | Included                       |
-| Private Slack channel                                                     | —    | —        | Included                                          | Included                       |
-| HIPAA BAA                                                                 | —    | —        | <Limits.HipaaBaaPricePerMonth /> per month add-on | Included                       |
-| [Management API](/docs/platform/management-api)                           | —    | —        | —                                                 | Included                       |
-| Role-based access control                                                 | —    | —        | Team level                                        | Included                       |
-| [Self-hosting](/docs/platform/data-storage#Self-hosting)                  | —    | —        | —                                                 | Paid add-on                    |
-| Uptime SLA                                                                | —    | —        | —                                                 | <Limits.EnterpriseUptimeSla /> |
-
-For the non-metered limits that apply to each plan, such as monthly active users
-and rooms, projects, dashboard seats, and simultaneous connections, see
-[Limits](/docs/pricing/limits).
-
-### Free
-
-The Free plan is for personal development, prototyping, and testing. It includes
-the full platform at no cost, with fixed
-[monthly usage allowances](#Free-monthly-allowances) for each metered unit
-instead of credits.
-
-- No credit card required.
-- Up to <Limits.FreeMaxMonthlyActiveRooms /> monthly active rooms and
-  <Limits.FreeTeamMembersPerAccount /> dashboard seats.
-- The "Powered by Liveblocks" badge is displayed in your application.
-- Limited to non-commercial, personal projects. See the
-  [fair use guidelines](/docs/pricing/limits/fair-use-guidelines#Commercial-usage).
-
-### Pro
-
-The Pro plan is for developers shipping collaborative features. It includes
-everything in Free, plus:
-
-- <Limits.ProMonthlyCredits /> of monthly credits for
-  <Limits.ProMonthlyPrice /> per month, or
-  <Limits.ProAnnualPricePerMonth /> per month billed annually.
-- Usage beyond your credits continues at the [metered rates](#Metered-usage).
-- Remove the "Powered by Liveblocks" badge.
-- Up to <Limits.ProMaxMonthlyActiveRooms /> monthly active rooms and
-  <Limits.ProTeamMembersPerAccount /> dashboard seats.
-
-### Team
-
-The Team plan is for teams shipping collaborative features at scale. It includes
-everything in Pro, plus:
-
-- A choice of [credit packages](/docs/pricing/billing#Team-credit-packages),
-  starting at
-  <Limits.TeamAnnualCredits tier={600} /> of monthly credits for
-  <Limits.TeamMonthlyPriceForTier tier={600} /> per month.
-- <Limits.TeamTeamMembersPerAccount /> dashboard seats included, then
-  <Limits.DashboardSeatsOveragePrice />.
-- [SAML Single Sign-on (SSO)](/docs/platform/account-management/saml) and a
-  private Slack channel.
-- SOC 2 report, available with annual billing.
-- HIPAA Business Associate Agreement (BAA) as a paid add-on at
-  <Limits.HipaaBaaPricePerMonth /> per month, billed annually.
-
-### Enterprise
-
-The Enterprise plan is for organizations with premium security and partnership
-needs. It includes everything in Team, plus:
-
-- Custom credit allocations and volume discounts, with invoice billing.
-- Multi-region hosting.
-- [Management API](/docs/platform/management-api),
-  [SCIM / directory sync](/docs/platform/account-management/directory-sync), and
-  advanced permissions.
-- Higher-touch support with a <Limits.EnterpriseUptimeSla /> uptime SLA.
-- Self-hosting as a paid add-on: run Liveblocks Sync in your own cloud so
-  collaboration data stays within your infrastructure, while Liveblocks provides
-  ongoing releases, security updates, deployment guidance, and enterprise
-  support. See [data storage](/docs/platform/data-storage#Self-hosting) for more
-  information.
-
-Enterprise limits are customized for your organization.
-[Contact sales](/contact/sales) for pricing and to discuss your requirements.
-
-<Button asChild className="not-markdown">
-  <a href="/contact/sales">Contact sales</a>
-</Button>
+Ready to go further? Upgrade to [Pro](/dashboard/billing?plan=pro) or
+[Team](/dashboard/billing?plan=team) from your dashboard, or
+[contact sales](/contact/sales) to discuss Enterprise.

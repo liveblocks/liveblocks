@@ -1,0 +1,36 @@
+---
+meta:
+  title: "Technical limits"
+  parentTitle: "Platform"
+  description:
+    "The technical limits that apply to identifiers, metadata, and realtime data
+    structures on every Liveblocks plan."
+---
+
+These limits apply to individual values on every plan, regardless of your
+subscription. For the per-plan limits, such as monthly active users,
+simultaneous connections, and storage per room, see
+[plan limits](/docs/pricing/plans#Plan-limits).
+
+| Item                                                                                                                                                                                                                                 | Limit                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| <LimitLabel tooltip={<>The unique identifier for a room. <a href="/docs/pricing/faqs#What's-a-room" className="font-medium text-product-brand">Learn more.</a></>}>roomId</LimitLabel>                                               | 128 characters                                                                                                       |
+| <LimitLabel tooltip="The unique identifier for a user. Each `userId` must represent a single user.">userId</LimitLabel>                                                                                                              | 128 characters                                                                                                       |
+| <LimitLabel tooltip="User information sent from the authentication endpoint.">userInfo</LimitLabel>                                                                                                                                  | 1024 characters once serialized to JSON                                                                              |
+| <LimitLabel tooltip="Messages sent via the broadcast API for real-time communication between clients.">Broadcast event message</LimitLabel>                                                                                          | <LimitHint tooltip="Limited to 1 MB for client versions below 3.14. Upgrade to get higher limits.">32 MB</LimitHint> |
+| <LimitLabel tooltip="Custom metadata attached to a thread.">Thread metadata</LimitLabel>                                                                                                                                             | 50 properties, key length 40 characters, value length 4000 characters                                                |
+| <LimitLabel tooltip="Custom metadata attached to a comment.">Comment metadata</LimitLabel>                                                                                                                                           | 50 properties, key length 40 characters, value length 4000 characters                                                |
+| <LimitLabel tooltip={<>A realtime data structure that stores key-value pairs. <a href="/docs/api-reference/liveblocks-client#LiveObject" className="font-medium text-product-brand">Learn more.</a></>}>LiveObject</LimitLabel>      | 2 MB when totaling the size of the keys and values                                                                   |
+| <LimitLabel tooltip={<>A realtime data structure that stores key-value pairs in a map. <a href="/docs/api-reference/liveblocks-client#LiveMap" className="font-medium text-product-brand">Learn more.</a></>}>LiveMap</LimitLabel>   | Unlimited, so long as each individual value does not exceed 2 MB                                                     |
+| <LimitLabel tooltip={<>A realtime data structure that stores an ordered list of items. <a href="/docs/api-reference/liveblocks-client#LiveList" className="font-medium text-product-brand">Learn more.</a></>}>LiveList</LimitLabel> | Unlimited, so long as each individual value does not exceed 2 MB                                                     |
+| <LimitLabel tooltip={<>A realtime rich-text value. <a href="/docs/api-reference/liveblocks-client#LiveText" className="font-medium text-product-brand">Learn more.</a></>}>LiveText</LimitLabel>                                     | 2 MB when totaling the size of the text and its inline attributes                                                    |
+| <LimitLabel tooltip={<>An immutable Storage reference to an uploaded file. <a href="/docs/api-reference/liveblocks-client#LiveFile" className="font-medium text-product-brand">Learn more.</a></>}>LiveFile</LimitLabel>             | Limited by the max file upload size for your plan                                                                    |
+
+Note that when one realtime data structure is nested inside another, it does not
+count towards the limit. Only the JSON leaves of your data structure count
+towards the limit. For example, if a `LiveList` is nested inside a `LiveObject`,
+the `LiveList` and its contents do not count towards the `LiveObject`'s data
+limit.
+
+For large files such as images and videos, use `LiveFile` instead of storing
+binary data or base64 strings in realtime data structures.
