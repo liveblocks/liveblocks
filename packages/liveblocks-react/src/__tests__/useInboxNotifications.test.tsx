@@ -2,6 +2,7 @@ import type { InboxNotificationData, ThreadData } from "@liveblocks/core";
 import {
   batch,
   HttpError,
+  kInternal,
   nanoid,
   Promise_withResolvers,
   wait,
@@ -28,6 +29,7 @@ import {
   vi,
 } from "vitest";
 
+import { config } from "../config";
 import {
   dummySubscriptionData,
   dummyThreadData,
@@ -1659,6 +1661,15 @@ describe("useInboxNotifications: pagination", () => {
 describe("useInboxNotifications: reload", () => {
   const initialTime = "2026-01-01T00:00:00.000Z";
   const nextTime = "2026-01-01T00:01:00.000Z";
+  const reloadInterval = config.NOTIFICATIONS_RELOAD_INTERVAL;
+
+  beforeEach(() => {
+    config.NOTIFICATIONS_RELOAD_INTERVAL = 0;
+  });
+
+  afterEach(() => {
+    config.NOTIFICATIONS_RELOAD_INTERVAL = reloadInterval;
+  });
 
   function page(
     threads: ThreadData[],
@@ -1715,6 +1726,165 @@ describe("useInboxNotifications: reload", () => {
     });
     return { ...hook, ...contexts, thread, notification };
   }
+
+  describe("throttling", () => {
+    beforeEach(() => {
+      config.NOTIFICATIONS_RELOAD_INTERVAL = reloadInterval;
+      vi.useFakeTimers({
+        toFake: ["Date", "performance", "setTimeout", "clearTimeout"],
+      });
+    });
+
+    afterEach(() => {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    function updates(inboxNotifications: InboxNotificationData[] = []) {
+      return {
+        threads: { updated: [], deleted: [] },
+        inboxNotifications: { updated: inboxNotifications, deleted: [] },
+        subscriptions: { updated: [], deleted: [] },
+        requestedAt: new Date(),
+      };
+    }
+
+    async function setupReload() {
+      const context = setupInbox();
+      await vi.waitFor(() =>
+        expect(context.result.current.isLoading).toBe(false)
+      );
+      const api = context.client[kInternal].httpClient;
+      const checkAccess = vi
+        .spyOn(api, "checkRoomAccesses")
+        .mockResolvedValue(true);
+      const fetchDelta = vi
+        .spyOn(api, "getInboxNotificationsSince")
+        .mockImplementation(async () => updates());
+      return { ...context, checkAccess, fetchDelta };
+    }
+
+    test("runs immediately, then shares a trailing reload that includes later changes", async () => {
+      const { result, unmount, notification, fetchDelta } = await setupReload();
+      const first$ = result.current.reload?.();
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      await first$;
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      const trailing$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(1_000);
+      const changed = { ...notification, readAt: new Date() };
+      fetchDelta.mockImplementation(async () => updates([changed]));
+      const later$ = result.current.reload?.();
+      expect(later$).toBe(trailing$);
+      const finished = vi.fn();
+      void trailing$?.then(finished);
+
+      await act(() => vi.advanceTimersByTimeAsync(2_999));
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+      expect(finished).not.toHaveBeenCalled();
+      await act(() => vi.advanceTimersByTimeAsync(1));
+      await trailing$;
+      expect(fetchDelta).toHaveBeenCalledTimes(2);
+      expect(result.current.inboxNotifications).toEqual([changed]);
+      unmount();
+    });
+
+    test("shares sustained calls without postponing the trailing reload", async () => {
+      const { result, unmount, fetchDelta } = await setupReload();
+      const pending$: Promise<void>[] = [];
+      for (let index = 0; index < 100; index++) {
+        pending$.push(Promise.resolve(result.current.reload?.()));
+        await act(() => vi.advanceTimersByTimeAsync(100));
+      }
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      await Promise.all(pending$);
+      expect(fetchDelta).toHaveBeenCalledTimes(3);
+      unmount();
+    });
+
+    test("waits for a slow request and then runs one fresh reload", async () => {
+      const { result, unmount, fetchDelta } = await setupReload();
+      const release = Promise_withResolvers<ReturnType<typeof updates>>();
+      fetchDelta.mockImplementationOnce(() => release.promise);
+      const first$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1_000);
+      const trailing$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(6_000);
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        release.resolve(updates());
+        await Promise.all([first$, trailing$]);
+      });
+      expect(fetchDelta).toHaveBeenCalledTimes(2);
+      unmount();
+    });
+
+    test("throttles retries after a failed reload", async () => {
+      const { result, unmount, fetchDelta } = await setupReload();
+      fetchDelta.mockRejectedValueOnce(new Error("Offline"));
+      const outcome$ = expect(result.current.reload?.()).rejects.toThrow(
+        "Offline"
+      );
+      await vi.advanceTimersByTimeAsync(0);
+      await outcome$;
+      const retry$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+      await act(() => vi.advanceTimersByTimeAsync(1));
+      await retry$;
+      expect(fetchDelta).toHaveBeenCalledTimes(2);
+      unmount();
+    });
+
+    test("waits for a poll started during the cooldown before scheduling the next reload", async () => {
+      const { result, unmount, umbrellaStore, fetchDelta } =
+        await setupReload();
+      const first$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(0);
+      await first$;
+      await vi.advanceTimersByTimeAsync(1_000);
+      const trailing$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(3_000);
+      const release = Promise_withResolvers<ReturnType<typeof updates>>();
+      fetchDelta.mockImplementationOnce(() => release.promise);
+      const poll$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+        new AbortController().signal
+      );
+      await vi.advanceTimersByTimeAsync(4_000);
+      expect(fetchDelta).toHaveBeenCalledTimes(2);
+      await act(async () => {
+        release.resolve(updates());
+        await Promise.all([poll$, trailing$]);
+      });
+      expect(fetchDelta).toHaveBeenCalledTimes(3);
+      const next$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(fetchDelta).toHaveBeenCalledTimes(3);
+      await act(() => vi.advanceTimersByTimeAsync(1));
+      await next$;
+      expect(fetchDelta).toHaveBeenCalledTimes(4);
+      unmount();
+    });
+
+    test("replays access changes within a reload without waiting for the cooldown", async () => {
+      const { result, unmount, fetchDelta, checkAccess } = await setupReload();
+      checkAccess.mockImplementationOnce(async ({ onAccesses }) => {
+        onAccesses([{ roomId: "room", access: "none" }]);
+        return true;
+      });
+      const reload$ = result.current.reload?.();
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      await vi.waitFor(() => expect(fetchDelta).toHaveBeenCalledTimes(2));
+      await reload$;
+      expect(result.current.inboxNotifications).toEqual([]);
+      unmount();
+    });
+  });
 
   test.each([false, true])(
     "reload updates notifications and associated threads without waiting for a poll (suspense: %s)",

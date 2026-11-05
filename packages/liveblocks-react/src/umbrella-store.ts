@@ -57,9 +57,11 @@ import {
   Signal,
   stableStringify,
   tryParseJson,
+  wait,
   withAbortSignal,
 } from "@liveblocks/core";
 
+import { config } from "./config";
 import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
 import { autobind } from "./lib/autobind";
 import { find } from "./lib/itertools";
@@ -1581,6 +1583,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
   #notificationsDeltaUpdate$: Promise<boolean> | undefined;
   #notificationsReload$: Promise<void> | undefined;
+  #notificationsNextReloadAt = 0;
 
   // Room Threads
   #roomThreadsLastRequestedAtByRoom = new Map<RoomId, Date>();
@@ -2653,8 +2656,12 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     if (this.#notificationsReload$ !== undefined)
       return this.#notificationsReload$;
     this.#notificationsReload$ = Promise.resolve().then(async () => {
+      const delay = this.#notificationsNextReloadAt - performance.now();
+      if (delay > 0) await wait(delay);
       // A signal received during a poll needs a new request after that poll.
       await this.#notificationsDeltaUpdate$?.catch(() => undefined);
+      this.#notificationsNextReloadAt =
+        performance.now() + config.NOTIFICATIONS_RELOAD_INTERVAL;
       this.#notificationsReload$ = undefined;
       const signal = AbortSignal.timeout(30_000);
       let requestVersion: number;
