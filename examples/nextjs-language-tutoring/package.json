@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks-examples/nextjs-language-tutoring",
-  "description": "This example shows how to build a Preply-like language tutoring platform with private lesson rooms, LiveText Tiptap documents, tldraw whiteboards, collaborative PDF annotation, and chat, using Liveblocks and Next.js.",
+  "description": "This example shows how to build an online language tutoring tool with Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
