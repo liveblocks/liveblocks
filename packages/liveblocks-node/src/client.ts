@@ -3135,6 +3135,30 @@ export class Liveblocks {
   }
 
   /**
+   * Marks an inbox notification as read.
+   * @param params.inboxNotificationId The ID of the inbox notification to mark as read.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async markInboxNotificationAsRead(
+    params: {
+      inboxNotificationId: string;
+    },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { inboxNotificationId } = params;
+
+    const res = await this.#post(
+      url`/v2/inbox-notifications/${inboxNotificationId}/read`,
+      undefined,
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
    * Deletes an inbox notification for a user.
    * @param params.userId The user ID for which to delete the inbox notification.
    * @param params.inboxNotificationId The ID of the inbox notification to delete.
