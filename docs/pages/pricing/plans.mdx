@@ -9,9 +9,10 @@ Liveblocks provides the realtime infrastructure to power collaborative
 experiences for human and agentic users.
 
 Pricing is usage-based, metered on the infrastructure your app actually uses,
-like collaboration time, storage, comments, and notifications. Each plan
-includes a monthly credit allowance that your usage draws from, so your cost
-aligns with how your app uses Liveblocks.
+like collaboration time, storage, comments, and notifications. Pro and Team
+include a monthly credit allowance that your usage draws from, so your cost
+aligns with how your app uses Liveblocks. Free includes fixed monthly usage
+allowances instead.
 
 Four plans scale from prototype to production: Free, Pro, Team, and Enterprise.
 
@@ -19,7 +20,7 @@ Four plans scale from prototype to production: Free, Pro, Team, and Enterprise.
 | -------------------- | ----------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
 | **Best for**         | Personal development, prototyping, and testing. | Developers shipping collaborative features. | Teams shipping collaborative features at scale.                                                                    | Organizations with premium security and partnership needs. |
 | **Monthly base**     | $0                                              | <Limits.ProMonthlyPrice /> per month        | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamMonthlyPriceForTier tier={600} /> per month</a> | Custom                                                     |
-| **Included credits** | [Free monthly credits](#Free-monthly-credits)   | <Limits.ProMonthlyCredits />                | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamAnnualCredits tier={600} /></a>                 | Custom                                                     |
+| **Included credits** | [Monthly allowances](#Free-monthly-allowances)  | <Limits.ProMonthlyCredits />                | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamAnnualCredits tier={600} /></a>                 | Custom                                                     |
 
 Choose annual billing to get two months free:
 
@@ -29,7 +30,7 @@ Choose annual billing to get two months free:
 
 ## Credits
 
-Every plan includes a monthly credit allowance that covers your metered usage
+Pro and Team include a monthly credit allowance that covers your metered usage
 first. Credits are denominated in US dollars. If your usage exceeds the amount
 of credits in your base plan, you'll be billed at the per-unit rates at the end
 of the month. Credits reset at the start of each billing cycle and do not roll
@@ -38,10 +39,14 @@ over.
 The Team plan offers multiple [credit packages](#Credits) that include more
 credit value than they cost, effectively lowering your per credit rate.
 
+The Free plan doesn't use credits. Instead, it includes fixed
+[monthly usage allowances](#Free-monthly-allowances) for each metered unit.
+
 ## Metered usage
 
-Metered usage is billed per unit, only for what you actually use. Your monthly
-credits cover this first, so you only pay for anything above them.
+Metered usage is billed per unit, only for what you actually use. On Pro and
+Team, your monthly credits cover this first, so you only pay for anything above
+them. On Free, each metered unit has a fixed monthly allowance instead.
 
 <Table columns={["22%", "58%", "20%"]}>
 
@@ -56,7 +61,7 @@ credits cover this first, so you only pay for anything above them.
 
 </Table>
 
-## Free monthly credits
+## Free monthly allowances
 
 The Free plan includes monthly usage allowances for each metered unit. If your
 account exceeds a limit, the affected feature pauses until limits reset at the
