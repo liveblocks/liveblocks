@@ -3,15 +3,23 @@ meta:
   title: "Limits"
   parentTitle: "Pricing"
   description:
-    "A list of all the limits and limitations that apply on Liveblocks."
+    "The non-metered plan limits and technical limits that apply on Liveblocks."
 ---
 
-Understand the limits that apply to your account: plan limits, overage, and
-technical limits.
+Understand the limits that apply to your account: non-metered plan limits and
+technical limits. For metered usage, credits, and Free allowances, see
+[Plans](/docs/pricing/plans) and [Billing](/docs/pricing/billing).
 
 ## Plan limits
 
-Each plan has limits that protect your account and your costs.
+Each plan has non-metered limits that protect your account and your costs. They
+are not billed; they define what's included before you need to upgrade.
+Liveblocks emails your account owners and shows a dashboard banner as you
+approach one. For what happens when you reach a limit, see the FAQs:
+
+- [What happens when limits are reached?](/docs/pricing/faqs#What-happens-when-limits-are-reached)
+- [What happens when I run out of Liveblocks credits?](/docs/pricing/faqs#What-happens-when-I-run-out-of-Liveblocks-credits)
+- [What happens when I reach the monthly active room limit?](/docs/pricing/faqs#What-happens-when-I-reach-the-monthly-active-room-limit)
 
 | Metric                                                                                                                                                                                                                                                                                                          | Free                                               | Pro                                               | Team                                               | Enterprise                                                                                                                                                       |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -24,7 +32,6 @@ Each plan has limits that protect your account and your costs.
 | <LimitLabel tooltip="Maximum storage data allowed in a single room.">Realtime data stored per room</LimitLabel>                                                                                                                                                                                                 | <Limits.FreeMaxStorageSizePerRoom />               | <Limits.ProMaxStorageSizePerRoom />               | <Limits.TeamMaxStorageSizePerRoom />               | <Limits.EnterpriseMaxStorageSizePerRoom />                                                                                                                       |
 | <LimitLabel tooltip="Total comments stored across all rooms.">Comments stored</LimitLabel>                                                                                                                                                                                                                      | <Limits.FreeMaxComments />                         | <Limits.ProMaxComments />                         | <Limits.TeamMaxComments />                         | <Limits.EnterpriseMaxComments />                                                                                                                                 |
 | <LimitLabel tooltip="Notifications automatically triggered from collaborative features like comment thread updates and @ mentions.">Monthly collaboration notifications</LimitLabel>                                                                                                                            | <Limits.FreeMaxCollaborationNotifications />       | <Limits.ProMaxCollaborationNotifications />       | <Limits.TeamMaxCollaborationNotifications />       | <Limits.EnterpriseMaxCollaborationNotifications />                                                                                                               |
-| <LimitLabel tooltip="Notifications you trigger from your own code.">Monthly custom notifications</LimitLabel>                                                                                                                                                                                                   | <Limits.FreeCustomNotificationsCompareIncluded />  | Included in credits                               | Included in credits                                | Custom                                                                                                                                                           |
 | <LimitLabel tooltip={<>Public key only recommended for prototyping. <a href="/docs/api-reference/authentication" className="font-medium text-product-brand">Learn more.</a></>}>Monthly anonymous connections</LimitLabel>                                                                                      | <Limits.FreeMaxAnonymousConnections />             | <Limits.ProMaxAnonymousConnections />             | <Limits.TeamMaxAnonymousConnections />             | <Limits.EnterpriseMaxAnonymousConnections />                                                                                                                     |
 | <LimitLabel tooltip="Average number of simultaneous connections per monthly active user.">Average connections per user</LimitLabel>                                                                                                                                                                             | —                                                  | 200                                               | 200                                                | Custom                                                                                                                                                           |
 | <LimitLabel tooltip="Total hours rooms stay active across your project each month.">Active room hours per month</LimitLabel>                                                                                                                                                                                    | —                                                  | <Limits.ProActiveRoomHoursPerMonth />             | <Limits.TeamActiveRoomHoursPerMonth />             | Custom                                                                                                                                                           |
@@ -35,16 +42,8 @@ Each plan has limits that protect your account and your costs.
 | <LimitLabel tooltip="How long activity and audit events are retained.">Event log retention</LimitLabel>                                                                                                                                                                                                         | <Limits.FreeEventLogRetention />                   | <Limits.ProEventLogRetention />                   | <Limits.TeamEventLogRetention />                   | <LimitHint tooltip={<>Up to <Limits.EnterpriseMaxEventLogRetention /></>}><Limits.EnterpriseEventLogRetention /></LimitHint>                                     |
 | <LimitLabel tooltip="Environments available in each project">Project environments\*</LimitLabel>                                                                                                                                                                                                                | <Limits.FreeEnvironments />                        | <Limits.ProEnvironments />                        | <Limits.TeamEnvironments />                        | <Limits.EnterpriseEnvironments />                                                                                                                                |
 
-### What happens when you reach a limit
-
-On Free, limits are hard caps. Liveblocks emails your account owners and shows a
-dashboard banner as you approach one, then pauses that activity until it resets
-at the start of the next month. Upgrade to [Pro](/dashboard/billing?plan=pro) or
-[Team](/dashboard/billing?plan=team) to lift the cap.
-
-On Pro and Team, there are no hard caps for metered usage. Usage above your
-monthly credits keeps running and is billed as overage, with alerts along the
-way so nothing is interrupted.
+Usage is also subject to the
+[fair use guidelines](/docs/pricing/limits/fair-use-guidelines).
 
 ## Technical limits
 
