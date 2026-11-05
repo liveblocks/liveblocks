@@ -23,25 +23,40 @@ patterns over time to ensure stable performance for all customers.
 
 ### Examples of fair use
 
-- A collaborative SaaS product
-- An AI chatbot
-- A multiplayer game
-- An interactive multiplayer landing page
+<StyledList>
+  <StyledListItem type="check">A collaborative SaaS product</StyledListItem>
+  <StyledListItem type="check">An AI chatbot</StyledListItem>
+  <StyledListItem type="check">A multiplayer game</StyledListItem>
+  <StyledListItem type="check">
+    An interactive multiplayer landing page
+  </StyledListItem>
+</StyledList>
 
 ### Never fair use
 
-- Using a single `userId` for multiple users
-- Abusing free REST API endpoints
-- Load testing without authorization
-- Not using Liveblocks for collaboration
-- Using multiple free teams or accounts to reduce usage
-- Sharing logins or using group accounts for the admin dashboard
+<StyledList>
+  <StyledListItem type="cross">
+    Using a single `userId` for multiple users
+  </StyledListItem>
+  <StyledListItem type="cross">Abusing free REST API endpoints</StyledListItem>
+  <StyledListItem type="cross">
+    Load testing without authorization
+  </StyledListItem>
+  <StyledListItem type="cross">
+    Not using Liveblocks for collaboration
+  </StyledListItem>
+  <StyledListItem type="cross">
+    Using multiple free teams or accounts to reduce usage
+  </StyledListItem>
+  <StyledListItem type="cross">
+    Sharing logins or using group accounts for the admin dashboard
+  </StyledListItem>
+</StyledList>
 
 ### Usage guidelines
 
 As a guideline for our community, we expect most projects to fall within the
-[plan limits](/docs/pricing/plans#Plan-limits) for average connections per user
-and active room hours per month. If your usage significantly exceeds these
+ranges outlined below for each plan. If your usage significantly exceeds these
 guidelines, we’ll contact you to discuss your needs and determine whether
 changes to your plan or implementation are required. We aim to accommodate
 legitimate usage while ensuring our platform remains stable and performant for
@@ -53,13 +68,36 @@ we may require changes to your implementation or a plan change to support the
 load. We will notify you if changes are required to your account before taking
 any action that impacts your account.
 
-Usage is measured at the team workspace level. On Pro and Team, usage beyond
-your included amounts is billed at the
-[metered rates](/docs/pricing/plans#Metered-usage) and
-[overage rates](/docs/pricing/plans#Plan-inclusions) unless another arrangement
-is put in place.
+#### Typical monthly usage guidelines
 
-### Commercial usage
+|                                   | Free                                         | Pro and Team                                |
+| --------------------------------- | -------------------------------------------- | ------------------------------------------- |
+| Average connections per month     | Up to <Limits.FreeAvgConnectionsPerMau />    | Up to <Limits.ProAvgConnectionsPerMau />    |
+| Total active room hours per month | Up to <Limits.FreeActiveRoomHoursPerMonth /> | Up to <Limits.ProActiveRoomHoursPerMonth /> |
+
+Usage is measured at the team workspace level. For teams on the Pro and Team
+plans, you can pay for [additional usage](/docs/pricing/plans#Plan-inclusions)
+as you go.
+
+#### Additional usage
+
+For members of our Pro and Team plans, we offer a pay-as-you-go model for
+additional usage, giving you greater flexibility and control over your usage.
+The typical monthly usage guidelines above are still applicable, while extra
+usage will be automatically charged at the following rates:
+
+| Item                                                                                | Included                                 | Pay-as-you-go                           |
+| ----------------------------------------------------------------------------------- | ---------------------------------------- | --------------------------------------- |
+| <a href="/docs/pricing/faqs#What-is-a-monthly-active-room">Monthly active rooms</a> | <Limits.ProMonthlyActiveRoomsIncluded /> | <Limits.ProMonthlyActiveRoomsOverage /> |
+| <a href="/docs/platform/account-management/manage-team-members">Dashboard seats</a> | <Limits.ProTeamMembersPerAccount />      | <Limits.DashboardSeatsOveragePrice />   |
+
+Metered usage such as realtime collaboration minutes, storage, comments, custom
+notifications, and file storage is covered by your monthly credits first, then
+billed at the [metered usage rates](/docs/pricing/plans#Metered-usage). Usage
+beyond included amounts will continue to be billed at pay-as-you-go rates unless
+another arrangement is put in place.
+
+#### Commercial usage
 
 The Free plan is limited to non-commercial, personal projects only. Any
 commercial use of Liveblocks requires a Pro, Team or Enterprise subscription.
@@ -81,7 +119,13 @@ paid plan, including development, staging, and testing environments. If you’re
 uncertain whether your project qualifies as commercial usage, please reach out
 to our support team for clarification.
 
-### Learn more
+#### General Limits
+
+Take a look at the [plan limits](/docs/pricing/plans#Plan-limits) and
+[technical limits](/docs/platform/technical-limits) documentation for the limits
+we apply to all accounts.
+
+#### Learn more
 
 Circumventing or attempting to bypass Liveblocks’ limits or usage guidelines is
 a violation of our fair use guidelines. For further information regarding these
