@@ -2,7 +2,9 @@
 meta:
   title: "Plans"
   parentTitle: "Pricing"
-  description: "Learn about the different plans available on Liveblocks."
+  description:
+    "Compare the Liveblocks Free, Pro, Team, and Enterprise plans: prices,
+    included credits and allowances, metered rates, and what each plan includes."
 ---
 
 Liveblocks provides the realtime infrastructure to power collaborative
@@ -16,37 +18,53 @@ allowances instead.
 
 Four plans scale from prototype to production: Free, Pro, Team, and Enterprise.
 
-|                      | Free                                            | Pro                                         | Team                                                                                                               | Enterprise                                                 |
+## Compare plans
+
+|                      | [Free](#Free)                                   | [Pro](#Pro)                                 | [Team](#Team)                                                                                                      | [Enterprise](#Enterprise)                                  |
 | -------------------- | ----------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
 | **Best for**         | Personal development, prototyping, and testing. | Developers shipping collaborative features. | Teams shipping collaborative features at scale.                                                                    | Organizations with premium security and partnership needs. |
 | **Monthly base**     | $0                                              | <Limits.ProMonthlyPrice /> per month        | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamMonthlyPriceForTier tier={600} /> per month</a> | Custom                                                     |
 | **Included credits** | [Monthly allowances](#Free-monthly-allowances)  | <Limits.ProMonthlyCredits />                | <a href="/docs/pricing/billing#Team-plan-options">from <Limits.TeamAnnualCredits tier={600} /></a>                 | Custom                                                     |
+| **Annual billing**   | —                                               | <Limits.ProAnnualPricePerMonth /> per month | from <Limits.TeamAnnualPricePerMonth tier={600} /> per month                                                       | Custom                                                     |
 
-Choose annual billing to get two months free:
+Annual billing gives you two months free. See
+[Billing](/docs/pricing/billing#Annual-billing) for details.
 
-- Pro: <Limits.ProAnnualPricePerMonth /> per month billed annually.
-- Team: starts at <Limits.TeamAnnualPricePerMonth tier={600} /> per month billed
-  annually.
-
-## Credits
+## Credits and Free allowances
 
 Pro and Team include a monthly credit allowance that covers your metered usage
-first. Credits are denominated in US dollars. If your usage exceeds the amount
-of credits in your base plan, you'll be billed at the per-unit rates at the end
-of the month. Credits reset at the start of each billing cycle and do not roll
-over.
+first. Credits are denominated in US dollars and reset at the start of each
+billing cycle. Usage above your credits is billed at the
+[metered rates](#Metered-usage) below. Team offers several
+[credit packages](/docs/pricing/billing#Team-plan-options) that include more
+credit value than they cost. Enterprise plans include a custom credit allowance
+negotiated for your workload.
 
-The Team plan offers multiple [credit packages](#Credits) that include more
-credit value than they cost, effectively lowering your per credit rate.
+The Free plan doesn't use credits. Instead, it includes fixed monthly usage
+allowances for each metered unit.
 
-The Free plan doesn't use credits. Instead, it includes fixed
-[monthly usage allowances](#Free-monthly-allowances) for each metered unit.
+### Free monthly allowances
+
+If your account exceeds an allowance, the affected feature pauses until
+allowances reset at the start of the next calendar month or you
+[upgrade your account](/dashboard/billing) to a paid plan.
+
+| Metric                                                                                                                                                           | Included amount                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| <LimitLabel tooltip="When 2+ people or agents are in the same room, each user-minute counts. Solo sessions cost $0.">Realtime collaboration minutes</LimitLabel> | <Limits.FreeRealtimeCollaborationMinutesIncluded /> |
+| <LimitLabel tooltip="Each change written to stored data, billed per million updates.">Realtime data storage updates</LimitLabel>                                 | <Limits.FreeRealtimeDataStorageUpdatesIncluded />   |
+| <LimitLabel tooltip="Total data kept in storage, billed per GB.">Realtime data stored</LimitLabel>                                                               | <Limits.FreeRealtimeDataStoredIncluded />           |
+| <LimitLabel tooltip="Number of net new comments created.">Comments created</LimitLabel>                                                                          | <Limits.FreeCommentsCreatedIncluded />              |
+| <LimitLabel tooltip="Notifications you trigger from your own code.">Monthly custom notifications</LimitLabel>                                                    | <Limits.FreeCustomNotificationsCompareIncluded />   |
+| <LimitLabel tooltip="Total amount of files stored, such as comment attachments.">File storage</LimitLabel>                                                       | <Limits.FreeMaxFileStorage />                       |
 
 ## Metered usage
 
-Metered usage is billed per unit, only for what you actually use. On Pro and
-Team, your monthly credits cover this first, so you only pay for anything above
-them. On Free, each metered unit has a fixed monthly allowance instead.
+Metered usage is billed per unit, only for what you actually use. The same rates
+apply on Pro and Team: your monthly credits cover this usage first, so you only
+pay for anything above them. On Free, each metered unit has a fixed
+[monthly allowance](#Free-monthly-allowances) instead. Enterprise contracts may
+include volume discounts or custom allocations.
 
 <Table columns={["22%", "58%", "20%"]}>
 
@@ -61,23 +79,14 @@ them. On Free, each metered unit has a fixed monthly allowance instead.
 
 </Table>
 
-## Free monthly allowances
+Notifications automatically triggered from collaborative features like comment
+thread updates and @ mentions are free and unlimited on every plan.
 
-The Free plan includes monthly usage allowances for each metered unit. If your
-account exceeds a limit, the affected feature pauses until limits reset at the
-start of the next calendar month or you
-[upgrade your account](/dashboard/billing) to a paid plan.
+## What each plan includes
 
-| Metric                                                                                                                                                           | Included amount                                     |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| <LimitLabel tooltip="When 2+ people or agents are in the same room, each user-minute counts. Solo sessions cost $0.">Realtime collaboration minutes</LimitLabel> | <Limits.FreeRealtimeCollaborationMinutesIncluded /> |
-| <LimitLabel tooltip="Each change written to stored data, billed per million updates.">Realtime data storage updates</LimitLabel>                                 | <Limits.FreeRealtimeDataStorageUpdatesIncluded />   |
-| <LimitLabel tooltip="Total data kept in storage, billed per GB.">Realtime data stored</LimitLabel>                                                               | <Limits.FreeRealtimeDataStoredIncluded />           |
-| <LimitLabel tooltip="Number of net new comments created.">Comments created</LimitLabel>                                                                          | <Limits.FreeCommentsCreatedIncluded />              |
-| <LimitLabel tooltip="Notifications you trigger from your own code.">Monthly custom notifications</LimitLabel>                                                    | <Limits.FreeCustomNotificationsCompareIncluded />   |
-| <LimitLabel tooltip="Total amount of files stored, such as comment attachments.">File storage</LimitLabel>                                                       | <Limits.FreeMaxFileStorage />                       |
-
-## Plan inclusions
+Every plan includes the full platform: Sync, Comments, Notifications, the
+dashboard, SDKs, and APIs. What changes between plans is your monthly credit
+allowance, seat count, and the security and support features you get.
 
 |                                                                           | Free | Pro      | Team                                              | Enterprise  |
 | ------------------------------------------------------------------------- | ---- | -------- | ------------------------------------------------- | ----------- |
@@ -92,3 +101,75 @@ start of the next calendar month or you
 | Role-based access control                                                 | —    | —        | Team level                                        | Included    |
 | [Self-hosting](/docs/platform/data-storage#Self-hosting)                  | —    | —        | —                                                 | Paid add-on |
 | Uptime SLA                                                                | —    | —        | —                                                 | 99.99%      |
+
+For the non-metered limits that apply to each plan, such as monthly active users
+and rooms, projects, dashboard seats, and simultaneous connections, see
+[Limits](/docs/pricing/limits).
+
+### Free
+
+The Free plan is for personal development, prototyping, and testing. It includes
+the full platform at no cost, with fixed
+[monthly usage allowances](#Free-monthly-allowances) for each metered unit
+instead of credits.
+
+- No credit card required.
+- Up to <Limits.FreeMaxMonthlyActiveRooms /> monthly active rooms and
+  <Limits.FreeTeamMembersPerAccount /> dashboard seats.
+- The "Powered by Liveblocks" badge is displayed in your application.
+- Limited to non-commercial, personal projects. See the
+  [fair use guidelines](/docs/pricing/limits/fair-use-guidelines#Commercial-usage).
+
+### Pro
+
+The Pro plan is for developers shipping collaborative features. It includes
+everything in Free, plus:
+
+- <Limits.ProMonthlyCredits /> of monthly credits for
+  <Limits.ProMonthlyPrice /> per month, or
+  <Limits.ProAnnualPricePerMonth /> per month billed annually.
+- Usage beyond your credits continues at the [metered rates](#Metered-usage).
+- Remove the "Powered by Liveblocks" badge.
+- Up to <Limits.ProMaxMonthlyActiveRooms /> monthly active rooms and
+  <Limits.ProTeamMembersPerAccount /> dashboard seats.
+
+### Team
+
+The Team plan is for teams shipping collaborative features at scale. It includes
+everything in Pro, plus:
+
+- A choice of [credit packages](/docs/pricing/billing#Team-plan-options),
+  starting at
+  <Limits.TeamAnnualCredits tier={600} /> of monthly credits for
+  <Limits.TeamMonthlyPriceForTier tier={600} /> per month.
+- <Limits.TeamTeamMembersPerAccount /> dashboard seats included, then
+  <Limits.DashboardSeatsOveragePrice />.
+- [SAML Single Sign-on (SSO)](/docs/platform/account-management/saml) and a
+  private Slack channel.
+- SOC 2 report, available with annual billing.
+- HIPAA Business Associate Agreement (BAA) as a paid add-on at
+  <Limits.HipaaBaaPricePerMonth /> per month, billed annually.
+
+### Enterprise
+
+The Enterprise plan is for organizations with premium security and partnership
+needs. It includes everything in Team, plus:
+
+- Custom credit allocations and volume discounts, with invoice billing.
+- Multi-region hosting.
+- [Management API](/docs/platform/management-api),
+  [SCIM / directory sync](/docs/platform/account-management/directory-sync), and
+  advanced permissions.
+- Higher-touch support with a 99.99% uptime SLA.
+- Self-hosting as a paid add-on: run Liveblocks Sync in your own cloud so
+  collaboration data stays within your infrastructure, while Liveblocks provides
+  ongoing releases, security updates, deployment guidance, and enterprise
+  support. See [data storage](/docs/platform/data-storage#Self-hosting) for more
+  information.
+
+Enterprise limits are customized for your organization.
+[Contact sales](/contact/sales) for pricing and to discuss your requirements.
+
+<Button asChild className="not-markdown">
+  <a href="/contact/sales">Contact sales</a>
+</Button>

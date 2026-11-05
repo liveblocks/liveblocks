@@ -820,25 +820,7 @@
     "routes": [
       {
         "title": "Plans",
-        "path": "/pricing/plans",
-        "routes": [
-          {
-            "title": "Free",
-            "path": "/pricing/plans/free"
-          },
-          {
-            "title": "Pro",
-            "path": "/pricing/plans/pro"
-          },
-          {
-            "title": "Team",
-            "path": "/pricing/plans/team"
-          },
-          {
-            "title": "Enterprise",
-            "path": "/pricing/plans/enterprise"
-          }
-        ]
+        "path": "/pricing/plans"
       },
       {
         "title": "Billing",
