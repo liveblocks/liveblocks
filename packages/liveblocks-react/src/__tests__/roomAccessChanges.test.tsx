@@ -1340,16 +1340,20 @@ describe("Room access changes", () => {
     const staleResponse = Promise_withResolvers<void>();
     const started = Promise_withResolvers<void>();
     server.use(
-      mockGetInboxNotifications(() =>
+      http.get("https://api.liveblocks.io/v2/c/:resource", () =>
         HttpResponse.json({
           threads: denied ? [] : [thread],
           inboxNotifications: denied ? [] : [notification],
           subscriptions: [],
           groups: [],
-          meta: { requestedAt: new Date().toISOString(), nextCursor: null },
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {},
+          },
         })
       ),
-      mockGetInboxNotificationsDelta(async () => {
+      http.get("https://api.liveblocks.io/v2/c/:resource/delta", async () => {
         const canRead = !denied;
         if (++pollCount === 1) {
           started.resolve();
@@ -1364,6 +1368,7 @@ describe("Room access changes", () => {
           deletedSubscriptions: [],
           meta: {
             requestedAt: new Date().toISOString(),
+            permissionHints: {},
             roomAccesses: [
               { roomId: thread.roomId, access: canRead ? "room" : "none" },
             ],
@@ -1375,16 +1380,22 @@ describe("Room access changes", () => {
     await umbrellaStore.outputs.loadingNotifications
       .getOrCreate("{}")
       .waitUntilLoaded();
-    const stalePoll$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+    await umbrellaStore.outputs.loadingUserThreads
+      .getOrCreate("{}")
+      .waitUntilLoaded();
+    const stalePoll$ = umbrellaStore.fetchUserThreadsDeltaUpdate(
       new AbortController().signal
     );
     await started.promise;
-    denied = true;
-    await umbrellaStore.fetchNotificationsDeltaUpdate(
-      new AbortController().signal
-    );
-    staleResponse.resolve();
-    await stalePoll$;
+    try {
+      denied = true;
+      await umbrellaStore.fetchNotificationsDeltaUpdate(
+        new AbortController().signal
+      );
+    } finally {
+      staleResponse.resolve();
+      await stalePoll$;
+    }
     umbrellaStore.updateThreadifications([thread], [notification], []);
     expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
     expect(umbrellaStore.notifications.signal.get().size).toBe(0);

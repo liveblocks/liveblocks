@@ -34,6 +34,7 @@
 
 ### `@liveblocks/react`
 
+- Add `reload()` to `useInboxNotifications()` to refresh notifications immediately.
 - Fix inbox notifications remaining visible after room access is revoked or a
   room is deleted.
 
