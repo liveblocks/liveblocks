@@ -1579,7 +1579,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
-  #notificationsDeltaUpdates$ = new Set<Promise<boolean>>();
+  #notificationsDeltaUpdate$: Promise<boolean> | undefined;
   #notificationsReload$: Promise<void> | undefined;
 
   // Room Threads
@@ -2654,7 +2654,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       return this.#notificationsReload$;
     this.#notificationsReload$ = Promise.resolve().then(async () => {
       // A signal received during a poll needs a new request after that poll.
-      await Promise.allSettled(this.#notificationsDeltaUpdates$);
+      await this.#notificationsDeltaUpdate$?.catch(() => undefined);
       this.#notificationsReload$ = undefined;
       const signal = AbortSignal.timeout(30_000);
       let requestVersion: number;
@@ -2678,22 +2678,25 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     await this.#fetchNotificationsDeltaUpdate(signal);
   }
 
-  async #fetchNotificationsDeltaUpdate(signal: AbortSignal): Promise<boolean> {
-    signal.throwIfAborted();
-    const since = this.#notificationsLastRequestedAt;
-    if (since === null) return false;
-    const update$ = this.#fetchUserDeltaUpdate("inbox", since, signal).then(
-      ({ requestedAt, allRoomsChecked }) => {
+  #fetchNotificationsDeltaUpdate(signal: AbortSignal): Promise<boolean> {
+    // Serialize polls and reloads so older responses cannot undo newer data.
+    const update$ = Promise.resolve(this.#notificationsDeltaUpdate$)
+      .catch(() => undefined)
+      .then(async () => {
+        signal.throwIfAborted();
+        const since = this.#notificationsLastRequestedAt;
+        if (since === null) return false;
+        const { requestedAt, allRoomsChecked } =
+          await this.#fetchUserDeltaUpdate("inbox", since, signal);
         this.#notificationsLastRequestedAt = requestedAt;
         return allRoomsChecked;
-      }
-    );
-    this.#notificationsDeltaUpdates$.add(update$);
-    try {
-      return await update$;
-    } finally {
-      this.#notificationsDeltaUpdates$.delete(update$);
-    }
+      })
+      .finally(() => {
+        if (this.#notificationsDeltaUpdate$ === update$)
+          this.#notificationsDeltaUpdate$ = undefined;
+      });
+    this.#notificationsDeltaUpdate$ = update$;
+    return withAbortSignal(update$, signal);
   }
 
   async #fetchUserDeltaUpdate(

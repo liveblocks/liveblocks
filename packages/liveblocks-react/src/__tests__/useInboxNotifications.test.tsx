@@ -1925,6 +1925,111 @@ describe("useInboxNotifications: reload", () => {
     unmount();
   });
 
+  test.each([false, true])(
+    "polls wait for a running reload before fetching their delta (reload fails: %s)",
+    async (reloadFails) => {
+      const { result, unmount, umbrellaStore, thread, notification } =
+        setupInbox();
+      await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+      const started = Promise_withResolvers<void>();
+      const release = Promise_withResolvers<void>();
+      const laterTime = "2026-01-01T00:02:00.000Z";
+      const deletedNotification = { ...notification, deletedAt: laterTime };
+      const cursors: (string | null)[] = [];
+      server.use(
+        mockGetInboxNotificationsDelta(async ({ request }) => {
+          const query = new URL(request.url).searchParams;
+          if (query.has("roomAccessesOnly")) return delta();
+          cursors.push(query.get("since"));
+          if (cursors.length === 1) {
+            started.resolve();
+            await release.promise;
+            return reloadFails
+              ? HttpResponse.json(null, { status: 403 })
+              : delta([thread], [notification]);
+          }
+          return HttpResponse.json({
+            threads: [],
+            inboxNotifications: [],
+            subscriptions: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [deletedNotification],
+            deletedSubscriptions: [],
+            meta: { requestedAt: laterTime },
+          });
+        })
+      );
+      const reload$ = result.current.reload?.();
+      const reloadOutcome$ = reload$?.catch((error: unknown) => error);
+      await started.promise;
+      const poll$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+        new AbortController().signal
+      );
+      await act(async () => {
+        try {
+          await wait(0);
+          expect(cursors).toEqual([initialTime]);
+        } finally {
+          release.resolve();
+          await Promise.all([reloadOutcome$, poll$]);
+        }
+      });
+      expect(cursors).toEqual([
+        initialTime,
+        reloadFails ? initialTime : nextTime,
+      ]);
+      expect(result.current.inboxNotifications).toEqual([]);
+      if (reloadFails) expect(await reloadOutcome$).toBeInstanceOf(HttpError);
+      await act(async () => {
+        await umbrellaStore.fetchNotificationsDeltaUpdate(
+          new AbortController().signal
+        );
+      });
+      expect(cursors[2]).toBe(laterTime);
+      unmount();
+    }
+  );
+
+  test("aborting a queued poll keeps later reloads behind the running request", async () => {
+    const { result, unmount, umbrellaStore } = setupInbox();
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    const started = Promise_withResolvers<void>();
+    const release = Promise_withResolvers<void>();
+    const cursors: (string | null)[] = [];
+    server.use(
+      mockGetInboxNotificationsDelta(async ({ request }) => {
+        const query = new URL(request.url).searchParams;
+        if (query.has("roomAccessesOnly")) return delta();
+        cursors.push(query.get("since"));
+        if (cursors.length === 1) {
+          started.resolve();
+          await release.promise;
+        }
+        return delta();
+      })
+    );
+    const first$ = result.current.reload?.();
+    await started.promise;
+    const controller = new AbortController();
+    const poll$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+      controller.signal
+    );
+    controller.abort();
+    await expect(poll$).rejects.toBe(controller.signal.reason);
+    const second$ = result.current.reload?.();
+    await act(async () => {
+      try {
+        await wait(0);
+        expect(cursors).toEqual([initialTime]);
+      } finally {
+        release.resolve();
+        await Promise.all([first$, second$]);
+      }
+    });
+    expect(cursors).toEqual([initialTime, nextTime]);
+    unmount();
+  });
+
   test("reload applies deletions without losing loaded pages or the next cursor", async () => {
     const { result, unmount, thread, notification } = setupInbox(
       false,
