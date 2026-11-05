@@ -1,3 +1,19 @@
+## vNEXT
+
+## v3.24.5
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating when receiving replies in
+  connected rooms.
+
+## v3.24.4
+
+### `@liveblocks/react`
+
+- Fix unread inbox notification counts not updating immediately when marking a
+  thread as read.
+
 ## v3.24.3
 
 ### `@liveblocks/client`

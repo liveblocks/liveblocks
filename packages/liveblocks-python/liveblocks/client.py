@@ -2585,8 +2585,8 @@ class Liveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-
-        permissions) section.
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-
+        token-room-permissions) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
         doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end
@@ -6167,8 +6167,8 @@ class AsyncLiveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-token-room-
-        permissions) section.
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/api-reference/authentication#id-
+        token-room-permissions) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
         doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end

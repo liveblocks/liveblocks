@@ -1,0 +1,165 @@
+"use client";
+
+import { LiveMap, type LiveFile } from "@liveblocks/client";
+import {
+  useCreateFeed,
+  useCreateFeedMessage,
+  useMutation,
+  useRoom,
+  useSelf,
+  useUploadFile,
+} from "@liveblocks/react/suspense";
+import { useCallback, useRef } from "react";
+import { useApp } from "@/components/app-context";
+import { mentionsAi } from "@/lib/ai-mention";
+import type { DocumentInfo } from "@/liveblocks.config";
+import { getChatFeedId } from "./feed";
+
+type SnapshotMessage = Extract<
+  Liveblocks["FeedMessageData"],
+  { kind: "snapshot" }
+>;
+type ChatAttachment = NonNullable<
+  Extract<Liveblocks["FeedMessageData"], { kind: "text" }>["attachments"]
+>[number];
+
+// Context the AI assistant gets when a message mentions it
+export type AiContext = {
+  // The document open next to the chat, which the request is probably about
+  activeDocId: string | null;
+  // Recent text messages, oldest first, for follow-up questions
+  history: { userId: string; content: string }[];
+};
+
+// What a document hands over when the user clicks "Send to chat"
+export type SnapshotPayload =
+  | { kind: "image"; blob: Blob; width: number; height: number; page?: number }
+  | { kind: "html"; html: string };
+
+// Posts messages to the room chat, creating the feed on first use
+export function useChat() {
+  const room = useRoom();
+  const { api } = useApp();
+  const self = useSelf((me) => me.id);
+  const createFeed = useCreateFeed();
+  const createFeedMessage = useCreateFeedMessage();
+  const uploadFile = useUploadFile();
+  const ensured = useRef(false);
+  const feedId = getChatFeedId(room.id);
+
+  const storeSnapshot = useMutation(
+    ({ storage }, id: string, file: LiveFile) => {
+      storage.get("snapshots").set(id, file);
+    },
+    []
+  );
+
+  const storeAttachment = useMutation(({ storage }, file: LiveFile) => {
+    let attachments = storage.get("attachments");
+    if (!attachments) {
+      attachments = new LiveMap<string, LiveFile>();
+      storage.set("attachments", attachments);
+    }
+    attachments.set(file.id, file);
+  }, []);
+
+  const ensureFeed = useCallback(async () => {
+    if (ensured.current) return;
+    try {
+      await createFeed(feedId, { metadata: { type: "chat" } });
+    } catch {
+      // Already exists
+    }
+    ensured.current = true;
+  }, [createFeed, feedId]);
+
+  const sendText = useCallback(
+    async (content: string, files: File[], ai: AiContext) => {
+      const trimmed = content.trim();
+      if (!trimmed && files.length === 0) return;
+      await ensureFeed();
+      const attachments: ChatAttachment[] = [];
+      for (const file of files) {
+        const liveFile = await uploadFile(file);
+        storeAttachment(liveFile);
+        attachments.push({
+          fileId: liveFile.id,
+          name: liveFile.name,
+          size: liveFile.size,
+          mimeType: liveFile.mimeType,
+        });
+      }
+      const data: Liveblocks["FeedMessageData"] = {
+        kind: "text",
+        userId: self,
+        content: trimmed,
+        ...(attachments.length > 0 ? { attachments } : {}),
+      };
+      await createFeedMessage(feedId, data);
+
+      // Mentioning @AI Assistant hands the message over; it replies in
+      // this feed and edits documents from the server. Don't wait for it.
+      if (mentionsAi(trimmed)) {
+        void api("/api/ai", {
+          method: "POST",
+          json: {
+            roomId: room.id,
+            activeDocId: ai.activeDocId,
+            history: [...ai.history, { userId: self, content: trimmed }],
+          },
+        }).catch(() => {
+          // Once started, the assistant reports its own errors in the chat
+        });
+      }
+    },
+    [
+      api,
+      createFeedMessage,
+      ensureFeed,
+      feedId,
+      room.id,
+      self,
+      storeAttachment,
+      uploadFile,
+    ]
+  );
+
+  const sendSnapshot = useCallback(
+    async (doc: DocumentInfo, payload: SnapshotPayload, caption?: string) => {
+      await ensureFeed();
+      const base = {
+        kind: "snapshot" as const,
+        userId: self,
+        docId: doc.id,
+        docType: doc.type,
+        docTitle: doc.title,
+        ...(caption?.trim() ? { caption: caption.trim() } : {}),
+      };
+
+      let data: SnapshotMessage;
+      if (payload.kind === "html") {
+        data = { ...base, html: payload.html };
+      } else {
+        const file = await uploadFile(
+          new File(
+            [payload.blob],
+            `${doc.title.replace(/[^\w.-]+/g, "_")}${payload.page ? `-p${payload.page}` : ""}.png`,
+            { type: "image/png" }
+          )
+        );
+        storeSnapshot(file.id, file);
+        data = {
+          ...base,
+          snapshotId: file.id,
+          width: payload.width,
+          height: payload.height,
+          ...(payload.page ? { page: payload.page } : {}),
+        };
+      }
+      await createFeedMessage(feedId, data);
+    },
+    [createFeedMessage, ensureFeed, feedId, self, storeSnapshot, uploadFile]
+  );
+
+  return { roomId: room.id, sendText, sendSnapshot };
+}
