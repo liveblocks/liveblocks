@@ -1579,6 +1579,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
+  #notificationsDeltaUpdates$ = new Set<Promise<boolean>>();
+  #notificationsReload$: Promise<void> | undefined;
 
   // Room Threads
   #roomThreadsLastRequestedAtByRoom = new Map<RoomId, Date>();
@@ -1933,6 +1935,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           return {
             isLoading: false,
             inboxNotifications,
+            reload: this.reloadNotifications,
             hasFetchedAll: page.hasFetchedAll,
             isFetchingMore: page.isFetchingMore,
             fetchMoreError: page.fetchMoreError,
@@ -2646,21 +2649,58 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     });
   }
 
-  public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
+  public reloadNotifications(): Promise<void> {
+    if (this.#notificationsReload$ !== undefined)
+      return this.#notificationsReload$;
+    this.#notificationsReload$ = Promise.resolve().then(async () => {
+      // A signal received during a poll needs a new request after that poll.
+      await Promise.allSettled(this.#notificationsDeltaUpdates$);
+      this.#notificationsReload$ = undefined;
+      const signal = AbortSignal.timeout(30_000);
+      let requestVersion: number;
+      do {
+        requestVersion = this.#roomCacheVersion;
+        const allRoomsChecked =
+          await this.#fetchNotificationsDeltaUpdate(signal);
+        if (!allRoomsChecked)
+          throw new Error(
+            "Could not check access to all inbox notification rooms"
+          );
+        // Access changes discard older responses; replay them before resolving.
+      } while (requestVersion !== this.#roomCacheVersion);
+    });
+    return this.#notificationsReload$;
+  }
+
+  public async fetchNotificationsDeltaUpdate(
+    signal: AbortSignal
+  ): Promise<void> {
+    await this.#fetchNotificationsDeltaUpdate(signal);
+  }
+
+  async #fetchNotificationsDeltaUpdate(signal: AbortSignal): Promise<boolean> {
+    signal.throwIfAborted();
     const since = this.#notificationsLastRequestedAt;
-    if (since === null) return;
-    this.#notificationsLastRequestedAt = await this.#fetchUserDeltaUpdate(
-      "inbox",
-      since,
-      signal
+    if (since === null) return false;
+    const update$ = this.#fetchUserDeltaUpdate("inbox", since, signal).then(
+      ({ requestedAt, allRoomsChecked }) => {
+        this.#notificationsLastRequestedAt = requestedAt;
+        return allRoomsChecked;
+      }
     );
+    this.#notificationsDeltaUpdates$.add(update$);
+    try {
+      return await update$;
+    } finally {
+      this.#notificationsDeltaUpdates$.delete(update$);
+    }
   }
 
   async #fetchUserDeltaUpdate(
     resource: "inbox" | "threads",
     since: Date,
     signal: AbortSignal
-  ): Promise<Date> {
+  ): Promise<{ requestedAt: Date; allRoomsChecked: boolean }> {
     const requestVersion = this.#roomCacheVersion;
     const requestId = ++this.#roomAccessRequestId;
     for (const update of this.optimisticUpdates.signal.get()) {
@@ -2699,11 +2739,15 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     });
     await this.#refreshInvalidatedRooms(signal);
     // Keep the cursor until access checks succeed and discarded data can be replayed.
-    return allRoomsChecked &&
-      requestVersion === this.#roomCacheVersion &&
-      since < result.requestedAt
-      ? result.requestedAt
-      : since;
+    return {
+      requestedAt:
+        allRoomsChecked &&
+        requestVersion === this.#roomCacheVersion &&
+        since < result.requestedAt
+          ? result.requestedAt
+          : since,
+      allRoomsChecked,
+    };
   }
 
   #applyRoomAccesses(
@@ -2946,11 +2990,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
     const since = this.#userThreadsLastRequestedAt;
     if (since === null) return;
-    this.#userThreadsLastRequestedAt = await this.#fetchUserDeltaUpdate(
-      "threads",
-      since,
-      signal
-    );
+    const result = await this.#fetchUserDeltaUpdate("threads", since, signal);
+    this.#userThreadsLastRequestedAt = result.requestedAt;
   }
 
   public async fetchRoomVersionsDeltaUpdate(

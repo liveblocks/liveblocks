@@ -1082,6 +1082,9 @@ describe("without Liveblocks augmentation", () => {
 
   test("useInboxNotifications()", () => {
     {
+      expectTypeOf(classic.useInboxNotifications().reload).toEqualTypeOf<
+        (() => Promise<void>) | undefined
+      >();
       expectTypeOf(
         classic.useInboxNotifications().isLoading
       ).toEqualTypeOf<boolean>();
@@ -1105,6 +1108,9 @@ describe("without Liveblocks augmentation", () => {
 
   test("useInboxNotifications() (suspense)", () => {
     {
+      expectTypeOf(suspense.useInboxNotifications().reload).toEqualTypeOf<
+        () => Promise<void>
+      >();
       expectTypeOf(
         suspense.useInboxNotifications().isLoading
       ).toEqualTypeOf<false>();

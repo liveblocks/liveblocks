@@ -6023,6 +6023,11 @@ function Inbox() {
   <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the notifications.
   </PropertiesListItem>
+  <PropertiesListItem name="reload" type="() => Promise<void>">
+    A function to immediately sync inbox notifications and their associated
+    threads. Available after the initial load succeeds. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-reloading).
+  </PropertiesListItem>
   <PropertiesListItem name="hasFetchedAll" type="boolean">
     Whether all available notifications have been fetched. [Learn
     more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
