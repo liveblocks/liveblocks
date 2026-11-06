@@ -35,10 +35,11 @@ then fetch it after.
 
 ## Setup
 
-To install, you need to use your secret key from the correct project in
-[your dashboard](/dashboard). Below are instructions for [Cursor](#Cursor),
+The MCP server is hosted at `https://mcp.liveblocks.io/mcp`, so there’s nothing
+to install. To connect, you need to use your secret key from the correct project
+in [your dashboard](/dashboard). Below are instructions for [Cursor](#Cursor),
 [Claude Code](#Claude-Code), [Claude Desktop](#Claude-Desktop), and
-[Codex](#Codex).
+[Codex](#Codex). You can also [run the server locally](#Running-locally).
 
 <Banner type="warning" title="Only for development">
 
@@ -58,10 +59,9 @@ To set up [Cursor](https://cursor.sh/):
 {
   "mcpServers": {
     "liveblocks": {
-      "command": "npx",
-      "args": ["-y", "github:liveblocks/liveblocks-mcp-server"],
-      "env": {
-        "LIVEBLOCKS_SECRET_KEY": "{{SECRET_KEY}}"
+      "url": "https://mcp.liveblocks.io/mcp",
+      "headers": {
+        "Authorization": "Bearer {{SECRET_KEY}}"
       }
     }
   }
@@ -74,12 +74,13 @@ To set up [Claude Code](https://claude.ai/code), run the following command in
 the terminal:
 
 ```bash
-claude mcp add liveblocks -e LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}" -- npx -y github:liveblocks/liveblocks-mcp-server
+claude mcp add --transport http liveblocks https://mcp.liveblocks.io/mcp --header "Authorization: Bearer {{SECRET_KEY}}"
 ```
 
 ### Claude Desktop
 
-To set up [Claude Desktop](https://claude.ai/download):
+Claude Desktop can’t send your secret key to remote servers, so it runs the
+server locally instead. To set up [Claude Desktop](https://claude.ai/download):
 
 1. Go to Settings → Developer → Edit Config.
 2. Open the JSON file, `claude_desktop_config.json`.
@@ -109,13 +110,57 @@ To set up [Codex](https://codex.com/):
 npm i -g @openai/codex
 ```
 
-2. Run the following command in the terminal, inserting your secret key:
+2. Run the following command in the terminal:
+
+```bash
+codex mcp add liveblocks \
+  --url https://mcp.liveblocks.io/mcp \
+  --bearer-token-env-var LIVEBLOCKS_SECRET_KEY
+```
+
+3. Make sure `LIVEBLOCKS_SECRET_KEY` is set in the shell Codex runs from, for
+   example in your shell profile:
+
+```bash
+export LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+```
+
+## Running locally
+
+You can also run the MCP server on your own machine with `npx`. It reads your
+secret key from the `LIVEBLOCKS_SECRET_KEY` environment variable.
+
+For Cursor, add the following:
+
+```json
+{
+  "mcpServers": {
+    "liveblocks": {
+      "command": "npx",
+      "args": ["-y", "github:liveblocks/liveblocks-mcp-server"],
+      "env": {
+        "LIVEBLOCKS_SECRET_KEY": "{{SECRET_KEY}}"
+      }
+    }
+  }
+}
+```
+
+For Claude Code, run the following command:
+
+```bash
+claude mcp add liveblocks -e LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}" -- npx -y github:liveblocks/liveblocks-mcp-server
+```
+
+For Codex, run the following command:
 
 ```bash
 codex mcp add liveblocks \
   --env LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}" \
   -- npx -y github:liveblocks/liveblocks-mcp-server
 ```
+
+[Claude Desktop](#Claude-Desktop) always runs the server locally.
 
 ## Source code
 
