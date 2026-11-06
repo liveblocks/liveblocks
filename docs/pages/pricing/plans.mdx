@@ -79,11 +79,7 @@ can go beyond the included amount at that rate.
 Each plan has non-metered limits that protect your account and your costs. They
 are not billed; they define what's included before you need to upgrade.
 Liveblocks emails your account owners and shows a dashboard banner as you
-approach one. For what happens when you reach a limit, see the FAQs:
-
-- [What happens when limits are reached?](/docs/pricing/faqs#What-happens-when-limits-are-reached)
-- [What happens when I run out of Liveblocks credits?](/docs/pricing/faqs#What-happens-when-I-run-out-of-Liveblocks-credits)
-- [What happens when I reach the monthly active room limit?](/docs/pricing/faqs#What-happens-when-I-reach-the-monthly-active-room-limit)
+approach one.
 
 | Metric                                                                                                                                                                                                                                                                                                          | Pro                                               | Team                                               | Enterprise                                                                                                                                                       |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -101,10 +97,12 @@ approach one. For what happens when you reach a limit, see the FAQs:
 | <LimitLabel tooltip={<>The number of webhook events sent to your webhook endpoints each month. <a href="/docs/platform/webhooks" className="font-medium text-product-brand">Learn more.</a></>}>Monthly webhook events</LimitLabel>                                                                             | <Limits.ProMaxWebhookEventsPerMonth />            | <Limits.TeamMaxWebhookEventsPerMonth />            | <Limits.EnterpriseMaxWebhookEventsPerMonth />                                                                                                                    |
 | <LimitLabel tooltip={<>The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Storage) events are sent to your webhook endpoint. <a href="/docs/api-reference/webhook-events#StorageUpdatedEvent" className="font-medium text-product-brand">Learn more.</a></>}>Webhook event frequency</LimitLabel> | <Limits.ProStorageUpdatedWebhookEventThrottle />  | <Limits.TeamStorageUpdatedWebhookEventThrottle />  | <LimitHint tooltip={<>Down to <Limits.EnterpriseMaxStorageUpdatedWebhookEventThrottle /></>}><Limits.EnterpriseStorageUpdatedWebhookEventThrottle /></LimitHint> |
 
-Usage is also subject to the
-[fair use guidelines](/docs/pricing/faqs#Fair-use-guidelines). Limits on the
-size of individual values, such as `roomId` or `LiveObject`, apply on every plan
-and are listed under [technical limits](/docs/platform/technical-limits).
+For what happens when you reach a limit or run out of credits, see the
+[credits and limits FAQs](/docs/pricing/faqs#Credits-and-limits). Usage is also
+subject to the [fair use guidelines](/docs/pricing/faqs#Fair-use-guidelines).
+Limits on the size of individual values, such as `roomId` or `LiveObject`, apply
+on every plan and are listed under
+[technical limits](/docs/platform/technical-limits).
 
 ## Free plan
 
