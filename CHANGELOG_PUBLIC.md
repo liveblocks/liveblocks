@@ -18,6 +18,34 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 45 (2026-11-06)
+
+- New example: [Language tutoring app](https://liveblocks.io/examples/language-tutoring/nextjs-language-tutoring).
+
+## Contributors
+
+ctnicholas
+
+# Week 44 (2026-10-30)
+
+## Infrastructure
+
+- We've been doing lots of prep work to replace the engine behind webhook
+  delivery with our own. Webhooks will continue working seamlessly for you, with
+  no code changes required on your end. Stay tuned!
+- Added a test URL for trying out webhooks. Send events to it and inspect them
+  from the dashboard.
+- Fixed sensitive custom webhook headers, such as `Authorization`, in the
+  dashboard and Management API.
+- Every webhook endpoint now has an explicit rate limit, from 1 to 1,000 requests
+  per second. Higher values are capped at 1,000, and endpoints without a valid
+  limit now use 1,000. The API returns `1000` for these rather than `null`.
+- Custom webhook headers are now validated, with a maximum of 5 per endpoint.
+
+## Contributors
+
+nvie, marcbouchenoire, nimeshnayaju
+
 # Week 43 (2026-10-23)
 
 ## v3.24.5
