@@ -18,6 +18,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 45 (2026-11-06)
+
+- New example: [Language tutoring app](https://liveblocks.io/examples/language-tutoring/nextjs-language-tutoring).
+
+## Contributors
+
+ctnicholas
+
 # Week 44 (2026-10-30)
 
 ## Infrastructure
