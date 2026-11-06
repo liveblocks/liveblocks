@@ -28,11 +28,12 @@ simultaneous connections, and storage per room, see
 | <LimitLabel tooltip={<>A realtime rich-text value. <a href="/docs/api-reference/liveblocks-client#LiveText" className="font-medium text-product-brand">Learn more.</a></>}>LiveText</LimitLabel>                                     | 2 MB when totaling the size of the text and its inline attributes                                                    |
 | <LimitLabel tooltip={<>An immutable Storage reference to an uploaded file. <a href="/docs/api-reference/liveblocks-client#LiveFile" className="font-medium text-product-brand">Learn more.</a></>}>LiveFile</LimitLabel>             | Limited by the max file upload size for your plan                                                                    |
 
-Note that when one realtime data structure is nested inside another, it does not
-count towards the limit. Only the JSON leaves of your data structure count
-towards the limit. For example, if a `LiveList` is nested inside a `LiveObject`,
-the `LiveList` and its contents do not count towards the `LiveObject`'s data
-limit.
+## Nesting data structures
+
+When one realtime data structure is nested inside another, it does not count
+towards the limit. Only the JSON leaves of your data structure count towards the
+limit. For example, if a `LiveList` is nested inside a `LiveObject`, the
+`LiveList` and its contents do not count towards the `LiveObject`'s data limit.
 
 For large files such as images and videos, use `LiveFile` instead of storing
 binary data or base64 strings in realtime data structures.
