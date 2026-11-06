@@ -759,6 +759,10 @@
         "path": "/platform/websocket-infrastructure"
       },
       {
+        "title": "Technical limits",
+        "path": "/platform/technical-limits"
+      },
+      {
         "title": "Projects",
         "path": "/platform/projects"
       },
@@ -820,42 +824,14 @@
     "routes": [
       {
         "title": "Plans",
-        "path": "/pricing/plans",
-        "routes": [
-          {
-            "title": "Free",
-            "path": "/pricing/plans/free"
-          },
-          {
-            "title": "Pro",
-            "path": "/pricing/plans/pro"
-          },
-          {
-            "title": "Team",
-            "path": "/pricing/plans/team"
-          },
-          {
-            "title": "Enterprise",
-            "path": "/pricing/plans/enterprise"
-          }
-        ]
+        "path": "/pricing/plans"
       },
       {
         "title": "Billing",
         "path": "/pricing/billing"
       },
       {
-        "title": "Limits",
-        "path": "/pricing/limits",
-        "routes": [
-          {
-            "title": "Fair use guidelines",
-            "path": "/pricing/limits/fair-use-guidelines"
-          }
-        ]
-      },
-      {
-        "title": "Pricing FAQs",
+        "title": "FAQs",
         "path": "/pricing/faqs"
       }
     ]
