@@ -1,0 +1,33 @@
+{
+  "layers": {
+    "app": ["views", "features", "components", "lib"],
+    "views": ["features", "components", "lib"],
+    "features": ["features", "components", "lib"],
+    "components": ["components", "lib"],
+    "lib": ["lib"]
+  },
+  "featureRoot": "features",
+  "viewRoot": "views",
+  "surfaceFile": "index.ts",
+  "serverDir": "api",
+  "allowedDeepImports": [
+    {
+      "from": "app/api/**",
+      "to": "features/*/api/**"
+    }
+  ],
+  "testInfra": ["tests/**"],
+  "entryFiles": [
+    "app/layout.tsx",
+    "app/page.tsx",
+    "app/providers.tsx",
+    "app/globals.css",
+    "app/api/**/route.ts"
+  ],
+  "commentsExempt": ["components/**", "liveblocks.config.ts"],
+  "testExempt": ["components/ai-elements/**", "components/ui/**"],
+  "featureMapDirectoryRows": ["components/ai-elements/", "components/ui/"],
+  "removedDirs": ["hooks"],
+  "sizeWarnLines": 300,
+  "legacy": {}
+}

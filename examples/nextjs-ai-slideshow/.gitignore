@@ -6,7 +6,13 @@ node_modules
 *.tsbuildinfo
 .vercel
 .next
+.next-*
 out
 next-env.d.ts
 # Turborepo
 .turbo
+# Local dev server and test artefacts
+.liveblocks
+playwright-report
+test-results
+coverage

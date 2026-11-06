@@ -2,7 +2,7 @@
 
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { PropsWithChildren } from "react";
-import { getRandomUser } from "./database";
+import { getRandomUser } from "@/features/users";
 
 const userId = getRandomUser().id;
 
@@ -24,9 +24,8 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
       throttle={16}
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       authEndpoint={authWithRandomUser("/api/liveblocks-auth")}
-      // Resolve user info (name, avatar) from their id. Used by AvatarStack and
-      // any other presence UI to show who's currently in the room.
       resolveUsers={async ({ userIds }) => {
         const search = new URLSearchParams(
           userIds.map((userId) => ["userIds", userId])
@@ -37,7 +36,6 @@ export function Providers({ children }: PropsWithChildren) {
         }
         return await response.json();
       }}
-      // Find a list of users that match the current search term.
       resolveMentionSuggestions={async ({ text }) => {
         const response = await fetch(
           `/api/users/search?text=${encodeURIComponent(text)}`
