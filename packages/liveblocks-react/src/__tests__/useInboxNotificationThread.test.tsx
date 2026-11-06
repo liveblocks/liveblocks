@@ -86,6 +86,7 @@ describe("useInboxNotificationThread", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -169,6 +170,7 @@ describe("useInboxNotificationThread", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -275,6 +277,7 @@ describe("useInboxNotificationThread", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,

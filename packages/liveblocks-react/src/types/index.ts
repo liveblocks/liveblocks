@@ -345,8 +345,8 @@ export type ThreadsAsyncResult<TM extends BaseMetadata, CM extends BaseMetadata>
 
 export type SearchCommentsAsyncResult = AsyncResult<Array<SearchCommentsResult>, "results">; // prettier-ignore
 
-export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
-export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications"> & { reload: () => Promise<void> }; // prettier-ignore
+export type InboxNotificationsAsyncResult = Relax<AsyncLoading<"inboxNotifications"> | AsyncError<"inboxNotifications"> | InboxNotificationsAsyncSuccess>; // prettier-ignore
 
 export type FeedsAsyncSuccess<FM extends Json = Json> = PagedAsyncSuccess<Feed<FM>[], "feeds">; // prettier-ignore
 export type FeedsAsyncResult<FM extends Json = Json> = PagedAsyncResult<Feed<FM>[], "feeds">; // prettier-ignore

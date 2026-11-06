@@ -1366,6 +1366,9 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
   test("useInboxNotifications()", () => {
     {
       const result = lbctx.useInboxNotifications();
+      expectTypeOf(result.reload).toEqualTypeOf<
+        (() => Promise<void>) | undefined
+      >();
       expectTypeOf(result.isLoading).toEqualTypeOf<boolean>();
       expectTypeOf(result.error).toEqualTypeOf<Error | undefined>();
       expectTypeOf(
@@ -1382,6 +1385,7 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
   test("useInboxNotifications() (suspense)", () => {
     {
       const result = lbctx.suspense.useInboxNotifications();
+      expectTypeOf(result.reload).toEqualTypeOf<() => Promise<void>>();
       expectTypeOf(result.isLoading).toEqualTypeOf<false>();
       expectTypeOf(result.error).toEqualTypeOf<undefined>();
       expectTypeOf(

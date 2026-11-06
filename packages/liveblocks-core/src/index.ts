@@ -28,7 +28,7 @@ export type {
   WithNavigation,
 } from "./ai";
 export { defineAiTool } from "./ai";
-export type { FileUrlData } from "./api-client";
+export type { FileUrlData, RoomAccess } from "./api-client";
 export type {
   Client,
   ClientOptions,
@@ -221,6 +221,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export { warnOnce, warnOnceIf } from "./lib/warnings";
+export { withAbortSignal } from "./lib/with-abort-signal";
 export type {
   AccessLevel,
   PermissionMatrix,

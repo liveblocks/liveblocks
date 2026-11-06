@@ -358,54 +358,65 @@ describe("client", () => {
       });
     });
 
-    test("should return a list of room when getRooms with query params receives a successful response", async () => {
-      const expectedQuery =
-        "roomId^'liveblocks:' metadata['color']:'blue' metadata['size']:'10'";
+    test.each<{
+      hasThreads: boolean | "unresolved" | "resolved";
+      expectedFilter: string;
+    }>([
+      { hasThreads: true, expectedFilter: "hasThreads:true" },
+      { hasThreads: false, expectedFilter: "hasThreads:false" },
+      { hasThreads: "unresolved", expectedFilter: "hasThreads:'unresolved'" },
+      { hasThreads: "resolved", expectedFilter: "hasThreads:'resolved'" },
+    ])(
+      "should filter rooms with hasThreads:$hasThreads in string and object queries",
+      async ({ hasThreads, expectedFilter }) => {
+        const expectedQuery = `${expectedFilter} roomId^'liveblocks:' metadata['color']:'blue' metadata['size']:'10'`;
 
-      server.use(
-        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, (res) => {
-          const url = new URL(res.request.url);
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/rooms`, (res) => {
+            const url = new URL(res.request.url);
 
-          expect(url.searchParams.size).toEqual(1);
-          expect(url.searchParams.get("query")).toEqual(expectedQuery);
-          return HttpResponse.json(
-            {
-              nextCursor: "1",
-              data: [room],
+            expect(url.searchParams.size).toEqual(1);
+            expect(url.searchParams.get("query")).toEqual(expectedQuery);
+            return HttpResponse.json(
+              {
+                nextCursor: "1",
+                data: [room],
+              },
+              { status: 200 }
+            );
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        await expect(
+          client.getRooms({
+            query: expectedQuery,
+          })
+        ).resolves.toEqual({
+          nextCursor: "1",
+          data: [room],
+        });
+
+        await expect(
+          client.getRooms({
+            query: {
+              metadata: {
+                color: "blue",
+                size: "10",
+              },
+              roomId: {
+                startsWith: "liveblocks:",
+              },
+              hasThreads,
             },
-            { status: 200 }
-          );
-        })
-      );
-
-      const client = new Liveblocks({ secret: "sk_xxx" });
-
-      await expect(
-        client.getRooms({
-          query: expectedQuery,
-        })
-      ).resolves.toEqual({
-        nextCursor: "1",
-        data: [room],
-      });
-
-      await expect(
-        client.getRooms({
-          query: {
-            metadata: {
-              color: "blue",
-              size: "10",
-            },
-            roomId: {
-              startsWith: "liveblocks:",
-            },
-          },
-        })
-      ).resolves.toEqual({
-        nextCursor: "1",
-        data: [room],
-      });
-    });
+          })
+        ).resolves.toEqual({
+          nextCursor: "1",
+          data: [room],
+        });
+      }
+    );
 
     test("should return a list of room when getRooms with partial params receives a successful response", async () => {
       server.use(
@@ -3688,6 +3699,80 @@ describe("client", () => {
           activityData: { file: "url" },
         })
       ).resolves.toBeUndefined();
+    });
+  });
+
+  describe("mark inbox notification as read", () => {
+    test("should mark the specified inbox notification as read", async () => {
+      const inboxNotificationId = "in_123";
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/inbox-notifications/:inboxNotificationId/read`,
+          async ({ params, request }) => {
+            expect(params.inboxNotificationId).toBe(inboxNotificationId);
+            expect(request.headers.get("Authorization")).toBe("Bearer sk_xxx");
+            expect(await request.text()).toBe("");
+            return HttpResponse.json({});
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.markInboxNotificationAsRead({ inboxNotificationId })
+      ).resolves.toBeUndefined();
+    });
+
+    test("should throw a LiveblocksError when the inbox notification is not found", async () => {
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/inbox-notifications/:inboxNotificationId/read`,
+          () => {
+            return HttpResponse.json(
+              {
+                error: "RESOURCE_NOT_FOUND",
+                message: "Inbox notification not found",
+              },
+              { status: 404 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.markInboxNotificationAsRead({ inboxNotificationId: "in_123" })
+      ).rejects.toMatchObject({
+        name: "LiveblocksError",
+        status: 404,
+        message: "Inbox notification not found",
+      });
+    });
+
+    test("should support aborting the request", async () => {
+      const abortController = new AbortController();
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/inbox-notifications/:inboxNotificationId/read`,
+          () => {
+            abortController.abort();
+            return HttpResponse.json({});
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.markInboxNotificationAsRead(
+          { inboxNotificationId: "in_123" },
+          { signal: abortController.signal }
+        )
+      ).rejects.toMatchObject({ name: "AbortError" });
     });
   });
 
