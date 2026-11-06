@@ -39,8 +39,30 @@ function formatLabelIds(ids: string[]): string {
     .join("\n");
 }
 
+// The issue's Lexical description converted to markdown, or `null` if the
+// document could not be loaded.
+export async function loadIssueDescriptionMarkdown(
+  roomId: string
+): Promise<string | null> {
+  try {
+    return await withLexicalDocument(
+      {
+        roomId,
+        client: liveblocks,
+        nodes: [...ISSUE_LEXICAL_NODES],
+      },
+      async (doc) => doc.toMarkdown().trim()
+    );
+  } catch {
+    // Lexical unavailable for this room, should not happen
+    return null;
+  }
+}
+
 // Markdown snapshot of the issue: room metadata, storage fields, labels,
-export async function buildIssueContextMarkdown(roomId: string): Promise<string> {
+export async function buildIssueContextMarkdown(
+  roomId: string
+): Promise<string> {
   let storage: StorageJson;
   try {
     storage = (await liveblocks.getStorageDocument(
@@ -59,22 +81,13 @@ export async function buildIssueContextMarkdown(roomId: string): Promise<string>
     // continue without room metadata
   }
 
-  let descriptionMd = "_No description could be loaded._";
-  try {
-    descriptionMd = await withLexicalDocument(
-      {
-        roomId,
-        client: liveblocks,
-        nodes: [...ISSUE_LEXICAL_NODES],
-      },
-      async (doc) => {
-        const md = doc.toMarkdown().trim();
-        return md.length > 0 ? md : "_Empty._";
-      }
-    );
-  } catch {
-    // Lexical unavailable for this room, should not happen
-  }
+  const loadedDescription = await loadIssueDescriptionMarkdown(roomId);
+  const descriptionMd =
+    loadedDescription === null
+      ? "_No description could be loaded._"
+      : loadedDescription.length > 0
+        ? loadedDescription
+        : "_Empty._";
 
   const labels = Array.isArray(storage.labels) ? storage.labels : [];
   const links = Array.isArray(storage.links) ? storage.links : [];

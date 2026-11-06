@@ -37,7 +37,7 @@ const FEATURES: Feature[] = [
     icon: <SparklesIcon className="w-4 h-4" />,
     title: "AI Assistant",
     description:
-      "@mention the “AI Assistant” in a comment to get a streamed reply. It can create new issues and edit the current one. The sparkle buttons also auto-fill properties, labels, and links.",
+      "@mention the “AI Assistant” in a comment to get a streamed reply. It can create new issues and edit the current one. The sparkle buttons auto-fill links (Claude) and classify priority, progress, assignee, and labels (Jev by TypeSafe).",
   },
   {
     icon: <CreateIcon className="w-4 h-4" />,
