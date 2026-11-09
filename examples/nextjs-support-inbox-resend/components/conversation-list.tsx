@@ -52,6 +52,7 @@ export function ConversationList({
   filter,
   sort,
   isSeeding,
+  inboxAddress,
   onSelect,
   onQueryChange,
   onFilterChange,
@@ -67,6 +68,8 @@ export function ConversationList({
   filter: ListFilter;
   sort: ListSort;
   isSeeding: boolean;
+  // Address of the connected Resend inbox; null in demo mode.
+  inboxAddress: string | null;
   onSelect: (feedId: string) => void;
   onQueryChange: (query: string) => void;
   onFilterChange: (filter: ListFilter) => void;
@@ -187,7 +190,12 @@ export function ConversationList({
 
       <div className="scroll-quiet min-h-0 flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
-          <ListEmptyState view={view} query={query} isSeeding={isSeeding} />
+          <ListEmptyState
+            view={view}
+            query={query}
+            isSeeding={isSeeding}
+            inboxAddress={inboxAddress}
+          />
         ) : (
           <ul role="list" className="flex flex-col">
             {conversations.map((conversation) => (
@@ -326,20 +334,25 @@ function ListEmptyState({
   view,
   query,
   isSeeding,
+  inboxAddress,
 }: {
   view: View;
   query: string;
   isSeeding: boolean;
+  inboxAddress: string | null;
 }) {
   let title = "Nothing here";
   let description = "Conversations matching this view will show up here.";
 
   if (isSeeding) {
     title = "Setting up your inbox";
-    description = "Loading sample conversations…";
+    description = "Loading conversations…";
   } else if (query) {
     title = "No results";
     description = `Nothing matches “${query}”.`;
+  } else if (view === "inbox" && inboxAddress) {
+    title = "Waiting for your first email";
+    description = `Emails sent to ${inboxAddress} will appear here in realtime.`;
   } else if (view === "inbox") {
     title = "Inbox zero";
     description = "New customer emails will appear here in realtime.";

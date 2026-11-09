@@ -15,15 +15,19 @@ const MINUTE = 60_000;
 
 /**
  * Populates an empty inbox with the sample conversations, so the example is
- * a believable, active support inbox from the first load. Feed and message
- * ids are deterministic, so two tabs seeding at the same time can't create
- * duplicates. Demo conversations are tagged `source: "demo"` and replies to
- * them are simulated — nothing is ever emailed.
+ * a believable, active support inbox from the first load. Only runs in demo
+ * mode (`enabled`): an inbox connected to Resend starts empty and fills up
+ * from the webhook instead. Feed and message ids are deterministic, so two
+ * tabs seeding at the same time can't create duplicates. Demo conversations
+ * are tagged `source: "demo"` and replies to them are simulated — nothing is
+ * ever emailed.
  */
 export function useDemoSeed({
+  enabled,
   isEmpty,
   isLoaded,
 }: {
+  enabled: boolean;
   isEmpty: boolean;
   isLoaded: boolean;
 }) {
@@ -33,7 +37,7 @@ export function useDemoSeed({
   const [isSeeding, setIsSeeding] = useState(false);
 
   useEffect(() => {
-    if (!isLoaded || !isEmpty || started.current) {
+    if (!enabled || !isLoaded || !isEmpty || started.current) {
       return;
     }
     started.current = true;
@@ -123,7 +127,7 @@ export function useDemoSeed({
         // Best effort: a partially seeded inbox is still usable.
       })
       .finally(() => setIsSeeding(false));
-  }, [isEmpty, isLoaded, createFeed, createFeedMessage]);
+  }, [enabled, isEmpty, isLoaded, createFeed, createFeedMessage]);
 
   return { isSeeding };
 }

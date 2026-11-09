@@ -58,10 +58,15 @@ export function SupportInbox({ roomId }: { roomId: string }) {
     }
   }, [hasFetchedAll, isFetchingMore, fetchMore]);
 
+  // Sample conversations are only seeded in demo mode, once we know which
+  // mode this deployment runs in.
   const { isSeeding } = useDemoSeed({
+    enabled: settings?.mode === "demo",
     isLoaded: hasFetchedAll,
     isEmpty: feeds.length === 0,
   });
+  // Empty + settings still loading: don't flash "Inbox zero" before seeding.
+  const isPreparing = isSeeding || (settings === null && feeds.length === 0);
 
   const updateFeedMetadata = useUpdateFeedMetadata();
   const createFeedMessage = useCreateFeedMessage();
@@ -405,7 +410,8 @@ export function SupportInbox({ roomId }: { roomId: string }) {
               query={query}
               filter={filter}
               sort={sort}
-              isSeeding={isSeeding}
+              isSeeding={isPreparing}
+              inboxAddress={demoMode ? null : (settings?.inboxAddress ?? null)}
               onSelect={select}
               onQueryChange={setQuery}
               onFilterChange={setFilter}
