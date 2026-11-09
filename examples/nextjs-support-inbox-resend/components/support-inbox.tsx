@@ -1,0 +1,473 @@
+"use client";
+
+import {
+  useCreateFeedMessage,
+  useDeleteFeedMessage,
+  useFeeds,
+  useSelf,
+  useUpdateFeedMessage,
+  useUpdateFeedMetadata,
+  useUpdateMyPresence,
+} from "@liveblocks/react/suspense";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getUsers } from "@/app/database";
+import type { ReplyRequest, ReplyResponse } from "@/lib/api";
+import { useDemoSeed } from "@/hooks/use-demo-seed";
+import { useInboxSettings } from "@/hooks/use-inbox-settings";
+import {
+  extractMentionedUserIds,
+  previewOf,
+  PRIORITY_RANK,
+  type Conversation,
+  type ConversationMetadata,
+  type EmailMessageData,
+  type Priority,
+  type Status,
+} from "@/lib/conversation";
+import { cn } from "@/lib/utils";
+import {
+  ConversationList,
+  type ListFilter,
+  type ListSort,
+} from "./conversation-list";
+import { ConversationView, NoConversation } from "./conversation-view";
+import { CustomerPanel } from "./customer-panel";
+import { SettingsView } from "./settings-view";
+import { Sidebar, type View, type ViewCounts } from "./sidebar";
+import { TooltipProvider } from "./ui/tooltip";
+
+/**
+ * The shared inbox. One Liveblocks room per inbox; each conversation is a
+ * feed in that room, so the list, the thread, and every status change stay in
+ * sync for the whole team in realtime.
+ */
+export function SupportInbox({ roomId }: { roomId: string }) {
+  const self = useSelf();
+  const settings = useInboxSettings();
+  // Until a Resend inbox is configured, every reply is simulated.
+  const demoMode = settings?.mode !== "resend";
+
+  // Every conversation in the inbox. Pages are loaded until we have them all
+  // so counts and filters are accurate.
+  const { feeds, hasFetchedAll, fetchMore, isFetchingMore } = useFeeds({
+    limit: 100,
+  });
+  useEffect(() => {
+    if (!hasFetchedAll && !isFetchingMore) {
+      fetchMore();
+    }
+  }, [hasFetchedAll, isFetchingMore, fetchMore]);
+
+  const { isSeeding } = useDemoSeed({
+    isLoaded: hasFetchedAll,
+    isEmpty: feeds.length === 0,
+  });
+
+  const updateFeedMetadata = useUpdateFeedMetadata();
+  const createFeedMessage = useCreateFeedMessage();
+  const updateFeedMessage = useUpdateFeedMessage();
+  const deleteFeedMessage = useDeleteFeedMessage();
+  const updateMyPresence = useUpdateMyPresence();
+
+  const [view, setView] = useState<View>("inbox");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<ListFilter>("all");
+  const [sort, setSort] = useState<ListSort>("newest");
+  const [detailsOpen, setDetailsOpen] = useState(true);
+
+  const conversations = feeds;
+
+  // Feed metadata is written as a whole object: merge each change onto the
+  // latest known metadata so no field is dropped.
+  const patch = useCallback(
+    (conversation: Conversation, changes: Partial<ConversationMetadata>) =>
+      updateFeedMetadata(conversation.feedId, {
+        ...conversation.metadata,
+        ...changes,
+      }),
+    [updateFeedMetadata]
+  );
+
+  const counts = useMemo<ViewCounts>(() => {
+    const result: ViewCounts = {
+      inbox: 0,
+      mine: 0,
+      unassigned: 0,
+      mentions: 0,
+      resolved: 0,
+    };
+    for (const { metadata } of conversations) {
+      if (metadata.status === "resolved") {
+        result.resolved += 1;
+      } else {
+        result.inbox += 1;
+        if (metadata.assigneeId === self.id) result.mine += 1;
+        if (!metadata.assigneeId) result.unassigned += 1;
+      }
+      if (metadata.mentionedUserIds?.includes(self.id)) result.mentions += 1;
+    }
+    return result;
+  }, [conversations, self.id]);
+
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const list = conversations.filter(({ metadata }) => {
+      if (!matchesView(metadata, view, self.id)) return false;
+      if (filter === "unread" && metadata.unread !== "true") return false;
+      if (
+        filter === "priority" &&
+        metadata.priority !== "urgent" &&
+        metadata.priority !== "high"
+      ) {
+        return false;
+      }
+      if (needle) {
+        const haystack = [
+          metadata.subject,
+          metadata.customerName,
+          metadata.customerEmail,
+          metadata.customerCompany,
+          metadata.preview,
+        ]
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(needle)) return false;
+      }
+      return true;
+    });
+
+    const activity = (conversation: Conversation) =>
+      Date.parse(conversation.metadata.lastActivityAt) ||
+      conversation.updatedAt;
+
+    return list.sort((a, b) => {
+      if (sort === "priority") {
+        const rank =
+          PRIORITY_RANK[a.metadata.priority] - PRIORITY_RANK[b.metadata.priority];
+        if (rank !== 0) return rank;
+      }
+      return sort === "oldest"
+        ? activity(a) - activity(b)
+        : activity(b) - activity(a);
+    });
+  }, [conversations, view, filter, query, sort, self.id]);
+
+  const selected = useMemo(
+    () => conversations.find((item) => item.feedId === selectedId) ?? null,
+    [conversations, selectedId]
+  );
+
+  // On wide screens, land on the first conversation of the view so the
+  // thread pane is never empty. Phones start on the list instead.
+  useEffect(() => {
+    if (view === "settings" || selected || visible.length === 0) return;
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      setSelectedId(visible[0].feedId);
+    }
+  }, [view, selected, visible]);
+
+  // Drop the selection if the conversation disappeared from the inbox.
+  useEffect(() => {
+    if (selectedId && hasFetchedAll && !selected) {
+      setSelectedId(null);
+    }
+  }, [selectedId, selected, hasFetchedAll]);
+
+  // Tell teammates which conversation we're reading (live avatars).
+  useEffect(() => {
+    updateMyPresence({
+      viewingFeedId: view === "settings" ? null : selectedId,
+    });
+  }, [selectedId, view, updateMyPresence]);
+
+  const select = useCallback(
+    (feedId: string) => {
+      setSelectedId(feedId);
+      const conversation = conversations.find((item) => item.feedId === feedId);
+      // Opening a conversation marks it read for the whole team, like a shared
+      // mailbox.
+      if (conversation?.metadata.unread === "true") {
+        void patch(conversation, { unread: "false" });
+      }
+    },
+    [conversations, patch]
+  );
+
+  const changeView = useCallback((next: View) => {
+    setView(next);
+    setQuery("");
+    setFilter("all");
+    if (next === "settings") {
+      setSelectedId(null);
+    }
+  }, []);
+
+  const setStatus = useCallback(
+    (status: Status) => {
+      if (!selected) return;
+      void patch(selected, {
+        status,
+        lastActivityAt: new Date().toISOString(),
+      });
+    },
+    [selected, patch]
+  );
+
+  const setPriority = useCallback(
+    (priority: Priority) => {
+      if (!selected) return;
+      void patch(selected, { priority });
+    },
+    [selected, patch]
+  );
+
+  const setAssignee = useCallback(
+    (assigneeId: string) => {
+      if (!selected) return;
+      void patch(selected, { assigneeId });
+    },
+    [selected, patch]
+  );
+
+  const markUnread = useCallback(() => {
+    if (!selected) return;
+    void patch(selected, { unread: "true" });
+  }, [selected, patch]);
+
+  // Hands a reply that's already in the feed to the server, which emails it
+  // through Resend and settles the message as "sent" or "failed". We apply
+  // the outcome from the response as well, so the thread updates the instant
+  // the request returns rather than waiting on the server's own feed write.
+  const deliver = useCallback(
+    async (feedId: string, messageId: string, data: EmailMessageData) => {
+      const body: ReplyRequest = {
+        roomId,
+        feedId,
+        messageId,
+        userId: self.id,
+        text: data.text,
+      };
+      let result: ReplyResponse | null = null;
+      try {
+        const response = await fetch("/api/conversations/reply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        result = (await response.json().catch(() => null)) as ReplyResponse | null;
+      } catch {
+        result = null;
+      }
+
+      if (result?.ok) {
+        await updateFeedMessage(feedId, messageId, {
+          ...data,
+          status: "sent",
+          failureReason: "",
+          resendEmailId: result.resendEmailId,
+          from: result.from,
+          simulated: result.simulated,
+        });
+      } else {
+        await updateFeedMessage(feedId, messageId, {
+          ...data,
+          status: "failed",
+          failureReason:
+            (result && !result.ok && result.error) ||
+            "Couldn't reach the server.",
+        });
+      }
+    },
+    [roomId, self.id, updateFeedMessage]
+  );
+
+  // Sending a reply writes it into the feed right away as a "sending" email,
+  // so it shows up for every agent (and in the list) instantly; the server
+  // then flips it to "sent" once Resend accepts it.
+  const sendReply = useCallback(
+    async (text: string) => {
+      if (!selected) return;
+      const messageId = `reply_${crypto.randomUUID()}`;
+      const simulated = demoMode || selected.metadata.source === "demo";
+      const data: EmailMessageData = {
+        kind: "email",
+        direction: "outbound",
+        status: "sending",
+        failureReason: "",
+        resendEmailId: "",
+        from: {
+          name: self.info.name,
+          email: simulated
+            ? "support@relay.example"
+            : (settings?.inboxAddress ?? ""),
+        },
+        to: [selected.metadata.customerEmail],
+        cc: [],
+        subject: selected.metadata.subject,
+        text,
+        attachments: [],
+        authorId: self.id,
+        simulated,
+      };
+      await createFeedMessage(selected.feedId, data, { id: messageId });
+      void patch(selected, {
+        preview: previewOf(text),
+        lastActivityAt: new Date().toISOString(),
+      });
+      void deliver(selected.feedId, messageId, data);
+    },
+    [
+      selected,
+      self.id,
+      self.info.name,
+      demoMode,
+      settings,
+      createFeedMessage,
+      patch,
+      deliver,
+    ]
+  );
+
+  const retryReply = useCallback(
+    async (message: { id: string; data: EmailMessageData }) => {
+      if (!selected) return;
+      const data: EmailMessageData = {
+        ...message.data,
+        status: "sending",
+        failureReason: "",
+      };
+      await updateFeedMessage(selected.feedId, message.id, data);
+      void deliver(selected.feedId, message.id, data);
+    },
+    [selected, updateFeedMessage, deliver]
+  );
+
+  const discardReply = useCallback(
+    (message: { id: string }) => {
+      if (!selected) return;
+      void deleteFeedMessage(selected.feedId, message.id);
+    },
+    [selected, deleteFeedMessage]
+  );
+
+  // Internal notes never leave Liveblocks: they're written straight into the
+  // feed from the client and are only visible to the team.
+  const addNote = useCallback(
+    async (text: string) => {
+      if (!selected) return;
+      const agents = getUsers().map((user) => ({
+        id: user.id,
+        name: user.info.name,
+      }));
+      const mentionedUserIds = extractMentionedUserIds(text, agents);
+      await createFeedMessage(selected.feedId, {
+        kind: "note",
+        authorId: self.id,
+        text,
+        mentionedUserIds,
+      });
+      await patch(selected, {
+        lastActivityAt: new Date().toISOString(),
+        mentionedUserIds: [
+          ...new Set([
+            ...(selected.metadata.mentionedUserIds ?? []),
+            ...mentionedUserIds,
+          ]),
+        ],
+      });
+    },
+    [selected, self.id, createFeedMessage, patch]
+  );
+
+  const showingDetail = view !== "settings" && selected !== null;
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <div className="flex h-dvh overflow-hidden bg-canvas text-ink">
+        <Sidebar
+          view={view}
+          counts={counts}
+          inboxAddress={settings?.inboxAddress ?? null}
+          onChange={changeView}
+          className="hidden md:flex"
+        />
+
+        {view === "settings" ? (
+          <SettingsView settings={settings} />
+        ) : (
+          <>
+            <ConversationList
+              view={view}
+              counts={counts}
+              conversations={visible}
+              selectedId={selectedId}
+              query={query}
+              filter={filter}
+              sort={sort}
+              isSeeding={isSeeding}
+              onSelect={select}
+              onQueryChange={setQuery}
+              onFilterChange={setFilter}
+              onSortChange={setSort}
+              onViewChange={changeView}
+              // Phones show either the list or the thread.
+              className={cn(showingDetail ? "hidden md:flex" : "flex")}
+            />
+
+            {selected ? (
+              <ConversationView
+                conversation={selected}
+                selfId={self.id}
+                demoMode={demoMode}
+                detailsOpen={detailsOpen}
+                onToggleDetails={() => setDetailsOpen((open) => !open)}
+                onBack={() => setSelectedId(null)}
+                onSetStatus={setStatus}
+                onSetPriority={setPriority}
+                onSetAssignee={setAssignee}
+                onMarkUnread={markUnread}
+                onSendReply={sendReply}
+                onRetryReply={retryReply}
+                onDiscardReply={discardReply}
+                onAddNote={addNote}
+              />
+            ) : (
+              <NoConversation className="hidden md:flex" />
+            )}
+
+            {selected && detailsOpen ? (
+              <CustomerPanel
+                conversation={selected}
+                conversations={conversations}
+                onClose={() => setDetailsOpen(false)}
+                className="hidden xl:flex"
+              />
+            ) : null}
+          </>
+        )}
+      </div>
+    </TooltipProvider>
+  );
+}
+
+function matchesView(
+  metadata: Conversation["metadata"],
+  view: View,
+  selfId: string
+) {
+  switch (view) {
+    case "inbox":
+      return metadata.status === "open";
+    case "mine":
+      return metadata.status === "open" && metadata.assigneeId === selfId;
+    case "unassigned":
+      return metadata.status === "open" && !metadata.assigneeId;
+    case "mentions":
+      return metadata.mentionedUserIds?.includes(selfId) ?? false;
+    case "resolved":
+      return metadata.status === "resolved";
+    case "settings":
+      return false;
+  }
+}
