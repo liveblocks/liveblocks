@@ -18,6 +18,24 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 46 (2026-11-13)
+
+## Documentation
+
+- Restructured pricing docs into new [Plans](https://liveblocks.io/docs/pricing/plans),
+  [Billing](https://liveblocks.io/docs/pricing/billing), and
+  [FAQs](https://liveblocks.io/docs/pricing/faqs) pages, with redirects from
+  the old per-plan, limits, and fair-use pages.
+
+## Website
+
+- Updated the pricing page and docs to share the same pricing FAQ content and
+  plan prices.
+
+## Contributors
+
+ctnicholas
+
 # Week 45 (2026-11-06)
 
 ## v3.25.0
