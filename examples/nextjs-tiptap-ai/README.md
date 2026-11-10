@@ -32,6 +32,7 @@ Set up this project manually:
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
+- Add an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to `.env.local`
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 <!-- TODO: use this getting started guide after example merged to website
@@ -58,6 +59,7 @@ Alternatively, you can set up your project manually:
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
+- Add an `AI_GATEWAY_API_KEY` from the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to `.env.local`
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 </details>
