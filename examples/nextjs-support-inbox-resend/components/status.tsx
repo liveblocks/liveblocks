@@ -16,6 +16,8 @@ import { getUsers } from "@/app/database";
 import {
   PRIORITIES,
   PRIORITY_LABEL,
+  STATUS_LABEL,
+  STATUSES,
   type Priority,
   type Status,
 } from "@/lib/conversation";
@@ -75,23 +77,95 @@ export function PriorityMark({ priority }: { priority: Priority }) {
   return null;
 }
 
-export function StatusBadge({ status }: { status: Status }) {
+export function StatusIcon({
+  status,
+  className,
+}: {
+  status: Status;
+  className?: string;
+}) {
+  const base = cn("size-3.5 shrink-0", className);
+  switch (status) {
+    case "needs-response":
+      return <CircleDotIcon className={cn(base, "text-open")} />;
+    case "waiting":
+      return <CircleDashedIcon className={cn(base, "text-ink-muted")} />;
+    case "resolved":
+      return <CheckIcon className={cn(base, "text-ink-muted")} />;
+  }
+}
+
+// Inline status for list rows and the details panel: a colored dot only for
+// conversations the team still owes a reply, so the list stays quiet.
+export function StatusText({
+  status,
+  className,
+}: {
+  status: Status;
+  className?: string;
+}) {
   return (
-    <span
-      className={cn(
-        "inline-flex h-6 items-center gap-1.5 rounded-md border px-2 text-xs font-medium",
-        status === "open"
-          ? "border-open/25 bg-open/8 text-open"
-          : "border-line bg-hover text-ink-secondary"
-      )}
-    >
-      {status === "open" ? (
-        <CircleDotIcon className="size-3" />
-      ) : (
-        <CheckIcon className="size-3" />
-      )}
-      {status === "open" ? "Open" : "Resolved"}
+    <span className={cn("inline-flex items-center gap-1.5", className)}>
+      <span
+        className={cn(
+          "size-1.5 shrink-0 rounded-full",
+          status === "needs-response" ? "bg-open" : "bg-ink-faint"
+        )}
+        aria-hidden
+      />
+      <span
+        className={cn(
+          status === "needs-response" && "font-medium text-open"
+        )}
+      >
+        {STATUS_LABEL[status]}
+      </span>
     </span>
+  );
+}
+
+export function StatusMenu({
+  value,
+  onChange,
+}: {
+  value: Status;
+  onChange: (status: Status) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={cn(
+          triggerClass,
+          value === "needs-response" &&
+            "border-open/25 bg-open/8 text-open hover:border-open/40 hover:bg-open/12 hover:text-open"
+        )}
+        aria-label="Status"
+      >
+        <StatusIcon status={value} className="size-3" />
+        <span>{STATUS_LABEL[value]}</span>
+        <ChevronDownIcon
+          className={cn(
+            "size-3",
+            value === "needs-response" ? "text-open/60" : "text-ink-faint"
+          )}
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-48">
+        {STATUSES.map((status) => (
+          <DropdownMenuItem
+            key={status}
+            onClick={() => onChange(status)}
+            className="text-xs"
+          >
+            <StatusIcon status={status} />
+            <span className="flex-1">{STATUS_LABEL[status]}</span>
+            {status === value ? (
+              <CheckIcon className="size-3.5 text-ink-muted" />
+            ) : null}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

@@ -5,13 +5,14 @@ import { Building2Icon, MailIcon, XIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import {
   CATEGORY_LABEL,
+  isOpen,
   PRIORITY_LABEL,
   type Conversation,
 } from "@/lib/conversation";
 import { formatFullDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AgentAvatar, AgentName, CustomerAvatar } from "./avatars";
-import { PriorityIcon } from "./status";
+import { PriorityIcon, StatusText } from "./status";
 
 export function CustomerPanel({
   conversation,
@@ -30,7 +31,7 @@ export function CustomerPanel({
     (item) => item.metadata.customerEmail === metadata.customerEmail
   );
   const openCount = history.filter(
-    (item) => item.metadata.status === "open"
+    (item) => isOpen(item.metadata.status)
   ).length;
 
   return (
@@ -103,15 +104,7 @@ export function CustomerPanel({
         </h3>
         <dl className="flex flex-col gap-2.5">
           <Field label="Status">
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "size-1.5 rounded-full",
-                  metadata.status === "open" ? "bg-open" : "bg-ink-faint"
-                )}
-              />
-              {metadata.status === "open" ? "Open" : "Resolved"}
-            </span>
+            <StatusText status={metadata.status} />
           </Field>
           <Field label="Priority">
             <span className="inline-flex items-center gap-1.5">

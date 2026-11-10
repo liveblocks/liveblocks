@@ -33,7 +33,6 @@ export type DemoConversation = {
   priority: Priority;
   // Agent id, or "" when unassigned.
   assigneeId: string;
-  unread: boolean;
   // Oldest first.
   messages: DemoMessage[];
 };
@@ -48,10 +47,9 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       company: "Northwind Analytics",
     },
     category: "billing",
-    status: "open",
+    status: "needs-response",
     priority: "urgent",
     assigneeId: "anjali.wanda@relay.example",
-    unread: true,
     messages: [
       {
         kind: "email",
@@ -92,10 +90,9 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       company: "Ferris & Co.",
     },
     category: "technical",
-    status: "open",
+    status: "needs-response",
     priority: "high",
     assigneeId: "mislav.abha@relay.example",
-    unread: true,
     messages: [
       {
         kind: "email",
@@ -133,10 +130,9 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       company: "Brightfield Labs",
     },
     category: "account",
-    status: "open",
+    status: "needs-response",
     priority: "high",
     assigneeId: "quinn.elton@relay.example",
-    unread: true,
     messages: [
       {
         kind: "email",
@@ -174,10 +170,9 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       company: "Cedar Path Health",
     },
     category: "feature-request",
-    status: "open",
+    status: "needs-response",
     priority: "normal",
     assigneeId: "",
-    unread: true,
     messages: [
       {
         kind: "email",
@@ -209,10 +204,9 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       company: "HarborGrid",
     },
     category: "technical",
-    status: "open",
+    status: "waiting",
     priority: "high",
     assigneeId: "mislav.abha@relay.example",
-    unread: false,
     messages: [
       {
         kind: "email",
@@ -257,10 +251,9 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       company: "Orbit & Loom",
     },
     category: "billing",
-    status: "open",
+    status: "waiting",
     priority: "normal",
     assigneeId: "anjali.wanda@relay.example",
-    unread: false,
     messages: [
       {
         kind: "email",
@@ -299,10 +292,9 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       company: "Mapleline Freight",
     },
     category: "feedback",
-    status: "open",
+    status: "waiting",
     priority: "low",
     assigneeId: "",
-    unread: false,
     messages: [
       {
         kind: "email",
@@ -331,10 +323,9 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       company: "Vellum Security",
     },
     category: "feature-request",
-    status: "open",
+    status: "waiting",
     priority: "normal",
     assigneeId: "charlie.layne@relay.example",
-    unread: false,
     messages: [
       {
         kind: "email",
@@ -366,10 +357,9 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       company: "Pinebridge Legal",
     },
     category: "technical",
-    status: "open",
+    status: "waiting",
     priority: "normal",
     assigneeId: "",
-    unread: false,
     messages: [
       {
         kind: "email",
@@ -402,7 +392,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "resolved",
     priority: "normal",
     assigneeId: "anjali.wanda@relay.example",
-    unread: false,
     messages: [
       {
         kind: "email",
@@ -444,7 +433,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "resolved",
     priority: "normal",
     assigneeId: "charlie.layne@relay.example",
-    unread: false,
     messages: [
       {
         kind: "email",
@@ -486,7 +474,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "resolved",
     priority: "low",
     assigneeId: "tatum.paolo@relay.example",
-    unread: false,
     messages: [
       {
         kind: "email",

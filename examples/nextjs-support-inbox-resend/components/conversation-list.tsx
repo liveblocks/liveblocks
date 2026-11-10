@@ -20,7 +20,7 @@ import {
   ViewerAvatars,
 } from "./avatars";
 import { VIEWS, viewLabel, type View, type ViewCounts } from "./sidebar";
-import { PriorityMark } from "./status";
+import { PriorityMark, StatusText } from "./status";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,12 +28,13 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-export type ListFilter = "all" | "unread" | "priority";
+export type ListFilter = "all" | "needs-response" | "waiting" | "priority";
 export type ListSort = "newest" | "oldest" | "priority";
 
 const FILTERS: { id: ListFilter; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "unread", label: "Unread" },
+  { id: "needs-response", label: "Needs response" },
+  { id: "waiting", label: "Waiting on customer" },
   { id: "priority", label: "High priority" },
 ];
 
@@ -226,7 +227,6 @@ function ConversationRow({
   onSelect: () => void;
 }) {
   const { metadata, feedId } = conversation;
-  const unread = metadata.unread === "true";
   const lastActivity = Date.parse(metadata.lastActivityAt) || conversation.updatedAt;
 
   return (
@@ -255,22 +255,11 @@ function ConversationRow({
             email={metadata.customerEmail}
             size="lg"
           />
-          {unread ? (
-            <span
-              className="absolute -top-0.5 -left-0.5 size-2.5 rounded-full bg-ink ring-2 ring-surface"
-              aria-label="Unread"
-            />
-          ) : null}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-3">
-            <span
-              className={cn(
-                "truncate text-[13px]",
-                unread ? "font-semibold text-ink" : "font-medium text-ink"
-              )}
-            >
+            <span className="truncate text-[13px] font-medium text-ink">
               {metadata.customerName}
             </span>
             <time
@@ -283,23 +272,13 @@ function ConversationRow({
           </div>
 
           <div className="mt-0.5 flex items-center justify-between gap-3">
-            <span
-              className={cn(
-                "truncate text-[13px]",
-                unread ? "font-medium text-ink" : "text-ink-secondary"
-              )}
-            >
+            <span className="truncate text-[13px] text-ink-secondary">
               {metadata.subject}
             </span>
             <PriorityMark priority={metadata.priority} />
           </div>
 
-          <p
-            className={cn(
-              "mt-1 line-clamp-1 text-xs leading-snug",
-              unread ? "text-ink-secondary" : "text-ink-muted"
-            )}
-          >
+          <p className="mt-1 line-clamp-1 text-xs leading-snug text-ink-muted">
             {metadata.preview}
           </p>
 
@@ -315,12 +294,8 @@ function ConversationRow({
               ) : (
                 <span className="truncate italic">Unassigned</span>
               )}
-              {metadata.status === "resolved" ? (
-                <>
-                  <span aria-hidden>·</span>
-                  <span>Resolved</span>
-                </>
-              ) : null}
+              <span aria-hidden>·</span>
+              <StatusText status={metadata.status} className="truncate" />
             </div>
             <ViewerAvatars feedId={feedId} size="xs" max={3} />
           </div>

@@ -40,13 +40,14 @@ declare global {
       customerEmail: string;
       customerCompany: string;
       category: "billing" | "feature-request" | "account" | "feedback" | "technical" | "";
-      status: "open" | "resolved";
+      // Where the conversation stands: the customer is waiting on the team
+      // ("needs-response"), the team is waiting on the customer ("waiting"),
+      // or it's done. Customer emails flip it to "needs-response", replies
+      // flip it to "waiting"; agents can also set it by hand.
+      status: "needs-response" | "waiting" | "resolved";
       priority: "low" | "normal" | "high" | "urgent";
       // Id of the assigned agent, or "" when unassigned.
       assigneeId: string;
-      // Whether the conversation has unread customer emails (shared state of
-      // the inbox, like a real shared mailbox).
-      unread: "true" | "false";
       // ISO timestamp of the latest email or internal note.
       lastActivityAt: string;
       // Agents @-mentioned in internal notes on this conversation.

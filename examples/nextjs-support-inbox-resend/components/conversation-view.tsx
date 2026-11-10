@@ -9,13 +9,13 @@ import {
   PanelRightOpenIcon,
   RotateCcwIcon,
 } from "lucide-react";
-import type { Conversation, Priority } from "@/lib/conversation";
+import type { Conversation, Priority, Status } from "@/lib/conversation";
 import { cn } from "@/lib/utils";
 import { CustomerAvatar, ViewerAvatars } from "./avatars";
 import { Composer } from "./composer";
 import { MessageTimeline } from "./message-timeline";
 import { TimelineSkeleton } from "./skeletons";
-import { AssigneeMenu, PriorityMenu, StatusBadge } from "./status";
+import { AssigneeMenu, PriorityMenu, StatusMenu } from "./status";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function ConversationView({
@@ -28,7 +28,6 @@ export function ConversationView({
   onSetStatus,
   onSetPriority,
   onSetAssignee,
-  onMarkUnread,
   onSendReply,
   onAddNote,
   className,
@@ -39,10 +38,9 @@ export function ConversationView({
   detailsOpen: boolean;
   onToggleDetails: () => void;
   onBack: () => void;
-  onSetStatus: (status: "open" | "resolved") => void;
+  onSetStatus: (status: Status) => void;
   onSetPriority: (priority: Priority) => void;
   onSetAssignee: (userId: string) => void;
-  onMarkUnread: () => void;
   onSendReply: (text: string) => Promise<void>;
   onAddNote: (text: string) => Promise<void>;
   className?: string;
@@ -109,10 +107,10 @@ export function ConversationView({
             <span className="hidden truncate text-ink-muted sm:inline">
               {metadata.customerEmail}
             </span>
-            <StatusBadge status={metadata.status} />
           </div>
 
           <div className="flex items-center gap-1.5">
+            <StatusMenu value={metadata.status} onChange={onSetStatus} />
             <AssigneeMenu
               value={metadata.assigneeId}
               selfId={selfId}
@@ -120,25 +118,11 @@ export function ConversationView({
             />
             <PriorityMenu value={metadata.priority} onChange={onSetPriority} />
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={onMarkUnread}
-                  disabled={metadata.unread === "true"}
-                  className="hidden size-7 items-center justify-center rounded-md border border-line text-ink-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-ink disabled:opacity-40 sm:flex"
-                >
-                  <MailOpenIcon className="size-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" sideOffset={6}>
-                Mark as unread
-              </TooltipContent>
-            </Tooltip>
-
             <button
               type="button"
-              onClick={() => onSetStatus(resolved ? "open" : "resolved")}
+              onClick={() =>
+                onSetStatus(resolved ? "needs-response" : "resolved")
+              }
               className={cn(
                 "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                 resolved

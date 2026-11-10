@@ -39,6 +39,18 @@ export type NoteMessageData = Extract<
 >;
 
 export type Status = ConversationMetadata["status"];
+
+export const STATUSES: Status[] = ["needs-response", "waiting", "resolved"];
+
+export const STATUS_LABEL: Record<Status, string> = {
+  "needs-response": "Needs response",
+  waiting: "Waiting on customer",
+  resolved: "Resolved",
+};
+
+export function isOpen(status: Status) {
+  return status !== "resolved";
+}
 export type Priority = ConversationMetadata["priority"];
 export type Category = Exclude<ConversationMetadata["category"], "">;
 

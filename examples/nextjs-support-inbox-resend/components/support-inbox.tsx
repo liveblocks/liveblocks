@@ -17,6 +17,7 @@ import { useDemoSeed } from "@/hooks/use-demo-seed";
 import { useInboxSettings } from "@/hooks/use-inbox-settings";
 import {
   extractMentionedUserIds,
+  isOpen,
   previewOf,
   PRIORITY_RANK,
   type Conversation,
@@ -107,7 +108,7 @@ export function SupportInbox({ roomId }: { roomId: string }) {
       resolved: 0,
     };
     for (const { metadata } of conversations) {
-      if (metadata.status === "resolved") {
+      if (!isOpen(metadata.status)) {
         result.resolved += 1;
       } else {
         result.inbox += 1;
@@ -123,7 +124,10 @@ export function SupportInbox({ roomId }: { roomId: string }) {
     const needle = query.trim().toLowerCase();
     const list = conversations.filter(({ metadata }) => {
       if (!matchesView(metadata, view, self.id)) return false;
-      if (filter === "unread" && metadata.unread !== "true") return false;
+      if (filter === "needs-response" && metadata.status !== "needs-response") {
+        return false;
+      }
+      if (filter === "waiting" && metadata.status !== "waiting") return false;
       if (
         filter === "priority" &&
         metadata.priority !== "urgent" &&
@@ -190,18 +194,9 @@ export function SupportInbox({ roomId }: { roomId: string }) {
     });
   }, [selectedId, view, updateMyPresence]);
 
-  const select = useCallback(
-    (feedId: string) => {
-      setSelectedId(feedId);
-      const conversation = conversations.find((item) => item.feedId === feedId);
-      // Opening a conversation marks it read for the whole team, like a shared
-      // mailbox.
-      if (conversation?.metadata.unread === "true") {
-        void patch(conversation, { unread: "false" });
-      }
-    },
-    [conversations, patch]
-  );
+  const select = useCallback((feedId: string) => {
+    setSelectedId(feedId);
+  }, []);
 
   const changeView = useCallback((next: View) => {
     setView(next);
@@ -239,11 +234,6 @@ export function SupportInbox({ roomId }: { roomId: string }) {
     [selected, patch]
   );
 
-  const markUnread = useCallback(() => {
-    if (!selected) return;
-    void patch(selected, { unread: "true" });
-  }, [selected, patch]);
-
   // Hands a reply that's already in the feed to the server, which emails it
   // through Resend and settles the message as "sent". We apply the outcome
   // from the response as well, so the thread updates the instant the request
@@ -256,7 +246,10 @@ export function SupportInbox({ roomId }: { roomId: string }) {
       messageId: string,
       data: EmailMessageData,
       // List summary as it was before this reply, to put back on failure.
-      previous: Pick<ConversationMetadata, "preview" | "lastActivityAt">
+      previous: Pick<
+        ConversationMetadata,
+        "preview" | "lastActivityAt" | "status"
+      >
     ) => {
       const body: ReplyRequest = {
         roomId,
@@ -335,11 +328,14 @@ export function SupportInbox({ roomId }: { roomId: string }) {
       const previous = {
         preview: selected.metadata.preview,
         lastActivityAt: selected.metadata.lastActivityAt,
+        status: selected.metadata.status,
       };
       await createFeedMessage(selected.feedId, data, { id: messageId });
+      // Replying hands the conversation over to the customer.
       void patch(selected, {
         preview: previewOf(text),
         lastActivityAt: new Date().toISOString(),
+        status: isOpen(previous.status) ? "waiting" : previous.status,
       });
       void deliver(selected.feedId, messageId, data, previous);
     },
@@ -431,7 +427,6 @@ export function SupportInbox({ roomId }: { roomId: string }) {
                 onSetStatus={setStatus}
                 onSetPriority={setPriority}
                 onSetAssignee={setAssignee}
-                onMarkUnread={markUnread}
                 onSendReply={sendReply}
                 onAddNote={addNote}
               />
@@ -461,11 +456,11 @@ function matchesView(
 ) {
   switch (view) {
     case "inbox":
-      return metadata.status === "open";
+      return isOpen(metadata.status);
     case "mine":
-      return metadata.status === "open" && metadata.assigneeId === selfId;
+      return isOpen(metadata.status) && metadata.assigneeId === selfId;
     case "unassigned":
-      return metadata.status === "open" && !metadata.assigneeId;
+      return isOpen(metadata.status) && !metadata.assigneeId;
     case "mentions":
       return metadata.mentionedUserIds?.includes(selfId) ?? false;
     case "resolved":

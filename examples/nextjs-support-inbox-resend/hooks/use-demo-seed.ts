@@ -168,7 +168,6 @@ function demoMetadata(
     status: conversation.status,
     priority: conversation.priority,
     assigneeId: conversation.assigneeId,
-    unread: conversation.unread ? "true" : "false",
     lastActivityAt: new Date(now - latest.minutesAgo * MINUTE).toISOString(),
     mentionedUserIds: [...mentioned],
   };

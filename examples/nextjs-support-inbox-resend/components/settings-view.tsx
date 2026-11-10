@@ -146,7 +146,7 @@ export function SettingsView({
           <p className="text-xs leading-relaxed text-ink-muted">
             Conversations are Liveblocks Feeds inside one room per shared
             inbox: every email and internal note is a feed message, and status,
-            priority, assignee and unread state live in the feed metadata.
+            priority and assignee live in the feed metadata.
             Presence powers the live avatars that show who is reading a thread.
           </p>
         </Card>
