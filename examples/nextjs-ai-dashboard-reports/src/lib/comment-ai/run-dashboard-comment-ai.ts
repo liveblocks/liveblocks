@@ -9,7 +9,6 @@ import {
   type CommentData,
   type ThreadData,
 } from "@liveblocks/node";
-import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
 import { ModelMessage, stepCountIs, streamText } from "ai";
 
 export type CommentLocation = {
@@ -148,7 +147,7 @@ ${content}
   }
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-5"),
+    model: "anthropic/claude-sonnet-4.5",
     system,
     messages,
     tools: createDashboardCommentAiTools(),
@@ -157,7 +156,7 @@ ${content}
       anthropic: {
         sendReasoning: true,
         thinking: { type: "enabled", budgetTokens: 10000 },
-      } satisfies AnthropicLanguageModelOptions,
+      },
     },
   });
 

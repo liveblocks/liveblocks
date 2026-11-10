@@ -16,7 +16,6 @@ import {
 import { createMemoryState } from "@chat-adapter/state-memory";
 import { BOT_USER_ID, BOT_USER_NAME, getUser } from "./database";
 import { streamText } from "ai";
-import { createAnthropic } from "@ai-sdk/anthropic";
 
 const SYSTEM_PROMPT = `You are a helpful assistant in a **demo app**: **Liveblocks Comments** (threads and replies in a room) integrated with the **Chat SDK** via **\`@liveblocks/chat-sdk-adapter\`**—Liveblocks' **adapter for the Chat SDK** (mapping comments to Chat SDK channels)—plus the Chat SDK's **in-memory state** adapter. You answer when someone @-mentions the bot.
 
@@ -70,12 +69,8 @@ bot.onNewMention(postAiResponse);
 async function postAiResponse(thread: Thread, message: Message) {
   await thread.adapter.addReaction(thread.id, message.id, "👀");
 
-  const model = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })(
-    "claude-sonnet-4-20250514"
-  );
-
   const response = streamText({
-    model,
+    model: "anthropic/claude-sonnet-4.5",
     system: SYSTEM_PROMPT,
     messages: [await convertChatMessageToAiMessage(message)],
   });

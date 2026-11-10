@@ -5,7 +5,6 @@ import {
   markdownToCommentBody,
 } from "@liveblocks/node";
 import { streamText } from "ai";
-import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
 import type { ThreadData, CommentData } from "@liveblocks/node";
 import { stringifyCommentBody } from "@liveblocks/client";
 import { ModelMessage } from "ai";
@@ -208,14 +207,14 @@ ${content}
 
   // Stream the response from the AI model with reasoning enabled
   const result = streamText({
-    model: anthropic("claude-sonnet-4-5"),
+    model: "anthropic/claude-sonnet-4.5",
     system,
     messages,
     providerOptions: {
       anthropic: {
         sendReasoning: true,
         thinking: { type: "enabled", budgetTokens: 10000 },
-      } satisfies AnthropicLanguageModelOptions,
+      },
     },
   });
 

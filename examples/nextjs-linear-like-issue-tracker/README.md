@@ -58,14 +58,15 @@ You need to set up webhooks to use all features in this example.
 - Add your webhook secret key to `.env.local` as the
   `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable
 
-### Setting up Anthropic
+### Setting up Vercel AI Gateway
 
-You need your own Anthropic API key to run the AI agent.
+You need your own Vercel AI Gateway API key to run the AI agent, which uses
+Anthropic models through the gateway.
 
-- Create an account on [Anthropic](https://anthropic.com)
-- Create a new API key from the
-  [Anthropic Dashboard](https://platform.claude.com/settings/keys)
-- Add your Anthropic API key to `.env.local` as the `ANTHROPIC_API_KEY`
+- Create an account on [Vercel](https://vercel.com)
+- Create a new API key from the [AI Gateway](https://vercel.com/docs/ai-gateway)
+  section of the Vercel dashboard
+- Add your AI Gateway API key to `.env.local` as the `AI_GATEWAY_API_KEY`
   environment variable
 
 ### Manual setup

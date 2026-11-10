@@ -10,7 +10,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.25",
     "@ai-sdk/openai-compatible": "^0.1.17",
     "@liveblocks/client": "^3.23.0",
     "@liveblocks/node": "^3.23.0",
