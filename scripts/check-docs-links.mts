@@ -16,7 +16,11 @@
  *   - #anchors           → must match a heading in the target file, using the
  *                          same slug rules as the website: case is PRESERVED,
  *                          backticks and "?" are stripped, spaces become "-",
- *                          and explicit ids ("### Heading [#my-id]") win
+ *                          and explicit ids ("### Heading [#my-id]") win.
+ *                          Pages that embed website-generated content (e.g.
+ *                          <PricingFaqs />) have headings this script cannot
+ *                          see, so unknown anchors into them are not flagged;
+ *                          they are listed with --verbose instead
  *   - other /… paths     → website pages outside this repo (e.g. /blog);
  *                          not verifiable locally, listed with --verbose
  *   - http(s)/mailto     → skipped
@@ -92,6 +96,21 @@ function slugify(text: string): string {
 
 const anchorCache = new Map<string, Set<string>>();
 
+// Placeholders the website replaces with generated markdown at build time. The
+// generated headings (e.g. every pricing FAQ question) live in the liveblocks.io
+// repo, so anchors into these pages cannot be fully verified offline.
+const GENERATED_CONTENT_RE = /^\s*<PricingFaqs\s*\/>\s*$/m;
+
+const generatedContentCache = new Map<string, boolean>();
+
+function hasGeneratedHeadings(file: string): boolean {
+  const cached = generatedContentCache.get(file);
+  if (cached !== undefined) return cached;
+  const result = GENERATED_CONTENT_RE.test(fs.readFileSync(file, "utf8"));
+  generatedContentCache.set(file, result);
+  return result;
+}
+
 function getAnchors(file: string): Set<string> {
   const cached = anchorCache.get(file);
   if (cached) return cached;
@@ -145,6 +164,7 @@ function resolveDocs(url: string): string | typeof GUIDES_INDEX | null {
 
 const issues: string[] = [];
 const websitePaths = new Map<string, number>();
+const unverifiableAnchors: string[] = [];
 
 for (const file of FILES) {
   const fname = path.relative(ROOT, file);
@@ -174,11 +194,15 @@ for (const file of FILES) {
         if (anchor?.startsWith("/")) continue;
         // Same-page anchor.
         if (anchor && !getAnchors(file).has(anchor)) {
-          issues.push(
-            `Anchor: #${anchor}
+          if (hasGeneratedHeadings(file)) {
+            unverifiableAnchors.push(`#${anchor} (${fname}:${lineno})`);
+          } else {
+            issues.push(
+              `Anchor: #${anchor}
   File: ${fname}:${lineno}
 `
-          );
+            );
+          }
         }
       } else if (url.startsWith("/docs")) {
         const target = resolveDocs(url);
@@ -191,12 +215,16 @@ for (const file of FILES) {
 `
           );
         } else if (anchor && !getAnchors(target).has(anchor)) {
-          issues.push(
-            `Anchor: #${anchor}
+          if (hasGeneratedHeadings(target)) {
+            unverifiableAnchors.push(`${url}#${anchor} (${fname}:${lineno})`);
+          } else {
+            issues.push(
+              `Anchor: #${anchor}
   Link: ${url}${anchor ? "#" + anchor : ""}
   File: ${fname}:${lineno}
 `
-          );
+            );
+          }
         }
       } else if (url.startsWith("/guides")) {
         issues.push(
@@ -221,6 +249,15 @@ if (VERBOSE && websitePaths.size > 0) {
   );
   for (const [url, count] of [...websitePaths].sort()) {
     console.log(`  ${String(count).padStart(4)}x ${url}`);
+  }
+}
+
+if (VERBOSE && unverifiableAnchors.length > 0) {
+  console.log(
+    `\n${unverifiableAnchors.length} anchor(s) into website-generated content, not verified:`
+  );
+  for (const entry of unverifiableAnchors) {
+    console.log(`  ${entry}`);
   }
 }
 

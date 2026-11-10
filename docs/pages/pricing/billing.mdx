@@ -2,25 +2,35 @@
 meta:
   title: "Billing"
   parentTitle: "Pricing"
-  description: "How billing works on Liveblocks, from credits to your invoice."
+  description:
+    "How billing works on Liveblocks: credits, Team credit packages, overage,
+    annual billing, invoices, and tracking your usage."
 ---
 
-Understand how your bill is calculated: monthly credits, overage, annual
-billing, invoices, and tracking your usage. For plan prices and metered rates,
-see [Plans](/docs/pricing/plans).
+Understand how your bill is calculated: monthly credits, Team credit packages,
+overage, annual billing, invoices, and tracking your usage. For plan prices,
+Free allowances, and metered rates, see [Plans](/docs/pricing/plans).
 
 ## Credits
 
-Every plan includes a monthly credit allowance that covers your metered usage
-first. Credits are denominated in US dollars. If your usage exceeds the amount
-of credits in your base plan, you'll be billed at the per-unit rates at the end
-of the month. Credits reset at the start of each billing cycle and do not roll
+Pro and Team include a monthly credit allowance that covers your
+[metered usage](/docs/pricing/plans#Metered-usage) first. Credits are
+denominated in US dollars. Billing runs monthly, from the 1st to the last day of
+the month. Credits reset at the start of each billing cycle and do not roll
 over.
 
-The Team plan offers multiple credit packages that include more credit value
-than they cost, effectively lowering your per credit rate.
+The Free plan doesn't use credits. It includes fixed
+[monthly usage allowances](/docs/pricing/plans#Free-monthly-allowances) for each
+metered unit, which reset on the same monthly cycle.
 
-### Team plan options
+Enterprise plans include a custom monthly credit allowance negotiated for your
+workload. [Contact sales](/contact/sales) to discuss your requirements.
+
+## Team credit packages
+
+The Team plan offers multiple credit packages that include more credit value
+than they cost, effectively lowering your per credit rate. You can change
+packages from your [billing settings](/dashboard/billing).
 
 | Monthly credits                          | Monthly price                                            | Annual price                                                             |
 | ---------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -30,37 +40,42 @@ than they cost, effectively lowering your per credit rate.
 | <Limits.TeamAnnualCredits tier={2250} /> | <Limits.TeamMonthlyPriceForTier tier={2250} /> per month | <Limits.TeamAnnualPricePerMonth tier={2250} /> per month billed annually |
 | <Limits.TeamAnnualCredits tier={3750} /> | <Limits.TeamMonthlyPriceForTier tier={3750} /> per month | <Limits.TeamAnnualPricePerMonth tier={3750} /> per month billed annually |
 
-## Billing cycle
-
-Billing runs monthly, from the 1st to the last day of the month. Credits reset
-at the start of each cycle and do not roll over.
-
 ## Overage
 
-Usage above your monthly credits is overage. If your usage exceeds the amount of
-credits in your base plan, you'll be billed at the
-[per-unit rates](/docs/pricing/plans#Metered-usage) at the end of the month.
+Usage above your monthly credits is overage. On Pro and Team, there are no hard
+caps for metered usage: usage beyond your credits keeps running and is billed at
+the [metered rates](/docs/pricing/plans#Metered-usage) at the end of the month,
+with email alerts along the way so nothing is interrupted.
 
-## Free plan usage
-
-Even though the Free plan has no cost, usage follows the same monthly cycle. If
-your account exceeds a limit, the affected feature pauses until limits reset at
-the start of the next calendar month or you
-[upgrade your account](/dashboard/billing) to a paid plan.
+On Free, there is no overage. If your account exceeds an allowance, the affected
+feature pauses until allowances reset at the start of the next calendar month or
+you [upgrade your account](/dashboard/billing) to a paid plan. See
+[what happens when you run out of credits](/docs/pricing/faqs#What-happens-when-I-run-out-of-Liveblocks-credits)
+in the FAQs.
 
 ## Annual billing
 
 Pay annually to get two months free compared with monthly billing. Credits still
 reset each month.
 
+- Pro: <Limits.ProAnnualPricePerMonth /> per month billed annually, instead of
+  <Limits.ProMonthlyPrice /> per month.
+- Team: see the annual price for each [credit package](#Team-credit-packages)
+  above.
+
+On Team, the SOC 2 report is available with annual billing only.
+
 ## Invoices and payment
 
 Paid plans are billed by card. Invoicing is available on Enterprise.
 [Contact sales](/contact/sales) to discuss upgrading to an Enterprise plan.
 
-You can view and download past invoices from your [dashboard](/dashboard).
+You can view and download past invoices from your
+[billing settings](/dashboard/billing).
 
 ## Tracking your usage
 
-Usage and remaining credits are accessible to all account Owners in the
-[Liveblocks dashboard](/dashboard/usage).
+The [usage page](/dashboard/usage) in your dashboard shows real-time usage
+broken down by metric, current credit consumption, and projected month-end
+spend. It is accessible to all account Owners. Liveblocks also emails your
+account owners as you approach your limits.

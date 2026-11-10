@@ -1,4 +1,5 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
+import { AuthForbiddenError } from "./auth-manager";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -83,10 +84,17 @@ export type FileUrlData = {
   readonly expiresAt: number;
 };
 
+export type RoomAccess = {
+  roomId: string;
+  /** Inbox-only access covers personal notifications and their threads. */
+  access: "room" | "inbox" | "none";
+};
+
 export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   getThreads(options: {
     roomId: string;
     cursor?: string;
+    signal?: AbortSignal;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -99,6 +107,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
+    refreshCursor?: string;
     permissionHints: Record<string, RoomPermissions>;
   }>;
 
@@ -460,12 +469,14 @@ export interface NotificationHttpApi<
 > {
   getInboxNotifications(options?: {
     cursor?: string;
+    signal?: AbortSignal;
     query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<TM, CM>[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
+    refreshCursor?: string;
     requestedAt: Date;
   }>;
 
@@ -521,8 +532,16 @@ export interface LiveblocksHttpApi<
   extends RoomHttpApi<TM, CM>, NotificationHttpApi<TM, CM> {
   getUrlMetadata(url: string): Promise<UrlMetadata>;
 
+  /** Reports confirmed accesses and returns whether all room checks succeeded. */
+  checkRoomAccesses(options: {
+    roomIds: string[];
+    signal?: AbortSignal;
+    onAccesses: (accesses: RoomAccess[]) => void;
+  }): Promise<boolean>;
+
   getUserThreads_experimental(options?: {
     cursor?: string;
+    signal?: AbortSignal;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -533,6 +552,7 @@ export interface LiveblocksHttpApi<
     inboxNotifications: InboxNotificationData[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
+    refreshCursor?: string;
     requestedAt: Date;
     permissionHints: Record<string, RoomPermissions>;
   }>;
@@ -564,6 +584,8 @@ export interface LiveblocksHttpApi<
 
 const ROOM_FILE_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const ROOM_FILE_RETRY_ATTEMPTS = 10;
+const PAGE_REQUEST_TIMEOUT = 30_000;
+const ROOM_ACCESS_CHECK_TIMEOUT = 5_000;
 const FILE_URL_EXPIRY_BUFFER = 30_000;
 const FILE_URL_ERROR_CACHE_TTL = 1_000;
 const FILE_URL_ERROR_MAX_ATTEMPTS = 3;
@@ -860,6 +882,7 @@ export function createApiClient<
   async function getThreads(options: {
     roomId: string;
     cursor?: string;
+    signal?: AbortSignal;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
@@ -867,6 +890,7 @@ export function createApiClient<
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
+    const signal = options.signal ?? AbortSignal.timeout(PAGE_REQUEST_TIMEOUT);
     let query: string | undefined;
 
     if (options.query) {
@@ -886,20 +910,25 @@ export function createApiClient<
         meta: {
           requestedAt: string;
           nextCursor: string | null;
+          refreshCursor?: string;
           permissionHints: Record<string, RoomPermissions>;
         };
       }>(
         url`/v2/c/rooms/${options.roomId}/threads`,
-        await authManager.getAuthValue({
-          roomId: options.roomId,
-          resource: commentsResourceForVisibility(options.query?.visibility),
-          access: "read",
-        }),
+        await authManager.getAuthValue(
+          {
+            roomId: options.roomId,
+            resource: commentsResourceForVisibility(options.query?.visibility),
+            access: "read",
+          },
+          signal
+        ),
         {
           cursor: options.cursor,
           query,
           limit: PAGE_SIZE,
-        }
+        },
+        { signal }
       );
 
       return {
@@ -909,6 +938,7 @@ export function createApiClient<
         ),
         subscriptions: result.subscriptions.map(convertToSubscriptionData),
         nextCursor: result.meta.nextCursor,
+        refreshCursor: result.meta.refreshCursor,
         requestedAt: new Date(result.meta.requestedAt),
         permissionHints: result.meta.permissionHints,
       };
@@ -1860,8 +1890,10 @@ export function createApiClient<
    * -----------------------------------------------------------------------------------------------*/
   async function getInboxNotifications(options?: {
     cursor?: string;
+    signal?: AbortSignal;
     query?: { roomId?: string; kind?: string };
   }) {
+    const signal = options?.signal ?? AbortSignal.timeout(PAGE_REQUEST_TIMEOUT);
     const PAGE_SIZE = 50;
 
     let query: string | undefined;
@@ -1878,15 +1910,20 @@ export function createApiClient<
       meta: {
         requestedAt: string;
         nextCursor: string | null;
+        refreshCursor?: string;
       };
     }>(
       url`/v2/c/inbox-notifications`,
-      await authManager.getAuthValue({ resource: "personal", access: "write" }),
+      await authManager.getAuthValue(
+        { resource: "personal", access: "write" },
+        signal
+      ),
       {
         cursor: options?.cursor,
         limit: PAGE_SIZE,
         query,
-      }
+      },
+      { signal }
     );
 
     const groups = json.groups.map(convertToGroupData);
@@ -1902,8 +1939,97 @@ export function createApiClient<
       threads: json.threads.map(convertToThreadData),
       subscriptions: json.subscriptions.map(convertToSubscriptionData),
       nextCursor: json.meta.nextCursor,
+      refreshCursor: json.meta.refreshCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };
+  }
+
+  async function checkRoomAccesses(options: {
+    roomIds: string[];
+    signal?: AbortSignal;
+    onAccesses: (accesses: RoomAccess[]) => void;
+  }): Promise<boolean> {
+    if (options.roomIds.length === 0) return true;
+    let allRoomsChecked = true;
+    const signal = options.signal ?? AbortSignal.timeout(PAGE_REQUEST_TIMEOUT);
+    const personalAuth = await authManager.getAuthValue(
+      { resource: "personal", access: "write" },
+      signal
+    );
+    for (const roomIds of chunk(options.roomIds, 50)) {
+      // A stalled authorization must not cancel checks for the other rooms.
+      const authSignal = AbortSignal.any([
+        signal,
+        AbortSignal.timeout(ROOM_ACCESS_CHECK_TIMEOUT),
+      ]);
+      const authorizations = await Promise.allSettled(
+        roomIds.map(async (roomId) => {
+          const authValue = await authManager
+            .getAuthValue(
+              { roomId, resource: "comments", access: "read" },
+              authSignal
+            )
+            .catch((error: unknown) => {
+              // Personal inbox items remain readable after room authorization fails.
+              if (error instanceof AuthForbiddenError) return personalAuth;
+              throw error;
+            });
+          return { roomId, authValue };
+        })
+      );
+      signal.throwIfAborted();
+
+      type AccessBatch = {
+        authValue: AuthValue;
+        roomIds: string[];
+        size: number;
+      };
+      const batches: AccessBatch[] = [];
+      const byToken = new Map<string, AccessBatch>();
+      for (const authorization of authorizations) {
+        if (authorization.status === "rejected") {
+          allRoomsChecked = false;
+          continue;
+        }
+        const { roomId, authValue } = authorization.value;
+        const token = getBearerTokenFromAuthValue(authValue);
+        const size = encodeURIComponent(JSON.stringify(roomId)).length + 3;
+        let batch = byToken.get(token);
+        if (batch === undefined || batch.size + size > 4000) {
+          batch = { authValue, roomIds: [], size: 0 };
+          batches.push(batch);
+          byToken.set(token, batch);
+        }
+        batch.roomIds.push(roomId);
+        batch.size += size;
+      }
+
+      const requestSignal = AbortSignal.any([
+        signal,
+        AbortSignal.timeout(ROOM_ACCESS_CHECK_TIMEOUT),
+      ]);
+      const checks = await Promise.allSettled(
+        batches.map(async (batch) => {
+          const result = await httpClient.get<{
+            meta: { roomAccesses?: RoomAccess[] };
+          }>(
+            url`/v2/c/inbox-notifications/delta`,
+            batch.authValue,
+            {
+              since: new Date().toISOString(),
+              roomAccessesOnly: "true",
+              roomIds: JSON.stringify(batch.roomIds),
+            },
+            { signal: requestSignal }
+          );
+          signal.throwIfAborted();
+          options.onAccesses(result.meta.roomAccesses ?? []);
+        })
+      );
+      signal.throwIfAborted();
+      allRoomsChecked &&= checks.every((check) => check.status === "fulfilled");
+    }
+    return allRoomsChecked;
   }
 
   async function getInboxNotificationsSince(options: {
@@ -1929,8 +2055,16 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      await authManager.getAuthValue({ resource: "personal", access: "write" }),
-      { since: options.since.toISOString(), query },
+      await authManager.getAuthValue(
+        { resource: "personal", access: "write" },
+        options.signal
+      ),
+      {
+        since: options.since.toISOString(),
+        query,
+        // Supplying roomIds keeps the delta on the writer during access refreshes.
+        roomIds: "[]",
+      },
       { signal: options.signal }
     );
     return {
@@ -2054,12 +2188,14 @@ export function createApiClient<
    */
   async function getUserThreads_experimental(options?: {
     cursor?: string;
+    signal?: AbortSignal;
     query?: {
       resolved?: boolean;
       visibility?: ThreadVisibility;
       metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
+    const signal = options?.signal ?? AbortSignal.timeout(PAGE_REQUEST_TIMEOUT);
     let query: string | undefined;
 
     if (options?.query) {
@@ -2078,16 +2214,21 @@ export function createApiClient<
       meta: {
         requestedAt: string;
         nextCursor: string | null;
+        refreshCursor?: string;
         permissionHints: Record<string, RoomPermissions>;
       };
     }>(
       url`/v2/c/threads`,
-      await authManager.getAuthValue({ resource: "personal", access: "write" }),
+      await authManager.getAuthValue(
+        { resource: "personal", access: "write" },
+        signal
+      ),
       {
         cursor: options?.cursor,
         query,
         limit: PAGE_SIZE,
-      }
+      },
+      { signal }
     );
 
     return {
@@ -2097,6 +2238,7 @@ export function createApiClient<
       ),
       subscriptions: json.subscriptions.map(convertToSubscriptionData),
       nextCursor: json.meta.nextCursor,
+      refreshCursor: json.meta.refreshCursor,
       requestedAt: new Date(json.meta.requestedAt),
       permissionHints: json.meta.permissionHints,
     };
@@ -2119,8 +2261,15 @@ export function createApiClient<
       };
     }>(
       url`/v2/c/threads/delta`,
-      await authManager.getAuthValue({ resource: "personal", access: "write" }),
-      { since: options.since.toISOString() },
+      await authManager.getAuthValue(
+        { resource: "personal", access: "write" },
+        options.signal
+      ),
+      {
+        since: options.since.toISOString(),
+        // Supplying roomIds keeps the delta on the writer during access refreshes.
+        roomIds: "[]",
+      },
       { signal: options.signal }
     );
 
@@ -2246,6 +2395,7 @@ export function createApiClient<
     deleteInboxNotification,
     getNotificationSettings,
     updateNotificationSettings,
+    checkRoomAccesses,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,

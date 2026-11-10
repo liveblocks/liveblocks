@@ -29,17 +29,17 @@ with:
   channels)
 - [`@chat-adapter/state-memory`](https://www.npmjs.com/package/@chat-adapter/state-memory)
   — Chat SDK **state** adapter (in-memory)
-- [`ai`](https://sdk.vercel.ai/docs) and
-  [`@ai-sdk/anthropic`](https://sdk.vercel.ai/providers/ai-sdk-providers/anthropic)
-  — streaming replies from **Claude** into the thread
+- [`ai`](https://sdk.vercel.ai/docs) with
+  [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) — streaming replies
+  from **Claude** into the thread
 
 ### What the bot does
 
 When someone **@-mentions** the bot in a comment thread, the webhook handler
 (`POST /api/webhooks/liveblocks`) runs [`bot.onNewMention`](app/bot.ts): it adds
 a **👀** reaction to the message, calls **`streamText`** with Claude
-(`claude-sonnet-4-20250514` by default), and **`stream`s the model output into
-the thread** as the bot's reply.
+(`anthropic/claude-sonnet-4.5` by default), and **`stream`s the model output
+into the thread** as the bot's reply.
 
 The bot **does not** handle comment reactions (there is no `onReaction`
 handler). The system prompt in [`app/bot.ts`](app/bot.ts) explains Liveblocks
@@ -63,11 +63,11 @@ you to automatically get your API key from your
 
 Add these to `.env.local` (see manual setup below if you are not using the CLI):
 
-| Variable                    | Purpose                                                                           |
-| --------------------------- | --------------------------------------------------------------------------------- |
-| `LIVEBLOCKS_SECRET_KEY`     | Liveblocks secret key (`sk_…`) for REST and auth                                  |
-| `LIVEBLOCKS_WEBHOOK_SECRET` | Webhook signing secret (`whsec_…`)                                                |
-| `ANTHROPIC_API_KEY`         | [Anthropic API key](https://docs.anthropic.com/en/api/getting-started) for Claude |
+| Variable                    | Purpose                                                                    |
+| --------------------------- | -------------------------------------------------------------------------- |
+| `LIVEBLOCKS_SECRET_KEY`     | Liveblocks secret key (`sk_…`) for REST and auth                           |
+| `LIVEBLOCKS_WEBHOOK_SECRET` | Webhook signing secret (`whsec_…`)                                         |
+| `AI_GATEWAY_API_KEY`        | [Vercel AI Gateway API key](https://vercel.com/docs/ai-gateway) for Claude |
 
 ### Setting up webhooks
 
@@ -102,8 +102,8 @@ Alternatively, you can set up your project manually:
   - `LIVEBLOCKS_SECRET_KEY` — Liveblocks secret key
   - `LIVEBLOCKS_WEBHOOK_SECRET` — webhook signing secret (after you configure
     webhooks)
-  - `ANTHROPIC_API_KEY` — from the
-    [Anthropic Console](https://console.anthropic.com/)
+  - `AI_GATEWAY_API_KEY` — from the
+    [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 - Follow the “Setting up webhooks” section above
 
@@ -125,8 +125,8 @@ npx create-liveblocks-app@latest --example liveblocks-chat-sdk-ai-bot --vercel
 This will download the example and ask permission to open your browser, enabling
 you to deploy to Vercel.
 
-Add **`ANTHROPIC_API_KEY`** (and the Liveblocks variables) in the Vercel project
-settings. Then follow the “Setting up webhooks” section above using your
+Add **`AI_GATEWAY_API_KEY`** (and the Liveblocks variables) in the Vercel
+project settings. Then follow the “Setting up webhooks” section above using your
 production webhook URL.
 
 </details>
@@ -140,7 +140,7 @@ production webhook URL.
 After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/liveblocks-chat-sdk-ai-bot)
 on CodeSandbox, add **`LIVEBLOCKS_SECRET_KEY`**,
-**`LIVEBLOCKS_WEBHOOK_SECRET`**, and **`ANTHROPIC_API_KEY`** as
+**`LIVEBLOCKS_WEBHOOK_SECRET`**, and **`AI_GATEWAY_API_KEY`** as
 [secrets](https://codesandbox.io/docs/secrets).
 
 Webhook delivery to a sandbox URL may require a tunnel (see

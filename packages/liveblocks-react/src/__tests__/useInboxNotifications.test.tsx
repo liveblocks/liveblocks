@@ -1,4 +1,12 @@
-import { batch, HttpError, nanoid, wait } from "@liveblocks/core";
+import type { InboxNotificationData, ThreadData } from "@liveblocks/core";
+import {
+  batch,
+  HttpError,
+  kInternal,
+  nanoid,
+  Promise_withResolvers,
+  wait,
+} from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -21,6 +29,7 @@ import {
   vi,
 } from "vitest";
 
+import { config } from "../config";
 import {
   dummySubscriptionData,
   dummyThreadData,
@@ -92,6 +101,7 @@ describe("useInboxNotifications", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -157,6 +167,7 @@ describe("useInboxNotifications", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -327,6 +338,7 @@ describe("useInboxNotifications", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [newInboxNotification, oldInboxNotification],
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -505,6 +517,7 @@ describe("useInboxNotifications - Suspense", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -557,8 +570,11 @@ describe("useInboxNotifications: polling", () => {
           },
         });
       }),
-      mockGetInboxNotificationsDelta(() => {
-        pollerCount++;
+      mockGetInboxNotificationsDelta(({ request }) => {
+        if (
+          new URL(request.url).searchParams.get("roomAccessesOnly") !== "true"
+        )
+          pollerCount++;
         return HttpResponse.json({
           threads,
           inboxNotifications,
@@ -702,6 +718,7 @@ describe("useInboxNotifications: polling", () => {
         inboxNotifications: inboxNotifications.filter(
           (inboxNotification) => inboxNotification.roomId === roomA
         ),
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -726,6 +743,7 @@ describe("useInboxNotifications: polling", () => {
       expect(result2.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -763,8 +781,11 @@ describe("useInboxNotifications: polling", () => {
           },
         });
       }),
-      mockGetInboxNotificationsDelta(() => {
-        pollerCount++;
+      mockGetInboxNotificationsDelta(({ request }) => {
+        if (
+          new URL(request.url).searchParams.get("roomAccessesOnly") !== "true"
+        )
+          pollerCount++;
         return HttpResponse.json({
           threads,
           inboxNotifications,
@@ -854,8 +875,11 @@ describe("useInboxNotifications: polling", () => {
           },
         });
       }),
-      mockGetInboxNotificationsDelta(() => {
-        pollerCount++;
+      mockGetInboxNotificationsDelta(({ request }) => {
+        if (
+          new URL(request.url).searchParams.get("roomAccessesOnly") !== "true"
+        )
+          pollerCount++;
         return HttpResponse.json({
           threads,
           inboxNotifications,
@@ -1223,6 +1247,7 @@ describe("useInboxNotifications: pagination", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [...inboxNotificationsPage1],
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: false,
@@ -1242,6 +1267,7 @@ describe("useInboxNotifications: pagination", () => {
           ...inboxNotificationsPage1,
           ...inboxNotificationsPage2,
         ],
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: false,
@@ -1260,6 +1286,7 @@ describe("useInboxNotifications: pagination", () => {
           ...inboxNotificationsPage2,
           ...inboxNotificationsPage3,
         ],
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: false,
@@ -1360,6 +1387,7 @@ describe("useInboxNotifications: pagination", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [...inboxNotificationsPageOne],
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: false,
@@ -1381,6 +1409,7 @@ describe("useInboxNotifications: pagination", () => {
           ...inboxNotificationsPageOne,
           ...inboxNotificationsPageTwo,
         ],
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -1452,6 +1481,7 @@ describe("useInboxNotifications: pagination", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [...inboxNotificationsPageOne],
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: false,
@@ -1469,6 +1499,7 @@ describe("useInboxNotifications: pagination", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [...inboxNotificationsPageOne],
+        reload: expect.any(Function),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: false,
@@ -1625,4 +1656,644 @@ describe("useInboxNotifications: pagination", () => {
 
     unmount();
   });
+});
+
+describe("useInboxNotifications: reload", () => {
+  const initialTime = "2026-01-01T00:00:00.000Z";
+  const nextTime = "2026-01-01T00:01:00.000Z";
+  const reloadInterval = config.NOTIFICATIONS_RELOAD_INTERVAL;
+
+  beforeEach(() => {
+    config.NOTIFICATIONS_RELOAD_INTERVAL = 0;
+  });
+
+  afterEach(() => {
+    config.NOTIFICATIONS_RELOAD_INTERVAL = reloadInterval;
+  });
+
+  function page(
+    threads: ThreadData[],
+    inboxNotifications: InboxNotificationData[],
+    nextCursor: string | null = null
+  ) {
+    const body = {
+      threads,
+      inboxNotifications,
+      subscriptions: [],
+      groups: [],
+      meta: { requestedAt: initialTime, nextCursor, refreshCursor: "restart" },
+    };
+    return HttpResponse.json<typeof body>(body);
+  }
+
+  function delta(
+    threads: ThreadData[] = [],
+    inboxNotifications: InboxNotificationData[] = []
+  ) {
+    const body = {
+      threads,
+      inboxNotifications,
+      subscriptions: [],
+      deletedThreads: [],
+      deletedInboxNotifications: [],
+      deletedSubscriptions: [],
+      meta: { requestedAt: nextTime },
+    };
+    return HttpResponse.json<typeof body>(body);
+  }
+
+  function setupInbox(suspense = false, nextCursor: string | null = null) {
+    const thread = dummyThreadData({ roomId: "room" });
+    const notification = dummyThreadInboxNotificationData({
+      roomId: thread.roomId,
+      threadId: thread.id,
+    });
+    server.use(
+      mockGetInboxNotifications(() =>
+        page([thread], [notification], nextCursor)
+      )
+    );
+    const contexts = createContextsForTest();
+    const { LiveblocksProvider, useInboxNotifications } = suspense
+      ? contexts.liveblocks.suspense
+      : contexts.liveblocks;
+    const hook = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>
+          <Suspense fallback={null}>{children}</Suspense>
+        </LiveblocksProvider>
+      ),
+    });
+    return { ...hook, ...contexts, thread, notification };
+  }
+
+  describe("throttling", () => {
+    beforeEach(() => {
+      config.NOTIFICATIONS_RELOAD_INTERVAL = reloadInterval;
+      vi.useFakeTimers({
+        toFake: ["Date", "performance", "setTimeout", "clearTimeout"],
+      });
+    });
+
+    afterEach(() => {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    function updates(inboxNotifications: InboxNotificationData[] = []) {
+      return {
+        threads: { updated: [], deleted: [] },
+        inboxNotifications: { updated: inboxNotifications, deleted: [] },
+        subscriptions: { updated: [], deleted: [] },
+        requestedAt: new Date(),
+      };
+    }
+
+    async function setupReload() {
+      const context = setupInbox();
+      await vi.waitFor(() =>
+        expect(context.result.current.isLoading).toBe(false)
+      );
+      const api = context.client[kInternal].httpClient;
+      const checkAccess = vi
+        .spyOn(api, "checkRoomAccesses")
+        .mockResolvedValue(true);
+      const fetchDelta = vi
+        .spyOn(api, "getInboxNotificationsSince")
+        .mockImplementation(async () => updates());
+      return { ...context, checkAccess, fetchDelta };
+    }
+
+    test("runs immediately, then shares a trailing reload that includes later changes", async () => {
+      const { result, unmount, notification, fetchDelta } = await setupReload();
+      const first$ = result.current.reload?.();
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      await first$;
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      const trailing$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(1_000);
+      const changed = { ...notification, readAt: new Date() };
+      fetchDelta.mockImplementation(async () => updates([changed]));
+      const later$ = result.current.reload?.();
+      expect(later$).toBe(trailing$);
+      const finished = vi.fn();
+      void trailing$?.then(finished);
+
+      await act(() => vi.advanceTimersByTimeAsync(2_999));
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+      expect(finished).not.toHaveBeenCalled();
+      await act(() => vi.advanceTimersByTimeAsync(1));
+      await trailing$;
+      expect(fetchDelta).toHaveBeenCalledTimes(2);
+      expect(result.current.inboxNotifications).toEqual([changed]);
+      unmount();
+    });
+
+    test("shares sustained calls without postponing the trailing reload", async () => {
+      const { result, unmount, fetchDelta } = await setupReload();
+      const pending$: Promise<void>[] = [];
+      for (let index = 0; index < 100; index++) {
+        pending$.push(Promise.resolve(result.current.reload?.()));
+        await act(() => vi.advanceTimersByTimeAsync(100));
+      }
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      await Promise.all(pending$);
+      expect(fetchDelta).toHaveBeenCalledTimes(3);
+      unmount();
+    });
+
+    test("waits for a slow request and then runs one fresh reload", async () => {
+      const { result, unmount, fetchDelta } = await setupReload();
+      const release = Promise_withResolvers<ReturnType<typeof updates>>();
+      fetchDelta.mockImplementationOnce(() => release.promise);
+      const first$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1_000);
+      const trailing$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(6_000);
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        release.resolve(updates());
+        await Promise.all([first$, trailing$]);
+      });
+      expect(fetchDelta).toHaveBeenCalledTimes(2);
+      unmount();
+    });
+
+    test("throttles retries after a failed reload", async () => {
+      const { result, unmount, fetchDelta } = await setupReload();
+      fetchDelta.mockRejectedValueOnce(new Error("Offline"));
+      const outcome$ = expect(result.current.reload?.()).rejects.toThrow(
+        "Offline"
+      );
+      await vi.advanceTimersByTimeAsync(0);
+      await outcome$;
+      const retry$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(fetchDelta).toHaveBeenCalledTimes(1);
+      await act(() => vi.advanceTimersByTimeAsync(1));
+      await retry$;
+      expect(fetchDelta).toHaveBeenCalledTimes(2);
+      unmount();
+    });
+
+    test("waits for a poll started during the cooldown before scheduling the next reload", async () => {
+      const { result, unmount, umbrellaStore, fetchDelta } =
+        await setupReload();
+      const first$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(0);
+      await first$;
+      await vi.advanceTimersByTimeAsync(1_000);
+      const trailing$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(3_000);
+      const release = Promise_withResolvers<ReturnType<typeof updates>>();
+      fetchDelta.mockImplementationOnce(() => release.promise);
+      const poll$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+        new AbortController().signal
+      );
+      await vi.advanceTimersByTimeAsync(4_000);
+      expect(fetchDelta).toHaveBeenCalledTimes(2);
+      await act(async () => {
+        release.resolve(updates());
+        await Promise.all([poll$, trailing$]);
+      });
+      expect(fetchDelta).toHaveBeenCalledTimes(3);
+      const next$ = result.current.reload?.();
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(fetchDelta).toHaveBeenCalledTimes(3);
+      await act(() => vi.advanceTimersByTimeAsync(1));
+      await next$;
+      expect(fetchDelta).toHaveBeenCalledTimes(4);
+      unmount();
+    });
+
+    test("replays access changes within a reload without waiting for the cooldown", async () => {
+      const { result, unmount, fetchDelta, checkAccess } = await setupReload();
+      checkAccess.mockImplementationOnce(async ({ onAccesses }) => {
+        onAccesses([{ roomId: "room", access: "none" }]);
+        return true;
+      });
+      const reload$ = result.current.reload?.();
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      await vi.waitFor(() => expect(fetchDelta).toHaveBeenCalledTimes(2));
+      await reload$;
+      expect(result.current.inboxNotifications).toEqual([]);
+      unmount();
+    });
+  });
+
+  test.each([false, true])(
+    "reload updates notifications and associated threads without waiting for a poll (suspense: %s)",
+    async (suspense) => {
+      const { result, unmount, rerender, umbrellaStore, thread, notification } =
+        setupInbox(suspense);
+      await vi.waitFor(() => expect(result.current?.isLoading).toBe(false));
+      const reload = result.current.reload;
+      expect(reload).toBeTypeOf("function");
+      rerender();
+      expect(result.current.reload).toBe(reload);
+
+      const updatedThread = {
+        ...thread,
+        resolved: true,
+        updatedAt: new Date(),
+      };
+      const updatedNotification = { ...notification, readAt: new Date() };
+      const requests: URL[] = [];
+      server.use(
+        mockGetInboxNotificationsDelta(({ request }) => {
+          const url = new URL(request.url);
+          requests.push(url);
+          return url.searchParams.has("roomAccessesOnly")
+            ? delta()
+            : delta([updatedThread], [updatedNotification]);
+        })
+      );
+
+      await act(async () => {
+        await reload?.();
+      });
+      expect(result.current.inboxNotifications).toEqual([updatedNotification]);
+      expect(umbrellaStore.threads.get(thread.id)).toEqual(updatedThread);
+      expect(requests).toHaveLength(2);
+      expect(requests[1]?.searchParams.get("since")).toBe(initialTime);
+      expect(result.current.isLoading).toBe(false);
+      unmount();
+    }
+  );
+
+  test("reload removes inaccessible room data and refreshes through the writer cursor", async () => {
+    const { result, unmount, umbrellaStore, thread } = setupInbox();
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    const pageCursors: (string | null)[] = [];
+    server.use(
+      mockGetInboxNotifications(({ request }) => {
+        pageCursors.push(new URL(request.url).searchParams.get("cursor"));
+        return page([], []);
+      }),
+      mockGetInboxNotificationsDelta(({ request }) => {
+        const isAccessCheck = new URL(request.url).searchParams.has(
+          "roomAccessesOnly"
+        );
+        return isAccessCheck
+          ? HttpResponse.json({
+              threads: [],
+              inboxNotifications: [],
+              subscriptions: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              deletedSubscriptions: [],
+              meta: {
+                requestedAt: nextTime,
+                roomAccesses: [{ roomId: thread.roomId, access: "none" }],
+              },
+            })
+          : delta();
+      })
+    );
+
+    await act(async () => {
+      await result.current.reload?.();
+    });
+    expect(result.current.inboxNotifications).toEqual([]);
+    expect(umbrellaStore.threads.get(thread.id)).toBeUndefined();
+    expect(pageCursors).toEqual(["restart"]);
+    unmount();
+  });
+
+  test("reload replays a restoration delta before resolving, including items outside the refreshed pages", async () => {
+    const { result, unmount, umbrellaStore, thread, notification } =
+      setupInbox();
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    const newerThread = dummyThreadData({ roomId: thread.roomId });
+    const newerNotification = dummyThreadInboxNotificationData({
+      threadId: newerThread.id,
+      roomId: thread.roomId,
+    });
+    let readable = false;
+    server.use(
+      mockGetInboxNotifications(() =>
+        readable
+          ? page([newerThread], [newerNotification], "older")
+          : page([], [])
+      ),
+      mockGetInboxNotificationsDelta(({ request }) => {
+        if (!new URL(request.url).searchParams.has("roomAccessesOnly"))
+          return readable ? delta([thread], [notification]) : delta();
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: nextTime,
+            roomAccesses: [
+              { roomId: thread.roomId, access: readable ? "room" : "none" },
+            ],
+          },
+        });
+      })
+    );
+    await act(async () => {
+      await result.current.reload?.();
+    });
+    expect(result.current.inboxNotifications).toEqual([]);
+    readable = true;
+    await act(async () => {
+      await result.current.reload?.();
+    });
+    expect(result.current.inboxNotifications).toEqual(
+      expect.arrayContaining([notification, newerNotification])
+    );
+    expect(umbrellaStore.threads.get(thread.id)).toEqual(thread);
+    expect(result.current.hasFetchedAll).toBe(false);
+    unmount();
+  });
+
+  test.each([false, true])(
+    "reload queues a fresh sync behind a poll and shares queued calls (poll fails: %s)",
+    async (pollFails) => {
+      const { result, unmount, umbrellaStore, thread, notification } =
+        setupInbox();
+      await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+      const started = Promise_withResolvers<void>();
+      const release = Promise_withResolvers<void>();
+      let deltaCalls = 0;
+      const cursors: (string | null)[] = [];
+      const updatedNotification = { ...notification, readAt: new Date() };
+      server.use(
+        mockGetInboxNotificationsDelta(async ({ request }) => {
+          const query = new URL(request.url).searchParams;
+          if (query.has("roomAccessesOnly")) return delta();
+          cursors.push(query.get("since"));
+          if (++deltaCalls === 1) {
+            started.resolve();
+            await release.promise;
+            return pollFails
+              ? HttpResponse.json(null, { status: 403 })
+              : delta();
+          }
+          return delta([thread], [updatedNotification]);
+        })
+      );
+      const poll$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+        new AbortController().signal
+      );
+      const pollOutcome$ = poll$.catch((error: unknown) => error);
+      await started.promise;
+      const reload$ = result.current.reload?.();
+      const duplicate$ = result.current.reload?.();
+      expect(duplicate$).toBe(reload$);
+      expect(deltaCalls).toBe(1);
+      await act(async () => {
+        release.resolve();
+        await Promise.all([pollOutcome$, reload$]);
+      });
+      expect(deltaCalls).toBe(2);
+      expect(cursors).toEqual([
+        initialTime,
+        pollFails ? initialTime : nextTime,
+      ]);
+      if (pollFails) expect(await pollOutcome$).toBeInstanceOf(HttpError);
+      expect(result.current.inboxNotifications).toEqual([updatedNotification]);
+      unmount();
+    }
+  );
+
+  test("a signal received during a reload starts another sync", async () => {
+    const { result, unmount } = setupInbox();
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    const started = Promise_withResolvers<void>();
+    const release = Promise_withResolvers<void>();
+    let deltaCalls = 0;
+    server.use(
+      mockGetInboxNotificationsDelta(async ({ request }) => {
+        if (new URL(request.url).searchParams.has("roomAccessesOnly"))
+          return delta();
+        if (++deltaCalls === 1) {
+          started.resolve();
+          await release.promise;
+        }
+        return delta();
+      })
+    );
+    const first$ = result.current.reload?.();
+    await started.promise;
+    const second$ = result.current.reload?.();
+    expect(second$).not.toBe(first$);
+    await act(async () => {
+      release.resolve();
+      await Promise.all([first$, second$]);
+    });
+    expect(deltaCalls).toBe(2);
+    unmount();
+  });
+
+  test.each([false, true])(
+    "polls wait for a running reload before fetching their delta (reload fails: %s)",
+    async (reloadFails) => {
+      const { result, unmount, umbrellaStore, thread, notification } =
+        setupInbox();
+      await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+      const started = Promise_withResolvers<void>();
+      const release = Promise_withResolvers<void>();
+      const laterTime = "2026-01-01T00:02:00.000Z";
+      const deletedNotification = { ...notification, deletedAt: laterTime };
+      const cursors: (string | null)[] = [];
+      server.use(
+        mockGetInboxNotificationsDelta(async ({ request }) => {
+          const query = new URL(request.url).searchParams;
+          if (query.has("roomAccessesOnly")) return delta();
+          cursors.push(query.get("since"));
+          if (cursors.length === 1) {
+            started.resolve();
+            await release.promise;
+            return reloadFails
+              ? HttpResponse.json(null, { status: 403 })
+              : delta([thread], [notification]);
+          }
+          return HttpResponse.json({
+            threads: [],
+            inboxNotifications: [],
+            subscriptions: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [deletedNotification],
+            deletedSubscriptions: [],
+            meta: { requestedAt: laterTime },
+          });
+        })
+      );
+      const reload$ = result.current.reload?.();
+      const reloadOutcome$ = reload$?.catch((error: unknown) => error);
+      await started.promise;
+      const poll$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+        new AbortController().signal
+      );
+      await act(async () => {
+        try {
+          await wait(0);
+          expect(cursors).toEqual([initialTime]);
+        } finally {
+          release.resolve();
+          await Promise.all([reloadOutcome$, poll$]);
+        }
+      });
+      expect(cursors).toEqual([
+        initialTime,
+        reloadFails ? initialTime : nextTime,
+      ]);
+      expect(result.current.inboxNotifications).toEqual([]);
+      if (reloadFails) expect(await reloadOutcome$).toBeInstanceOf(HttpError);
+      await act(async () => {
+        await umbrellaStore.fetchNotificationsDeltaUpdate(
+          new AbortController().signal
+        );
+      });
+      expect(cursors[2]).toBe(laterTime);
+      unmount();
+    }
+  );
+
+  test("aborting a queued poll keeps later reloads behind the running request", async () => {
+    const { result, unmount, umbrellaStore } = setupInbox();
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    const started = Promise_withResolvers<void>();
+    const release = Promise_withResolvers<void>();
+    const cursors: (string | null)[] = [];
+    server.use(
+      mockGetInboxNotificationsDelta(async ({ request }) => {
+        const query = new URL(request.url).searchParams;
+        if (query.has("roomAccessesOnly")) return delta();
+        cursors.push(query.get("since"));
+        if (cursors.length === 1) {
+          started.resolve();
+          await release.promise;
+        }
+        return delta();
+      })
+    );
+    const first$ = result.current.reload?.();
+    await started.promise;
+    const controller = new AbortController();
+    const poll$ = umbrellaStore.fetchNotificationsDeltaUpdate(
+      controller.signal
+    );
+    controller.abort();
+    await expect(poll$).rejects.toBe(controller.signal.reason);
+    const second$ = result.current.reload?.();
+    await act(async () => {
+      try {
+        await wait(0);
+        expect(cursors).toEqual([initialTime]);
+      } finally {
+        release.resolve();
+        await Promise.all([first$, second$]);
+      }
+    });
+    expect(cursors).toEqual([initialTime, nextTime]);
+    unmount();
+  });
+
+  test("reload applies deletions without losing loaded pages or the next cursor", async () => {
+    const { result, unmount, thread, notification } = setupInbox(
+      false,
+      "page2"
+    );
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    const olderThread = dummyThreadData({ roomId: thread.roomId });
+    const olderNotification = dummyThreadInboxNotificationData({
+      threadId: olderThread.id,
+      roomId: thread.roomId,
+      notifiedAt: new Date(notification.notifiedAt.getTime() - 1000),
+    });
+    const deletedNotification = { ...notification, deletedAt: nextTime };
+    const cursors: (string | null)[] = [];
+    server.use(
+      mockGetInboxNotifications(({ request }) => {
+        const cursor = new URL(request.url).searchParams.get("cursor");
+        cursors.push(cursor);
+        return cursor === "page2"
+          ? page([olderThread], [olderNotification], "page3")
+          : page([], []);
+      }),
+      mockGetInboxNotificationsDelta(({ request }) => {
+        if (new URL(request.url).searchParams.has("roomAccessesOnly"))
+          return delta();
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          deletedThreads: [],
+          deletedInboxNotifications: [deletedNotification],
+          deletedSubscriptions: [],
+          meta: { requestedAt: nextTime },
+        });
+      })
+    );
+    act(() => {
+      result.current.fetchMore?.();
+    });
+    await vi.waitFor(() =>
+      expect(result.current.inboxNotifications).toEqual([
+        notification,
+        olderNotification,
+      ])
+    );
+    await act(async () => {
+      await result.current.reload?.();
+    });
+    expect(result.current.inboxNotifications).toEqual([olderNotification]);
+    expect(result.current.hasFetchedAll).toBe(false);
+    act(() => {
+      result.current.fetchMore?.();
+    });
+    await vi.waitFor(() => expect(result.current.hasFetchedAll).toBe(true));
+    expect(cursors).toEqual(["page2", "page3"]);
+    unmount();
+  });
+
+  test.each(["delta", "access check"])(
+    "reload rejects on %s failure, keeps cached data, and can be retried",
+    async (source) => {
+      const { result, unmount, notification } = setupInbox();
+      await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+      const cursors: (string | null)[] = [];
+      let fail = true;
+      server.use(
+        mockGetInboxNotificationsDelta(({ request }) => {
+          const query = new URL(request.url).searchParams;
+          const isAccessCheck = query.has("roomAccessesOnly");
+          if (!isAccessCheck) cursors.push(query.get("since"));
+          return fail && isAccessCheck === (source === "access check")
+            ? HttpResponse.json(null, { status: 403 })
+            : delta();
+        })
+      );
+      await act(async () => {
+        if (source === "delta") {
+          await expect(result.current.reload?.()).rejects.toBeInstanceOf(
+            HttpError
+          );
+        } else {
+          await expect(result.current.reload?.()).rejects.toThrow(
+            "Could not check access to all inbox notification rooms"
+          );
+        }
+      });
+      expect(result.current.inboxNotifications).toEqual([notification]);
+      expect(result.current.error).toBeUndefined();
+      fail = false;
+      await act(async () => {
+        await result.current.reload?.();
+      });
+      expect(cursors).toEqual([initialTime, initialTime]);
+      unmount();
+    }
+  );
 });

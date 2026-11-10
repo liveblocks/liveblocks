@@ -1,225 +1,137 @@
 ---
 meta:
-  title: "Pricing FAQs"
+  title: "FAQs"
   parentTitle: "Pricing"
-  description: "Frequently asked questions about Liveblocks pricing."
+  maxTableOfContentsLevel: 2
+  description:
+    "Frequently asked questions about Liveblocks pricing, plans, usage, and the
+    fair use guidelines."
 ---
 
-## How does pricing work in Liveblocks?
+{/* These FAQs are shared with the FAQ section of liveblocks.io/pricing. */}
+{/* Source of truth: `src/utils/pricing/pricingFaq.ts` in the liveblocks.io repo. */}
+{/* Every FAQ is rendered here, grouped by section; only the ones flagged */}
+{/* `showOnPricingPage` are shown on the pricing page. The placeholder below */}
+{/* is replaced with the generated markdown when the docs are built. */}
 
-Each plan includes a monthly credit allowance you spend across all features.
-Credits reset at the start of each billing cycle and don't roll over. Pro
-includes
-{/* prettier-ignore */} <Limits.ProMonthlyCredits /> of credits, and Team plans start with
-{/* prettier-ignore */} <Limits.TeamAnnualCredits tier={600} /> of credits. Once you've used your
-credits, additional usage on Pro and Team is billed at metered rates. Free hits
-hard limits per feature instead.
+<PricingFaqs />
 
-For full per-metric rates and worked examples, see our
-[plans](/docs/pricing/plans).
+## Fair use guidelines
 
-## What counts as a realtime collaboration minute?
+All subscription plans include usage that is subject to these fair use
+guidelines. These guidelines define acceptable usage and how we evaluate usage
+patterns over time to ensure stable performance for all customers.
 
-Realtime collaboration minutes measure time when two or more people or agents
-are in the same room together. Each connected user-minute counts. Two users in a
-room for 5 minutes is 10 collaboration minutes, billed at
-{/* prettier-ignore */} <Limits.RealtimeCollaborationMinutesPrice />.
+### Examples of fair use
 
-Solo sessions cost $0. If only one person or agent is in a room, it is not
-billed.
+<StyledList>
+  <StyledListItem type="check">A collaborative SaaS product</StyledListItem>
+  <StyledListItem type="check">An AI chatbot</StyledListItem>
+  <StyledListItem type="check">A multiplayer game</StyledListItem>
+  <StyledListItem type="check">
+    An interactive multiplayer landing page
+  </StyledListItem>
+</StyledList>
 
-### What counts as connected?
+### Never fair use
 
-A user counts as connected when they have an open connection to a room—for
-example, after joining with
-[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or
-[`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom). Each
-browser tab is one connection.
+<StyledList>
+  <StyledListItem type="cross">
+    Using a single `userId` for multiple users
+  </StyledListItem>
+  <StyledListItem type="cross">Abusing free REST API endpoints</StyledListItem>
+  <StyledListItem type="cross">
+    Load testing without authorization
+  </StyledListItem>
+  <StyledListItem type="cross">
+    Not using Liveblocks for collaboration
+  </StyledListItem>
+  <StyledListItem type="cross">
+    Using multiple free teams or accounts to reduce usage
+  </StyledListItem>
+  <StyledListItem type="cross">
+    Sharing logins or using group accounts for the admin dashboard
+  </StyledListItem>
+</StyledList>
 
-### When does billing pause?
+### Usage guidelines
 
-If no one is using the room (no presence updates, cursor movement, or other
-activity), the room becomes inactive after 10 seconds. Collaboration minutes
-stop accumulating until someone interacts again.
+As a guideline for our community, we expect most projects to fall within the
+ranges outlined below for each plan. If your usage significantly exceeds these
+guidelines, we’ll contact you to discuss your needs and determine whether
+changes to your plan or implementation are required. We aim to accommodate
+legitimate usage while ensuring our platform remains stable and performant for
+all users.
 
-### Do background tabs count?
+If your usage patterns are abnormal and materially impact platform performance,
+as determined at Liveblocks’ discretion based on platform-wide considerations,
+we may require changes to your implementation or a plan change to support the
+load. We will notify you if changes are required to your account before taking
+any action that impacts your account.
 
-By default, Liveblocks keeps connections open in background tabs, so those users
-still count as connected. To disconnect inactive background tabs automatically,
-set
-[`backgroundKeepAliveTimeout`](/docs/api-reference/liveblocks-client#createClientBackgroundKeepAliveTimeout)
-on your client.
+#### Typical monthly usage guidelines
 
-### Where can I see collaboration minutes?
+|                                   | Free                                         | Pro and Team                                |
+| --------------------------------- | -------------------------------------------- | ------------------------------------------- |
+| Average connections per month     | Up to <Limits.FreeAvgConnectionsPerMau />    | Up to <Limits.ProAvgConnectionsPerMau />    |
+| Total active room hours per month | Up to <Limits.FreeActiveRoomHoursPerMonth /> | Up to <Limits.ProActiveRoomHoursPerMonth /> |
 
-Your [dashboard usage page](/dashboard/usage) shows collaboration minutes at the
-workspace level. Each project overview page shows collaboration minutes over
-time for that project. Per-user and per-room breakdowns are not available in the
-dashboard today.
+Usage is measured at the team workspace level. For teams on the Pro and Team
+plans, you can pay for [additional usage](/docs/pricing/plans#Plan-inclusions)
+as you go.
 
-## Which Liveblocks plan should I choose?
+#### Additional usage
 
-Liveblocks offers four plans to support developers and teams of all sizes:
+For members of our Pro and Team plans, we offer a pay-as-you-go model for
+additional usage, giving you greater flexibility and control over your usage.
+The typical monthly usage guidelines above are still applicable, while extra
+usage will be automatically charged at the following rates:
 
-- **Free:** Personal projects and prototyping
-- **Pro:** Indie devs and small teams shipping commercial apps
-- **Team:** Teams that need SSO and more than 3 seats
-- **Enterprise:** Larger orgs needing volume discounts, multi-region hosting,
-  and custom terms
+| Item                                                                                | Included                                 | Pay-as-you-go                           |
+| ----------------------------------------------------------------------------------- | ---------------------------------------- | --------------------------------------- |
+| <a href="/docs/pricing/faqs#What-is-a-monthly-active-room">Monthly active rooms</a> | <Limits.ProMonthlyActiveRoomsIncluded /> | <Limits.ProMonthlyActiveRoomsOverage /> |
+| <a href="/docs/platform/account-management/manage-team-members">Dashboard seats</a> | <Limits.ProTeamMembersPerAccount />      | <Limits.DashboardSeatsOveragePrice />   |
 
-The SOC 2 report is available on Team with annual billing and on Enterprise.
+Metered usage such as realtime collaboration minutes, storage, comments, custom
+notifications, and file storage is covered by your monthly credits first, then
+billed at the [metered usage rates](/docs/pricing/plans#Metered-usage). Usage
+beyond included amounts will continue to be billed at pay-as-you-go rates unless
+another arrangement is put in place.
 
-Compare features in detail: [Free](/docs/pricing/plans/free),
-[Pro](/docs/pricing/plans/pro), [Team](/docs/pricing/plans/team),
-[Enterprise](/docs/pricing/plans/enterprise).
+#### Commercial usage
 
-## What comes with my Liveblocks subscription?
+The Free plan is limited to non-commercial, personal projects only. Any
+commercial use of Liveblocks requires a Pro, Team or Enterprise subscription.
 
-Every plan includes the full platform: [Sync](/docs/products/sync),
-[Comments](/docs/products/comments),
-[Notifications](/docs/products/notifications/concepts#Custom-notifications), the
-[dashboard](/dashboard), SDKs, and APIs. What changes between plans is your
-monthly credit allowance, seat count, and the security and support features you
-get. After you've used your credits, you keep using Liveblocks. Pro and Team are
-charged for overage at the same metered rates. Free plans hit hard limits per
-feature.
+We consider usage to be commercial when a project generates revenue or financial
+benefit for anyone involved in its development, operation, or maintenance. This
+includes projects built by paid employees, contractors, or consultants. Internal
+use within a company qualifies as commercial usage, regardless of whether users
+pay directly. Common examples of commercial usage include:
 
-For a full plan-by-plan breakdown, see the [plans docs](/docs/pricing/plans).
+- Applications that accept payments or process transactions
+- Products or services offered for sale
+- Projects developed or maintained for compensation
+- Sites primarily focused on affiliate marketing
+- Applications displaying advertisements or sponsored content
 
-## Can I try Liveblocks before paying for it?
+All environments and projects associated with a commercial product must be on a
+paid plan, including development, staging, and testing environments. If you’re
+uncertain whether your project qualifies as commercial usage, please reach out
+to our support team for clarification.
 
-Yes. The Free plan is permanently free, no credit card required. You can build,
-test, and even ship commercial apps on Free as long as the Liveblocks watermark
-stays visible. To remove the watermark and unlock overage, upgrade to Pro at
-{/* prettier-ignore */} <Limits.ProMonthlyPrice /> per month. [Get started for free](/auth/signup).
+#### General Limits
 
-## Are there discounts for startups, nonprofits, or students?
+Take a look at the [plan limits](/docs/pricing/plans#Plan-limits) and
+[technical limits](/docs/platform/technical-limits) documentation for the limits
+we apply to all accounts.
 
-We offer a discount for early-stage startups. [Learn more and apply](/startups).
+#### Learn more
 
-## What happens when I run out of Liveblocks credits?
-
-On Free, you'll hit hard limits per metric and the affected feature pauses until
-your credits reset. On Pro and Team, additional usage is billed at metered rates
-with no markup. We send automated email alerts as you approach your limits.
-
-See [usage limits](/docs/pricing/limits) for full details.
-
-## How do I track and control my Liveblocks spending?
-
-The [usage page](/dashboard/usage) in your dashboard shows real-time usage
-broken down by metric, current credit consumption, and projected month-end
-spend. We also send automated email alerts as you approach your limits. For
-predictable spend, your monthly credits give you a fixed ceiling unless you
-allow overage, and annual Team plans lock in a fixed monthly cost while saving
-two months compared with monthly billing.
-
-## Can I pay by invoice instead of credit card?
-
-Yes, on Enterprise plans. [Contact sales](/contact/sales) to set this up.
-
-## Does Liveblocks support multi-region hosting?
-
-Yes, on Enterprise. We currently support EU and US, with more coming.
-[Reach out to sales](/contact) to discuss upgrading to an Enterprise plan.
-
-## How secure and reliable is Liveblocks?
-
-We run on edge infrastructure, monitored on our
-[status page](https://liveblocks.statuspage.io). We're SOC 2 and HIPAA
-compliant, and GDPR-compliant with a Data Processing Agreement (DPA) available
-on request. Enterprise plans support data residency in specific regions. For
-more, see our [security page](/security) and
-[data storage docs](/docs/platform/data-storage).
-
-## What is a monthly active room?
-
-Monthly active rooms represents the number of rooms that have been used within a
-given month. Rooms are identified by their `roomId`.
-
-Specifically, a room counts as active when any of these occur:
-
-- A user connects on the front-end.
-- A comment is added or modified.
-- A document is updated. Any of the following: Storage, Tiptap, BlockNote,
-  Lexical, Yjs.
-- An attachment is uploaded.
-
-If a room contains content from the previous month, it is not active until it is
-used in the current month. For example, if a text document is created in
-January, it is not active in February until a user connects to the document or
-updates its content.
-
-## What is a monthly active user?
-
-Monthly active users represents the number of users that have used any
-Liveblocks features within a given month. Users are identified by the `userId`
-property provided in your
-[authentication endpoint](/docs/api-reference/authentication). This `userId`
-generally comes from your database or your authentication provider.
-
-One unique `userId` corresponds to one user, no matter how long they connect
-for. For example, a user that connects for 5 minutes on 2 different days is
-counted as 1 MAU, and a user that connects 8 hours a day for a month is also
-counted as 1 MAU. This applies so long as usage falls under our
-[Fair Use Policy](/docs/pricing/limits/fair-use-guidelines).
-
-## What's a connection?
-
-A connection occurs when a user opens a web page containing a Liveblocks room.
-Each tab counts as one connection, which means that a user with two open tabs
-has two connections. A room is joined when using
-[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) in React or
-[`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) in
-JavaScript. Liveblocks connections are analogous to WebSocket connections,
-representing a realtime link to our server.
-
-## What's a room?
-
-A room is the virtual space where people collaborate. For most products, a room
-corresponds to a document.
-
-## What's a simultaneous connection per room?
-
-A simultaneous connection per room is when a user or multiple users are
-connected to the same Liveblocks room at the same time. Learn more about
-handling simultaneous room connection limits in our guide about
-[joining rooms at maximum capacity](/docs/guides/what-happens-when-a-user-joins-a-room-at-maximum-capacity).
-
-## What's a simultaneous connection per project?
-
-A simultaneous connection per project is when a user or multiple users are
-connected to the same project at the same time.
-
-## How is realtime data storage calculated?
-
-Realtime data storage is a cumulative calculation that represents all realtime
-data that is currently stored in your rooms. It does not reset monthly, and the
-total usage will continue to accrue over time as you add more content and data.
-You can monitor your usage at any time in the [dashboard](/dashboard).
-
-## What happens when limits are reached?
-
-Liveblocks returns a different error for each limit that a user might reach.
-That way, you can decide how to best handle those cases in your product.
-
-## Do you count monthly active rooms during testing?
-
-Yes, if test users connect to a room during automated testing, the room will be
-counted as a monthly active room. To prevent hitting limits during testing, you
-may want to provide a set of reusable `roomId`s.
-
-## How do I remove the “Powered by Liveblocks” badge?
-
-By default, Liveblocks displays a “Powered by Liveblocks” badge in your
-application. You need a [paid plan](/docs/pricing/plans) to remove the badge. To
-remove it, follow these steps:
-
-1. In the Liveblocks dashboard, navigate to your
-   [team’s settings](/dashboard/settings).
-2. Under **General**, toggle the option to remove “Powered by Liveblocks”
-   branding.
-
-If you’d instead like to adjust the position of the badge, set the
-[`badgeLocation`](/docs/api-reference/liveblocks-react#Powered-by-Liveblocks-branding)
-property.
+Circumventing or attempting to bypass Liveblocks’ limits or usage guidelines is
+a violation of our fair use guidelines. For further information regarding these
+guidelines and acceptable use of our services, refer to our
+[Terms of Service](/terms) or your Enterprise Service Agreement. In case of
+conflict, contractual terms supersede these guidelines. These guidelines may be
+updated over time as Liveblocks releases new features or changes platform
+capacity.

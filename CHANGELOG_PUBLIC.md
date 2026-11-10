@@ -18,6 +18,74 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 45 (2026-11-06)
+
+## v3.25.0
+
+### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
+
+- **Potentially breaking:** Plain JSON arrays and tuples in the return types of
+  `.toJSON()`, `useStorage()` selectors, and
+  `getStorageDocument(roomId, "json")` are now `readonly`, which is consistent
+  with all other values these APIs return.
+
+  ```ts
+  type Storage = {
+    items: LiveList<string>;
+    tags: string[];
+  };
+
+  const json = root.toJSON();
+
+  json.items;
+  //   ^^^^^ readonly string[]  (✅ was already correct)
+
+  json.tags;
+  //   ^^^^ before: string[]           (❌ not consistent)
+  //        now:    readonly string[]  (✅ consistent)
+  ```
+
+### `@liveblocks/node`
+
+- Add `markInboxNotificationAsRead()` method.
+- Add a `hasThreads` query filter to `getRooms()` and `iterRooms()`. Use `true`
+  or `false` to filter rooms with or without threads, or `"unresolved"` or
+  `"resolved"` to filter by thread state.
+
+### `@liveblocks/react`
+
+- Add `reload()` to `useInboxNotifications()` to refresh notifications immediately.
+- Fix inbox notifications remaining visible after room access is revoked or a
+  room is deleted.
+
+## Examples
+
+- New example: [Language tutoring app](https://liveblocks.io/examples/language-tutoring/nextjs-language-tutoring).
+
+## Contributors
+
+ctnicholas, nvie, marcbouchenoire
+
+# Week 44 (2026-10-30)
+
+## Infrastructure
+
+- We've been doing lots of prep work to replace the engine behind webhook
+  delivery with our own. Webhooks will continue working seamlessly for you, with
+  no code changes required on your end. Stay tuned!
+- Added a test URL for trying out webhooks. Send events to it and inspect them
+  from the dashboard.
+- Fixed sensitive custom webhook headers, such as `Authorization`, in the
+  dashboard and Management API.
+- Every webhook endpoint now has an explicit rate limit, from 1 to 1,000 requests
+  per second. Higher values are capped at 1,000, and endpoints without a valid
+  limit now use 1,000. The API returns `1000` for these rather than `null`.
+- Custom webhook headers are now validated, with a maximum of 5 per endpoint.
+
+## Contributors
+
+nvie, marcbouchenoire, nimeshnayaju
+
 # Week 43 (2026-10-23)
 
 ## v3.24.5
@@ -47,7 +115,6 @@ marcbouchenoire
 - Fix `LiveText` reconnect convergence with pending edits, including lost
   acknowledgements, repeated reconnects, and queued edits. Recovery updates now
   reach editor integrations instead of being filtered as local echoes.
-
 
 ## Contributors
 
