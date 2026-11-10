@@ -1,0 +1,129 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-tiptap/styles.css";
+
+/* Let hover styles also apply for touch/synthetic pointers. */
+@custom-variant hover (&:hover);
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.54 0.23 285);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.54 0.23 285 / 50%);
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Align Liveblocks UI (avatars, toolbars, mentions) with the app's primary color. */
+.lb-root {
+  --lb-accent: oklch(0.54 0.23 285);
+}
+
+/* Post composer (Tiptap). Preflight resets typography, so the editor needs
+   its own text styles. */
+.composer-editor .tiptap {
+  outline: none;
+  min-height: 160px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--foreground);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.composer-editor .tiptap p {
+  margin: 0;
+}
+
+.composer-editor .tiptap p + p {
+  margin-top: 0.75em;
+}
+
+.composer-editor .tiptap strong {
+  font-weight: 600;
+}
+
+.composer-editor .tiptap ul,
+.composer-editor .tiptap ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.composer-editor .tiptap ul {
+  list-style: disc;
+}
+
+.composer-editor .tiptap ol {
+  list-style: decimal;
+}
+
+.composer-editor .tiptap blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 0.75em;
+  color: var(--muted-foreground);
+}
+
+.composer-editor .tiptap code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--muted);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+}
+
+.composer-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--muted-foreground);
+}
