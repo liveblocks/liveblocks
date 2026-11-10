@@ -141,7 +141,6 @@ export async function syncEmailToFeed({
     kind: "email",
     direction: email.direction,
     status: "sent",
-    failureReason: "",
     resendEmailId: email.id,
     from: parseAddress(email.from),
     to: email.to.map((address) => parseAddress(address).email),
@@ -212,6 +211,28 @@ export async function settleReply({
 }
 
 /**
+ * Removes a pending ("sending") reply that could not be sent, so it doesn't
+ * linger in the thread if the agent's tab is gone. Best effort: the client
+ * removes it too, and the message may already be gone.
+ */
+export async function discardPendingReply({
+  roomId,
+  feedId,
+  messageId,
+}: {
+  roomId: string;
+  feedId: string;
+  messageId: string;
+}) {
+  const liveblocks = getLiveblocks();
+  try {
+    await liveblocks.deleteFeedMessage({ roomId, feedId, messageId });
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
+  }
+}
+
+/**
  * Handles an `inbox.email.sent` webhook for an email this app sent: finds the
  * pending reply by its Resend email id and marks it "sent". Returns false
  * when no such reply exists in the feed.
@@ -246,7 +267,7 @@ export async function confirmSentEmail({
       roomId,
       feedId,
       messageId: pending.id,
-      data: { ...pending.data, status: "sent", failureReason: "" },
+      data: { ...pending.data, status: "sent" },
     });
   }
   return true;

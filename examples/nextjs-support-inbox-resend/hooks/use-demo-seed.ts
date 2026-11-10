@@ -91,7 +91,6 @@ export function useDemoSeed({
               kind: "email",
               direction: message.direction,
               status: "sent",
-              failureReason: "",
               resendEmailId: "",
               from: outbound
                 ? {

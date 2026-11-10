@@ -5,6 +5,7 @@ import type { ReplyRequest, ReplyResponse } from "@/lib/api";
 import { parseAddress, textToHtml } from "@/lib/email";
 import { getLiveblocks, isLiveblocksConfigured } from "@/lib/server/liveblocks";
 import {
+  discardPendingReply,
   getResend,
   getResendConfig,
   inboxSelector,
@@ -20,10 +21,11 @@ const MAX_REPLY_LENGTH = 20_000;
  * By the time this route is called, the client has already added the reply
  * to the conversation's feed as a "sending" message, so every agent sees it
  * instantly. This route emails it through the Resend Inboxes reply API (which
- * keeps it in the customer's thread) and then settles that same message:
- * "sent" with Resend's email id once Resend accepts it, or "failed" with the
- * reason so the agent can retry or discard. The `inbox.email.sent` webhook
- * confirms the send a second time, idempotently.
+ * keeps it in the customer's thread) and then settles that same message as
+ * "sent" with Resend's email id once Resend accepts it. If sending fails, the
+ * pending message is removed from the feed and the reason is returned so the
+ * client can put the text back into the agent's composer. The
+ * `inbox.email.sent` webhook confirms the send a second time, idempotently.
  *
  * Conversations that aren't backed by a Resend thread (the seeded demo data),
  * or deployments without Resend credentials, get a clearly-marked simulated
@@ -103,21 +105,7 @@ export async function POST(request: NextRequest) {
   const from = { name: agent.info.name, email: resend.inbox };
 
   const settleFailure = async (reason: string, status: number) => {
-    await settleReply({
-      roomId,
-      feedId,
-      messageId,
-      data: outboundEmail({
-        metadata,
-        agent,
-        text,
-        from,
-        resendEmailId: "",
-        status: "failed",
-        failureReason: reason,
-        simulated: false,
-      }),
-    });
+    await discardPendingReply({ roomId, feedId, messageId });
     return fail(reason, status);
   };
 
@@ -178,7 +166,6 @@ function outboundEmail({
   from,
   resendEmailId,
   status,
-  failureReason = "",
   simulated,
 }: {
   metadata: Liveblocks["FeedMetadata"];
@@ -187,14 +174,12 @@ function outboundEmail({
   from: { name: string; email: string };
   resendEmailId: string;
   status: EmailMessageData["status"];
-  failureReason?: string;
   simulated: boolean;
 }): EmailMessageData {
   return {
     kind: "email",
     direction: "outbound",
     status,
-    failureReason,
     resendEmailId,
     from,
     to: [metadata.customerEmail],

@@ -9,9 +9,10 @@ import {
   useUpdateFeedMetadata,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getUsers } from "@/app/database";
 import type { ReplyRequest, ReplyResponse } from "@/lib/api";
+import { restoreFailedReply } from "@/lib/drafts";
 import { useDemoSeed } from "@/hooks/use-demo-seed";
 import { useInboxSettings } from "@/hooks/use-inbox-settings";
 import {
@@ -82,6 +83,9 @@ export function SupportInbox({ roomId }: { roomId: string }) {
   const [detailsOpen, setDetailsOpen] = useState(true);
 
   const conversations = feeds;
+  // Latest feeds for async callbacks that outlive a render (reply delivery).
+  const feedsRef = useRef(feeds);
+  feedsRef.current = feeds;
 
   // Feed metadata is written as a whole object: merge each change onto the
   // latest known metadata so no field is dropped.
@@ -241,11 +245,19 @@ export function SupportInbox({ roomId }: { roomId: string }) {
   }, [selected, patch]);
 
   // Hands a reply that's already in the feed to the server, which emails it
-  // through Resend and settles the message as "sent" or "failed". We apply
-  // the outcome from the response as well, so the thread updates the instant
-  // the request returns rather than waiting on the server's own feed write.
+  // through Resend and settles the message as "sent". We apply the outcome
+  // from the response as well, so the thread updates the instant the request
+  // returns rather than waiting on the server's own feed write. If sending
+  // fails, the pending message is removed and the text goes back into the
+  // agent's composer with the reason.
   const deliver = useCallback(
-    async (feedId: string, messageId: string, data: EmailMessageData) => {
+    async (
+      feedId: string,
+      messageId: string,
+      data: EmailMessageData,
+      // List summary as it was before this reply, to put back on failure.
+      previous: Pick<ConversationMetadata, "preview" | "lastActivityAt">
+    ) => {
       const body: ReplyRequest = {
         roomId,
         feedId,
@@ -269,22 +281,28 @@ export function SupportInbox({ roomId }: { roomId: string }) {
         await updateFeedMessage(feedId, messageId, {
           ...data,
           status: "sent",
-          failureReason: "",
           resendEmailId: result.resendEmailId,
           from: result.from,
           simulated: result.simulated,
         });
-      } else {
-        await updateFeedMessage(feedId, messageId, {
-          ...data,
-          status: "failed",
-          failureReason:
-            (result && !result.ok && result.error) ||
-            "Couldn't reach the server.",
-        });
+        return;
       }
+
+      const reason =
+        (result && !result.ok && result.error) || "Couldn't reach the server.";
+      try {
+        await deleteFeedMessage(feedId, messageId);
+      } catch {
+        // The server may already have removed it.
+      }
+      // Undo the list summary, unless something newer has happened since.
+      const current = feedsRef.current.find((feed) => feed.feedId === feedId);
+      if (current && current.metadata.preview === previewOf(data.text)) {
+        void patch(current, previous);
+      }
+      restoreFailedReply(feedId, data.text, `Reply not sent — ${reason}`);
     },
-    [roomId, self.id, updateFeedMessage]
+    [roomId, self.id, updateFeedMessage, deleteFeedMessage, patch]
   );
 
   // Sending a reply writes it into the feed right away as a "sending" email,
@@ -299,7 +317,6 @@ export function SupportInbox({ roomId }: { roomId: string }) {
         kind: "email",
         direction: "outbound",
         status: "sending",
-        failureReason: "",
         resendEmailId: "",
         from: {
           name: self.info.name,
@@ -315,12 +332,16 @@ export function SupportInbox({ roomId }: { roomId: string }) {
         authorId: self.id,
         simulated,
       };
+      const previous = {
+        preview: selected.metadata.preview,
+        lastActivityAt: selected.metadata.lastActivityAt,
+      };
       await createFeedMessage(selected.feedId, data, { id: messageId });
       void patch(selected, {
         preview: previewOf(text),
         lastActivityAt: new Date().toISOString(),
       });
-      void deliver(selected.feedId, messageId, data);
+      void deliver(selected.feedId, messageId, data, previous);
     },
     [
       selected,
@@ -332,28 +353,6 @@ export function SupportInbox({ roomId }: { roomId: string }) {
       patch,
       deliver,
     ]
-  );
-
-  const retryReply = useCallback(
-    async (message: { id: string; data: EmailMessageData }) => {
-      if (!selected) return;
-      const data: EmailMessageData = {
-        ...message.data,
-        status: "sending",
-        failureReason: "",
-      };
-      await updateFeedMessage(selected.feedId, message.id, data);
-      void deliver(selected.feedId, message.id, data);
-    },
-    [selected, updateFeedMessage, deliver]
-  );
-
-  const discardReply = useCallback(
-    (message: { id: string }) => {
-      if (!selected) return;
-      void deleteFeedMessage(selected.feedId, message.id);
-    },
-    [selected, deleteFeedMessage]
   );
 
   // Internal notes never leave Liveblocks: they're written straight into the
@@ -434,8 +433,6 @@ export function SupportInbox({ roomId }: { roomId: string }) {
                 onSetAssignee={setAssignee}
                 onMarkUnread={markUnread}
                 onSendReply={sendReply}
-                onRetryReply={retryReply}
-                onDiscardReply={discardReply}
                 onAddNote={addNote}
               />
             ) : (

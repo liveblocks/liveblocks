@@ -18,15 +18,17 @@ import {
   type KeyboardEvent,
 } from "react";
 import type { Conversation } from "@/lib/conversation";
+import {
+  clearDraft,
+  getDraft,
+  onDraftRestored,
+  saveDraft,
+  type ComposerMode,
+} from "@/lib/drafts";
 import { cn } from "@/lib/utils";
 import { AgentAvatar } from "./avatars";
 
-export type ComposerMode = "reply" | "note";
-
-type Draft = { mode: ComposerMode; text: string };
-
-// Drafts survive switching between conversations (per tab).
-const drafts = new Map<string, Draft>();
+export type { ComposerMode } from "@/lib/drafts";
 
 export function Composer({
   conversation,
@@ -42,20 +44,34 @@ export function Composer({
   onAddNote: (text: string) => Promise<void>;
 }) {
   const feedId = conversation.feedId;
-  const initial = drafts.get(feedId);
+  const initial = getDraft(feedId);
   const [mode, setMode] = useState<ComposerMode>(initial?.mode ?? "reply");
   const [text, setText] = useState(initial?.text ?? "");
   const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initial?.error ?? null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const resolved = conversation.metadata.status === "resolved";
 
   // Persist the draft as it changes.
   useEffect(() => {
-    if (text || drafts.has(feedId)) {
-      drafts.set(feedId, { mode, text });
+    if (text || error || getDraft(feedId)) {
+      saveDraft(feedId, { mode, text, error });
     }
-  }, [feedId, mode, text]);
+  }, [feedId, mode, text, error]);
+
+  // A reply that failed to send after leaving the composer comes back here,
+  // with the reason, so nothing the agent wrote is lost.
+  useEffect(
+    () =>
+      onDraftRestored((restoredFeedId, draft) => {
+        if (restoredFeedId !== feedId) return;
+        setMode(draft.mode);
+        setText(draft.text);
+        setError(draft.error);
+        textareaRef.current?.focus();
+      }),
+    [feedId]
+  );
 
   // Auto-grow the textarea with its content.
   useLayoutEffect(() => {
@@ -79,10 +95,10 @@ export function Composer({
         await onAddNote(value);
       }
       // Replies resolve as soon as they're in the feed (they show as
-      // "sending" until the email goes out); if the write itself fails, the
-      // draft stays here.
+      // "sending" until the email goes out). If sending fails later, the
+      // text is restored here via `restoreFailedReply`.
       setText("");
-      drafts.delete(feedId);
+      clearDraft(feedId);
       textareaRef.current?.focus();
     } catch (cause) {
       setError(

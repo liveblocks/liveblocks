@@ -9,11 +9,7 @@ import {
   PanelRightOpenIcon,
   RotateCcwIcon,
 } from "lucide-react";
-import type {
-  Conversation,
-  EmailMessageData,
-  Priority,
-} from "@/lib/conversation";
+import type { Conversation, Priority } from "@/lib/conversation";
 import { cn } from "@/lib/utils";
 import { CustomerAvatar, ViewerAvatars } from "./avatars";
 import { Composer } from "./composer";
@@ -34,8 +30,6 @@ export function ConversationView({
   onSetAssignee,
   onMarkUnread,
   onSendReply,
-  onRetryReply,
-  onDiscardReply,
   onAddNote,
   className,
 }: {
@@ -50,8 +44,6 @@ export function ConversationView({
   onSetAssignee: (userId: string) => void;
   onMarkUnread: () => void;
   onSendReply: (text: string) => Promise<void>;
-  onRetryReply: (message: { id: string; data: EmailMessageData }) => void;
-  onDiscardReply: (message: { id: string }) => void;
   onAddNote: (text: string) => Promise<void>;
   className?: string;
 }) {
@@ -168,12 +160,7 @@ export function ConversationView({
       {/* Suspense is scoped to the timeline so switching conversations only
           swaps the message area. */}
       <ClientSideSuspense fallback={<TimelineSkeleton />}>
-        <MessageTimeline
-          key={feedId}
-          conversation={conversation}
-          onRetryReply={onRetryReply}
-          onDiscardReply={onDiscardReply}
-        />
+        <MessageTimeline key={feedId} conversation={conversation} />
       </ClientSideSuspense>
 
       <Composer

@@ -2,7 +2,6 @@
 
 import { useFeedMessages } from "@liveblocks/react/suspense";
 import {
-  AlertCircleIcon,
   ChevronUpIcon,
   FileIcon,
   FileSpreadsheetIcon,
@@ -34,11 +33,6 @@ import { cn } from "@/lib/utils";
 import { AgentAvatar, AgentName, CustomerAvatar } from "./avatars";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-type ReplyActions = {
-  onRetryReply: (message: { id: string; data: EmailMessageData }) => void;
-  onDiscardReply: (message: { id: string }) => void;
-};
-
 /**
  * The chronological email + note timeline of one conversation. Messages come
  * from the conversation's Liveblocks feed and update in realtime: emails
@@ -47,11 +41,9 @@ type ReplyActions = {
  */
 export function MessageTimeline({
   conversation,
-  onRetryReply,
-  onDiscardReply,
 }: {
   conversation: Conversation;
-} & ReplyActions) {
+}) {
   const { messages, hasFetchedAll, fetchMore, isFetchingMore } =
     useFeedMessages(conversation.feedId, { limit: 50 });
   const sorted = sortByCreatedAt(messages);
@@ -107,12 +99,7 @@ export function MessageTimeline({
             return (
               <Fragment key={message.id}>
                 {newDay ? <DaySeparator timestamp={message.createdAt} /> : null}
-                <TimelineItem
-                  message={message}
-                  conversation={conversation}
-                  onRetryReply={onRetryReply}
-                  onDiscardReply={onDiscardReply}
-                />
+                <TimelineItem message={message} conversation={conversation} />
               </Fragment>
             );
           })
@@ -137,22 +124,15 @@ function DaySeparator({ timestamp }: { timestamp: number }) {
 function TimelineItem({
   message,
   conversation,
-  ...actions
 }: {
   message: ConversationMessage;
   conversation: Conversation;
-} & ReplyActions) {
+}) {
   if (isNote(message)) {
     return <NoteMessage message={message} />;
   }
   if (isEmail(message)) {
-    return (
-      <EmailMessage
-        message={message}
-        conversation={conversation}
-        {...actions}
-      />
-    );
+    return <EmailMessage message={message} conversation={conversation} />;
   }
   return null;
 }
@@ -160,16 +140,13 @@ function TimelineItem({
 function EmailMessage({
   message,
   conversation,
-  onRetryReply,
-  onDiscardReply,
 }: {
   message: { id: string; createdAt: number; data: EmailMessageData };
   conversation: Conversation;
-} & ReplyActions) {
+}) {
   const { data } = message;
   const outbound = data.direction === "outbound";
   const sending = outbound && data.status === "sending";
-  const failed = outbound && data.status === "failed";
   const { body, quoted } = splitQuotedText(data.text);
   const [showQuoted, setShowQuoted] = useState(false);
 
@@ -180,8 +157,7 @@ function EmailMessage({
         outbound
           ? "border-line bg-canvas"
           : "border-transparent bg-surface hover:border-line",
-        sending && "opacity-60",
-        failed && "border-urgent/40"
+        sending && "opacity-60"
       )}
       aria-label={`${outbound ? "Outgoing" : "Incoming"} email from ${data.from.name}`}
       aria-busy={sending || undefined}
@@ -230,15 +206,6 @@ function EmailMessage({
                 Sending to{" "}
                 {data.to.join(", ") || conversation.metadata.customerEmail}…
               </span>
-            ) : failed ? (
-              <span
-                className="inline-flex items-center gap-1 font-medium text-urgent"
-                role="alert"
-              >
-                <AlertCircleIcon className="size-3" />
-                Not sent
-                {data.failureReason ? ` — ${data.failureReason}` : ""}
-              </span>
             ) : outbound ? (
               <span className="inline-flex items-center gap-1 text-ink-secondary">
                 <SendIcon className="size-3" />
@@ -251,7 +218,7 @@ function EmailMessage({
               </span>
             )}
             {data.cc.length > 0 ? <span>· Cc {data.cc.join(", ")}</span> : null}
-            {data.simulated && outbound && !sending && !failed ? (
+            {data.simulated && outbound && !sending ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="inline-flex cursor-default items-center rounded-sm border border-dashed border-line-strong px-1.5 py-px text-[10px] font-medium tracking-wide text-ink-muted uppercase">
@@ -288,25 +255,6 @@ function EmailMessage({
           </div>
         ) : null}
       </div>
-
-      {failed ? (
-        <div className="mt-3 flex items-center gap-2 md:pl-12">
-          <button
-            type="button"
-            onClick={() => onRetryReply(message)}
-            className="inline-flex h-7 items-center rounded-md bg-ink px-2.5 text-xs font-medium text-surface hover:bg-ink/90"
-          >
-            Retry
-          </button>
-          <button
-            type="button"
-            onClick={() => onDiscardReply(message)}
-            className="inline-flex h-7 items-center rounded-md border border-line bg-surface px-2.5 text-xs text-ink-secondary hover:bg-hover"
-          >
-            Discard
-          </button>
-        </div>
-      ) : null}
 
       {data.attachments.length > 0 ? (
         <ul className="mt-3 flex flex-wrap gap-2 md:pl-12" aria-label="Attachments">

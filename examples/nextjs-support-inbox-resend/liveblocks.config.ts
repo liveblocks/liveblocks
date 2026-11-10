@@ -61,10 +61,10 @@ declare global {
           // Delivery state of an outbound reply. The client writes the
           // message as "sending" the moment the agent hits send, so everyone
           // sees it instantly; it becomes "sent" once Resend accepts the email
-          // (and the `inbox.email.sent` webhook confirms it), or "failed" with
-          // a reason. Inbound emails are always "sent".
-          status: "sending" | "sent" | "failed";
-          failureReason: string;
+          // (and the `inbox.email.sent` webhook confirms it). A reply that
+          // fails is removed from the feed and handed back to the sender's
+          // composer. Inbound emails are always "sent".
+          status: "sending" | "sent";
           // Resend email id, or "" until the email is sent (and always "" for
           // simulated demo emails).
           resendEmailId: string;

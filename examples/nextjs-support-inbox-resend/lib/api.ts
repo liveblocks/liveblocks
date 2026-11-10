@@ -13,7 +13,8 @@ export type InboxSettings = {
 
 // `POST /api/conversations/reply`. The client has already written the reply
 // into the feed as a "sending" message with this `messageId`; the route sends
-// the email and flips that message to "sent" or "failed".
+// the email and flips that message to "sent", or removes it and reports why
+// sending failed.
 export type ReplyRequest = {
   roomId: string;
   feedId: string;
