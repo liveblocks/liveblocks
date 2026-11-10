@@ -1205,6 +1205,23 @@ useEventListener(({ event, user, connectionId }) => {
 });
 ```
 
+#### Liveblocks.kickAllUsers [#post-rooms-roomId-kick]
+
+Disconnects all users currently connected to the room. Throws an error if the
+room isn’t found. This is a wrapper around the
+[Kick All Users API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-kick)
+and returns no response.
+
+```ts
+await liveblocks.kickAllUsers("my-room-id");
+```
+
+Clients automatically reconnect, and their access to the room is checked again
+at that point. This makes it useful after revoking a user’s access to a room,
+for example with [`updateRoom`](#post-rooms-roomId), as they won’t be able to
+rejoin. Presence set with [`setPresence`](#post-rooms-roomId-presence) is not
+affected.
+
 #### Liveblocks.setPresence [#post-rooms-roomId-presence]
 
 Sets ephemeral presence for a user in a room without requiring a WebSocket

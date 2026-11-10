@@ -805,6 +805,36 @@ describe("client", () => {
     });
   });
 
+  describe("kick all users", () => {
+    test("should successfully kick all users when kickAllUsers receives a successful response", async () => {
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/kick`, () => {
+          return HttpResponse.json({ ok: true }, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await expect(client.kickAllUsers("123")).resolves.toBeUndefined();
+    });
+
+    test("should throw LiveblocksError when the room isn't found", async () => {
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/kick`, () => {
+          return HttpResponse.json(
+            { error: "ROOM_NOT_FOUND", message: "Room not found" },
+            { status: 404 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await expect(client.kickAllUsers("123")).rejects.toMatchObject({
+        name: "LiveblocksError",
+        status: 404,
+      });
+    });
+  });
+
   describe("get active users", () => {
     test("should return active users when getActiveUsers receives a successful response", async () => {
       const client = new Liveblocks({ secret: "sk_xxx" });

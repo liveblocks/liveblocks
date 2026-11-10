@@ -1,5 +1,13 @@
 ## vNEXT
 
+### `@liveblocks/node`
+
+- Add `kickAllUsers()` method, to disconnect all users from a room. Clients
+  will automatically reconnect, and their access to the room is checked again.
+  This is useful after revoking a user's access to a room (e.g. with
+  `updateRoom()`): without it, their open connection stays active until it
+  ends naturally.
+
 ## v3.25.0
 
 ### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`

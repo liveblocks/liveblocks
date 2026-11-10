@@ -1686,6 +1686,25 @@ export class Liveblocks {
   }
 
   /**
+   * Disconnects all users currently connected to a room. Clients will automatically reconnect, and their access to the room gets checked again at that point. Presence set via setPresence() is not affected.
+   * @param roomId The id of the room to kick all users from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async kickAllUsers(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/kick`,
+      {},
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
    * Sets ephemeral presence for a user in a room without requiring a WebSocket connection.
    * The presence data will automatically expire after the specified TTL.
    * This is useful for scenarios like showing an AI agent's presence in a room.
