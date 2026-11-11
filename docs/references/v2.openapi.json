@@ -7925,7 +7925,7 @@
       "post": {
         "summary": "Recover failed webhook messages",
         "x-badge": "Beta",
-        "description": "Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
+        "description": "Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` when recovery starts, a `404` if the project or webhook does not exist, and a `422` if the webhook is disabled. This endpoint requires the `write:all` scope.",
         "tags": ["Management"],
         "parameters": [
           {
