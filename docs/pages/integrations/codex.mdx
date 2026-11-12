@@ -42,14 +42,21 @@ more.
       npm i -g @openai/codex
       ```
 
-      Next, install the
-      [Liveblocks MCP server](/docs/tools/mcp-server), inserting your secret key
-      from [your dashboard](/dashboard):
+      Next, connect to the
+      [Liveblocks MCP server](/docs/tools/mcp-server):
 
       ```bash
       codex mcp add liveblocks \
-        --env LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}" \
-        -- npx -y github:liveblocks/liveblocks-mcp-server
+        --url https://mcp.liveblocks.io/mcp \
+        --bearer-token-env-var LIVEBLOCKS_SECRET_KEY
+      ```
+
+      Make sure `LIVEBLOCKS_SECRET_KEY` is set in the shell Codex runs from,
+      inserting your secret key from [your dashboard](/dashboard), for example
+      in your shell profile:
+
+      ```bash
+      export LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
       ```
 
       <Banner type="warning" title="Only for development">
@@ -123,7 +130,7 @@ see the generated plugin files.
 ### MCP returns auth errors
 
 Use a secret key from the same [Liveblocks project](/dashboard) as your app.
-Confirm `LIVEBLOCKS_SECRET_KEY` in the MCP config matches that project.
+Confirm `LIVEBLOCKS_SECRET_KEY` in your shell matches that project.
 
 ### MCP returns incorrect data
 
