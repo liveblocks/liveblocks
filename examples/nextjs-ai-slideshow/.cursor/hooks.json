@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [{ "command": "node ../scripts/format-changed.mjs" }]
+  }
+}
