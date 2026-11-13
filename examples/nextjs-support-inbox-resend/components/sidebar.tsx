@@ -4,6 +4,7 @@ import { useSelf } from "@liveblocks/react/suspense";
 import {
   AtSignIcon,
   CheckCircle2Icon,
+  CheckIcon,
   ChevronsUpDownIcon,
   CircleDashedIcon,
   InboxIcon,
@@ -12,6 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WORKSPACES, type Workspace, type WorkspaceId } from "@/lib/workspaces";
 import { AgentAvatar } from "./avatars";
 import { HelpButton } from "./help-button";
 import {
@@ -50,14 +52,18 @@ export function viewLabel(view: View) {
 export function Sidebar({
   view,
   counts,
+  workspace,
   inboxAddress,
   onChange,
+  onWorkspaceChange,
   className,
 }: {
   view: View;
   counts: ViewCounts;
-  inboxAddress: string | null;
+  workspace: Workspace;
+  inboxAddress: string;
   onChange: (view: View) => void;
+  onWorkspaceChange: (workspaceId: WorkspaceId) => void;
   className?: string;
 }) {
   const self = useSelf();
@@ -65,12 +71,16 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex w-[220px] shrink-0 flex-col border-r border-line bg-canvas",
+        "flex w-[220px] shrink-0 flex-col",
         className
       )}
     >
       <div className="px-3 pt-3 pb-2">
-        <WorkspaceSwitcher inboxAddress={inboxAddress} />
+        <WorkspaceSwitcher
+          workspace={workspace}
+          inboxAddress={inboxAddress}
+          onChange={onWorkspaceChange}
+        />
       </div>
 
       <nav className="flex flex-col gap-px px-2" aria-label="Views">
@@ -154,17 +164,28 @@ export function Sidebar({
   );
 }
 
-function WorkspaceSwitcher({ inboxAddress }: { inboxAddress: string | null }) {
+function WorkspaceSwitcher({
+  workspace,
+  inboxAddress,
+  onChange,
+}: {
+  workspace: Workspace;
+  inboxAddress: string;
+  onChange: (workspaceId: WorkspaceId) => void;
+}) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="group flex h-10 w-full items-center gap-2.5 rounded-md px-1.5 text-left transition-colors hover:bg-hover data-[state=open]:bg-hover">
+      <DropdownMenuTrigger
+        className="group flex h-10 w-full items-center gap-2.5 rounded-md px-1.5 text-left transition-colors hover:bg-hover data-[state=open]:bg-hover"
+        aria-label={`Workspace: ${workspace.name}`}
+      >
         <RelayMark />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] leading-tight font-semibold text-ink">
-            Relay
+            {workspace.name}
           </div>
           <div className="truncate text-[11px] leading-tight text-ink-muted">
-            {inboxAddress ?? "support@relay.example"}
+            {inboxAddress}
           </div>
         </div>
         <ChevronsUpDownIcon className="size-3.5 shrink-0 text-ink-faint group-hover:text-ink-muted" />
@@ -173,15 +194,28 @@ function WorkspaceSwitcher({ inboxAddress }: { inboxAddress: string | null }) {
         <DropdownMenuLabel className="text-[11px] font-medium tracking-wide text-ink-muted uppercase">
           Workspaces
         </DropdownMenuLabel>
-        <DropdownMenuItem className="text-[13px]">
-          <RelayMark small />
-          <div className="min-w-0 flex-1">
-            <div className="truncate">Relay</div>
-            <div className="truncate text-[11px] text-ink-muted">
-              {inboxAddress ?? "support@relay.example"}
-            </div>
-          </div>
-        </DropdownMenuItem>
+        {WORKSPACES.map((item) => {
+          const active = item.id === workspace.id;
+          return (
+            <DropdownMenuItem
+              key={item.id}
+              className="text-[13px]"
+              onClick={() => onChange(item.id)}
+              aria-current={active ? "true" : undefined}
+            >
+              <RelayMark small />
+              <div className="min-w-0 flex-1">
+                <div className="truncate">{item.name}</div>
+                <div className="truncate text-[11px] text-ink-muted">
+                  {active ? inboxAddress : item.address}
+                </div>
+              </div>
+              {active ? (
+                <CheckIcon className="size-3.5 shrink-0 text-ink" />
+              ) : null}
+            </DropdownMenuItem>
+          );
+        })}
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled className="text-[13px]">
           Create workspace…

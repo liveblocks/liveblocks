@@ -10,6 +10,13 @@ import {
   type ConversationMetadata,
 } from "@/lib/conversation";
 import { DEMO_CONVERSATIONS, type DemoConversation } from "@/lib/demo-data";
+import { SALES_DEMO_CONVERSATIONS } from "@/lib/demo-data-sales";
+import type { Workspace, WorkspaceId } from "@/lib/workspaces";
+
+const DEMO_DATA: Record<WorkspaceId, DemoConversation[]> = {
+  support: DEMO_CONVERSATIONS,
+  sales: SALES_DEMO_CONVERSATIONS,
+};
 
 const MINUTE = 60_000;
 
@@ -23,10 +30,12 @@ const MINUTE = 60_000;
  * ever emailed.
  */
 export function useDemoSeed({
+  workspace,
   enabled,
   isEmpty,
   isLoaded,
 }: {
+  workspace: Workspace;
   enabled: boolean;
   isEmpty: boolean;
   isLoaded: boolean;
@@ -50,7 +59,7 @@ export function useDemoSeed({
     }));
 
     Promise.all(
-      DEMO_CONVERSATIONS.map(async (conversation) => {
+      DEMO_DATA[workspace.id].map(async (conversation) => {
         const feedId = feedIdForThread(`demo-${conversation.id}`);
         const metadata = demoMetadata(conversation, now, agents);
         const createdAt = timestampOf(conversation, 0, now);
@@ -94,8 +103,8 @@ export function useDemoSeed({
               resendEmailId: "",
               from: outbound
                 ? {
-                    name: author?.name ?? "Relay Support",
-                    email: "support@relay.example",
+                    name: author?.name ?? workspace.name,
+                    email: workspace.address,
                   }
                 : {
                     name: conversation.customer.name,
@@ -103,7 +112,7 @@ export function useDemoSeed({
                   },
               to: outbound
                 ? [conversation.customer.email]
-                : ["support@relay.example"],
+                : [workspace.address],
               cc: [],
               subject: conversation.subject,
               text: message.text,
@@ -126,7 +135,7 @@ export function useDemoSeed({
         // Best effort: a partially seeded inbox is still usable.
       })
       .finally(() => setIsSeeding(false));
-  }, [enabled, isEmpty, isLoaded, createFeed, createFeedMessage]);
+  }, [workspace, enabled, isEmpty, isLoaded, createFeed, createFeedMessage]);
 
   return { isSeeding };
 }

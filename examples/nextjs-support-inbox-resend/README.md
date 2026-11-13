@@ -23,8 +23,11 @@
 This example shows how to build a shared customer-support inbox with
 [Liveblocks Feeds](https://liveblocks.io/docs/products/sync/feeds) and
 [Resend Inboxes](https://resend.com/docs/dashboard/inboxes/introduction), using
-[Next.js](https://nextjs.org/). Each shared inbox is a Liveblocks room, each
-email conversation is a feed, and each email or internal note is a feed message.
+[Next.js](https://nextjs.org/). Each shared inbox (workspace) is a Liveblocks
+room, each email conversation is a feed, and each email or internal note is a
+feed message. Switch between the Support and Sales workspaces from the sidebar;
+only the Support inbox can be connected to Resend, the Sales workspace always
+runs on sample conversations.
 Incoming emails arrive via a Resend Inboxes webhook; replies are sent through
 the Resend Inboxes reply API and appear instantly for every agent (optimistic
 "sending" state settled by the server). Live avatars show who is reading each

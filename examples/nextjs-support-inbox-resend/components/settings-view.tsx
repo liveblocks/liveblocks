@@ -11,6 +11,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { getUsers } from "@/app/database";
 import type { InboxSettings } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { WORKSPACES, type Workspace } from "@/lib/workspaces";
 import { AgentAvatar } from "./avatars";
 
 /**
@@ -20,20 +21,24 @@ import { AgentAvatar } from "./avatars";
  */
 export function SettingsView({
   settings,
+  workspace,
+  connected,
   className,
 }: {
   settings: InboxSettings | null;
+  workspace: Workspace;
+  // Whether this workspace's inbox is connected to Resend.
+  connected: boolean;
   className?: string;
 }) {
   const self = useSelf();
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);
   const webhookUrl = `${origin || "https://your-app.example"}/api/webhooks/resend`;
-  const connected = settings?.mode === "resend";
 
   return (
     <section
-      className={cn("scroll-quiet min-w-0 flex-1 overflow-y-auto bg-surface", className)}
+      className={cn("scroll-quiet min-w-0 flex-1 overflow-y-auto bg-surface md:card", className)}
       aria-label="Settings"
     >
       <div className="mx-auto w-full max-w-[680px] px-6 py-8 md:px-10">
@@ -53,6 +58,11 @@ export function SettingsView({
                   <CheckCircle2Icon className="size-3" />
                   Connected to Resend
                 </Pill>
+              ) : settings.mode === "resend" ? (
+                <Pill>
+                  <CircleDashedIcon className="size-3" />
+                  Sample workspace
+                </Pill>
               ) : (
                 <Pill>
                   <CircleDashedIcon className="size-3" />
@@ -68,7 +78,7 @@ export function SettingsView({
                 <code className="font-mono text-xs">{settings.inboxAddress}</code>
               ) : (
                 <span className="text-ink-muted">
-                  support@relay.example (sample)
+                  {workspace.address} (sample)
                 </span>
               )
             }
@@ -97,7 +107,14 @@ export function SettingsView({
               )
             }
           />
-          {!connected ? (
+          {!connected && !workspace.connectable ? (
+            <p className="mt-3 text-xs leading-relaxed text-ink-muted">
+              This workspace runs on sample conversations: replies are
+              simulated and nothing is delivered. Only the{" "}
+              {WORKSPACES.find((item) => item.connectable)?.name} workspace can
+              be connected to a Resend inbox.
+            </p>
+          ) : !connected ? (
             <p className="mt-3 text-xs leading-relaxed text-ink-muted">
               Replies are simulated and nothing is delivered. To send and
               receive real email, add <Env>RESEND_API_KEY</Env>,{" "}

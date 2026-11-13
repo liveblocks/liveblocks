@@ -18,12 +18,13 @@ type FeedMessage<FMD> = {
 
 export const EXAMPLE_NAME = "nextjs-support-inbox-resend";
 
-// One Liveblocks room per shared inbox. The room id of the configured Resend
-// inbox; gallery deployments append an `exampleId` suffix on the client.
+// One Liveblocks room per shared inbox. This is the room of the configured
+// Resend inbox; other workspaces and gallery deployments derive their room ids
+// from it (see `lib/workspaces.ts`).
 export const BASE_ROOM_ID = `liveblocks:examples:${EXAMPLE_NAME}`;
 
 export function isExampleRoomId(roomId: string) {
-  return roomId === BASE_ROOM_ID || roomId.startsWith(`${BASE_ROOM_ID}-`);
+  return roomId.startsWith(BASE_ROOM_ID);
 }
 
 export type ConversationMetadata = Liveblocks["FeedMetadata"];

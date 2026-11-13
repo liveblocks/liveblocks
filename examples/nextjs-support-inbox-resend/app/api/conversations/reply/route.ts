@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/app/database";
 import { isExampleRoomId, type EmailMessageData } from "@/lib/conversation";
+import { workspaceForRoomId } from "@/lib/workspaces";
 import type { ReplyRequest, ReplyResponse } from "@/lib/api";
 import { parseAddress, textToHtml } from "@/lib/email";
 import { getLiveblocks, isLiveblocksConfigured } from "@/lib/server/liveblocks";
@@ -72,7 +73,10 @@ export async function POST(request: NextRequest) {
 
   // Simulated reply: recorded in the feed for the team, never emailed.
   if (metadata.source !== "resend" || !resend) {
-    const from = { name: agent.info.name, email: "support@relay.example" };
+    const from = {
+      name: agent.info.name,
+      email: workspaceForRoomId(roomId).address,
+    };
     const sentAt = new Date().toISOString();
     await settleReply({
       roomId,

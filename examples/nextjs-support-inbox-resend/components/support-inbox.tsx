@@ -38,6 +38,7 @@ import { ConversationView, NoConversation } from "./conversation-view";
 import { CustomerPanel } from "./customer-panel";
 import { SettingsView } from "./settings-view";
 import { Sidebar, VIEWS, type View, type ViewCounts } from "./sidebar";
+import type { Workspace, WorkspaceId } from "@/lib/workspaces";
 import { TooltipProvider } from "./ui/tooltip";
 
 /**
@@ -45,11 +46,24 @@ import { TooltipProvider } from "./ui/tooltip";
  * feed in that room, so the list, the thread, and every status change stay in
  * sync for the whole team in realtime.
  */
-export function SupportInbox({ roomId }: { roomId: string }) {
+export function SupportInbox({
+  roomId,
+  workspace,
+  onWorkspaceChange,
+}: {
+  roomId: string;
+  workspace: Workspace;
+  onWorkspaceChange: (workspaceId: WorkspaceId) => void;
+}) {
   const self = useSelf();
   const settings = useInboxSettings();
-  // Until a Resend inbox is configured, every reply is simulated.
-  const demoMode = settings?.mode !== "resend";
+  // Only the default workspace can be connected to a Resend inbox. Until it
+  // is (and in every other workspace), every reply is simulated.
+  const connected = settings?.mode === "resend" && workspace.connectable;
+  const demoMode = !connected;
+  const inboxAddress = connected
+    ? (settings?.inboxAddress ?? workspace.address)
+    : workspace.address;
 
   // Every conversation in the inbox. Pages are loaded until we have them all
   // so counts and filters are accurate.
@@ -62,10 +76,11 @@ export function SupportInbox({ roomId }: { roomId: string }) {
     }
   }, [hasFetchedAll, isFetchingMore, fetchMore]);
 
-  // Sample conversations are only seeded in demo mode, once we know which
-  // mode this deployment runs in.
+  // Sample conversations are only seeded into inboxes that aren't connected
+  // to Resend, once we know which mode this deployment runs in.
   const { isSeeding } = useDemoSeed({
-    enabled: settings?.mode === "demo",
+    workspace,
+    enabled: settings !== null && !connected,
     isLoaded: hasFetchedAll,
     isEmpty: feeds.length === 0,
   });
@@ -306,9 +321,7 @@ export function SupportInbox({ roomId }: { roomId: string }) {
         resendEmailId: "",
         from: {
           name: self.info.name,
-          email: simulated
-            ? "support@relay.example"
-            : (settings?.inboxAddress ?? ""),
+          email: inboxAddress,
         },
         to: [selected.metadata.customerEmail],
         cc: [],
@@ -377,17 +390,23 @@ export function SupportInbox({ roomId }: { roomId: string }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex h-dvh overflow-hidden bg-canvas text-ink">
+      <div className="flex h-dvh overflow-hidden bg-canvas text-ink md:gap-2.5 md:p-2.5">
         <Sidebar
           view={view}
           counts={counts}
-          inboxAddress={settings?.inboxAddress ?? null}
+          workspace={workspace}
+          inboxAddress={inboxAddress}
           onChange={changeView}
+          onWorkspaceChange={onWorkspaceChange}
           className="hidden md:flex"
         />
 
         {view === "settings" ? (
-          <SettingsView settings={settings} />
+          <SettingsView
+            settings={settings}
+            workspace={workspace}
+            connected={connected}
+          />
         ) : (
           <>
             <ConversationList
@@ -399,7 +418,7 @@ export function SupportInbox({ roomId }: { roomId: string }) {
               filter={filter}
               sort={sort}
               isSeeding={isPreparing}
-              inboxAddress={demoMode ? null : (settings?.inboxAddress ?? null)}
+              inboxAddress={connected ? inboxAddress : null}
               onSelect={select}
               onQueryChange={setQuery}
               onFilterChange={setFilter}

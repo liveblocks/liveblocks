@@ -1,15 +1,14 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { BASE_ROOM_ID } from "@/lib/conversation";
+import { roomIdForWorkspace, type WorkspaceId } from "@/lib/workspaces";
 
 /**
- * This hook is used when deploying an example on liveblocks.io, where multiple
- * isolated rooms are created from a single example using an `exampleId`.
- * You can ignore it completely if you run the example locally.
+ * Room id for a workspace. On liveblocks.io, multiple isolated rooms are
+ * created from a single example using an `exampleId` search param; you can
+ * ignore that part if you run the example locally.
  */
-export function useExampleRoomId() {
+export function useExampleRoomId(workspaceId: WorkspaceId) {
   const params = useSearchParams();
-  const exampleId = params?.get("exampleId");
-  return exampleId ? `${BASE_ROOM_ID}-${exampleId}` : BASE_ROOM_ID;
+  return roomIdForWorkspace(workspaceId, params?.get("exampleId"));
 }
