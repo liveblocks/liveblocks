@@ -63,7 +63,7 @@ const styles: Record<string, CSSProperties> = {
     background: "transparent",
     border: "none",
     borderRadius: 6,
-    color: "#737373",
+    color: "#6a7282",
     cursor: "pointer",
   },
   backdrop: {
@@ -74,11 +74,11 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
-    background: "rgba(23, 23, 23, 0.2)",
+    background: "rgba(16, 24, 40, 0.2)",
   },
   panel: {
     background: "#ffffff",
-    border: "1px solid #e5e5e5",
+    border: "1px solid #e5e7eb",
     borderRadius: 8,
     boxShadow:
       "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
@@ -93,11 +93,11 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "space-between",
     gap: 16,
     padding: 20,
-    borderBottom: "1px solid #e5e5e5",
+    borderBottom: "1px solid #e5e7eb",
   },
-  title: { fontSize: 14, fontWeight: 600, color: "#171717", margin: 0 },
+  title: { fontSize: 14, fontWeight: 600, color: "#101828", margin: 0 },
   titleLink: { color: "inherit", textDecoration: "none" },
-  desc: { fontSize: 14, color: "#737373", marginTop: 4, marginBottom: 0 },
+  desc: { fontSize: 14, color: "#6a7282", marginTop: 4, marginBottom: 0 },
   close: {
     flexShrink: 0,
     marginTop: -4,
@@ -106,7 +106,7 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 4,
     border: "none",
     background: "transparent",
-    color: "#737373",
+    color: "#6a7282",
     cursor: "pointer",
     lineHeight: 0,
   },
@@ -128,24 +128,24 @@ const styles: Record<string, CSSProperties> = {
     width: 28,
     height: 28,
     borderRadius: 4,
-    background: "#f5f5f5",
-    color: "#404040",
+    background: "#f3f4f6",
+    color: "#4a5565",
   },
-  featureTitle: { fontSize: 14, fontWeight: 500, color: "#171717", margin: 0 },
+  featureTitle: { fontSize: 14, fontWeight: 500, color: "#101828", margin: 0 },
   featureDesc: {
     fontSize: 14,
-    color: "#737373",
+    color: "#6a7282",
     marginTop: 2,
     marginBottom: 0,
   },
 };
 
 const HOVER_CSS = `
-.lb-help-button:hover { background:#fafafa !important; color:#171717 !important; }
+.lb-help-button:hover { background:#f9fafb !important; color:#101828 !important; }
 .lb-help-title-link:hover { text-decoration: underline !important; }
-.lb-help-close:hover { background:#f5f5f5 !important; color:#171717 !important; }
-.lb-help-link { color:#404040 !important; text-decoration: underline !important; }
-.lb-help-link:hover { color:#171717 !important; }
+.lb-help-close:hover { background:#f3f4f6 !important; color:#101828 !important; }
+.lb-help-link { color:#4a5565 !important; text-decoration: underline !important; }
+.lb-help-link:hover { color:#101828 !important; }
 .lb-help, .lb-help * { box-sizing: border-box; }
 `;
 
