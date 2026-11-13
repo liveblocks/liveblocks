@@ -13,7 +13,7 @@ function Bone({ className }: { className?: string }) {
 export function InboxSkeleton() {
   return (
     <div
-      className="flex h-dvh bg-canvas md:gap-2.5 md:p-2.5"
+      className="flex h-dvh bg-canvas md:gap-1.5 md:p-1.5"
       aria-busy
       aria-label="Loading inbox"
     >

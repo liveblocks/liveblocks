@@ -408,7 +408,7 @@ export function SupportInbox({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex h-dvh overflow-hidden bg-canvas text-ink md:gap-2.5 md:p-2.5">
+      <div className="flex h-dvh overflow-hidden bg-canvas text-ink md:gap-1.5 md:p-1.5">
         <Sidebar
           view={view}
           counts={counts}
