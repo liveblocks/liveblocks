@@ -20,6 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 46 (2026-11-13)
 
+## v3.25.1
+
+### All packages
+
+- Improve custom inbox notifications' types, `activities` can now be accessed on
+  any inbox notification without having to narrow it first.
+
 ## Infrastructure
 
 - All webhooks are now delivered by a new webhook engine, which we built and
@@ -42,7 +49,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas, nimeshnayaju, nvie
+ctnicholas, nimeshnayaju, nvie, marcbouchenoire
 
 # Week 45 (2026-11-06)
 
