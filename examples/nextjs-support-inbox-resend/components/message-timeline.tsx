@@ -292,7 +292,7 @@ function NoteMessage({
       className="relative mb-3 rounded-lg border border-note-line bg-note p-4"
       aria-label="Internal note"
     >
-      <header className="flex items-start gap-3">
+      <div className="flex items-start gap-3">
         <AgentAvatar userId={data.authorId} size="lg" />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-3">
@@ -313,10 +313,10 @@ function NoteMessage({
               {formatMessageTime(message.createdAt)}
             </time>
           </div>
+          <div className="prose-email mt-1 whitespace-pre-wrap">
+            {renderParagraphs(data.text, true)}
+          </div>
         </div>
-      </header>
-      <div className="prose-email mt-2.5 whitespace-pre-wrap md:pl-12">
-        {renderParagraphs(data.text, true)}
       </div>
     </article>
   );
