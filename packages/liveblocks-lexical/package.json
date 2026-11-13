@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/lexical",
-  "version": "3.25.0",
+  "version": "3.25.1",
   "description": "Lexical collaboration plugins backed by Liveblocks.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
