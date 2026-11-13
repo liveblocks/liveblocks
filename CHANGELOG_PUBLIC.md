@@ -18,6 +18,38 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 46 (2026-11-13)
+
+## v3.25.1
+
+### All packages
+
+- Improve custom inbox notifications' types, `activities` can now be accessed on
+  any inbox notification without having to narrow it first.
+
+## Infrastructure
+
+- All webhooks are now delivered by a new webhook engine, which we built and
+  tested internally over the past few weeks. You shouldn't notice any
+  difference, and you don't need to change any code. The new engine is cheaper
+  for us to operate and gives us more control and insight into webhook delivery,
+  which will help us build better webhook features going forward.
+
+## Documentation
+
+- Restructured pricing docs into new [Plans](https://liveblocks.io/docs/pricing/plans),
+  [Billing](https://liveblocks.io/docs/pricing/billing), and
+  [FAQs](https://liveblocks.io/docs/pricing/faqs) pages, with redirects from
+  the old per-plan, limits, and fair-use pages.
+
+## Dashboard
+
+- Users that have changed back to the Free plan can now view all previous invoices.
+
+## Contributors
+
+ctnicholas, nimeshnayaju, nvie, marcbouchenoire
+
 # Week 45 (2026-11-06)
 
 ## v3.25.0
