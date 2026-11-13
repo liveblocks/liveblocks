@@ -1,0 +1,123 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tailwind v4 only applies `hover:` on devices that support hover. Make it
+   work with touch/synthetic pointers too so hover-revealed controls are usable
+   everywhere. */
+@custom-variant hover (&:hover);
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+
+  /* Cool, blue-gray neutrals, on Tailwind's gray scale. */
+  --color-canvas: oklch(0.975 0.003 264);
+  --color-surface: oklch(1 0 0);
+  --color-line: var(--color-gray-200);
+  --color-line-strong: var(--color-gray-300);
+  --color-ink: var(--color-gray-900);
+  --color-ink-secondary: var(--color-gray-600);
+  --color-ink-muted: var(--color-gray-500);
+  --color-ink-faint: var(--color-gray-400);
+  --color-hover: var(--color-gray-100);
+  --color-selected: oklch(0.945 0.006 264);
+
+  /* Internal notes get a soft tint. */
+  --color-note: oklch(0.985 0.02 90);
+  --color-note-line: oklch(0.93 0.04 90);
+  --color-note-ink: oklch(0.45 0.08 75);
+
+  /* Status accents (used sparingly). */
+  --color-open: oklch(0.65 0.17 155);
+  --color-urgent: oklch(0.6 0.2 25);
+  --color-high: oklch(0.72 0.17 60);
+
+  /* shadcn-style tokens used by the copied UI primitives. */
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-ink);
+  --color-primary-foreground: var(--color-gray-50);
+  --color-secondary: var(--color-hover);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-hover);
+  --color-muted-foreground: var(--color-ink-muted);
+  --color-accent: var(--color-hover);
+  --color-accent-foreground: var(--color-ink);
+  --color-destructive: var(--color-urgent);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line-strong);
+  --color-ring: var(--color-gray-400);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+    font-feature-settings:
+      "cv11" 1,
+      "ss01" 1,
+      "ss03" 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: oklch(0.9 0.03 264);
+  }
+
+  /* Quiet scrollbars that match the warm neutrals. */
+  .scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+  .scroll-quiet::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-quiet::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scroll-quiet::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* White panels floating on the canvas: the conversation list, the thread,
+   and settings. Navigation and details sit directly on the canvas. */
+@utility card {
+  @apply overflow-hidden rounded-lg border border-line bg-surface;
+  box-shadow: 0 1px 2px oklch(0.21 0.034 264.665 / 4%);
+}
+
+@layer utilities {
+  /* Readable, email-like body copy. */
+  .prose-email {
+    @apply text-[14px] leading-[1.6] text-ink;
+    overflow-wrap: anywhere;
+  }
+  .prose-email p + p {
+    margin-top: 0.85em;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
