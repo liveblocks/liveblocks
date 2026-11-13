@@ -118,6 +118,22 @@ describe("Liveblocks client without Liveblocks augmentation", () => {
     });
   });
 
+  test("getInboxNotification exposes optional activities", async () => {
+    const notification = await client.getInboxNotification({
+      userId: "user-123",
+      inboxNotificationId: "in_xxx",
+    });
+
+    const { activities = [] } = notification;
+    expectTypeOf(
+      activities.map((activity) => activity.createdAt)
+    ).toEqualTypeOf<Date[]>();
+
+    if (notification.activities !== undefined) {
+      expectTypeOf(notification.subjectId).toEqualTypeOf<string>();
+    }
+  });
+
   test("should accept any JSON payload in broadcastEvent()", async () => {
     // @ts-expect-error payload is required
     client.broadcastEvent("my-room");

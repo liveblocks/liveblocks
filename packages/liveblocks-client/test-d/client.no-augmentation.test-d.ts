@@ -5,6 +5,13 @@ import { describe, expectTypeOf, test } from "vitest";
 describe("createClient without Liveblocks augmentation", () => {
   const client = createClient({ publicApiKey: "pk_xxx" });
 
+  test("getInboxNotifications exposes optional activities", async () => {
+    const { inboxNotifications } = await client.getInboxNotifications();
+    expectTypeOf(
+      inboxNotifications.map(({ activities }) => activities?.[0]?.createdAt)
+    ).toEqualTypeOf<(Date | undefined)[]>();
+  });
+
   describe(".enterRoom()", () => {
     test("should allow missing options when presence is generic JsonObject", () => {
       {
