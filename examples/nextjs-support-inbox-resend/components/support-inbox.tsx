@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ConversationList,
+  defaultFilter,
   type ListFilter,
   type ListSort,
 } from "./conversation-list";
@@ -79,7 +80,7 @@ export function SupportInbox({ roomId }: { roomId: string }) {
   const [view, setView] = useState<View>("inbox");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<ListFilter>("all");
+  const [filter, setFilter] = useState<ListFilter>(defaultFilter("inbox"));
   const [sort, setSort] = useState<ListSort>("newest");
   const [detailsOpen, setDetailsOpen] = useState(true);
 
@@ -201,7 +202,7 @@ export function SupportInbox({ roomId }: { roomId: string }) {
   const changeView = useCallback((next: View) => {
     setView(next);
     setQuery("");
-    setFilter("all");
+    setFilter(defaultFilter(next));
     if (next === "settings") {
       setSelectedId(null);
     }

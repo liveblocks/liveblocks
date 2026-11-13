@@ -31,6 +31,12 @@ import {
 export type ListFilter = "all" | "needs-response" | "waiting" | "priority";
 export type ListSort = "newest" | "oldest" | "priority";
 
+// The inbox opens on what the team owes a reply to; other views show
+// everything they contain.
+export function defaultFilter(view: View): ListFilter {
+  return view === "inbox" ? "needs-response" : "all";
+}
+
 const FILTERS: { id: ListFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "needs-response", label: "Needs response" },
@@ -146,7 +152,7 @@ export function ConversationList({
             <DropdownMenuTrigger className="inline-flex h-6 items-center gap-1.5 rounded-md px-1.5 text-xs text-ink-secondary transition-colors hover:bg-hover hover:text-ink data-[state=open]:bg-hover">
               <ListFilterIcon className="size-3.5 text-ink-muted" />
               {FILTERS.find((item) => item.id === filter)?.label}
-              {filter !== "all" ? (
+              {filter !== defaultFilter(view) ? (
                 <span className="size-1.5 rounded-full bg-ink" />
               ) : null}
             </DropdownMenuTrigger>
@@ -193,6 +199,7 @@ export function ConversationList({
         {conversations.length === 0 ? (
           <ListEmptyState
             view={view}
+            filter={filter}
             query={query}
             isSeeding={isSeeding}
             inboxAddress={inboxAddress}
@@ -307,11 +314,13 @@ function ConversationRow({
 
 function ListEmptyState({
   view,
+  filter,
   query,
   isSeeding,
   inboxAddress,
 }: {
   view: View;
+  filter: ListFilter;
   query: string;
   isSeeding: boolean;
   inboxAddress: string | null;
@@ -328,6 +337,15 @@ function ListEmptyState({
   } else if (view === "inbox" && inboxAddress) {
     title = "Waiting for your first email";
     description = `Emails sent to ${inboxAddress} will appear here in realtime.`;
+  } else if (view === "inbox" && filter === "needs-response") {
+    title = "Inbox zero";
+    description = "Nothing needs a response right now.";
+  } else if (view === "inbox" && filter === "waiting") {
+    title = "Nothing waiting on customers";
+    description = "Conversations you've replied to will show up here.";
+  } else if (view === "inbox" && filter === "priority") {
+    title = "No high-priority conversations";
+    description = "Urgent and high-priority conversations will show up here.";
   } else if (view === "inbox") {
     title = "Inbox zero";
     description = "New customer emails will appear here in realtime.";
