@@ -33,6 +33,7 @@ export type DemoConversation = {
   priority: Priority;
   // Agent id, or "" when unassigned.
   assigneeId: string;
+  tags?: string[];
   // Oldest first.
   messages: DemoMessage[];
 };
@@ -50,6 +51,7 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "needs-response",
     priority: "urgent",
     assigneeId: "anjali.wanda@relay.example",
+    tags: ["Billing", "Churn risk"],
     messages: [
       {
         kind: "email",
@@ -93,6 +95,7 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "needs-response",
     priority: "high",
     assigneeId: "mislav.abha@relay.example",
+    tags: ["API", "Bug"],
     messages: [
       {
         kind: "email",
@@ -133,6 +136,7 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "needs-response",
     priority: "high",
     assigneeId: "quinn.elton@relay.example",
+    tags: ["Dashboard & Admin", "Bug"],
     messages: [
       {
         kind: "email",
@@ -173,6 +177,7 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "needs-response",
     priority: "normal",
     assigneeId: "",
+    tags: ["Dashboard & Admin"],
     messages: [
       {
         kind: "email",
@@ -207,6 +212,7 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "waiting",
     priority: "high",
     assigneeId: "mislav.abha@relay.example",
+    tags: ["API", "Integrations"],
     messages: [
       {
         kind: "email",
@@ -254,6 +260,7 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "waiting",
     priority: "normal",
     assigneeId: "anjali.wanda@relay.example",
+    tags: ["Billing", "Churn risk"],
     messages: [
       {
         kind: "email",
@@ -326,6 +333,7 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "waiting",
     priority: "normal",
     assigneeId: "charlie.layne@relay.example",
+    tags: ["API", "Enterprise"],
     messages: [
       {
         kind: "email",
@@ -360,6 +368,7 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "waiting",
     priority: "normal",
     assigneeId: "",
+    tags: ["Bug"],
     messages: [
       {
         kind: "email",
@@ -433,6 +442,7 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "resolved",
     priority: "normal",
     assigneeId: "charlie.layne@relay.example",
+    tags: ["Dashboard & Admin", "Unknowns"],
     messages: [
       {
         kind: "email",

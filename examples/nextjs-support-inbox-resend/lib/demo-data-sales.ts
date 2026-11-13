@@ -17,6 +17,7 @@ export const SALES_DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "needs-response",
     priority: "urgent",
     assigneeId: "mislav.abha@relay.example",
+    tags: ["Enterprise"],
     messages: [
       {
         kind: "email",
@@ -60,6 +61,7 @@ export const SALES_DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "needs-response",
     priority: "normal",
     assigneeId: "tatum.paolo@relay.example",
+    tags: ["Onboarding"],
     messages: [
       {
         kind: "email",
@@ -94,6 +96,7 @@ export const SALES_DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "needs-response",
     priority: "high",
     assigneeId: "quinn.elton@relay.example",
+    tags: ["Enterprise", "Unknowns"],
     messages: [
       {
         kind: "email",
@@ -137,6 +140,7 @@ export const SALES_DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "waiting",
     priority: "high",
     assigneeId: "anjali.wanda@relay.example",
+    tags: ["Billing", "Enterprise"],
     messages: [
       {
         kind: "email",
@@ -221,6 +225,7 @@ export const SALES_DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "waiting",
     priority: "normal",
     assigneeId: "charlie.layne@relay.example",
+    tags: ["Billing"],
     messages: [
       {
         kind: "email",
@@ -277,6 +282,7 @@ export const SALES_DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "resolved",
     priority: "normal",
     assigneeId: "quinn.elton@relay.example",
+    tags: ["Enterprise"],
     messages: [
       {
         kind: "email",
@@ -318,6 +324,7 @@ export const SALES_DEMO_CONVERSATIONS: DemoConversation[] = [
     status: "resolved",
     priority: "low",
     assigneeId: "mislav.abha@relay.example",
+    tags: ["Churn risk"],
     messages: [
       {
         kind: "email",

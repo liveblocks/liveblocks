@@ -112,6 +112,7 @@ export async function syncEmailToFeed({
       status: inbound ? "needs-response" : "waiting",
       priority: "normal",
       assigneeId: "",
+      tags: [],
       lastActivityAt: new Date(receivedAt).toISOString(),
       mentionedUserIds: [],
     };

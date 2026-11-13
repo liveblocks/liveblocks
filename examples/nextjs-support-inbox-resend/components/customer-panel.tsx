@@ -12,6 +12,7 @@ import { formatFullDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AgentAvatar, AgentName, CustomerAvatar, ViewerAvatars } from "./avatars";
 import { PriorityIcon, StatusText } from "./status";
+import { TagList } from "./tags";
 
 export function CustomerPanel({
   conversation,
@@ -129,6 +130,11 @@ export function CustomerPanel({
           </Field>
           {metadata.category ? (
             <Field label="Category">{CATEGORY_LABEL[metadata.category]}</Field>
+          ) : null}
+          {metadata.tags?.length ? (
+            <Field label="Tags">
+              <TagList tags={metadata.tags} max={6} />
+            </Field>
           ) : null}
           <Field label="Created">{formatFullDate(conversation.createdAt)}</Field>
           <Field label="Last activity">

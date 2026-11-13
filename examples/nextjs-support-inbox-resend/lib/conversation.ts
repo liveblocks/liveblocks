@@ -83,6 +83,16 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   partnership: "Partnership",
 };
 
+// Short, stable reference shown next to the subject (e.g. "T-4821"), derived
+// from the feed id so it needs no counter and is the same for everyone.
+export function ticketRef(feedId: string) {
+  let hash = 0;
+  for (let i = 0; i < feedId.length; i++) {
+    hash = (hash * 31 + feedId.charCodeAt(i)) >>> 0;
+  }
+  return `T-${1000 + (hash % 9000)}`;
+}
+
 // Feed ids are derived from the Resend thread id so a webhook retry (or a
 // second webhook for the same thread) always resolves to the same feed.
 export function feedIdForThread(resendThreadId: string) {

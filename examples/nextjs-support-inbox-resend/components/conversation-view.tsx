@@ -16,6 +16,7 @@ import { Composer } from "./composer";
 import { MessageTimeline } from "./message-timeline";
 import { TimelineSkeleton } from "./skeletons";
 import { AssigneeMenu, PriorityMenu, StatusMenu } from "./status";
+import { TagsMenu } from "./tags";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function ConversationView({
@@ -28,6 +29,8 @@ export function ConversationView({
   onSetStatus,
   onSetPriority,
   onSetAssignee,
+  onSetTags,
+  knownTags,
   onSendReply,
   onAddNote,
   className,
@@ -41,6 +44,8 @@ export function ConversationView({
   onSetStatus: (status: Status) => void;
   onSetPriority: (priority: Priority) => void;
   onSetAssignee: (userId: string) => void;
+  onSetTags: (tags: string[]) => void;
+  knownTags: string[];
   onSendReply: (text: string) => Promise<void>;
   onAddNote: (text: string) => Promise<void>;
   className?: string;
@@ -117,6 +122,11 @@ export function ConversationView({
               onChange={onSetAssignee}
             />
             <PriorityMenu value={metadata.priority} onChange={onSetPriority} />
+            <TagsMenu
+              value={metadata.tags ?? []}
+              knownTags={knownTags}
+              onChange={onSetTags}
+            />
 
             <button
               type="button"

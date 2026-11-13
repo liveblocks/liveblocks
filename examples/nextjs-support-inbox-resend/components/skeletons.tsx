@@ -30,12 +30,16 @@ export function InboxSkeleton() {
           <Bone className="h-5 w-40" />
         </div>
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="flex gap-3 border-b border-line px-4 py-3">
-            <Bone className="size-9 rounded-full" />
-            <div className="flex-1 space-y-2 pt-0.5">
-              <Bone className="h-3 w-1/2" />
-              <Bone className="h-3 w-4/5" />
-              <Bone className="h-3 w-full" />
+          <div key={index} className="space-y-2 border-b border-line px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Bone className="size-5 rounded-full" />
+              <Bone className="h-3 w-1/3" />
+            </div>
+            <Bone className="h-3 w-4/5" />
+            <Bone className="h-3 w-full" />
+            <div className="flex justify-between pt-1">
+              <Bone className="h-3 w-12" />
+              <Bone className="h-3 w-16" />
             </div>
           </div>
         ))}

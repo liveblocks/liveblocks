@@ -6,21 +6,24 @@ import {
   ChevronDownIcon,
   InboxIcon,
   ListFilterIcon,
+  MailIcon,
   SearchIcon,
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { Conversation } from "@/lib/conversation";
+import {
+  PRIORITY_LABEL,
+  STATUS_LABEL,
+  ticketRef,
+  type Conversation,
+} from "@/lib/conversation";
 import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import {
-  AgentAvatar,
-  AgentName,
-  CustomerAvatar,
-  ViewerAvatars,
-} from "./avatars";
+import { AgentAvatar, CustomerAvatar, ViewerAvatars } from "./avatars";
 import { VIEWS, viewLabel, type View, type ViewCounts } from "./sidebar";
-import { PriorityMark, StatusText } from "./status";
+import { PriorityIcon, StatusIcon } from "./status";
+import { TagList } from "./tags";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -271,55 +274,69 @@ function ConversationRow({
           aria-hidden
         />
 
-        <div className="relative shrink-0 pt-0.5">
-          <CustomerAvatar
-            name={metadata.customerName}
-            email={metadata.customerEmail}
-            size="lg"
-          />
-        </div>
-
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="truncate text-[13px] font-medium text-ink">
-              {metadata.customerName}
-            </span>
-            <time
-              className="tabular shrink-0 text-[11px] text-ink-faint"
-              dateTime={new Date(lastActivity).toISOString()}
-              title={new Date(lastActivity).toLocaleString()}
-            >
-              {formatRelative(lastActivity, now)}
-            </time>
+          {/* Customer + status */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <CustomerAvatar
+                name={metadata.customerName}
+                email={metadata.customerEmail}
+                size="sm"
+              />
+              <span className="truncate text-[13px] font-medium text-ink">
+                {metadata.customerName}
+              </span>
+            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex shrink-0 items-center">
+                  <StatusIcon status={metadata.status} />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="left" sideOffset={6}>
+                {STATUS_LABEL[metadata.status]}
+              </TooltipContent>
+            </Tooltip>
           </div>
 
-          <div className="mt-0.5 flex items-center justify-between gap-3">
-            <span className="truncate text-[13px] text-ink-secondary">
+          {/* Reference + subject */}
+          <div className="mt-1.5 flex min-w-0 items-baseline gap-2">
+            <span className="tabular shrink-0 text-[13px] font-semibold text-ink-faint">
+              {ticketRef(feedId)}
+            </span>
+            <span className="truncate text-[13px] font-semibold text-ink">
               {metadata.subject}
             </span>
-            <PriorityMark priority={metadata.priority} />
           </div>
 
-          <p className="mt-1 line-clamp-1 text-xs leading-snug text-ink-muted">
+          <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-ink-muted">
             {metadata.preview}
           </p>
 
-          <div className="mt-2 flex h-4 items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-ink-faint">
+          <TagList tags={metadata.tags ?? []} className="mt-2" />
+
+          {/* Priority · time · people */}
+          <div className="mt-2 flex h-5 items-center justify-between gap-2">
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-ink-secondary">
+              <PriorityIcon priority={metadata.priority} className="size-3" />
+              <span className="truncate">{PRIORITY_LABEL[metadata.priority]}</span>
+            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              <ViewerAvatars feedId={feedId} size="xs" max={3} />
+              <span className="inline-flex items-center gap-1 text-[11px] text-ink-faint">
+                <MailIcon className="size-3" />
+                <time
+                  className="tabular"
+                  dateTime={new Date(lastActivity).toISOString()}
+                  title={new Date(lastActivity).toLocaleString()}
+                >
+                  {formatRelative(lastActivity, now)}
+                </time>
+              </span>
               {metadata.assigneeId ? (
-                <>
-                  <AgentAvatar userId={metadata.assigneeId} size="xs" />
-                  <span className="truncate">
-                    <AgentName userId={metadata.assigneeId} />
-                  </span>
-                </>
-              ) : (
-                <span className="truncate italic">Unassigned</span>
-              )}
-              <span aria-hidden>·</span>
-              <StatusText status={metadata.status} className="truncate" />
+                <AgentAvatar userId={metadata.assigneeId} size="sm" />
+              ) : null}
             </div>
-            <ViewerAvatars feedId={feedId} size="xs" max={3} />
           </div>
         </div>
       </button>

@@ -58,6 +58,8 @@ declare global {
       priority: "low" | "normal" | "high" | "urgent";
       // Id of the assigned agent, or "" when unassigned.
       assigneeId: string;
+      // Free-form labels agents add to a conversation (see `lib/tags.ts`).
+      tags: string[];
       // ISO timestamp of the latest email or internal note.
       lastActivityAt: string;
       // Agents @-mentioned in internal notes on this conversation.

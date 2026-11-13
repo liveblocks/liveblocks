@@ -150,6 +150,7 @@ export function SupportInbox({
           metadata.customerEmail,
           metadata.customerCompany,
           metadata.preview,
+          ...(metadata.tags ?? []),
         ]
           .join(" ")
           .toLowerCase();
@@ -241,6 +242,23 @@ export function SupportInbox({
     },
     [selected, patch]
   );
+
+  const setTags = useCallback(
+    (tags: string[]) => {
+      if (!selected) return;
+      void patch(selected, { tags });
+    },
+    [selected, patch]
+  );
+
+  // Every tag in use in this inbox, offered as suggestions when tagging.
+  const knownTags = useMemo(() => {
+    const tags = new Set<string>();
+    for (const { metadata } of conversations) {
+      for (const tag of metadata.tags ?? []) tags.add(tag);
+    }
+    return [...tags];
+  }, [conversations]);
 
   // Hands a reply that's already in the feed to the server, which emails it
   // through Resend and settles the message as "sent". We apply the outcome
@@ -439,6 +457,8 @@ export function SupportInbox({
                 onSetStatus={setStatus}
                 onSetPriority={setPriority}
                 onSetAssignee={setAssignee}
+                onSetTags={setTags}
+                knownTags={knownTags}
                 onSendReply={sendReply}
                 onAddNote={addNote}
               />
