@@ -12,7 +12,7 @@
     var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 
   /* Warm, editorial neutrals. */
-  --color-canvas: oklch(0.985 0.002 75);
+  --color-canvas: oklch(0.975 0.003 75);
   --color-surface: oklch(1 0 0);
   --color-line: oklch(0.93 0.004 75);
   --color-line-strong: oklch(0.87 0.006 75);
@@ -98,6 +98,13 @@
   .scroll-quiet::-webkit-scrollbar-track {
     background: transparent;
   }
+}
+
+/* White panels floating on the canvas: the conversation list, the thread,
+   and settings. Navigation and details sit directly on the canvas. */
+@utility card {
+  @apply overflow-hidden rounded-lg bg-surface ring-1 ring-ink/6;
+  box-shadow: 0 1px 2px oklch(0.2 0.005 60 / 4%);
 }
 
 @layer utilities {

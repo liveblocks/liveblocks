@@ -50,7 +50,7 @@ export function ConversationView({
 
   return (
     <section
-      className={cn("flex min-w-0 flex-1 flex-col bg-surface", className)}
+      className={cn("flex min-w-0 flex-1 flex-col bg-surface md:card", className)}
       aria-label="Conversation"
     >
       <header className="shrink-0 border-b border-line">
@@ -162,7 +162,7 @@ export function NoConversation({ className }: { className?: string }) {
   return (
     <section
       className={cn(
-        "flex min-w-0 flex-1 flex-col items-center justify-center bg-surface px-8 text-center",
+        "card flex min-w-0 flex-1 flex-col items-center justify-center px-8 text-center",
         className
       )}
     >

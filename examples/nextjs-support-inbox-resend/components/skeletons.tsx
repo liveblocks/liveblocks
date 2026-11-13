@@ -12,14 +12,18 @@ function Bone({ className }: { className?: string }) {
 // Full-page placeholder while the room and its feeds load.
 export function InboxSkeleton() {
   return (
-    <div className="flex h-dvh bg-canvas" aria-busy aria-label="Loading inbox">
-      <div className="hidden w-[220px] shrink-0 flex-col gap-2 border-r border-line p-3 md:flex">
+    <div
+      className="flex h-dvh bg-canvas md:gap-2.5 md:p-2.5"
+      aria-busy
+      aria-label="Loading inbox"
+    >
+      <div className="hidden w-[220px] shrink-0 flex-col gap-2 p-3 md:flex">
         <Bone className="mb-3 h-10" />
         {Array.from({ length: 5 }).map((_, index) => (
           <Bone key={index} className="h-8" />
         ))}
       </div>
-      <div className="flex w-full shrink-0 flex-col border-r border-line bg-surface md:w-[340px] xl:w-[380px]">
+      <div className="flex w-full shrink-0 flex-col bg-surface md:card md:w-[340px] xl:w-[380px]">
         <div className="flex flex-col gap-2.5 border-b border-line px-4 pt-3.5 pb-3">
           <Bone className="h-5 w-24" />
           <Bone className="h-8" />
@@ -36,7 +40,7 @@ export function InboxSkeleton() {
           </div>
         ))}
       </div>
-      <div className="hidden min-w-0 flex-1 flex-col bg-surface md:flex">
+      <div className="hidden min-w-0 flex-1 flex-col bg-surface md:card md:flex">
         <div className="border-b border-line px-6 py-4">
           <Bone className="h-4 w-1/3" />
           <Bone className="mt-3 h-4 w-1/4" />

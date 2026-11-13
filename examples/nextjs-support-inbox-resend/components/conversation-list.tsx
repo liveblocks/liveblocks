@@ -105,7 +105,7 @@ export function ConversationList({
   return (
     <section
       className={cn(
-        "flex w-full shrink-0 flex-col border-r border-line bg-surface md:w-[340px] xl:w-[380px]",
+        "flex w-full shrink-0 flex-col bg-surface md:card md:w-[340px] xl:w-[380px]",
         className
       )}
       aria-label="Conversations"
