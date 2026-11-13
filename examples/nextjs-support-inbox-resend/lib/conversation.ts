@@ -76,6 +76,10 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   account: "Account access",
   feedback: "Product feedback",
   technical: "Technical issue",
+  pricing: "Pricing & plans",
+  trial: "Trial",
+  security: "Security review",
+  partnership: "Partnership",
 };
 
 // Feed ids are derived from the Resend thread id so a webhook retry (or a

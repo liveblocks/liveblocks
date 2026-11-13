@@ -30,13 +30,14 @@ import { cn } from "@/lib/utils";
 import {
   ConversationList,
   defaultFilter,
+  matchesFilter,
   type ListFilter,
   type ListSort,
 } from "./conversation-list";
 import { ConversationView, NoConversation } from "./conversation-view";
 import { CustomerPanel } from "./customer-panel";
 import { SettingsView } from "./settings-view";
-import { Sidebar, type View, type ViewCounts } from "./sidebar";
+import { Sidebar, VIEWS, type View, type ViewCounts } from "./sidebar";
 import { TooltipProvider } from "./ui/tooltip";
 
 /**
@@ -108,15 +109,16 @@ export function SupportInbox({ roomId }: { roomId: string }) {
       mentions: 0,
       resolved: 0,
     };
+    // Each count is what the view shows with its default filter.
     for (const { metadata } of conversations) {
-      if (!isOpen(metadata.status)) {
-        result.resolved += 1;
-      } else {
-        result.inbox += 1;
-        if (metadata.assigneeId === self.id) result.mine += 1;
-        if (!metadata.assigneeId) result.unassigned += 1;
+      for (const { id } of VIEWS) {
+        if (
+          matchesView(metadata, id, self.id) &&
+          matchesFilter(metadata, defaultFilter(id))
+        ) {
+          result[id] += 1;
+        }
       }
-      if (metadata.mentionedUserIds?.includes(self.id)) result.mentions += 1;
     }
     return result;
   }, [conversations, self.id]);
@@ -125,17 +127,7 @@ export function SupportInbox({ roomId }: { roomId: string }) {
     const needle = query.trim().toLowerCase();
     const list = conversations.filter(({ metadata }) => {
       if (!matchesView(metadata, view, self.id)) return false;
-      if (filter === "needs-response" && metadata.status !== "needs-response") {
-        return false;
-      }
-      if (filter === "waiting" && metadata.status !== "waiting") return false;
-      if (
-        filter === "priority" &&
-        metadata.priority !== "urgent" &&
-        metadata.priority !== "high"
-      ) {
-        return false;
-      }
+      if (!matchesFilter(metadata, filter)) return false;
       if (needle) {
         const haystack = [
           metadata.subject,
@@ -462,10 +454,10 @@ function matchesView(
       return isOpen(metadata.status) && metadata.assigneeId === selfId;
     case "unassigned":
       return isOpen(metadata.status) && !metadata.assigneeId;
-    case "mentions":
-      return metadata.mentionedUserIds?.includes(selfId) ?? false;
     case "resolved":
       return metadata.status === "resolved";
+    case "mentions":
+      return metadata.mentionedUserIds?.includes(selfId) ?? false;
     case "settings":
       return false;
   }

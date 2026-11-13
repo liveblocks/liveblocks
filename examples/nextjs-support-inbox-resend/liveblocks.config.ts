@@ -39,7 +39,17 @@ declare global {
       customerName: string;
       customerEmail: string;
       customerCompany: string;
-      category: "billing" | "feature-request" | "account" | "feedback" | "technical" | "";
+      category:
+        | "billing"
+        | "feature-request"
+        | "account"
+        | "feedback"
+        | "technical"
+        | "pricing"
+        | "trial"
+        | "security"
+        | "partnership"
+        | "";
       // Where the conversation stands: the customer is waiting on the team
       // ("needs-response"), the team is waiting on the customer ("waiting"),
       // or it's done. Customer emails flip it to "needs-response", replies

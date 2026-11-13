@@ -31,10 +31,25 @@ import {
 export type ListFilter = "all" | "needs-response" | "waiting" | "priority";
 export type ListSort = "newest" | "oldest" | "priority";
 
-// The inbox opens on what the team owes a reply to; other views show
-// everything they contain.
+// Every view opens on what the team owes a reply to; Resolved shows everything
+// it contains.
 export function defaultFilter(view: View): ListFilter {
-  return view === "inbox" ? "needs-response" : "all";
+  return view === "resolved" ? "all" : "needs-response";
+}
+
+export function matchesFilter(
+  metadata: Pick<Liveblocks["FeedMetadata"], "status" | "priority">,
+  filter: ListFilter
+) {
+  switch (filter) {
+    case "all":
+      return true;
+    case "needs-response":
+    case "waiting":
+      return metadata.status === filter;
+    case "priority":
+      return metadata.priority === "urgent" || metadata.priority === "high";
+  }
 }
 
 const FILTERS: { id: ListFilter; label: string }[] = [
@@ -250,7 +265,7 @@ function ConversationRow({
         {/* Selection bar */}
         <span
           className={cn(
-            "absolute inset-y-2 left-0 w-0.5 rounded-r bg-ink transition-opacity",
+            "absolute inset-y-0 left-0 w-0.5 bg-ink transition-opacity",
             selected ? "opacity-100" : "opacity-0"
           )}
           aria-hidden
