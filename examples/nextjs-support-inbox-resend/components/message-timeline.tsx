@@ -153,10 +153,8 @@ function EmailMessage({
   return (
     <article
       className={cn(
-        "group/message relative mb-3 rounded-lg border p-4 transition-colors",
-        outbound
-          ? "border-line bg-canvas"
-          : "border-transparent bg-surface hover:border-line",
+        "group/message relative mb-3 rounded-lg p-4",
+        outbound ? "bg-canvas" : "bg-surface",
         sending && "opacity-60"
       )}
       aria-label={`${outbound ? "Outgoing" : "Incoming"} email from ${data.from.name}`}
@@ -289,7 +287,7 @@ function NoteMessage({
 
   return (
     <article
-      className="relative mb-3 rounded-lg border border-note-line bg-note p-4"
+      className="relative mb-3 rounded-lg bg-note p-4"
       aria-label="Internal note"
     >
       <div className="flex items-start gap-3">
