@@ -107,8 +107,9 @@ describe("InboxNotification `kinds` (with Liveblocks augmentation)", () => {
             expectTypeOf(
               props.inboxNotification.threadId
             ).toEqualTypeOf<string>();
-            // @ts-expect-error - `activities` is not on thread notifications
-            void props.inboxNotification.activities;
+            expectTypeOf(
+              props.inboxNotification.activities
+            ).toEqualTypeOf<undefined>();
 
             return <InboxNotification.Thread {...props} />;
           },
@@ -116,8 +117,9 @@ describe("InboxNotification `kinds` (with Liveblocks augmentation)", () => {
             expectTypeOf(
               props.inboxNotification.mentionId
             ).toEqualTypeOf<string>();
-            // @ts-expect-error - `activities` is not on text-mention notifications
-            void props.inboxNotification.activities;
+            expectTypeOf(
+              props.inboxNotification.activities
+            ).toEqualTypeOf<undefined>();
 
             return <InboxNotification.TextMention {...props} />;
           },
@@ -130,10 +132,12 @@ describe("InboxNotification `kinds` (with Liveblocks augmentation)", () => {
             ).toEqualTypeOf<number>();
             // @ts-expect-error - invalid activity data field
             void props.inboxNotification.activities[0]!.data.nonexisting;
-            // @ts-expect-error - `threadId` is not on this custom kind
-            void props.inboxNotification.threadId;
-            // @ts-expect-error - `mentionId` is not on this custom kind
-            void props.inboxNotification.mentionId;
+            expectTypeOf(
+              props.inboxNotification.threadId
+            ).toEqualTypeOf<undefined>();
+            expectTypeOf(
+              props.inboxNotification.mentionId
+            ).toEqualTypeOf<undefined>();
 
             return (
               <InboxNotification.Custom {...props} title="Title">

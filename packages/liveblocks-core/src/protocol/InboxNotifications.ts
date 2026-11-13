@@ -1,5 +1,6 @@
 import type { DAD } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
+import type { Relax } from "../lib/Relax";
 import type { MentionData } from "./MentionData";
 
 export type InboxNotificationThreadData = {
@@ -46,10 +47,11 @@ export type InboxNotificationCustomData<K extends keyof DAD = keyof DAD> = {
   activities: InboxNotificationActivity<K>[];
 };
 
-export type InboxNotificationData =
+export type InboxNotificationData = Relax<
   | InboxNotificationThreadData
   | InboxNotificationCustomData
-  | InboxNotificationTextMentionData;
+  | InboxNotificationTextMentionData
+>;
 
 export type InboxNotificationThreadDataPlain =
   DateToString<InboxNotificationThreadData>;
