@@ -99,12 +99,15 @@ export function ViewerAvatars({
   size = "md",
   max = 4,
   includeSelf = false,
+  ring = "ring-surface",
   className,
 }: {
   feedId: string;
   size?: Size;
   max?: number;
   includeSelf?: boolean;
+  // Ring color separating stacked avatars; match the background they sit on.
+  ring?: "ring-surface" | "ring-canvas";
   className?: string;
 }) {
   const viewerIds = useOthers((others) => {
@@ -134,7 +137,7 @@ export function ViewerAvatars({
       {visible.map((userId) => (
         <Tooltip key={userId}>
           <TooltipTrigger asChild>
-            <span className="rounded-full ring-2 ring-surface">
+            <span className={cn("rounded-full ring-2", ring)}>
               <AgentAvatar userId={userId} size={size} />
             </span>
           </TooltipTrigger>
@@ -146,7 +149,8 @@ export function ViewerAvatars({
       {overflow > 0 ? (
         <span
           className={cn(
-            "inline-flex items-center justify-center rounded-full bg-hover font-medium text-ink-muted ring-2 ring-surface",
+            "inline-flex items-center justify-center rounded-full bg-hover font-medium text-ink-muted ring-2",
+            ring,
             SIZE[size]
           )}
         >

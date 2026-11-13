@@ -1,6 +1,5 @@
 "use client";
 
-import { shallow, useOthers, useSelf } from "@liveblocks/react";
 import { Building2Icon, MailIcon, XIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import {
@@ -11,7 +10,7 @@ import {
 } from "@/lib/conversation";
 import { formatFullDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { AgentAvatar, AgentName, CustomerAvatar } from "./avatars";
+import { AgentAvatar, AgentName, CustomerAvatar, ViewerAvatars } from "./avatars";
 import { PriorityIcon, StatusText } from "./status";
 
 export function CustomerPanel({
@@ -37,15 +36,19 @@ export function CustomerPanel({
   return (
     <aside
       className={cn(
-        "scroll-quiet flex w-[300px] shrink-0 flex-col overflow-y-auto border-l border-line bg-canvas",
+        "scroll-quiet flex w-[300px] shrink-0 flex-col overflow-y-auto",
         className
       )}
       aria-label="Details"
     >
-      <div className="flex items-center justify-between px-5 pt-3.5 pb-2">
-        <h2 className="text-[11px] font-medium tracking-wide text-ink-muted uppercase">
-          Details
-        </h2>
+      <div className="flex h-11 items-center justify-between px-5 pt-1">
+        {/* Teammates reading this thread right now (live, via presence). */}
+        <ViewerAvatars
+          feedId={conversation.feedId}
+          size="md"
+          includeSelf
+          ring="ring-canvas"
+        />
         <button
           type="button"
           onClick={onClose}
@@ -148,50 +151,7 @@ export function CustomerPanel({
         </dl>
       </section>
 
-      <Divider />
-
-      <section className="px-5 py-5">
-        <h3 className="mb-3 text-[11px] font-medium tracking-wide text-ink-muted uppercase">
-          Reading now
-        </h3>
-        <Viewers feedId={conversation.feedId} />
-      </section>
     </aside>
-  );
-}
-
-function Viewers({ feedId }: { feedId: string }) {
-  const self = useSelf((me) => me?.id ?? null);
-  const others = useOthers(
-    (others) =>
-      [
-        ...new Set(
-          others
-            .filter((other) => other.presence.viewingFeedId === feedId)
-            .map((other) => other.id)
-        ),
-      ].filter((id) => id !== self),
-    shallow
-  );
-  const ids = self ? [self, ...others] : others;
-
-  return (
-    <ul className="flex flex-col gap-2">
-      {ids.map((userId) => (
-        <li key={userId} className="flex items-center gap-2 text-xs text-ink">
-          <span className="relative">
-            <AgentAvatar userId={userId} size="md" />
-            <span className="absolute -right-px -bottom-px size-2 rounded-full bg-open ring-2 ring-canvas" />
-          </span>
-          <span className="truncate">
-            <AgentName userId={userId} />
-            {userId === self ? (
-              <span className="text-ink-faint"> (you)</span>
-            ) : null}
-          </span>
-        </li>
-      ))}
-    </ul>
   );
 }
 
