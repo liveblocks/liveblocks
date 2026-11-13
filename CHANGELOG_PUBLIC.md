@@ -20,6 +20,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 46 (2026-11-13)
 
+## Infrastructure
+
+- All webhooks are now delivered by a new webhook engine, which we built and
+  tested internally over the past few weeks. You shouldn't notice any
+  difference, and you don't need to change any code. The new engine is cheaper
+  for us to operate and gives us more control and insight into webhook delivery,
+  which will help us build better webhook features going forward.
+
 ## Documentation
 
 - Restructured pricing docs into new [Plans](https://liveblocks.io/docs/pricing/plans),
@@ -34,7 +42,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas
+ctnicholas, nimeshnayaju, nvie
 
 # Week 45 (2026-11-06)
 
