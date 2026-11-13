@@ -2,7 +2,7 @@
 
 ## v3.25.1
 
-### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
+### All packages
 
 - Improve custom inbox notifications' types, `activities` can now be accessed on
   any inbox notification without having to narrow it first.
