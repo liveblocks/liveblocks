@@ -559,7 +559,7 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
     },
     text: ({ element }) => {
       // <code><s><em><strong>text</strong></s></em></code>
-      let children = element.text;
+      let children: string | MarkdownSafeString = element.text;
 
       if (!children) {
         return children;
@@ -582,7 +582,10 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
             ? " "
             : "";
 
-        return `${delimiter}${padding}${children}${padding}${delimiter}`;
+        children = new MarkdownSafeString(
+          [`${delimiter}${padding}${children}${padding}${delimiter}`],
+          []
+        );
       }
 
       if (element.bold) {
@@ -600,7 +603,7 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
         children = markdown`~~${children}~~`;
       }
 
-      return children;
+      return children.toString();
     },
     link: ({ element, href }) => {
       // prettier-ignore

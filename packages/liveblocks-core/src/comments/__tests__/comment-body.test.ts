@@ -436,17 +436,31 @@ describe("stringifyCommentBody", () => {
   });
 
   test.each([
-    ["hello", "`hello`"],
-    ["snake_case * (x)[0] {x} # ! | ~ \\", "`snake_case * (x)[0] {x} # ! | ~ \\`"],
-    ["a`b", "``a`b``"],
-    ["a``b`c", "```a``b`c```"],
-    ["`hello`", "`` `hello` ``"],
-    [" hello ", "`  hello  `"],
-    ["   ", "`   `"],
-  ])("serializes inline code %j as Markdown", async (text, expected) => {
+    ["hello", "`hello`", {}],
+    [
+      "snake_case * (x)[0] {x} # ! | ~ \\",
+      "`snake_case * (x)[0] {x} # ! | ~ \\`",
+      {},
+    ],
+    ["a`b", "``a`b``", {}],
+    ["a``b`c", "```a``b`c```", {}],
+    ["`hello`", "`` `hello` ``", {}],
+    [" hello ", "`  hello  `", {}],
+    ["   ", "`   `", {}],
+    ["a_b", "**`a_b`**", { bold: true }],
+    ["a_b", "_`a_b`_", { italic: true }],
+    ["a_b", "~~`a_b`~~", { strikethrough: true }],
+    [
+      "a_b",
+      "~~_**`a_b`**_~~",
+      { bold: true, italic: true, strikethrough: true },
+    ],
+  ])("serializes inline code %j as Markdown", async (text, expected, marks) => {
     const body: CommentBody = {
       version: 1,
-      content: [{ type: "paragraph", children: [{ text, code: true }] }],
+      content: [
+        { type: "paragraph", children: [{ text, code: true, ...marks }] },
+      ],
     };
 
     await expect(
