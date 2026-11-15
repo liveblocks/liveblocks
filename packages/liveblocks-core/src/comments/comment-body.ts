@@ -403,6 +403,7 @@ export function html(
 }
 
 const markdownEscapables = {
+  "\\": "\\\\",
   _: "\\_",
   "*": "\\*",
   "#": "\\#",
@@ -564,6 +565,26 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
         return children;
       }
 
+      if (element.code) {
+        // Code spans do not interpret backslash escapes. Use a delimiter longer
+        // than any run of backticks in the text, and pad when CommonMark would
+        // otherwise merge delimiters or strip surrounding spaces.
+        const backticks = children.match(/`+/g) ?? [];
+        const delimiter = "`".repeat(
+          Math.max(0, ...backticks.map((run) => run.length)) + 1
+        );
+        const padding =
+          children.startsWith("`") ||
+          children.endsWith("`") ||
+          (children.startsWith(" ") &&
+            children.endsWith(" ") &&
+            /[^ ]/.test(children))
+            ? " "
+            : "";
+
+        return `${delimiter}${padding}${children}${padding}${delimiter}`;
+      }
+
       if (element.bold) {
         // prettier-ignore
         children = markdown`**${children}**`;
@@ -577,11 +598,6 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
       if (element.strikethrough) {
         // prettier-ignore
         children = markdown`~~${children}~~`;
-      }
-
-      if (element.code) {
-        // prettier-ignore
-        children = markdown`\`${children}\``;
       }
 
       return children;

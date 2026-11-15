@@ -435,6 +435,51 @@ describe("stringifyCommentBody", () => {
     );
   });
 
+  test.each([
+    ["hello", "`hello`"],
+    ["snake_case * (x)[0] {x} # ! | ~ \\", "`snake_case * (x)[0] {x} # ! | ~ \\`"],
+    ["a`b", "``a`b``"],
+    ["a``b`c", "```a``b`c```"],
+    ["`hello`", "`` `hello` ``"],
+    [" hello ", "`  hello  `"],
+    ["   ", "`   `"],
+  ])("serializes inline code %j as Markdown", async (text, expected) => {
+    const body: CommentBody = {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text, code: true }] }],
+    };
+
+    await expect(
+      stringifyCommentBody(body, { format: "markdown" })
+    ).resolves.toBe(expected);
+  });
+
+  test("escapes backslashes in Markdown formatting, links and mentions", async () => {
+    const body: CommentBody = {
+      version: 1,
+      content: [
+        {
+          type: "paragraph",
+          children: [
+            { text: "C:\\", bold: true },
+            { text: "a\\_b", italic: true },
+            { type: "link", url: "https://example.com", text: "C:\\" },
+            { type: "mention", kind: "user", id: "user" },
+          ],
+        },
+      ],
+    };
+
+    await expect(
+      stringifyCommentBody(body, {
+        format: "markdown",
+        resolveUsers: () => [{ name: "C:\\" }],
+      })
+    ).resolves.toBe(
+      "**C:\\\\**_a\\\\\\_b_[C:\\\\](https://example.com)@C:\\\\"
+    );
+  });
+
   test("escapes Markdown", async () => {
     const commentBodyMarkdown: CommentBody = {
       version: 1,
