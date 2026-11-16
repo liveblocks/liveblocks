@@ -2403,7 +2403,7 @@ ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
 
 ## Doocumentation
 
-- Improved [Limits](https://liveblocks.io/docs/pricing/limits) page.
+- Improved [Limits](https://liveblocks.io/docs/pricing/plans#Plan-limits) page.
 - Improved [Plans](https://liveblocks.io/docs/pricing/plans) page.
 
 ## Contributors
