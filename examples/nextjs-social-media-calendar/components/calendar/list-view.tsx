@@ -9,26 +9,32 @@ import { Button } from "@/components/ui/button";
 import {
   compareByDateTime,
   formatDayHeading,
-  formatMonthTitle,
+  formatPeriodTitle,
   formatTime,
   isSameDay,
   parseDateKey,
+  startOfPeriod,
   toDateKey,
   type DateKey,
+  type Period,
 } from "@/lib/dates";
 import { PLATFORM_INFO, PlatformBadge, type Platform } from "@/lib/platforms";
 import { STATUS_INFO, type PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 
 type ListViewProps = {
-  month: Date;
+  period: Period;
+  /** Any day in the week or month the list covers. */
+  date: Date;
+  /** The posts in that week or month. */
   posts: PostData[];
   postHref: (postId: string) => string;
   onCreatePost: (date: DateKey, platform: Platform) => void;
 };
 
 export function ListView({
-  month,
+  period,
+  date,
   posts,
   postHref,
   onCreatePost,
@@ -49,7 +55,7 @@ export function ListView({
   const today = new Date();
 
   if (groups.length === 0) {
-    const firstOfMonth = toDateKey(month);
+    const firstDay = toDateKey(startOfPeriod(period, date));
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
         <span className="flex size-12 items-center justify-center rounded-full bg-neutral-100 text-neutral-400">
@@ -57,15 +63,15 @@ export function ListView({
         </span>
         <div>
           <p className="text-sm font-medium text-neutral-900">
-            Nothing planned for {formatMonthTitle(month)}
+            Nothing planned for {formatPeriodTitle(period, date)}
           </p>
           <p className="mt-1 text-sm text-neutral-500">
-            Create a post to start filling the month.
+            Create a post to start filling the {period}.
           </p>
         </div>
         <NewPostMenu
           align="center"
-          onSelect={(platform) => onCreatePost(firstOfMonth, platform)}
+          onSelect={(platform) => onCreatePost(firstDay, platform)}
           trigger={
             <Button size="sm">
               <PlusIcon />

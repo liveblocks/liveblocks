@@ -20,11 +20,15 @@ import { useCallback, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import { Brand } from "@/components/brand";
 import { ListView } from "@/components/calendar/list-view";
-import { MonthCalendar } from "@/components/calendar/month-calendar";
+import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { HelpButton } from "@/components/help-button";
 import { Loading } from "@/components/loading";
 import { NewPostMenu } from "@/components/new-post-menu";
 import { Button } from "@/components/ui/button";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/ui/segmented-control";
 import {
   Tabs,
   TabsList,
@@ -39,13 +43,14 @@ import {
 } from "@/components/ui/tooltip";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import {
-  addMonths,
-  formatMonthTitle,
-  isSameMonth,
+  addPeriods,
+  formatPeriodTitle,
+  isSamePeriod,
   parseDateKey,
-  startOfMonth,
+  startOfPeriod,
   toDateKey,
   type DateKey,
+  type Period,
 } from "@/lib/dates";
 import type { Platform } from "@/lib/platforms";
 import { createInitialStorage, type PostData } from "@/lib/posts";
@@ -72,15 +77,21 @@ function CalendarApp() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [view, setView] = useState<View>("calendar");
-  const [month, setMonth] = useState(() => startOfMonth(new Date()));
+  const [period, setPeriod] = useState<Period>("month");
+  // Any day in the week or month being shown. Starts on today, so switching
+  // between week and month keeps showing the current one.
+  const [date, setDate] = useState(() => new Date());
 
   // Storage is read as plain JSON: the `posts` LiveMap becomes an object
   // keyed by post id.
   const posts = useStorage((root) => Object.values(root.posts), shallow);
 
-  const monthPosts = useMemo(
-    () => posts.filter((post) => isSameMonth(parseDateKey(post.date), month)),
-    [posts, month]
+  const periodPosts = useMemo(
+    () =>
+      posts.filter((post) =>
+        isSamePeriod(period, parseDateKey(post.date), date)
+      ),
+    [posts, period, date]
   );
 
   // Keep gallery query params (exampleId, examplePreview) when opening a post.
@@ -123,11 +134,12 @@ function CalendarApp() {
   );
 
   const today = new Date();
-  // "New post" in the header lands on today when viewing the current month,
-  // otherwise on the first day of the month being viewed.
-  const defaultNewPostDate = isSameMonth(month, today)
+  // "New post" in the header lands on today when it's in view, otherwise on
+  // the first day of the week or month being viewed.
+  const defaultNewPostDate = isSamePeriod(period, date, today)
     ? toDateKey(today)
-    : toDateKey(month);
+    : toDateKey(startOfPeriod(period, date));
+  const periodLabel = period === "week" ? "week" : "month";
 
   return (
     <Tabs
@@ -139,49 +151,56 @@ function CalendarApp() {
         <Brand />
 
         <div className="flex items-center gap-1">
+          <SegmentedControl
+            value={period}
+            onValueChange={(value) =>
+              setPeriod(value === "week" ? "week" : "month")
+            }
+            aria-label="Period"
+            className="mr-2"
+          >
+            <SegmentedControlItem value="week">Week</SegmentedControlItem>
+            <SegmentedControlItem value="month">Month</SegmentedControlItem>
+          </SegmentedControl>
           <Tooltip>
             <TooltipTrigger
               render={
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => setMonth((current) => addMonths(current, -1))}
-                  aria-label="Previous month"
+                  onClick={() =>
+                    setDate((current) => addPeriods(period, current, -1))
+                  }
+                  aria-label={`Previous ${periodLabel}`}
                 />
               }
             >
               <ChevronLeftIcon />
             </TooltipTrigger>
-            <TooltipContent>Previous month</TooltipContent>
+            <TooltipContent>Previous {periodLabel}</TooltipContent>
           </Tooltip>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setMonth(startOfMonth(new Date()))}
-            disabled={isSameMonth(month, today)}
-          >
-            Today
-          </Button>
           <Tooltip>
             <TooltipTrigger
               render={
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => setMonth((current) => addMonths(current, 1))}
-                  aria-label="Next month"
+                  onClick={() =>
+                    setDate((current) => addPeriods(period, current, 1))
+                  }
+                  aria-label={`Next ${periodLabel}`}
                 />
               }
             >
               <ChevronRightIcon />
             </TooltipTrigger>
-            <TooltipContent>Next month</TooltipContent>
+            <TooltipContent>Next {periodLabel}</TooltipContent>
           </Tooltip>
           <h1 className="ml-2 text-sm font-semibold text-neutral-900 tabular-nums">
-            {formatMonthTitle(month)}
+            {formatPeriodTitle(period, date)}
           </h1>
           <span className="ml-2 hidden rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500 sm:inline">
-            {monthPosts.length} {monthPosts.length === 1 ? "post" : "posts"}
+            {periodPosts.length} {periodPosts.length === 1 ? "post" : "posts"}
           </span>
         </div>
 
@@ -221,9 +240,10 @@ function CalendarApp() {
 
       <main className="min-h-0 flex-1 overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
         <TabsPanel value="calendar" className="h-full">
-          <MonthCalendar
-            month={month}
-            // All posts, so the grid's leading/trailing days from the
+          <CalendarGrid
+            period={period}
+            date={date}
+            // All posts, so a month grid's leading/trailing days from the
             // neighboring months show their posts too.
             posts={posts}
             postHref={postHref}
@@ -233,8 +253,9 @@ function CalendarApp() {
         </TabsPanel>
         <TabsPanel value="list" className="h-full">
           <ListView
-            month={month}
-            posts={monthPosts}
+            period={period}
+            date={date}
+            posts={periodPosts}
             postHref={postHref}
             onCreatePost={createAndOpenPost}
           />

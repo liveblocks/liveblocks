@@ -36,7 +36,7 @@ const FEATURES: Feature[] = [
     icon: <CalendarDaysIcon />,
     title: "Plan posts on a shared calendar",
     description:
-      "Every post is stored in Liveblocks Storage. Switch between the monthly calendar and the list view, and use the + button on any day to plan a new post.",
+      "Every post is stored in Liveblocks Storage. Browse by week or month, in a calendar or as a list, and use the + button on any day to plan a new post.",
   },
   {
     icon: <ZapIcon />,

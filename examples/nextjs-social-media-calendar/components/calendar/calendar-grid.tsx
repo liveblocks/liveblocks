@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import {
   compareByDateTime,
   formatDayHeading,
-  getMonthGrid,
+  getPeriodGrid,
   isSameDay,
-  isSameMonth,
+  isSamePeriod,
   parseDateKey,
   toDateKey,
   WEEKDAYS,
   type DateKey,
+  type Period,
 } from "@/lib/dates";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
 import type { PostData } from "@/lib/posts";
@@ -21,22 +22,30 @@ import { cn } from "@/lib/utils";
 import { PostBoard, PostBoardDay } from "./post-board";
 import { PostCard } from "./post-card";
 
-type MonthCalendarProps = {
-  month: Date;
+type CalendarGridProps = {
+  period: Period;
+  /** Any day in the week or month to show. */
+  date: Date;
   posts: PostData[];
   postHref: (postId: string) => string;
   onMovePost: (postId: string, date: DateKey) => void;
   onCreatePost: (date: DateKey, platform: Platform) => void;
 };
 
-export function MonthCalendar({
-  month,
+/**
+ * The week or month as a grid of days, each a drop target for the posts it
+ * holds. A month shows whole weeks, so it starts and ends with a few days of
+ * the neighboring months.
+ */
+export function CalendarGrid({
+  period,
+  date,
   posts,
   postHref,
   onMovePost,
   onCreatePost,
-}: MonthCalendarProps) {
-  const days = useMemo(() => getMonthGrid(month), [month]);
+}: CalendarGridProps) {
+  const days = useMemo(() => getPeriodGrid(period, date), [period, date]);
   const dayKeys = useMemo(() => days.map(toDateKey), [days]);
 
   const postsById = useMemo(
@@ -98,7 +107,12 @@ export function MonthCalendar({
           }}
           aria-label="Posts by day"
           className="grid grid-cols-7"
-          style={{ gridAutoRows: "minmax(132px, auto)", minHeight: "100%" }}
+          style={{
+            // A week is one row that fills the view; a month's rows grow
+            // with their posts and scroll.
+            gridAutoRows: period === "week" ? "1fr" : "minmax(132px, auto)",
+            minHeight: "100%",
+          }}
         >
           {days.map((day, index) => {
             const key = dayKeys[index];
@@ -108,7 +122,7 @@ export function MonthCalendar({
                 date={day}
                 dateKey={key}
                 postsById={postsById}
-                isCurrentMonth={isSameMonth(day, month)}
+                inPeriod={isSamePeriod(period, day, date)}
                 isToday={isSameDay(day, today)}
                 postHref={postHref}
                 onCreatePost={onCreatePost}
@@ -125,7 +139,7 @@ function DayCell({
   date,
   dateKey,
   postsById,
-  isCurrentMonth,
+  inPeriod,
   isToday,
   postHref,
   onCreatePost,
@@ -133,7 +147,7 @@ function DayCell({
   date: Date;
   dateKey: DateKey;
   postsById: Map<string, PostData>;
-  isCurrentMonth: boolean;
+  inPeriod: boolean;
   isToday: boolean;
   postHref: (postId: string) => string;
   onCreatePost: (date: DateKey, platform: Platform) => void;
@@ -145,7 +159,7 @@ function DayCell({
       aria-label={formatDayHeading(date)}
       className={cn(
         "group/day relative flex min-w-0 flex-col gap-1.5 border-r border-b border-neutral-950/5 p-1.5 transition-colors [&:nth-child(7n)]:border-r-0",
-        !isCurrentMonth && "bg-neutral-50/80",
+        !inPeriod && "bg-neutral-50/80",
         "data-over:bg-primary/5 data-over:ring-1 data-over:ring-primary/40 data-over:ring-inset"
       )}
     >
@@ -157,7 +171,7 @@ function DayCell({
                 "flex size-6 items-center justify-center rounded-full text-xs font-medium tabular-nums",
                 isToday
                   ? "bg-primary text-primary-foreground"
-                  : isCurrentMonth
+                  : inPeriod
                     ? "text-neutral-700"
                     : "text-neutral-400"
               )}
