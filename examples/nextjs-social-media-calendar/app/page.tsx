@@ -255,9 +255,8 @@ function CalendarApp() {
               </Tooltip>
             </div>
 
-            <span className="justify-self-end rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500">
-              {periodPosts.length} {periodPosts.length === 1 ? "post" : "posts"}
-            </span>
+            {/* Empty third column keeps the title centered. */}
+            <span aria-hidden />
           </header>
 
           <TabsPanel value="calendar" className="min-h-0 flex-1">
