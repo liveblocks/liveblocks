@@ -81,8 +81,10 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
 }
 
 // Cards stay short: images are cropped to a strip rather than shown whole.
+// `pointer-events-none` and `draggable={false}` keep the browser from
+// starting its own image drag, which would cut the card's pointer drag short.
 const THUMBNAIL_CLASS =
-  "relative block h-14 w-full overflow-hidden rounded bg-neutral-100";
+  "pointer-events-none relative block h-14 w-full overflow-hidden rounded bg-neutral-100 select-none";
 
 /**
  * The post's first photo or video, from the LiveFile stored on the post.
@@ -102,13 +104,19 @@ function MediaThumbnail({ file }: { file: LiveFileData }) {
             muted
             playsInline
             preload="metadata"
+            draggable={false}
             className="size-full object-cover"
             aria-label={file.name}
           />
         ) : (
           // Presigned URLs from Liveblocks: plain <img>, not next/image.
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt="" className="size-full object-cover" />
+          <img
+            src={url}
+            alt=""
+            draggable={false}
+            className="size-full object-cover"
+          />
         )
       ) : null}
       {isVideo ? (
@@ -135,7 +143,12 @@ function LinkThumbnail({ url }: { url: string }) {
     <span className={THUMBNAIL_CLASS}>
       {/* Remote OG image: plain <img>, not next/image (unknown hosts). */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image} alt="" className="size-full object-cover" />
+      <img
+        src={image}
+        alt=""
+        draggable={false}
+        className="size-full object-cover"
+      />
     </span>
   );
 }
