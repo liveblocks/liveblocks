@@ -1,8 +1,8 @@
 "use client";
 
-import { useUrlMetadata } from "@liveblocks/react";
 import { LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLinkPreview } from "@/hooks/use-link-preview";
 import { displayHost } from "./urls";
 
 // Wait for the URL to stop changing before asking for its metadata, so a link
@@ -20,8 +20,9 @@ function useSettledValue<T>(value: T, delay: number): T {
 
 /**
  * The preview card a network shows under a post that contains a link: the
- * page's image, title, description, and host. Metadata comes from
- * Liveblocks' `useUrlMetadata`, so no scraping happens in the browser.
+ * page's image, title, description, and host. The page's Open Graph tags are
+ * read on the server by the `getLinkPreview` action, so nothing is scraped in
+ * the browser.
  */
 export function LinkCard({ url }: { url: string }) {
   const settledUrl = useSettledValue(url, SETTLE_DELAY_MS);
@@ -29,7 +30,7 @@ export function LinkCard({ url }: { url: string }) {
 }
 
 function SettledLinkCard({ url }: { url: string }) {
-  const { metadata, isLoading, error } = useUrlMetadata(url);
+  const { metadata, isLoading, error } = useLinkPreview(url);
   const host = displayHost(url);
 
   if (isLoading) {
@@ -52,7 +53,7 @@ function SettledLinkCard({ url }: { url: string }) {
   // naming the link, like networks do.
   const title = error ? undefined : metadata?.title?.trim();
   const description = error ? undefined : metadata?.description?.trim();
-  const image = error ? undefined : metadata?.image;
+  const image = error ? undefined : (metadata?.image ?? undefined);
 
   return (
     <a

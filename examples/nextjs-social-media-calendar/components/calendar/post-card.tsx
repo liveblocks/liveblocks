@@ -1,7 +1,7 @@
 "use client";
 
 import type { LiveFileData } from "@liveblocks/client";
-import { useFileUrl, useUrlMetadata } from "@liveblocks/react";
+import { useFileUrl } from "@liveblocks/react";
 import { GripVerticalIcon, PlayIcon } from "lucide-react";
 import Link from "next/link";
 import { EditingAvatars } from "@/components/editing-avatars";
@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useLinkPreview } from "@/hooks/use-link-preview";
 import { formatTime } from "@/lib/dates";
 import { PLATFORM_INFO, PlatformBadge } from "@/lib/platforms";
 import { STATUS_INFO, type PostData } from "@/lib/posts";
@@ -130,11 +131,12 @@ function MediaThumbnail({ file }: { file: LiveFileData }) {
 
 /**
  * For a post without media of its own: the Open Graph image of the last
- * link in its text, as the network would show it. Nothing while it loads or
- * when the page has no image.
+ * link in its text, as the network would show it (read from the page's Open
+ * Graph tags by the `getLinkPreview` action). Nothing while it loads or when
+ * the page has no image.
  */
 function LinkThumbnail({ url }: { url: string }) {
-  const { metadata } = useUrlMetadata(url);
+  const { metadata } = useLinkPreview(url);
   const image = metadata?.image;
   if (!image) {
     return null;
