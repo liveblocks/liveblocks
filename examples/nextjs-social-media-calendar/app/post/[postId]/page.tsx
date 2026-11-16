@@ -360,7 +360,10 @@ function PostComposer({
                 postId={post.id}
                 platform={post.platform}
                 preview={post.preview}
-                onPreviewChange={(preview) => onUpdate({ preview })}
+                linkUrl={post.linkUrl}
+                onPreviewChange={(preview, linkUrl) =>
+                  onUpdate({ preview, linkUrl })
+                }
                 onTextChange={setText}
               />
 

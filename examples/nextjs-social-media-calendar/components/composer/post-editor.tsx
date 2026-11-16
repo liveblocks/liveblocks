@@ -8,6 +8,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef } from "react";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
 import { getInitialDocument, truncatePreview } from "@/lib/posts";
+import { findFirstUrl } from "./urls";
 
 const PREVIEW_SYNC_DELAY_MS = 400;
 
@@ -15,7 +16,9 @@ type PostEditorProps = {
   postId: string;
   platform: Platform;
   preview: string;
-  onPreviewChange: (preview: string) => void;
+  linkUrl: string | undefined;
+  /** Called, debounced, when the snippet or the first link in the text changes. */
+  onPreviewChange: (preview: string, linkUrl: string | undefined) => void;
   /** The current plain text, for the character count and link card. */
   onTextChange: (text: string) => void;
 };
@@ -24,12 +27,14 @@ type PostEditorProps = {
  * The post body: a Tiptap editor whose document is stored as LiveText in the
  * post's room (`collaborationMode: "liveblocks"`), so everyone with the post
  * open edits the same caption with live carets. Plain text only, like the
- * networks it's written for: paragraphs and line breaks, no formatting.
+ * networks it's written for: paragraphs, line breaks, and links that are
+ * recognized as they're typed and open on click. No other formatting.
  */
 export function PostEditor({
   postId,
   platform,
   preview,
+  linkUrl,
   onPreviewChange,
   onTextChange,
 }: PostEditorProps) {
@@ -48,13 +53,20 @@ export function PostEditor({
       StarterKit.configure({
         // The Liveblocks extension comes with its own history handling
         undoRedo: false,
-        // Social captions are plain text: no marks or block formatting
+        // Social captions are plain text: no marks or block formatting,
+        // except links, which networks recognize and make clickable.
         bold: false,
         italic: false,
         strike: false,
         underline: false,
         code: false,
-        link: false,
+        link: {
+          autolink: true,
+          linkOnPaste: true,
+          openOnClick: true,
+          defaultProtocol: "https",
+          HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
+        },
         heading: false,
         blockquote: false,
         codeBlock: false,
@@ -95,23 +107,28 @@ export function PostEditor({
     onTextChangeRef.current(isReady ? text : "");
   }, [text, isReady]);
 
-  // Mirror a plain-text snippet of the body into the project room, debounced,
-  // so the calendar and list cards can show it without joining this room.
+  // Mirror a plain-text snippet of the body and its first link into the
+  // project room, debounced, so the calendar and list cards can show them
+  // without joining this room.
   const onPreviewChangeRef = useRef(onPreviewChange);
   onPreviewChangeRef.current = onPreviewChange;
-  const previewRef = useRef(preview);
-  previewRef.current = preview;
+  const storedRef = useRef({ preview, linkUrl });
+  storedRef.current = { preview, linkUrl };
   useEffect(() => {
     if (!isReady) {
       return;
     }
     const nextPreview = truncatePreview(text);
-    if (nextPreview === previewRef.current) {
+    const nextLink = findFirstUrl(text) ?? undefined;
+    const isStored = () =>
+      nextPreview === storedRef.current.preview &&
+      nextLink === storedRef.current.linkUrl;
+    if (isStored()) {
       return;
     }
     const timeout = setTimeout(() => {
-      if (nextPreview !== previewRef.current) {
-        onPreviewChangeRef.current(nextPreview);
+      if (!isStored()) {
+        onPreviewChangeRef.current(nextPreview, nextLink);
       }
     }, PREVIEW_SYNC_DELAY_MS);
     return () => clearTimeout(timeout);
