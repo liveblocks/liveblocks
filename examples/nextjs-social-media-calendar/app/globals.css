@@ -83,14 +83,8 @@
   cursor: grabbing;
 }
 
-/* Post composer (Tiptap). The formatting tools sit in the post's footer, so
-   they take its background. */
-.composer-toolbar.lb-tiptap-toolbar {
-  background: transparent;
-  padding: 0;
-}
-
-/* Preflight resets typography, so the editor needs its own text styles. */
+/* Post composer (Tiptap). Preflight resets typography, so the editor needs
+   its own text styles. */
 .composer-editor .tiptap {
   outline: none;
   min-height: 120px;
@@ -107,38 +101,6 @@
 
 .composer-editor .tiptap p + p {
   margin-top: 0.75em;
-}
-
-.composer-editor .tiptap strong {
-  font-weight: 600;
-}
-
-.composer-editor .tiptap ul,
-.composer-editor .tiptap ol {
-  padding-left: 1.5em;
-  margin: 0.5em 0;
-}
-
-.composer-editor .tiptap ul {
-  list-style: disc;
-}
-
-.composer-editor .tiptap ol {
-  list-style: decimal;
-}
-
-.composer-editor .tiptap blockquote {
-  border-left: 3px solid var(--border);
-  padding-left: 0.75em;
-  color: var(--muted-foreground);
-}
-
-.composer-editor .tiptap code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.9em;
-  background: var(--muted);
-  border-radius: 4px;
-  padding: 0.1em 0.3em;
 }
 
 .composer-editor .tiptap p.is-editor-empty:first-child::before {

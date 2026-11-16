@@ -1,14 +1,16 @@
 "use client";
 
 import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "@liveblocks/prosemirror";
-import { Toolbar, useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
 import { getInitialDocument, truncatePreview } from "@/lib/posts";
 import { cn } from "@/lib/utils";
+import { LinkCard } from "./link-card";
+import { findFirstUrl } from "./urls";
 
 const PREVIEW_SYNC_DELAY_MS = 400;
 
@@ -17,20 +19,26 @@ type PostEditorProps = {
   platform: Platform;
   preview: string;
   onPreviewChange: (preview: string) => void;
+  /** Shown under the text, before the link card: the post's media. */
+  attachments?: ReactNode;
+  /** Shown at the start of the footer, next to the character count. */
+  actions?: ReactNode;
 };
 
 /**
  * The post body: a Tiptap editor whose document is stored as LiveText in the
  * post's room (`collaborationMode: "liveblocks"`), so everyone with the post
- * open edits the same caption with live carets. Laid out like the body of a
- * post: the text, then a row with the formatting tools and the character
- * count.
+ * open edits the same caption with live carets. Plain text only, like the
+ * networks it's written for: paragraphs and line breaks, no formatting. The
+ * first link in the text gets a preview card under the post.
  */
 export function PostEditor({
   postId,
   platform,
   preview,
   onPreviewChange,
+  attachments,
+  actions,
 }: PostEditorProps) {
   const liveblocks = useLiveblocksExtension({
     collaborationMode: "liveblocks",
@@ -47,11 +55,21 @@ export function PostEditor({
       StarterKit.configure({
         // The Liveblocks extension comes with its own history handling
         undoRedo: false,
-        // Social captions are plain text with a little inline formatting
+        // Social captions are plain text: no marks or block formatting
+        bold: false,
+        italic: false,
+        strike: false,
+        underline: false,
+        code: false,
+        link: false,
         heading: false,
-        codeBlock: false,
-        horizontalRule: false,
         blockquote: false,
+        codeBlock: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        listKeymap: false,
+        horizontalRule: false,
       }),
       Placeholder.configure({
         placeholder: `Write your ${PLATFORM_INFO[platform].label} post…`,
@@ -102,25 +120,26 @@ export function PostEditor({
   const maxLength = PLATFORM_INFO[platform].maxLength;
   const length = text.length;
   const overLimit = length > maxLength;
+  const url = isReady ? findFirstUrl(text) : null;
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-3">
       <div
-        className="composer-editor cursor-text pt-1 pb-3"
+        className="composer-editor cursor-text pt-1"
         onClick={() => editor?.commands.focus()}
       >
         <EditorContent editor={editor} />
       </div>
 
-      <div className="-mx-2 flex items-center justify-between gap-3 border-t border-neutral-950/5 pt-2">
-        <Toolbar editor={editor} className="composer-toolbar">
-          <Toolbar.SectionHistory />
-          <Toolbar.Separator />
-          <Toolbar.SectionInline />
-        </Toolbar>
+      {attachments}
+
+      {url ? <LinkCard url={url} /> : null}
+
+      <div className="-mx-2 flex items-center justify-between gap-3 border-t border-neutral-950/5 px-2 pt-2">
+        <div className="flex items-center gap-1">{actions}</div>
         <span
           className={cn(
-            "mr-2 text-xs tabular-nums text-neutral-500",
+            "text-xs text-neutral-500 tabular-nums",
             overLimit ? "font-medium text-red-600" : undefined
           )}
           aria-live="polite"
