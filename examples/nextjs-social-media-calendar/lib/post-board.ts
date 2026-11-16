@@ -85,13 +85,19 @@ export const postBoard = definePrimitive({
   },
   slots: (slot) => ({
     root: slot({}),
-    day: slot<{ value: string }, { posts: string[]; over: boolean }>({
+    day: slot<
+      { value: string },
+      { posts: string[]; over: boolean; moving: boolean }
+    >({
       props: { value: "string" },
       // What the day holds right now: the draft while a post moves, so the
       // moving post renders in the day it hovers, else the committed lists.
+      // `moving` is true while any post is being moved, so days can hide
+      // affordances that would get in the way of a drop.
       state: (state, part) => ({
         posts: part.api.transfer.lists(state)[part.key] ?? [],
         over: isOver(state, part.key, part.api.transfer.lists(state)),
+        moving: state.moving !== null,
       }),
       attrs: (state, part) => ({
         "data-over": isOver(state, part.key, part.api.transfer.lists(state))
