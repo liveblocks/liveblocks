@@ -203,17 +203,26 @@ function CalendarApp() {
       <main className="flex min-w-0 flex-1 flex-col py-3 pr-3">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-neutral-950/5">
           <header className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-neutral-950/5 px-3 py-2">
-            <SegmentedControl
-              value={period}
-              onValueChange={(value) =>
-                setPeriod(value === "week" ? "week" : "month")
-              }
-              aria-label="Period"
-              className="justify-self-start"
-            >
-              <SegmentedControlItem value="month">Month</SegmentedControlItem>
-              <SegmentedControlItem value="week">Week</SegmentedControlItem>
-            </SegmentedControl>
+            <div className="flex items-center gap-3 justify-self-start">
+              <SegmentedControl
+                value={period}
+                onValueChange={(value) =>
+                  setPeriod(value === "week" ? "week" : "month")
+                }
+                aria-label="Period"
+              >
+                <SegmentedControlItem value="month">Month</SegmentedControlItem>
+                <SegmentedControlItem value="week">Week</SegmentedControlItem>
+              </SegmentedControl>
+              {/* Plain text, as a quiet way back to the current period. */}
+              <button
+                type="button"
+                onClick={() => setDate(new Date())}
+                className="cursor-pointer rounded-sm text-sm text-neutral-500 transition-colors outline-none hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Today
+              </button>
+            </div>
 
             <div className="flex items-center gap-1">
               <Tooltip>
