@@ -92,7 +92,7 @@ export function CalendarGrid({
           </div>
         ))}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1">
         <PostBoard
           lists={lists}
           order={dayKeys}
@@ -106,12 +106,11 @@ export function CalendarGrid({
             }
           }}
           aria-label="Posts by day"
-          className="grid grid-cols-7"
+          className="grid h-full grid-cols-7"
           style={{
-            // A week is one row that fills the view; a month's rows grow
-            // with their posts and scroll.
-            gridAutoRows: period === "week" ? "1fr" : "minmax(132px, auto)",
-            minHeight: "100%",
+            // Every row gets an equal share of the height, whatever it holds;
+            // a day with more posts than fit scrolls inside its cell.
+            gridTemplateRows: `repeat(${days.length / 7}, minmax(0, 1fr))`,
           }}
         >
           {days.map((day, index) => {
@@ -158,7 +157,7 @@ function DayCell({
       role="group"
       aria-label={formatDayHeading(date)}
       className={cn(
-        "group/day relative flex min-w-0 flex-col gap-1.5 border-r border-b border-neutral-950/5 p-1.5 transition-colors [&:nth-child(7n)]:border-r-0",
+        "group/day relative flex min-h-0 min-w-0 flex-col gap-1.5 border-r border-b border-neutral-950/5 p-1.5 transition-colors [&:nth-child(7n)]:border-r-0",
         !inPeriod && "bg-neutral-50/80",
         "data-over:bg-primary/5 data-over:ring-1 data-over:ring-primary/40 data-over:ring-inset"
       )}
@@ -200,7 +199,7 @@ function DayCell({
 
           {/* Rendered from the board's state, so a post being dragged shows up
           in the day it hovers before it's dropped. */}
-          <div className="flex flex-1 flex-col gap-1.5">
+          <div className="-m-0.5 flex min-h-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto p-0.5">
             {state.posts.flatMap((id) => {
               const post = postsById.get(id);
               return post ? (
