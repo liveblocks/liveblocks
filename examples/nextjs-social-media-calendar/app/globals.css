@@ -1,5 +1,8 @@
+/* ui-sdk adds the little CSS its behaviors need (hiding closed popups, etc.)
+   in this layer. Declaring it first lets every other style win over it. */
+@layer ui-sdk;
+
 @import "tailwindcss";
-@import "tw-animate-css";
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-tiptap/styles.css";
 
@@ -66,6 +69,18 @@
 /* Align Liveblocks UI (avatars, toolbars, mentions) with the app's primary color. */
 .lb-root {
   --lb-accent: oklch(0.54 0.23 285);
+}
+
+/* While a post is dragged, ui-sdk follows the pointer with a copy of the
+   card (`data-drag-preview`). The copy keeps the card's classes, so only the
+   lifted look is added here. */
+[data-slot="post-board-post"][data-drag-preview] {
+  rotate: 1.5deg;
+  box-shadow:
+    0 0 0 1px oklch(0.54 0.23 285 / 30%),
+    0 20px 25px -5px rgb(0 0 0 / 0.15),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  cursor: grabbing;
 }
 
 /* Post composer (Tiptap). Preflight resets typography, so the editor needs

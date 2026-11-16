@@ -18,13 +18,22 @@ import { PostPreview } from "@/components/composer/post-preview";
 import { HelpButton } from "@/components/help-button";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
+import { DateInput, TimeInput } from "@/components/ui/date-time-input";
 import {
   Select,
   SelectContent,
   SelectItem,
+  SelectItemIcon,
   SelectTrigger,
   SelectValue,
+  SelectValueIcon,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useExampleHref, useExampleRoomId } from "@/hooks/use-example-room-id";
 import {
   isPlatform,
@@ -111,11 +120,13 @@ function PostShell({ postId }: { postId: string }) {
         <p className="text-sm text-neutral-500">
           It may have been deleted by someone else in the project.
         </p>
-        <Button asChild variant="outline" size="sm">
-          <Link href={calendarHref}>
-            <ArrowLeftIcon />
-            Back to calendar
-          </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          render={<Link href={calendarHref} />}
+        >
+          <ArrowLeftIcon />
+          Back to calendar
         </Button>
       </div>
     );
@@ -165,14 +176,17 @@ function PostComposer({
   return (
     <div className="flex h-dvh w-full flex-col gap-2.5 overflow-hidden bg-neutral-50 p-2.5">
       <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-white px-3 py-2 shadow ring-1 ring-neutral-950/5">
-        <Button asChild variant="ghost" size="sm" className="-ml-1">
-          <Link href={calendarHref}>
-            <ArrowLeftIcon />
-            Calendar
-          </Link>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-1"
+          render={<Link href={calendarHref} />}
+        >
+          <ArrowLeftIcon />
+          Calendar
         </Button>
 
-        <div className="h-5 w-px bg-neutral-200" />
+        <Separator orientation="vertical" />
 
         <div className="flex items-center gap-2.5">
           <PlatformBadge platform={post.platform} size={28} />
@@ -190,44 +204,51 @@ function PostComposer({
           <Select
             value={post.status}
             onValueChange={(value) => {
-              if (isPostStatus(value)) {
+              if (value !== null && isPostStatus(value)) {
                 onUpdate({ status: value });
               }
             }}
           >
-            <SelectTrigger size="sm" aria-label="Status" className="gap-2">
-              <span
-                className={cn(
-                  "size-2 rounded-full",
-                  STATUS_INFO[post.status].dot
-                )}
-              />
+            <SelectTrigger aria-label="Status">
+              <SelectValueIcon />
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="end">
               {POST_STATUSES.map((status) => (
                 <SelectItem key={status} value={status}>
-                  <span
-                    className={cn(
-                      "size-2 rounded-full",
-                      STATUS_INFO[status].dot
-                    )}
-                  />
+                  <SelectItemIcon>
+                    <span
+                      className={cn(
+                        "block size-2 rounded-full",
+                        STATUS_INFO[status].dot
+                      )}
+                    />
+                  </SelectItemIcon>
                   {STATUS_INFO[status].label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={onDelete}
-            aria-label="Delete post"
-            className="text-neutral-500 hover:text-red-600"
-          >
-            <Trash2Icon />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={onDelete}
+                  aria-label="Delete post"
+                  // Destructive and irreversible: an agent driving the UI
+                  // should confirm before pressing it.
+                  data-agent-confirm=""
+                  className="text-neutral-500 hover:bg-red-50 hover:text-red-600"
+                />
+              }
+            >
+              <Trash2Icon />
+            </TooltipTrigger>
+            <TooltipContent>Delete post</TooltipContent>
+          </Tooltip>
 
           <HelpButton />
         </div>
@@ -244,40 +265,41 @@ function PostComposer({
                 }
               }}
             >
-              <SelectTrigger size="sm" aria-label="Platform">
+              <SelectTrigger aria-label="Platform">
+                <SelectValueIcon />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {PLATFORMS.map((item) => (
                   <SelectItem key={item} value={item}>
-                    <PlatformBadge platform={item} size={18} />
+                    <SelectItemIcon>
+                      <PlatformBadge platform={item} size={18} />
+                    </SelectItemIcon>
                     {PLATFORM_INFO[item].label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <input
-              type="date"
+            {/* Segmented inputs: the value only changes once every segment
+                holds something, so a half-typed date never reaches Storage. */}
+            <DateInput
               value={post.date}
-              onChange={(event) => {
-                if (event.target.value) {
-                  onUpdate({ date: event.target.value });
+              onValueChange={(date) => {
+                if (date) {
+                  onUpdate({ date });
                 }
               }}
               aria-label="Date"
-              className="h-8 rounded-md border border-input bg-transparent px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
-            <input
-              type="time"
+            <TimeInput
               value={post.time}
-              onChange={(event) => {
-                if (event.target.value) {
-                  onUpdate({ time: event.target.value });
+              onValueChange={(time) => {
+                if (time) {
+                  onUpdate({ time });
                 }
               }}
               aria-label="Time"
-              className="h-8 rounded-md border border-input bg-transparent px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
           </div>
 

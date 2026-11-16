@@ -66,12 +66,13 @@ export function ListView({
         <NewPostMenu
           align="center"
           onSelect={(platform) => onCreatePost(firstOfMonth, platform)}
-        >
-          <Button size="sm">
-            <PlusIcon />
-            New post
-          </Button>
-        </NewPostMenu>
+          trigger={
+            <Button size="sm">
+              <PlusIcon />
+              New post
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -104,16 +105,17 @@ export function ListView({
                 <NewPostMenu
                   align="start"
                   onSelect={(platform) => onCreatePost(dateKey, platform)}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="ml-auto text-neutral-400"
-                    aria-label="Add a post on this day"
-                  >
-                    <PlusIcon />
-                  </Button>
-                </NewPostMenu>
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="ml-auto text-neutral-400"
+                      aria-label={`Add a post on ${formatDayHeading(date)}`}
+                    >
+                      <PlusIcon />
+                    </Button>
+                  }
+                />
               </header>
               <ul className="divide-y divide-neutral-950/5 overflow-hidden rounded-lg bg-white ring-1 ring-neutral-950/5">
                 {dayPosts.map((post) => (

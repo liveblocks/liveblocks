@@ -2,6 +2,7 @@
 
 import { shallow } from "@liveblocks/client";
 import { useOthers } from "@liveblocks/react/suspense";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,6 +23,14 @@ export function usePostEditors(postId: string) {
         })),
     shallow
   );
+}
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part[0] ?? "")
+    .join("");
 }
 
 export function EditingAvatars({
@@ -47,24 +56,25 @@ export function EditingAvatars({
   return (
     <div
       className={cn("flex items-center", className)}
+      role="group"
       aria-label={`Being edited by ${editors.map((e) => e.name).join(", ")}`}
     >
       {visible.map((editor, index) => (
-        <img
+        <Avatar
           key={editor.connectionId}
-          src={editor.avatar}
-          alt={editor.name}
-          title={`${editor.name} is editing`}
-          width={size}
-          height={size}
-          className="rounded-full bg-neutral-100 ring-2 ring-white"
+          role="img"
+          aria-label={`${editor.name} is editing`}
+          className="ring-2 ring-white"
           style={{
             width: size,
             height: size,
             marginLeft: index === 0 ? 0 : -size * 0.3,
             boxShadow: `0 0 0 2px #fff, 0 0 0 3.5px ${editor.color}`,
           }}
-        />
+        >
+          <AvatarImage src={editor.avatar} alt="" />
+          <AvatarFallback aria-hidden>{initials(editor.name)}</AvatarFallback>
+        </Avatar>
       ))}
       {overflow > 0 ? (
         <span

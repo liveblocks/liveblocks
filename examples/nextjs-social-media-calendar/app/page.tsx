@@ -25,7 +25,18 @@ import { HelpButton } from "@/components/help-button";
 import { Loading } from "@/components/loading";
 import { NewPostMenu } from "@/components/new-post-menu";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsPanel,
+  TabsTab,
+  TabsTabIcon,
+} from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import {
   addMonths,
@@ -119,19 +130,30 @@ function CalendarApp() {
     : toDateKey(month);
 
   return (
-    <div className="flex h-dvh w-full flex-col gap-2.5 overflow-hidden bg-neutral-50 p-2.5">
+    <Tabs
+      value={view}
+      onValueChange={(value) => setView(value === "list" ? "list" : "calendar")}
+      className="flex h-dvh w-full flex-col gap-2.5 overflow-hidden bg-neutral-50 p-2.5"
+    >
       <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-white px-3 py-2 shadow ring-1 ring-neutral-950/5">
         <Brand />
 
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setMonth((current) => addMonths(current, -1))}
-            aria-label="Previous month"
-          >
-            <ChevronLeftIcon />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setMonth((current) => addMonths(current, -1))}
+                  aria-label="Previous month"
+                />
+              }
+            >
+              <ChevronLeftIcon />
+            </TooltipTrigger>
+            <TooltipContent>Previous month</TooltipContent>
+          </Tooltip>
           <Button
             variant="outline"
             size="sm"
@@ -140,14 +162,21 @@ function CalendarApp() {
           >
             Today
           </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setMonth((current) => addMonths(current, 1))}
-            aria-label="Next month"
-          >
-            <ChevronRightIcon />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setMonth((current) => addMonths(current, 1))}
+                  aria-label="Next month"
+                />
+              }
+            >
+              <ChevronRightIcon />
+            </TooltipTrigger>
+            <TooltipContent>Next month</TooltipContent>
+          </Tooltip>
           <h1 className="ml-2 text-sm font-semibold text-neutral-900 tabular-nums">
             {formatMonthTitle(month)}
           </h1>
@@ -159,41 +188,39 @@ function CalendarApp() {
         <div className="ml-auto flex items-center gap-3">
           <AvatarStack size={28} />
 
-          <Tabs
-            value={view}
-            onValueChange={(value) =>
-              setView(value === "list" ? "list" : "calendar")
-            }
-          >
-            <TabsList>
-              <TabsTrigger value="calendar">
+          <TabsList aria-label="View">
+            <TabsTab value="calendar">
+              <TabsTabIcon>
                 <CalendarIcon />
-                Calendar
-              </TabsTrigger>
-              <TabsTrigger value="list">
+              </TabsTabIcon>
+              Calendar
+            </TabsTab>
+            <TabsTab value="list">
+              <TabsTabIcon>
                 <ListIcon />
-                List
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+              </TabsTabIcon>
+              List
+            </TabsTab>
+          </TabsList>
 
           <NewPostMenu
             onSelect={(platform) =>
               createAndOpenPost(defaultNewPostDate, platform)
             }
-          >
-            <Button size="sm">
-              <PlusIcon />
-              New post
-            </Button>
-          </NewPostMenu>
+            trigger={
+              <Button size="sm">
+                <PlusIcon />
+                New post
+              </Button>
+            }
+          />
 
           <HelpButton />
         </div>
       </header>
 
       <main className="min-h-0 flex-1 overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
-        {view === "calendar" ? (
+        <TabsPanel value="calendar" className="h-full">
           <MonthCalendar
             month={month}
             // All posts, so the grid's leading/trailing days from the
@@ -203,15 +230,16 @@ function CalendarApp() {
             onMovePost={movePost}
             onCreatePost={createAndOpenPost}
           />
-        ) : (
+        </TabsPanel>
+        <TabsPanel value="list" className="h-full">
           <ListView
             month={month}
             posts={monthPosts}
             postHref={postHref}
             onCreatePost={createAndOpenPost}
           />
-        )}
+        </TabsPanel>
       </main>
-    </div>
+    </Tabs>
   );
 }
