@@ -15,7 +15,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef } from "react";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
 import { getInitialDocument, truncatePreview } from "@/lib/posts";
-import { findFirstUrl } from "./urls";
+import { findLastUrl } from "./urls";
 
 const PREVIEW_SYNC_DELAY_MS = 400;
 
@@ -24,7 +24,7 @@ type PostEditorProps = {
   platform: Platform;
   preview: string;
   linkUrl: string | undefined;
-  /** Called, debounced, when the snippet or the first link in the text changes. */
+  /** Called, debounced, when the snippet or the last link in the text changes. */
   onPreviewChange: (preview: string, linkUrl: string | undefined) => void;
   /** The current plain text, for the character count and link card. */
   onTextChange: (text: string) => void;
@@ -118,7 +118,7 @@ export function PostEditor({
     onTextChangeRef.current(isReady ? text : "");
   }, [text, isReady]);
 
-  // Mirror a plain-text snippet of the body and its first link into the
+  // Mirror a plain-text snippet of the body and its last link into the
   // project room, debounced, so the calendar and list cards can show them
   // without joining this room.
   const onPreviewChangeRef = useRef(onPreviewChange);
@@ -130,7 +130,7 @@ export function PostEditor({
       return;
     }
     const nextPreview = truncatePreview(text);
-    const nextLink = findFirstUrl(text) ?? undefined;
+    const nextLink = findLastUrl(text) ?? undefined;
     const isStored = () =>
       nextPreview === storedRef.current.preview &&
       nextLink === storedRef.current.linkUrl;

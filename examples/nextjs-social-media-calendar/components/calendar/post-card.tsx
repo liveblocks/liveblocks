@@ -129,7 +129,7 @@ function MediaThumbnail({ file }: { file: LiveFileData }) {
 }
 
 /**
- * For a post without media of its own: the Open Graph image of the first
+ * For a post without media of its own: the Open Graph image of the last
  * link in its text, as the network would show it. Nothing while it loads or
  * when the page has no image.
  */

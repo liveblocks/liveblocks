@@ -58,7 +58,7 @@ export type PostFields = {
   // Plain-text snippet of the body, synced from the composer so the calendar
   // can show a preview without joining every post's room.
   preview: string;
-  // First link in the body, synced the same way, so a card can show the
+  // Last link in the body, synced the same way, so a card can show the
   // page's image when the post has no media of its own. Absent on old posts.
   linkUrl?: string;
   createdAt: number;

@@ -21,7 +21,7 @@ import {
   PostMedia,
   usePostMedia,
 } from "@/components/composer/post-media";
-import { findFirstUrl } from "@/components/composer/urls";
+import { findLastUrl } from "@/components/composer/urls";
 import { EditingAvatars } from "@/components/editing-avatars";
 import { HelpButton } from "@/components/help-button";
 import { Loading } from "@/components/loading";
@@ -186,7 +186,7 @@ function PostBody(props: ComponentProps<typeof PostEditor>) {
 /**
  * A header with who's editing this post, and the post itself laid out the way
  * it will appear once published: the LiveText-backed body, its LiveFile media
- * under it, and a preview card for the first link.
+ * under it, and, when it has no media, a preview card for the last link.
  */
 function PostComposer({
   post,
@@ -202,7 +202,9 @@ function PostComposer({
   const platform = PLATFORM_INFO[post.platform];
   const media = usePostMedia(post.id, post.media);
   const [text, setText] = useState("");
-  const url = findFirstUrl(text);
+  // Like the networks: a post with media shows the media, not a link card.
+  const hasMedia = media.media.length > 0 || media.pending.length > 0;
+  const url = hasMedia ? null : findLastUrl(text);
   const length = text.length;
   const overLimit = length > platform.maxLength;
 

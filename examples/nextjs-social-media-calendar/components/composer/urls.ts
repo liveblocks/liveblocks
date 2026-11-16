@@ -1,14 +1,16 @@
 // A link in the text: `https://…`, `http://…`, or a bare `www.…`. Trailing
 // punctuation that usually ends a sentence rather than the URL is left out.
-const URL_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"']+/i;
+const URL_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
 const TRAILING_PUNCTUATION = /[.,:;!?)\]}'"…]+$/;
 
 /**
- * The first link in a post's text, normalized to an absolute URL, or `null`
- * when there is none. Used to show a preview card under the post.
+ * The last link in a post's text, normalized to an absolute URL, or `null`
+ * when there is none. Networks preview the last link in a post, so that's the
+ * one whose card and image are shown.
  */
-export function findFirstUrl(text: string): string | null {
-  const match = URL_PATTERN.exec(text);
+export function findLastUrl(text: string): string | null {
+  const matches = Array.from(text.matchAll(URL_PATTERN));
+  const match = matches[matches.length - 1];
   if (!match) {
     return null;
   }
