@@ -155,3 +155,8 @@ export function compareByDateTime(
 ) {
   return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
 }
+
+/** Orders posts within one day by time of day (`HH:MM`), ignoring the date. */
+export function compareByTime(a: { time: string }, b: { time: string }) {
+  return a.time.localeCompare(b.time);
+}

@@ -6,6 +6,7 @@ import { NewPostMenu } from "@/components/new-post-menu";
 import { Button } from "@/components/ui/button";
 import {
   compareByDateTime,
+  compareByTime,
   formatDayHeading,
   getPeriodGrid,
   isSameDay,
@@ -20,7 +21,7 @@ import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
 import type { PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 import { PostBoard, PostBoardDay } from "./post-board";
-import { PostCard } from "./post-card";
+import { PostCard, PostCardGhost } from "./post-card";
 
 type CalendarGridProps = {
   period: Period;
@@ -190,6 +191,7 @@ function DayCell({
             dateKey={dateKey}
             posts={state.posts}
             moving={state.moving}
+            left={state.left}
             postsById={postsById}
             scrollsPosts={scrollsPosts}
             postHref={postHref}
@@ -217,6 +219,7 @@ function DayPosts({
   dateKey,
   posts,
   moving,
+  left,
   postsById,
   scrollsPosts,
   postHref,
@@ -226,6 +229,8 @@ function DayPosts({
   dateKey: DateKey;
   posts: string[];
   moving: boolean;
+  /** The post picked up from this day and currently over another, if any. */
+  left: { id: string; index: number } | null;
   postsById: Map<string, PostData>;
   scrollsPosts: boolean;
   postHref: (postId: string) => string;
@@ -238,6 +243,25 @@ function DayPosts({
   const restingHeight = useRef<number | null>(null);
   const [heldHeight, setHeldHeight] = useState<number | null>(null);
   const holds = moving && !scrollsPosts;
+
+  // A post's place in its day is its time, wherever the pointer put it in
+  // the board's draft, so a drag can't reorder posts within a day. By time
+  // only: a post in flight still carries the date it's being moved from.
+  const sorted = useMemo(
+    () =>
+      [...posts].sort((a, b) => {
+        const postA = postsById.get(a);
+        const postB = postsById.get(b);
+        return postA && postB ? compareByTime(postA, postB) : 0;
+      }),
+    [posts, postsById]
+  );
+
+  // A faded copy of the post where it was picked up, while it's away.
+  const ghost = (id: string) => {
+    const post = postsById.get(id);
+    return post ? <PostCardGhost key={`ghost-${id}`} post={post} /> : null;
+  };
 
   useLayoutEffect(() => {
     if (!moving && ref.current) {
@@ -260,14 +284,16 @@ function DayPosts({
       )}
       style={heldHeight !== null ? { minHeight: heldHeight } : undefined}
     >
-      {posts.flatMap((id) => {
+      {sorted.flatMap((id, index) => {
         const post = postsById.get(id);
-        return post ? (
+        const card = post ? (
           <PostCard key={post.id} post={post} href={postHref(post.id)} />
         ) : (
           []
         );
+        return left?.index === index ? [ghost(left.id), card] : card;
       })}
+      {left && left.index >= sorted.length ? ghost(left.id) : null}
       <NewPostMenu
         align="start"
         label={`New post on ${date.toLocaleDateString("en-US", {

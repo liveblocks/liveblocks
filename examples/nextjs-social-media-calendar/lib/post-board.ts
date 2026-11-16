@@ -5,6 +5,7 @@ import {
   type ChangeDetails,
   type TransferDraft,
   type TransferLists,
+  type TransferMessage,
   type TransferReason,
 } from "@ui-sdk/core";
 
@@ -43,10 +44,51 @@ function isOver(state: PostBoardState, day: string, lists: TransferLists) {
 }
 
 /**
+ * The post that left `day` during the current move, and where it sat: it's
+ * in the committed lists but not in the draft's. `null` when nothing moves,
+ * when the post came from elsewhere, or while it hovers its own day again.
+ */
+function leftFrom(
+  state: PostBoardState,
+  day: string
+): { id: string; index: number } | null {
+  if (state.moving === null) {
+    return null;
+  }
+  const { key, lists } = state.moving;
+  const index = (state.lists[day] ?? []).indexOf(key);
+  if (index === -1 || (lists[day] ?? []).includes(key)) {
+    return null;
+  }
+  return { id: key, index };
+}
+
+// A post has one place in its day, its time, so there's no position to
+// announce: only which day it's in.
+function announcement({ type, label, list }: TransferMessage) {
+  if (type === "grab") {
+    return `Picked up ${label}, ${list}.`;
+  }
+  if (type === "move") {
+    return `${label}, ${list}.`;
+  }
+  if (type === "drop") {
+    return `Dropped ${label} in ${list}.`;
+  }
+  return `Moved ${label} back to ${list}.`;
+}
+
+// Keys that would reorder a post within its day. A post sits at its time, so
+// while one is picked up these do nothing (Left and Right still change day).
+const REORDER_KEYS = new Set(["ArrowUp", "ArrowDown", "Home", "End"]);
+
+/**
  * A board of days holding posts, where a post can be dragged to another day
  * or moved there with the keyboard. Built on ui-sdk core's `createTransfer`,
  * so pointer drags, keyboard moves, auto-scroll and announcements come with
- * it; the calendar only renders what `lists(state)` says.
+ * it; the calendar only renders what `lists(state)` says. A post's place
+ * within a day is its time, not where it was dropped: the calendar sorts each
+ * day's posts by time and `onListsChange` reports only the change of day.
  */
 export const postBoard = definePrimitive({
   name: "post-board",
@@ -74,6 +116,7 @@ export const postBoard = definePrimitive({
         context.options().order ?? Object.keys(context.store.get().lists),
       label: (key) => context.options().postLabel?.(key),
       listLabel: (list) => context.options().dayLabel?.(list),
+      message: announcement,
     });
 
     return {
@@ -87,17 +130,25 @@ export const postBoard = definePrimitive({
     root: slot({}),
     day: slot<
       { value: string },
-      { posts: string[]; over: boolean; moving: boolean }
+      {
+        posts: string[];
+        over: boolean;
+        moving: boolean;
+        left: { id: string; index: number } | null;
+      }
     >({
       props: { value: "string" },
       // What the day holds right now: the draft while a post moves, so the
       // moving post renders in the day it hovers, else the committed lists.
       // `moving` is true while any post is being moved, so days can hide
-      // affordances that would get in the way of a drop.
+      // affordances that would get in the way of a drop. `left` names the
+      // post that was picked up from this day and is away, so the day can
+      // mark the place it came from.
       state: (state, part) => ({
         posts: part.api.transfer.lists(state)[part.key] ?? [],
         over: isOver(state, part.key, part.api.transfer.lists(state)),
         moving: state.moving !== null,
+        left: leftFrom(state, part.key),
       }),
       attrs: (state, part) => ({
         "data-over": isOver(state, part.key, part.api.transfer.lists(state))
@@ -129,9 +180,14 @@ export const postBoard = definePrimitive({
         // Picking a post up starts from its handle. Once it's up, the keys
         // keep working with focus on the card too.
         keydown: (event, { api, store, key }) => {
-          if (api.transfer.moving(store.get(), key)) {
-            api.transfer.keydown(event, key);
+          if (!api.transfer.moving(store.get(), key)) {
+            return;
           }
+          if (REORDER_KEYS.has(event.key)) {
+            event.preventDefault();
+            return;
+          }
+          api.transfer.keydown(event, key);
         },
       },
       bind: (el, part) => part.api.transfer.bindItem(el, part.key),
@@ -143,7 +199,14 @@ export const postBoard = definePrimitive({
       props: { value: "string" },
       attrs: () => ({ type: "button" }),
       on: {
-        keydown: (event, { api, key }) => {
+        keydown: (event, { api, store, key }) => {
+          if (
+            api.transfer.moving(store.get(), key) &&
+            REORDER_KEYS.has(event.key)
+          ) {
+            event.preventDefault();
+            return;
+          }
           api.transfer.keydown(event, key);
         },
       },
