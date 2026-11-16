@@ -76,32 +76,11 @@ export const postBoard = definePrimitive({
       listLabel: (list) => context.options().dayLabel?.(list),
     });
 
-    // A card is a link. The click that ends a pointer drag must not follow
-    // it, so remember which post was dragged until its next pointer press.
-    const dragged = new Set<string>();
-    context.onDestroy(
-      context.store.subscribe(() => {
-        const { moving } = context.store.get();
-        if (moving?.pointer) {
-          dragged.add(moving.key);
-        }
-      })
-    );
-
     return {
       transfer,
       /** Moves a post to a day at once, like an agent would. */
       move: (postId: string, day: string, index = 0) =>
         transfer.move(postId, day, index),
-      /** Starts a pointer drag of a post; a plain click stays a click. */
-      pointerdown(event: PointerEvent, postId: string) {
-        dragged.delete(postId);
-        transfer.pointerdown(event, postId);
-      },
-      /** Whether a click on a post follows the drag that just ended. */
-      endsDrag(postId: string) {
-        return dragged.delete(postId);
-      },
     };
   },
   slots: (slot) => ({
@@ -136,28 +115,26 @@ export const postBoard = definePrimitive({
           : undefined,
       }),
       on: {
-        // A drag can start anywhere on the card; a plain click stays a click.
-        pointerdown: (event, { api, key }) => api.pointerdown(event, key),
-        click: (event, { api, key }) => {
-          if (api.endsDrag(key)) {
-            event.preventDefault();
-          }
-        },
+        // A drag starts anywhere on the card once the pointer moves a few
+        // pixels; a plain click stays a click and the one that ends a drag
+        // is swallowed, so the card can be a link.
+        pointerdown: (event, { api, key }) =>
+          api.transfer.pointerdown(event, key),
         // Picking a post up starts from its handle. Once it's up, the keys
-        // keep working wherever focus is on the card.
+        // keep working with focus on the card too.
         keydown: (event, { api, store, key }) => {
-          const fromHandle =
-            event.target instanceof Element &&
-            event.target.closest('[data-slot="post-board-handle"]') !== null;
-          if (!fromHandle && api.transfer.moving(store.get(), key)) {
+          if (api.transfer.moving(store.get(), key)) {
             api.transfer.keydown(event, key);
           }
         },
       },
       bind: (el, part) => part.api.transfer.bindItem(el, part.key),
     }),
+    // Picks the post with the same `value` up with the keyboard. It sits
+    // beside the card rather than inside it, since the card is a link and a
+    // button can't be nested in one.
     handle: slot<{ value: string }>({
-      props: { value: { kind: "string", from: "post", required: true } },
+      props: { value: "string" },
       attrs: () => ({ type: "button" }),
       on: {
         keydown: (event, { api, key }) => {

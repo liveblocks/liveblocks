@@ -15,10 +15,11 @@ import { cn } from "@/lib/utils";
 import { PostBoardHandle, PostBoardPost } from "./post-board";
 
 /**
- * A post on the calendar. The card is a drop-and-drag item: a pointer can
- * drag it anywhere, the link inside opens the composer, and the handle picks
- * it up with the keyboard. ui-sdk follows a pointer drag with a copy of this
- * element, so the card at rest and the one being dragged look the same.
+ * A post on the calendar. The card is the board's draggable item and a link
+ * to the composer at once: a pointer can drag it anywhere (the board captures
+ * the pointer on this element, so a plain click still follows the link), and
+ * the handle beside it picks it up with the keyboard. ui-sdk follows a pointer
+ * drag with a copy of the card, so it looks the same at rest and in flight.
  */
 export function PostCard({ post, href }: { post: PostData; href: string }) {
   const status = STATUS_INFO[post.status];
@@ -26,19 +27,16 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
   const label = `${platform.label} post at ${formatTime(post.time)}, ${status.label}`;
 
   return (
-    <PostBoardPost
-      value={post.id}
-      className={cn(
-        "group/card relative flex touch-none flex-col gap-1.5 rounded-md bg-white p-2 text-left shadow-xs ring-1 ring-neutral-950/5 transition-[box-shadow,opacity] select-none",
-        "hover:shadow-md hover:ring-neutral-950/10 focus-within:ring-2 focus-within:ring-ring",
-        "data-moving:ring-2 data-moving:ring-primary/60 data-dragging:opacity-40"
-      )}
-    >
-      <Link
-        href={href}
-        draggable={false}
+    <div className="group/card relative">
+      <PostBoardPost
+        value={post.id}
+        render={<Link href={href} draggable={false} />}
         aria-label={label}
-        className="flex min-w-0 flex-col gap-1.5 no-underline outline-none after:absolute after:inset-0 after:rounded-md"
+        className={cn(
+          "flex touch-none flex-col gap-1.5 rounded-md bg-white p-2 text-left no-underline shadow-xs ring-1 ring-neutral-950/5 transition-[box-shadow,opacity] outline-none select-none",
+          "hover:shadow-md hover:ring-neutral-950/10 focus-visible:ring-2 focus-visible:ring-ring",
+          "data-moving:ring-2 data-moving:ring-primary/60 data-dragging:opacity-40"
+        )}
       >
         <span className="flex items-center gap-1.5">
           <PlatformBadge platform={post.platform} size={20} />
@@ -55,8 +53,8 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
             <span className="text-neutral-400 italic">Empty post</span>
           )}
         </span>
-      </Link>
-      <EditingAvatars postId={post.id} size={18} className="mt-0.5" />
+        <EditingAvatars postId={post.id} size={18} className="mt-0.5" />
+      </PostBoardPost>
 
       <Tooltip>
         <TooltipTrigger
@@ -64,7 +62,7 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
             <PostBoardHandle
               value={post.id}
               aria-label={`Move ${label}`}
-              className="absolute top-1.5 right-1.5 z-10 flex size-5 cursor-grab items-center justify-center rounded text-neutral-400 opacity-0 transition-opacity outline-none group-hover/card:opacity-100 hover:bg-neutral-100 hover:text-neutral-700 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing group-data-moving/card:opacity-100"
+              className="absolute top-1.5 right-1.5 flex size-5 cursor-grab items-center justify-center rounded text-neutral-400 opacity-0 transition-opacity outline-none group-hover/card:opacity-100 group-has-data-moving/card:opacity-100 hover:bg-neutral-100 hover:text-neutral-700 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
             />
           }
         >
@@ -74,6 +72,6 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
           Space picks up, arrows move, Space drops
         </TooltipContent>
       </Tooltip>
-    </PostBoardPost>
+    </div>
   );
 }
