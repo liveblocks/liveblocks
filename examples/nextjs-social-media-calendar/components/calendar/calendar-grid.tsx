@@ -92,7 +92,7 @@ export function CalendarGrid({
           </div>
         ))}
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <PostBoard
           lists={lists}
           order={dayKeys}
@@ -106,12 +106,14 @@ export function CalendarGrid({
             }
           }}
           aria-label="Posts by day"
-          className="grid h-full grid-cols-7"
-          style={{
-            // Every row gets an equal share of the height, whatever it holds;
-            // a day with more posts than fit scrolls inside its cell.
-            gridTemplateRows: `repeat(${days.length / 7}, minmax(0, 1fr))`,
-          }}
+          className="grid grid-cols-7"
+          style={
+            period === "week"
+              ? // One row filling the view; a busy day scrolls inside its cell.
+                { height: "100%", gridTemplateRows: "minmax(0, 1fr)" }
+              : // Rows grow with their posts and the month scrolls.
+                { minHeight: "100%", gridAutoRows: "minmax(132px, auto)" }
+          }
         >
           {days.map((day, index) => {
             const key = dayKeys[index];
@@ -122,6 +124,7 @@ export function CalendarGrid({
                 dateKey={key}
                 postsById={postsById}
                 inPeriod={isSamePeriod(period, day, date)}
+                scrollsPosts={period === "week"}
                 isToday={isSameDay(day, today)}
                 postHref={postHref}
                 onCreatePost={onCreatePost}
@@ -139,6 +142,7 @@ function DayCell({
   dateKey,
   postsById,
   inPeriod,
+  scrollsPosts,
   isToday,
   postHref,
   onCreatePost,
@@ -147,6 +151,8 @@ function DayCell({
   dateKey: DateKey;
   postsById: Map<string, PostData>;
   inPeriod: boolean;
+  /** Whether the posts scroll inside the cell (week) or grow it (month). */
+  scrollsPosts: boolean;
   isToday: boolean;
   postHref: (postId: string) => string;
   onCreatePost: (date: DateKey, platform: Platform) => void;
@@ -185,7 +191,12 @@ function DayCell({
           a post is being moved. */}
           {/* Negative margin + padding gives card shadows room inside the
           scrolling area instead of clipping them. */}
-          <div className="-m-1.5 flex min-h-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto p-1.5">
+          <div
+            className={cn(
+              "-m-1.5 flex min-h-0 flex-1 flex-col gap-1.5 p-1.5",
+              scrollsPosts && "overflow-x-hidden overflow-y-auto"
+            )}
+          >
             {state.posts.flatMap((id) => {
               const post = postsById.get(id);
               return post ? (
