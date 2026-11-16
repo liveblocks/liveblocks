@@ -1,7 +1,14 @@
 "use client";
 
 import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "@liveblocks/prosemirror";
-import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useThreads } from "@liveblocks/react/suspense";
+import {
+  FloatingComposer,
+  FloatingThreads,
+  FloatingToolbar,
+  Toolbar,
+  useLiveblocksExtension,
+} from "@liveblocks/react-tiptap";
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -29,6 +36,10 @@ type PostEditorProps = {
  * open edits the same caption with live carets. Plain text only, like the
  * networks it's written for: paragraphs, line breaks, and links that are
  * recognized as they're typed and open on click. No other formatting.
+ *
+ * Selecting text shows a floating "comment" button; comments are Liveblocks
+ * threads anchored to the text (`FloatingComposer` to write one,
+ * `FloatingThreads` to read and reply).
  */
 export function PostEditor({
   postId,
@@ -134,12 +145,26 @@ export function PostEditor({
     return () => clearTimeout(timeout);
   }, [text, isReady]);
 
+  const { threads } = useThreads();
+
   return (
-    <div
-      className="composer-editor cursor-text pt-1"
-      onClick={() => editor?.commands.focus()}
-    >
-      <EditorContent editor={editor} />
-    </div>
+    <>
+      <div
+        className="composer-editor cursor-text pt-1"
+        onClick={() => editor?.commands.focus()}
+      >
+        <EditorContent editor={editor} />
+      </div>
+      {/* No formatting here either: the floating toolbar only comments. */}
+      <FloatingToolbar editor={editor}>
+        <Toolbar.SectionCollaboration />
+      </FloatingToolbar>
+      <FloatingComposer editor={editor} className="w-[350px]" />
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        className="w-[350px]"
+      />
+    </>
   );
 }

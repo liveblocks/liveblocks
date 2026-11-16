@@ -29,8 +29,9 @@ reschedule, and click any post to open a realtime composer, laid out like the
 post itself, where the whole team can write the caption together, attach photos
 and short videos (uploaded as
 [LiveFiles](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveFile)),
-and see a preview card for the first link. Avatars show who's in the project and
-who's editing each post. The interface is built with
+leave [comments](https://liveblocks.io/docs/products/comments) on a selection of
+the text, and see a preview card for the first link. Avatars show who's in the
+project and who's editing each post. The interface is built with
 [ui-sdk](https://ui-sdk.dev): its unstyled components (menus, selects, tabs,
 dialogs, date and time inputs) styled with Tailwind, plus a small custom
 primitive on `@ui-sdk/core`'s `createTransfer` for dragging posts between days
