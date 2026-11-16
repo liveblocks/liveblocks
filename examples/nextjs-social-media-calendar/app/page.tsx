@@ -1,6 +1,6 @@
 "use client";
 
-import { LiveObject, shallow } from "@liveblocks/client";
+import { LiveList, LiveObject, shallow } from "@liveblocks/client";
 import {
   ClientSideSuspense,
   RoomProvider,
@@ -53,7 +53,7 @@ import {
   type Period,
 } from "@/lib/dates";
 import type { Platform } from "@/lib/platforms";
-import { createInitialStorage, type PostData } from "@/lib/posts";
+import { createInitialStorage, type PostLson } from "@/lib/posts";
 
 type View = "calendar" | "list";
 
@@ -110,7 +110,7 @@ function CalendarApp() {
   const createPost = useMutation(
     ({ storage }, date: DateKey, platform: Platform) => {
       const id = `post-${nanoid(8)}`;
-      const post: PostData = {
+      const post: PostLson = {
         id,
         platform,
         date,
@@ -118,6 +118,7 @@ function CalendarApp() {
         status: "draft",
         preview: "",
         createdAt: Date.now(),
+        media: new LiveList([]),
       };
       storage.get("posts").set(id, new LiveObject(post));
       return id;
@@ -145,121 +146,142 @@ function CalendarApp() {
     <Tabs
       value={view}
       onValueChange={(value) => setView(value === "list" ? "list" : "calendar")}
-      className="flex h-dvh w-full flex-col gap-2.5 overflow-hidden bg-neutral-50 p-2.5"
+      orientation="vertical"
+      className="flex h-dvh w-full overflow-hidden bg-neutral-100 text-neutral-900"
     >
-      <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-white px-3 py-2 shadow ring-1 ring-neutral-950/5">
+      <aside className="flex w-56 shrink-0 flex-col gap-5 p-4">
         <Brand />
 
-        <div className="flex items-center gap-1">
-          <SegmentedControl
-            value={period}
-            onValueChange={(value) =>
-              setPeriod(value === "week" ? "week" : "month")
-            }
-            aria-label="Period"
-            className="mr-2"
+        <NewPostMenu
+          align="start"
+          onSelect={(platform) =>
+            createAndOpenPost(defaultNewPostDate, platform)
+          }
+          trigger={
+            <Button size="sm" className="w-full justify-center">
+              <PlusIcon />
+              New post
+            </Button>
+          }
+        />
+
+        <nav className="flex flex-col gap-1.5">
+          <p className="px-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase">
+            Workspace
+          </p>
+          <TabsList
+            aria-label="View"
+            className="flex h-auto flex-col items-stretch gap-0.5 rounded-none bg-transparent p-0"
           >
-            <SegmentedControlItem value="week">Week</SegmentedControlItem>
-            <SegmentedControlItem value="month">Month</SegmentedControlItem>
-          </SegmentedControl>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() =>
-                    setDate((current) => addPeriods(period, current, -1))
-                  }
-                  aria-label={`Previous ${periodLabel}`}
-                />
-              }
+            <TabsTab
+              value="calendar"
+              className="h-8 justify-start px-2 text-sm text-neutral-700 hover:bg-neutral-200/60 data-selected:bg-white data-selected:shadow-xs [&_svg]:size-4"
             >
-              <ChevronLeftIcon />
-            </TooltipTrigger>
-            <TooltipContent>Previous {periodLabel}</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() =>
-                    setDate((current) => addPeriods(period, current, 1))
-                  }
-                  aria-label={`Next ${periodLabel}`}
-                />
-              }
-            >
-              <ChevronRightIcon />
-            </TooltipTrigger>
-            <TooltipContent>Next {periodLabel}</TooltipContent>
-          </Tooltip>
-          <h1 className="ml-2 text-sm font-semibold text-neutral-900 tabular-nums">
-            {formatPeriodTitle(period, date)}
-          </h1>
-          <span className="ml-2 hidden rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500 sm:inline">
-            {periodPosts.length} {periodPosts.length === 1 ? "post" : "posts"}
-          </span>
-        </div>
-
-        <div className="ml-auto flex items-center gap-3">
-          <AvatarStack size={28} />
-
-          <TabsList aria-label="View">
-            <TabsTab value="calendar">
               <TabsTabIcon>
                 <CalendarIcon />
               </TabsTabIcon>
               Calendar
             </TabsTab>
-            <TabsTab value="list">
+            <TabsTab
+              value="list"
+              className="h-8 justify-start px-2 text-sm text-neutral-700 hover:bg-neutral-200/60 data-selected:bg-white data-selected:shadow-xs [&_svg]:size-4"
+            >
               <TabsTabIcon>
                 <ListIcon />
               </TabsTabIcon>
               List
             </TabsTab>
           </TabsList>
+        </nav>
 
-          <NewPostMenu
-            onSelect={(platform) =>
-              createAndOpenPost(defaultNewPostDate, platform)
-            }
-            trigger={
-              <Button size="sm">
-                <PlusIcon />
-                New post
-              </Button>
-            }
-          />
-
+        <div className="mt-auto flex items-center justify-between gap-2 px-1">
+          <AvatarStack size={28} />
           <HelpButton />
         </div>
-      </header>
+      </aside>
 
-      <main className="min-h-0 flex-1 overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
-        <TabsPanel value="calendar" className="h-full">
-          <CalendarGrid
-            period={period}
-            date={date}
-            // All posts, so a month grid's leading/trailing days from the
-            // neighboring months show their posts too.
-            posts={posts}
-            postHref={postHref}
-            onMovePost={movePost}
-            onCreatePost={createAndOpenPost}
-          />
-        </TabsPanel>
-        <TabsPanel value="list" className="h-full">
-          <ListView
-            period={period}
-            date={date}
-            posts={periodPosts}
-            postHref={postHref}
-            onCreatePost={createAndOpenPost}
-          />
-        </TabsPanel>
+      <main className="flex min-w-0 flex-1 flex-col py-3 pr-3">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-neutral-950/5">
+          <header className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-neutral-950/5 px-3 py-2">
+            <SegmentedControl
+              value={period}
+              onValueChange={(value) =>
+                setPeriod(value === "week" ? "week" : "month")
+              }
+              aria-label="Period"
+              className="justify-self-start"
+            >
+              <SegmentedControlItem value="month">Month</SegmentedControlItem>
+              <SegmentedControlItem value="week">Week</SegmentedControlItem>
+            </SegmentedControl>
+
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() =>
+                        setDate((current) => addPeriods(period, current, -1))
+                      }
+                      aria-label={`Previous ${periodLabel}`}
+                    />
+                  }
+                >
+                  <ChevronLeftIcon />
+                </TooltipTrigger>
+                <TooltipContent>Previous {periodLabel}</TooltipContent>
+              </Tooltip>
+              <h1 className="min-w-28 text-center text-sm font-semibold text-neutral-900 tabular-nums">
+                {formatPeriodTitle(period, date)}
+              </h1>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() =>
+                        setDate((current) => addPeriods(period, current, 1))
+                      }
+                      aria-label={`Next ${periodLabel}`}
+                    />
+                  }
+                >
+                  <ChevronRightIcon />
+                </TooltipTrigger>
+                <TooltipContent>Next {periodLabel}</TooltipContent>
+              </Tooltip>
+            </div>
+
+            <span className="justify-self-end rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500">
+              {periodPosts.length} {periodPosts.length === 1 ? "post" : "posts"}
+            </span>
+          </header>
+
+          <TabsPanel value="calendar" className="min-h-0 flex-1">
+            <CalendarGrid
+              period={period}
+              date={date}
+              // All posts, so a month grid's leading/trailing days from the
+              // neighboring months show their posts too.
+              posts={posts}
+              postHref={postHref}
+              onMovePost={movePost}
+              onCreatePost={createAndOpenPost}
+            />
+          </TabsPanel>
+          <TabsPanel value="list" className="min-h-0 flex-1">
+            <ListView
+              period={period}
+              date={date}
+              posts={periodPosts}
+              postHref={postHref}
+              onCreatePost={createAndOpenPost}
+            />
+          </TabsPanel>
+        </div>
       </main>
     </Tabs>
   );
