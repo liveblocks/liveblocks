@@ -18,6 +18,20 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 47 (2026-11-20)
+
+## Infrastructure
+
+- The `appId` field in the `userEntered`, `userLeft`, `storageUpdated`,
+  `ydocUpdated` and `roomCreated` webhook payloads is deprecated, and we'll stop
+  sending it starting January 1st, 2027. It holds the same value as
+  `projectId`, so if your webhook handler reads `data.appId`, please switch to
+  `data.projectId`.
+
+## Contributors
+
+nvie
+
 # Week 46 (2026-11-13)
 
 ## v3.25.1
