@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { NewPostMenu } from "@/components/new-post-menu";
 import { Button } from "@/components/ui/button";
 import {
@@ -185,49 +185,112 @@ function DayCell({
             </span>
           </div>
 
-          {/* Rendered from the board's state, so a post being dragged shows up
-          in the day it hovers before it's dropped. The empty space left in
-          the day is a slot that offers a new post when hovered, except while
-          a post is being moved. */}
-          {/* Negative margin + padding gives card shadows room inside the
-          scrolling area instead of clipping them. */}
-          <div
-            className={cn(
-              "-m-1.5 flex min-h-0 flex-1 flex-col gap-1.5 p-1.5",
-              scrollsPosts && "overflow-x-hidden overflow-y-auto"
-            )}
-          >
-            {state.posts.flatMap((id) => {
-              const post = postsById.get(id);
-              return post ? (
-                <PostCard key={post.id} post={post} href={postHref(post.id)} />
-              ) : (
-                []
-              );
-            })}
-            {state.moving ? null : (
-              <NewPostMenu
-                align="start"
-                label={`New post on ${date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}`}
-                onSelect={(platform) => onCreatePost(dateKey, platform)}
-                trigger={
-                  <button
-                    type="button"
-                    className="flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-neutral-300 text-xs font-medium text-neutral-500 opacity-0 transition-opacity outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring data-open:opacity-100"
-                    aria-label={`Add a post on ${formatDayHeading(date)}`}
-                  >
-                    <PlusIcon className="size-3.5" aria-hidden />
-                    New post
-                  </button>
-                }
-              />
-            )}
-          </div>
+          <DayPosts
+            date={date}
+            dateKey={dateKey}
+            posts={state.posts}
+            moving={state.moving}
+            postsById={postsById}
+            scrollsPosts={scrollsPosts}
+            postHref={postHref}
+            onCreatePost={onCreatePost}
+          />
         </>
       )}
     </PostBoardDay>
+  );
+}
+
+/**
+ * A day's posts, rendered from the board's state so a post being dragged
+ * shows up in the day it hovers before it's dropped. The empty space left in
+ * the day is a slot that offers a new post while the day is hovered.
+ *
+ * Nothing about the day's size changes while a post moves: the slot stays in
+ * the layout (hidden) rather than unmounting, and in the month view, where
+ * rows size to their contents, the day keeps at least the height it had when
+ * the move started until the drop completes, so the day a post leaves
+ * doesn't collapse under the pointer.
+ */
+function DayPosts({
+  date,
+  dateKey,
+  posts,
+  moving,
+  postsById,
+  scrollsPosts,
+  postHref,
+  onCreatePost,
+}: {
+  date: Date;
+  dateKey: DateKey;
+  posts: string[];
+  moving: boolean;
+  postsById: Map<string, PostData>;
+  scrollsPosts: boolean;
+  postHref: (postId: string) => string;
+  onCreatePost: (date: DateKey, platform: Platform) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  // The height as of the last render with nothing moving: what to hold while
+  // a post moves. Measured every idle render, so it's current when a move
+  // starts, however quickly the pointer leaves the day.
+  const restingHeight = useRef<number | null>(null);
+  const [heldHeight, setHeldHeight] = useState<number | null>(null);
+  const holds = moving && !scrollsPosts;
+
+  useLayoutEffect(() => {
+    if (!moving && ref.current) {
+      restingHeight.current = ref.current.offsetHeight;
+    }
+  });
+
+  useLayoutEffect(() => {
+    setHeldHeight(holds ? restingHeight.current : null);
+  }, [holds]);
+
+  return (
+    // Negative margin + padding gives card shadows room inside the scrolling
+    // area instead of clipping them.
+    <div
+      ref={ref}
+      className={cn(
+        "-m-1.5 flex min-h-0 flex-1 flex-col gap-1.5 p-1.5",
+        scrollsPosts && "overflow-x-hidden overflow-y-auto"
+      )}
+      style={heldHeight !== null ? { minHeight: heldHeight } : undefined}
+    >
+      {posts.flatMap((id) => {
+        const post = postsById.get(id);
+        return post ? (
+          <PostCard key={post.id} post={post} href={postHref(post.id)} />
+        ) : (
+          []
+        );
+      })}
+      <NewPostMenu
+        align="start"
+        label={`New post on ${date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })}`}
+        onSelect={(platform) => onCreatePost(dateKey, platform)}
+        trigger={
+          <button
+            type="button"
+            className={cn(
+              // Shown while the pointer is anywhere over the day.
+              "flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-neutral-300 text-xs font-medium text-neutral-500 opacity-0 transition-opacity outline-none group-hover/day:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring data-open:opacity-100",
+              // Out of the way of a drop, but still taking up its space.
+              moving && "invisible"
+            )}
+            aria-label={`Add a post on ${formatDayHeading(date)}`}
+          >
+            <PlusIcon className="size-3.5" aria-hidden />
+            New post
+          </button>
+        }
+      />
+    </div>
   );
 }
