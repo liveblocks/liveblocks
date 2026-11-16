@@ -1,7 +1,7 @@
 "use client";
 
 import type { LiveFileData } from "@liveblocks/client";
-import { useFileUrl } from "@liveblocks/react";
+import { useFileUrl, useUrlMetadata } from "@liveblocks/react";
 import { GripVerticalIcon, PlayIcon } from "lucide-react";
 import Link from "next/link";
 import { EditingAvatars } from "@/components/editing-avatars";
@@ -35,8 +35,8 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
         render={<Link href={href} draggable={false} />}
         aria-label={label}
         className={cn(
-          "flex touch-none flex-col gap-1.5 rounded-md bg-white p-2 text-left no-underline shadow-xs ring-1 ring-neutral-950/5 transition-[box-shadow,opacity] outline-none select-none",
-          "hover:shadow-md hover:ring-neutral-950/10 focus-visible:ring-2 focus-visible:ring-ring",
+          "flex touch-none flex-col gap-1.5 rounded-md bg-white p-2 text-left no-underline shadow-md shadow-neutral-950/8 ring-1 ring-neutral-950/5 transition-[box-shadow,opacity] outline-none select-none",
+          "hover:shadow-lg hover:shadow-neutral-950/10 hover:ring-neutral-950/10 focus-visible:ring-2 focus-visible:ring-ring",
           "data-moving:ring-2 data-moving:ring-primary/60 data-dragging:opacity-40"
         )}
       >
@@ -47,7 +47,11 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
             {formatTime(post.time)}
           </span>
         </span>
-        {post.media?.[0] ? <MediaThumbnail file={post.media[0]} /> : null}
+        {post.media?.[0] ? (
+          <MediaThumbnail file={post.media[0]} />
+        ) : post.linkUrl ? (
+          <LinkThumbnail url={post.linkUrl} />
+        ) : null}
         <span className="truncate text-xs leading-snug text-neutral-800">
           {post.preview || (
             <span className="text-neutral-400 italic">Empty post</span>
@@ -76,6 +80,10 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
   );
 }
 
+// Cards stay short: images are cropped to a strip rather than shown whole.
+const THUMBNAIL_CLASS =
+  "relative block h-14 w-full overflow-hidden rounded bg-neutral-100";
+
 /**
  * The post's first photo or video, from the LiveFile stored on the post.
  * Non-suspense `useFileUrl`, so the card renders (and can be dragged) while
@@ -86,7 +94,7 @@ function MediaThumbnail({ file }: { file: LiveFileData }) {
   const isVideo = file.mimeType.startsWith("video/");
 
   return (
-    <span className="relative block aspect-[4/3] w-full overflow-hidden rounded bg-neutral-100">
+    <span className={THUMBNAIL_CLASS}>
       {url ? (
         isVideo ? (
           <video
@@ -108,6 +116,26 @@ function MediaThumbnail({ file }: { file: LiveFileData }) {
           <PlayIcon className="size-2.5 fill-current" aria-hidden />
         </span>
       ) : null}
+    </span>
+  );
+}
+
+/**
+ * For a post without media of its own: the Open Graph image of the first
+ * link in its text, as the network would show it. Nothing while it loads or
+ * when the page has no image.
+ */
+function LinkThumbnail({ url }: { url: string }) {
+  const { metadata } = useUrlMetadata(url);
+  const image = metadata?.image;
+  if (!image) {
+    return null;
+  }
+  return (
+    <span className={THUMBNAIL_CLASS}>
+      {/* Remote OG image: plain <img>, not next/image (unknown hosts). */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={image} alt="" className="size-full object-cover" />
     </span>
   );
 }
