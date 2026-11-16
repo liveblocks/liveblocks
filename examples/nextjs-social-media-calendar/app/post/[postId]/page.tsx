@@ -1,6 +1,6 @@
 "use client";
 
-import { LiveMap } from "@liveblocks/client";
+import { LiveList, LiveMap } from "@liveblocks/client";
 import {
   ClientSideSuspense,
   RoomProvider,
@@ -16,6 +16,11 @@ import { useEffect } from "react";
 import { BrandAvatar, PROJECT_NAME } from "@/components/brand";
 import { PostActions } from "@/components/composer/post-actions";
 import { PostEditor } from "@/components/composer/post-editor";
+import {
+  AddMediaButton,
+  PostMedia,
+  usePostMedia,
+} from "@/components/composer/post-media";
 import { HelpButton } from "@/components/help-button";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
@@ -141,9 +146,9 @@ function PostShell({ postId }: { postId: string }) {
     <RoomProvider
       id={postRoomId}
       initialPresence={{ editingPostId: postId }}
-      // Post rooms only store the Tiptap document (`_tiptap_docs`); the
-      // `posts` map lives in the project room.
-      initialStorage={{ posts: new LiveMap() }}
+      // Post rooms store the Tiptap document (`_tiptap_docs`) and the post's
+      // media; the `posts` map lives in the project room.
+      initialStorage={{ posts: new LiveMap(), media: new LiveList([]) }}
     >
       <ClientSideSuspense fallback={<Loading />}>
         <PostComposer
@@ -163,7 +168,8 @@ function PostShell({ postId }: { postId: string }) {
 /**
  * Rendered inside the post room: a header with who's editing this post, and
  * the post itself laid out the way it will appear once published, with the
- * LiveText-backed Tiptap composer as its body.
+ * LiveText-backed Tiptap composer as its body, its LiveFile media under it,
+ * and a preview card for the first link.
  */
 function PostComposer({
   post,
@@ -177,6 +183,7 @@ function PostComposer({
   onDelete: () => void;
 }) {
   const platform = PLATFORM_INFO[post.platform];
+  const media = usePostMedia();
 
   return (
     <div className="flex h-dvh w-full flex-col gap-2.5 overflow-hidden bg-neutral-50 p-2.5">
@@ -332,6 +339,10 @@ function PostComposer({
               platform={post.platform}
               preview={post.preview}
               onPreviewChange={(preview) => onUpdate({ preview })}
+              attachments={<PostMedia {...media} />}
+              actions={
+                <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
+              }
             />
 
             <PostActions platform={post.platform} />

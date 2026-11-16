@@ -1,4 +1,9 @@
-import type { LiveMap, LiveObject } from "@liveblocks/client";
+import type {
+  LiveFile,
+  LiveList,
+  LiveMap,
+  LiveObject,
+} from "@liveblocks/client";
 import type { PostData } from "./lib/posts";
 
 declare global {
@@ -23,9 +28,11 @@ declare global {
 
     // The project room stores every post's metadata (platform, date, status,
     // text preview) in a LiveMap. Each post's body lives in its own room as a
-    // Tiptap document backed by LiveText, under `_tiptap_docs`.
+    // Tiptap document backed by LiveText, under `_tiptap_docs`, next to the
+    // photos and videos attached to it, uploaded to that room as LiveFiles.
     Storage: {
       posts: LiveMap<string, LiveObject<PostData>>;
+      media?: LiveList<LiveFile>;
     };
   }
 }
