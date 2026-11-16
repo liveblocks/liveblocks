@@ -5,12 +5,9 @@ import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
 import { getInitialDocument, truncatePreview } from "@/lib/posts";
-import { cn } from "@/lib/utils";
-import { LinkCard } from "./link-card";
-import { findFirstUrl } from "./urls";
 
 const PREVIEW_SYNC_DELAY_MS = 400;
 
@@ -19,26 +16,22 @@ type PostEditorProps = {
   platform: Platform;
   preview: string;
   onPreviewChange: (preview: string) => void;
-  /** Shown under the text, before the link card: the post's media. */
-  attachments?: ReactNode;
-  /** Shown at the start of the footer, next to the character count. */
-  actions?: ReactNode;
+  /** The current plain text, for the character count and link card. */
+  onTextChange: (text: string) => void;
 };
 
 /**
  * The post body: a Tiptap editor whose document is stored as LiveText in the
  * post's room (`collaborationMode: "liveblocks"`), so everyone with the post
  * open edits the same caption with live carets. Plain text only, like the
- * networks it's written for: paragraphs and line breaks, no formatting. The
- * first link in the text gets a preview card under the post.
+ * networks it's written for: paragraphs and line breaks, no formatting.
  */
 export function PostEditor({
   postId,
   platform,
   preview,
   onPreviewChange,
-  attachments,
-  actions,
+  onTextChange,
 }: PostEditorProps) {
   const liveblocks = useLiveblocksExtension({
     collaborationMode: "liveblocks",
@@ -95,6 +88,13 @@ export function PostEditor({
     }),
   }) ?? { text: "", isReady: false };
 
+  const onTextChangeRef = useRef(onTextChange);
+  onTextChangeRef.current = onTextChange;
+  useEffect(() => {
+    // Nothing to report until the LiveText document has loaded.
+    onTextChangeRef.current(isReady ? text : "");
+  }, [text, isReady]);
+
   // Mirror a plain-text snippet of the body into the project room, debounced,
   // so the calendar and list cards can show it without joining this room.
   const onPreviewChangeRef = useRef(onPreviewChange);
@@ -117,36 +117,12 @@ export function PostEditor({
     return () => clearTimeout(timeout);
   }, [text, isReady]);
 
-  const maxLength = PLATFORM_INFO[platform].maxLength;
-  const length = text.length;
-  const overLimit = length > maxLength;
-  const url = isReady ? findFirstUrl(text) : null;
-
   return (
-    <div className="flex flex-col gap-3">
-      <div
-        className="composer-editor cursor-text pt-1"
-        onClick={() => editor?.commands.focus()}
-      >
-        <EditorContent editor={editor} />
-      </div>
-
-      {attachments}
-
-      {url ? <LinkCard url={url} /> : null}
-
-      <div className="-mx-2 flex items-center justify-between gap-3 border-t border-neutral-950/5 px-2 pt-2">
-        <div className="flex items-center gap-1">{actions}</div>
-        <span
-          className={cn(
-            "text-xs text-neutral-500 tabular-nums",
-            overLimit ? "font-medium text-red-600" : undefined
-          )}
-          aria-live="polite"
-        >
-          {length.toLocaleString()} / {maxLength.toLocaleString()}
-        </span>
-      </div>
+    <div
+      className="composer-editor cursor-text pt-1"
+      onClick={() => editor?.commands.focus()}
+    >
+      <EditorContent editor={editor} />
     </div>
   );
 }

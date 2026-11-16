@@ -1,4 +1,10 @@
-import { LiveMap, LiveObject } from "@liveblocks/client";
+import {
+  LiveList,
+  LiveMap,
+  LiveObject,
+  type LiveFile,
+  type LiveFileData,
+} from "@liveblocks/client";
 import { addDays, startOfMonth, toDateKey, type DateKey } from "./dates";
 import type { Platform } from "./platforms";
 
@@ -38,10 +44,10 @@ export const STATUS_INFO: Record<
 };
 
 /**
- * Metadata for a post, stored in the project room. The post body itself is a
- * Tiptap document backed by LiveText in the post's own room.
+ * A post's plain fields, stored in the project room. The post body itself is
+ * a Tiptap document backed by LiveText in the post's own room.
  */
-export type PostData = {
+export type PostFields = {
   id: string;
   platform: Platform;
   // Local day the post is planned for, as `YYYY-MM-DD`.
@@ -54,6 +60,15 @@ export type PostData = {
   preview: string;
   createdAt: number;
 };
+
+/**
+ * The post as stored: its fields plus the photos and videos attached to it,
+ * uploaded to the project room as LiveFiles. Older posts have no `media`.
+ */
+export type PostLson = PostFields & { media?: LiveList<LiveFile> };
+
+/** The post as read with `useStorage`: plain data, LiveFiles as their data. */
+export type PostData = PostFields & { media?: readonly LiveFileData[] };
 
 type TiptapDoc = {
   type: "doc";
@@ -244,7 +259,7 @@ export function createInitialStorage(): Liveblocks["Storage"] {
     posts: new LiveMap(
       SEED_POSTS.map((post, index) => [
         post.id,
-        new LiveObject<PostData>({
+        new LiveObject<PostLson>({
           id: post.id,
           platform: post.platform,
           date: toDateKey(addDays(monthStart, Math.min(post.day, lastDay) - 1)),
@@ -252,6 +267,7 @@ export function createInitialStorage(): Liveblocks["Storage"] {
           status: post.status,
           preview: post.paragraphs.join(" "),
           createdAt: Date.now() + index,
+          media: new LiveList([]),
         }),
       ])
     ),

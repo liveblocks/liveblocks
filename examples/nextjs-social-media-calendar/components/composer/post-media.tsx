@@ -4,7 +4,6 @@ import { LiveList, type LiveFile, type LiveFileData } from "@liveblocks/client";
 import {
   useFileUrl,
   useMutation,
-  useStorage,
   useUploadFile,
 } from "@liveblocks/react/suspense";
 import { ImagePlusIcon, Loader2Icon, XIcon } from "lucide-react";
@@ -38,38 +37,50 @@ type PendingUpload = {
 };
 
 /**
- * The photos and videos attached to a post. Files are uploaded to the post's
- * room with `useUploadFile` and stored in Storage as `LiveFile`s in a
- * `LiveList`, so everyone with the post open sees them appear; `useFileUrl`
- * gets a URL to show each one.
+ * The photos and videos attached to a post. Used inside the project room:
+ * files are uploaded to it with `useUploadFile` and stored on the post as
+ * `LiveFile`s in a `LiveList`, so everyone sees them appear, on the composer
+ * and on the calendar card alike; `useFileUrl` gets a URL to show each one.
  */
-export function usePostMedia() {
-  const media = useStorage((root) => root.media ?? NO_MEDIA);
+export function usePostMedia(
+  postId: string,
+  media: readonly LiveFileData[] = NO_MEDIA
+) {
   const uploadFile = useUploadFile();
   const [pending, setPending] = useState<PendingUpload[]>([]);
 
-  const addMedia = useMutation(({ storage }, file: LiveFile) => {
-    // Post rooms created before media existed have no list yet.
-    let list = storage.get("media");
-    if (!list) {
-      list = new LiveList<LiveFile>([]);
-      storage.set("media", list);
-    }
-    if (list.length < MAX_MEDIA) {
-      list.push(file);
-    }
-  }, []);
+  const addMedia = useMutation(
+    ({ storage }, file: LiveFile) => {
+      const post = storage.get("posts").get(postId);
+      if (!post) {
+        return;
+      }
+      // Posts created before media existed have no list yet.
+      let list = post.get("media");
+      if (!list) {
+        list = new LiveList<LiveFile>([]);
+        post.set("media", list);
+      }
+      if (list.length < MAX_MEDIA) {
+        list.push(file);
+      }
+    },
+    [postId]
+  );
 
-  const removeMedia = useMutation(({ storage }, fileId: string) => {
-    const list = storage.get("media");
-    if (!list) {
-      return;
-    }
-    const index = list.findIndex((file) => file.id === fileId);
-    if (index !== -1) {
-      list.delete(index);
-    }
-  }, []);
+  const removeMedia = useMutation(
+    ({ storage }, fileId: string) => {
+      const list = storage.get("posts").get(postId)?.get("media");
+      if (!list) {
+        return;
+      }
+      const index = list.findIndex((file) => file.id === fileId);
+      if (index !== -1) {
+        list.delete(index);
+      }
+    },
+    [postId]
+  );
 
   const dismissPending = useCallback((key: string) => {
     setPending((current) => {

@@ -1,6 +1,8 @@
 "use client";
 
-import { GripVerticalIcon } from "lucide-react";
+import type { LiveFileData } from "@liveblocks/client";
+import { useFileUrl } from "@liveblocks/react";
+import { GripVerticalIcon, PlayIcon } from "lucide-react";
 import Link from "next/link";
 import { EditingAvatars } from "@/components/editing-avatars";
 import {
@@ -45,7 +47,8 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
             {formatTime(post.time)}
           </span>
         </span>
-        <span className="line-clamp-2 text-xs leading-snug text-neutral-800">
+        {post.media?.[0] ? <MediaThumbnail file={post.media[0]} /> : null}
+        <span className="truncate text-xs leading-snug text-neutral-800">
           {post.preview || (
             <span className="text-neutral-400 italic">Empty post</span>
           )}
@@ -70,5 +73,41 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
         </TooltipContent>
       </Tooltip>
     </div>
+  );
+}
+
+/**
+ * The post's first photo or video, from the LiveFile stored on the post.
+ * Non-suspense `useFileUrl`, so the card renders (and can be dragged) while
+ * the URL loads.
+ */
+function MediaThumbnail({ file }: { file: LiveFileData }) {
+  const { url } = useFileUrl(file);
+  const isVideo = file.mimeType.startsWith("video/");
+
+  return (
+    <span className="relative block aspect-[4/3] w-full overflow-hidden rounded bg-neutral-100">
+      {url ? (
+        isVideo ? (
+          <video
+            src={url}
+            muted
+            playsInline
+            preload="metadata"
+            className="size-full object-cover"
+            aria-label={file.name}
+          />
+        ) : (
+          // Presigned URLs from Liveblocks: plain <img>, not next/image.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="" className="size-full object-cover" />
+        )
+      ) : null}
+      {isVideo ? (
+        <span className="absolute right-1 bottom-1 flex size-5 items-center justify-center rounded-full bg-neutral-900/70 text-white">
+          <PlayIcon className="size-2.5 fill-current" aria-hidden />
+        </span>
+      ) : null}
+    </span>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { LiveList, LiveMap } from "@liveblocks/client";
+import { LiveMap } from "@liveblocks/client";
 import {
   ClientSideSuspense,
   RoomProvider,
@@ -8,12 +8,12 @@ import {
   useStorage,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
-import { AvatarStack } from "@liveblocks/react-ui";
 import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import { BrandAvatar, PROJECT_NAME } from "@/components/brand";
+import { LinkCard } from "@/components/composer/link-card";
 import { PostActions } from "@/components/composer/post-actions";
 import { PostEditor } from "@/components/composer/post-editor";
 import {
@@ -21,6 +21,8 @@ import {
   PostMedia,
   usePostMedia,
 } from "@/components/composer/post-media";
+import { findFirstUrl } from "@/components/composer/urls";
+import { EditingAvatars } from "@/components/editing-avatars";
 import { HelpButton } from "@/components/help-button";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
@@ -52,11 +54,12 @@ import {
   POST_STATUSES,
   STATUS_INFO,
   type PostData,
+  type PostFields,
   type PostStatus,
 } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 
-type PostUpdate = Partial<Omit<PostData, "id" | "createdAt">>;
+type PostUpdate = Partial<Omit<PostFields, "id" | "createdAt">>;
 
 /** Date and time read as part of the post's byline until focused. */
 const META_INPUT_CLASS =
@@ -86,13 +89,13 @@ function isPostStatus(value: string): value is PostStatus {
 }
 
 /**
- * Rendered inside the project room: reads and updates the post's metadata,
- * then enters the post room for the body.
+ * Rendered inside the project room: reads and updates the post's metadata
+ * and media, and renders the composer. Only the text body enters the post's
+ * own room.
  */
 function PostShell({ postId }: { postId: string }) {
   const router = useRouter();
   const calendarHref = useExampleHref("/");
-  const postRoomId = useExampleRoomId(postId);
   const updateMyPresence = useUpdateMyPresence();
 
   const post = useStorage((root) => root.posts[postId] ?? null);
@@ -143,33 +146,47 @@ function PostShell({ postId }: { postId: string }) {
   }
 
   return (
+    <PostComposer
+      post={post}
+      calendarHref={calendarHref}
+      onUpdate={updatePost}
+      onDelete={() => {
+        deletePost();
+        router.push(calendarHref);
+      }}
+    />
+  );
+}
+
+/**
+ * The body of the post, in the post's own room: a Tiptap document backed by
+ * LiveText under `_tiptap_docs`. The `posts` map lives in the project room.
+ */
+function PostBody(props: ComponentProps<typeof PostEditor>) {
+  const postRoomId = useExampleRoomId(props.postId);
+  return (
     <RoomProvider
       id={postRoomId}
-      initialPresence={{ editingPostId: postId }}
-      // Post rooms store the Tiptap document (`_tiptap_docs`) and the post's
-      // media; the `posts` map lives in the project room.
-      initialStorage={{ posts: new LiveMap(), media: new LiveList([]) }}
+      initialPresence={{ editingPostId: props.postId }}
+      initialStorage={{ posts: new LiveMap() }}
     >
-      <ClientSideSuspense fallback={<Loading />}>
-        <PostComposer
-          post={post}
-          calendarHref={calendarHref}
-          onUpdate={updatePost}
-          onDelete={() => {
-            deletePost();
-            router.push(calendarHref);
-          }}
-        />
+      <ClientSideSuspense
+        fallback={
+          <div className="composer-editor pt-1">
+            <div className="h-6 w-2/3 animate-pulse rounded bg-neutral-100" />
+          </div>
+        }
+      >
+        <PostEditor {...props} />
       </ClientSideSuspense>
     </RoomProvider>
   );
 }
 
 /**
- * Rendered inside the post room: a header with who's editing this post, and
- * the post itself laid out the way it will appear once published, with the
- * LiveText-backed Tiptap composer as its body, its LiveFile media under it,
- * and a preview card for the first link.
+ * A header with who's editing this post, and the post itself laid out the way
+ * it will appear once published: the LiveText-backed body, its LiveFile media
+ * under it, and a preview card for the first link.
  */
 function PostComposer({
   post,
@@ -183,7 +200,11 @@ function PostComposer({
   onDelete: () => void;
 }) {
   const platform = PLATFORM_INFO[post.platform];
-  const media = usePostMedia();
+  const media = usePostMedia(post.id, post.media);
+  const [text, setText] = useState("");
+  const url = findFirstUrl(text);
+  const length = text.length;
+  const overLimit = length > platform.maxLength;
 
   return (
     <div className="flex h-dvh w-full flex-col gap-2.5 overflow-hidden bg-neutral-50 p-2.5">
@@ -211,7 +232,7 @@ function PostComposer({
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          <AvatarStack size={28} />
+          <EditingAvatars postId={post.id} size={28} max={5} />
 
           <Select
             value={post.status}
@@ -334,16 +355,33 @@ function PostComposer({
               </Select>
             </div>
 
-            <PostEditor
-              postId={post.id}
-              platform={post.platform}
-              preview={post.preview}
-              onPreviewChange={(preview) => onUpdate({ preview })}
-              attachments={<PostMedia {...media} />}
-              actions={
+            <div className="flex flex-col gap-3">
+              <PostBody
+                postId={post.id}
+                platform={post.platform}
+                preview={post.preview}
+                onPreviewChange={(preview) => onUpdate({ preview })}
+                onTextChange={setText}
+              />
+
+              <PostMedia {...media} />
+
+              {url ? <LinkCard url={url} /> : null}
+
+              <div className="-mx-2 flex items-center justify-between gap-3 border-t border-neutral-950/5 px-2 pt-2">
                 <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
-              }
-            />
+                <span
+                  className={cn(
+                    "text-xs text-neutral-500 tabular-nums",
+                    overLimit ? "font-medium text-red-600" : undefined
+                  )}
+                  aria-live="polite"
+                >
+                  {length.toLocaleString()} /{" "}
+                  {platform.maxLength.toLocaleString()}
+                </span>
+              </div>
+            </div>
 
             <PostActions platform={post.platform} />
           </div>
