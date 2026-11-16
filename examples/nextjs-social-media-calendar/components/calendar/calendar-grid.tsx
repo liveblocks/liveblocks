@@ -164,7 +164,7 @@ function DayCell({
     >
       {(state) => (
         <>
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center px-1">
             <span
               className={cn(
                 "flex size-6 items-center justify-center rounded-full text-xs font-medium tabular-nums",
@@ -177,28 +177,11 @@ function DayCell({
             >
               {date.getDate()}
             </span>
-            <NewPostMenu
-              align="start"
-              label={`New post on ${date.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}`}
-              onSelect={(platform) => onCreatePost(dateKey, platform)}
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-neutral-400 opacity-0 transition-opacity group-hover/day:opacity-100 focus-visible:opacity-100 data-open:opacity-100"
-                  aria-label={`Add a post on ${formatDayHeading(date)}`}
-                >
-                  <PlusIcon />
-                </Button>
-              }
-            />
           </div>
 
           {/* Rendered from the board's state, so a post being dragged shows up
-          in the day it hovers before it's dropped. */}
+          in the day it hovers before it's dropped. The empty space left in
+          the day is a slot that offers a new post when hovered. */}
           <div className="-m-0.5 flex min-h-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto p-0.5">
             {state.posts.flatMap((id) => {
               const post = postsById.get(id);
@@ -208,6 +191,24 @@ function DayCell({
                 []
               );
             })}
+            <NewPostMenu
+              align="start"
+              label={`New post on ${date.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}`}
+              onSelect={(platform) => onCreatePost(dateKey, platform)}
+              trigger={
+                <button
+                  type="button"
+                  className="flex min-h-9 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-neutral-300 text-xs font-medium text-neutral-500 opacity-0 transition-opacity outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring data-open:opacity-100"
+                  aria-label={`Add a post on ${formatDayHeading(date)}`}
+                >
+                  <PlusIcon className="size-3.5" aria-hidden />
+                  New post
+                </button>
+              }
+            />
           </div>
         </>
       )}
