@@ -83,13 +83,19 @@
   cursor: grabbing;
 }
 
-/* Post composer (Tiptap). Preflight resets typography, so the editor needs
-   its own text styles. */
+/* Post composer (Tiptap). The formatting tools sit in the post's footer, so
+   they take its background. */
+.composer-toolbar.lb-tiptap-toolbar {
+  background: transparent;
+  padding: 0;
+}
+
+/* Preflight resets typography, so the editor needs its own text styles. */
 .composer-editor .tiptap {
   outline: none;
-  min-height: 160px;
-  font-size: 15px;
-  line-height: 1.6;
+  min-height: 120px;
+  font-size: 17px;
+  line-height: 1.5;
   color: var(--foreground);
   white-space: pre-wrap;
   word-break: break-word;

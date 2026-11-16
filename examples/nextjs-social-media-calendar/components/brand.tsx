@@ -16,3 +16,18 @@ export function Brand({ className }: { className?: string }) {
     </div>
   );
 }
+
+/** The project's avatar, as it would appear next to one of its posts. */
+export function BrandAvatar({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-semibold text-white",
+        className
+      )}
+      aria-hidden
+    >
+      {PROJECT_NAME.charAt(0)}
+    </span>
+  );
+}

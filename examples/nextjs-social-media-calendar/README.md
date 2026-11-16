@@ -24,13 +24,14 @@ This example shows how to build a collaborative social media content calendar
 with [Liveblocks Storage](https://liveblocks.io/docs/products/sync/storage),
 [LiveText](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveText),
 [Tiptap](https://tiptap.dev/), and [Next.js](https://nextjs.org/). Plan posts on
-a shared monthly calendar or list view, drag them between days to reschedule,
-and click any post to open a realtime composer where the whole team can write
-the caption together. Avatars show who's in the project and who's editing each
-post. The interface is built with [ui-sdk](https://ui-sdk.dev): its unstyled
-components (menus, selects, tabs, dialogs, date and time inputs) styled with
-Tailwind, plus a small custom primitive on `@ui-sdk/core`'s `createTransfer` for
-dragging posts between days with the pointer or the keyboard.
+a shared calendar (by week or month) or list view, drag them between days to
+reschedule, and click any post to open a realtime composer, laid out like the
+post itself, where the whole team can write the caption together. Avatars show
+who's in the project and who's editing each post. The interface is built with
+[ui-sdk](https://ui-sdk.dev): its unstyled components (menus, selects, tabs,
+dialogs, date and time inputs) styled with Tailwind, plus a small custom
+primitive on `@ui-sdk/core`'s `createTransfer` for dragging posts between days
+with the pointer or the keyboard.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/social-media-calendar.png" width="536" alt="Social Media Calendar" />
 

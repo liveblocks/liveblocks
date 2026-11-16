@@ -17,20 +17,20 @@ type PostEditorProps = {
   platform: Platform;
   preview: string;
   onPreviewChange: (preview: string) => void;
-  onTextChange: (text: string) => void;
 };
 
 /**
  * The post body: a Tiptap editor whose document is stored as LiveText in the
  * post's room (`collaborationMode: "liveblocks"`), so everyone with the post
- * open edits the same caption with live carets.
+ * open edits the same caption with live carets. Laid out like the body of a
+ * post: the text, then a row with the formatting tools and the character
+ * count.
  */
 export function PostEditor({
   postId,
   platform,
   preview,
   onPreviewChange,
-  onTextChange,
 }: PostEditorProps) {
   const liveblocks = useLiveblocksExtension({
     collaborationMode: "liveblocks",
@@ -77,12 +77,6 @@ export function PostEditor({
     }),
   }) ?? { text: "", isReady: false };
 
-  const onTextChangeRef = useRef(onTextChange);
-  onTextChangeRef.current = onTextChange;
-  useEffect(() => {
-    onTextChangeRef.current(text);
-  }, [text]);
-
   // Mirror a plain-text snippet of the body into the project room, debounced,
   // so the calendar and list cards can show it without joining this room.
   const onPreviewChangeRef = useRef(onPreviewChange);
@@ -110,36 +104,30 @@ export function PostEditor({
   const overLimit = length > maxLength;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-neutral-950/5">
-        <Toolbar editor={editor} className="w-full">
+    <div className="flex flex-col">
+      <div
+        className="composer-editor cursor-text pt-1 pb-3"
+        onClick={() => editor?.commands.focus()}
+      >
+        <EditorContent editor={editor} />
+      </div>
+
+      <div className="-mx-2 flex items-center justify-between gap-3 border-t border-neutral-950/5 pt-2">
+        <Toolbar editor={editor} className="composer-toolbar">
           <Toolbar.SectionHistory />
           <Toolbar.Separator />
           <Toolbar.SectionInline />
         </Toolbar>
-      </div>
-
-      <div
-        className="composer-editor min-h-0 flex-1 cursor-text overflow-y-auto px-5 py-4"
-        onClick={() => editor?.commands.focus()}
-      >
-        <EditorContent editor={editor} className="h-full" />
-      </div>
-
-      <footer className="flex items-center justify-between border-t border-neutral-950/5 px-4 py-2 text-xs text-neutral-500">
-        <span>
-          Changes save automatically and sync to everyone in realtime.
-        </span>
         <span
           className={cn(
-            "tabular-nums",
+            "mr-2 text-xs tabular-nums text-neutral-500",
             overLimit ? "font-medium text-red-600" : undefined
           )}
           aria-live="polite"
         >
           {length.toLocaleString()} / {maxLength.toLocaleString()}
         </span>
-      </footer>
+      </div>
     </div>
   );
 }

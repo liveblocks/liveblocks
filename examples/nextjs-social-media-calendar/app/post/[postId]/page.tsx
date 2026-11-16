@@ -12,9 +12,10 @@ import { AvatarStack } from "@liveblocks/react-ui";
 import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { BrandAvatar, PROJECT_NAME } from "@/components/brand";
+import { PostActions } from "@/components/composer/post-actions";
 import { PostEditor } from "@/components/composer/post-editor";
-import { PostPreview } from "@/components/composer/post-preview";
 import { HelpButton } from "@/components/help-button";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,10 @@ import {
 import { cn } from "@/lib/utils";
 
 type PostUpdate = Partial<Omit<PostData, "id" | "createdAt">>;
+
+/** Date and time read as part of the post's byline until focused. */
+const META_INPUT_CLASS =
+  "h-6 border-transparent bg-transparent px-0.5 text-[15px] text-neutral-500 shadow-none hover:text-neutral-900 focus-within:bg-neutral-100";
 
 export default function PostPage() {
   const { postId } = useParams<{ postId: string }>();
@@ -156,8 +161,9 @@ function PostShell({ postId }: { postId: string }) {
 }
 
 /**
- * Rendered inside the post room: header with who's editing this post, the
- * LiveText-backed Tiptap composer, and a live preview.
+ * Rendered inside the post room: a header with who's editing this post, and
+ * the post itself laid out the way it will appear once published, with the
+ * LiveText-backed Tiptap composer as its body.
  */
 function PostComposer({
   post,
@@ -170,7 +176,6 @@ function PostComposer({
   onUpdate: (update: PostUpdate) => void;
   onDelete: () => void;
 }) {
-  const [text, setText] = useState("");
   const platform = PLATFORM_INFO[post.platform];
 
   return (
@@ -254,76 +259,88 @@ function PostComposer({
         </div>
       </header>
 
-      <main className="grid min-h-0 flex-1 grid-cols-1 gap-2.5 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="flex min-h-0 flex-col overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
-          <div className="flex flex-wrap items-center gap-2 border-b border-neutral-950/5 px-3 py-2">
-            <Select
-              value={post.platform}
-              onValueChange={(value) => {
-                if (isPlatform(value)) {
-                  onUpdate({ platform: value });
-                }
-              }}
-            >
-              <SelectTrigger aria-label="Platform">
-                <SelectValueIcon />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PLATFORMS.map((item) => (
-                  <SelectItem key={item} value={item}>
-                    <SelectItemIcon>
-                      <PlatformBadge platform={item} size={18} />
-                    </SelectItemIcon>
-                    {PLATFORM_INFO[item].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <main className="min-h-0 flex-1 overflow-y-auto">
+        <article
+          className="mx-auto my-4 flex w-full max-w-[600px] gap-3 rounded-xl bg-white p-4 shadow ring-1 ring-neutral-950/5 sm:my-8"
+          aria-label={`${platform.label} post`}
+        >
+          <BrandAvatar />
 
-            {/* Segmented inputs: the value only changes once every segment
-                holds something, so a half-typed date never reaches Storage. */}
-            <DateInput
-              value={post.date}
-              onValueChange={(date) => {
-                if (date) {
-                  onUpdate({ date });
-                }
-              }}
-              aria-label="Date"
-            />
-            <TimeInput
-              value={post.time}
-              onValueChange={(time) => {
-                if (time) {
-                  onUpdate({ time });
-                }
-              }}
-              aria-label="Time"
-            />
-          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-1 text-[15px] leading-6">
+              <span className="font-bold text-neutral-900">{PROJECT_NAME}</span>
+              <span className="text-neutral-500">{platform.handle}</span>
+              <span className="text-neutral-400" aria-hidden>
+                ·
+              </span>
+              {/* Segmented inputs: the value only changes once every segment
+                  holds something, so a half-typed date never reaches Storage. */}
+              <TimeInput
+                value={post.time}
+                onValueChange={(time) => {
+                  if (time) {
+                    onUpdate({ time });
+                  }
+                }}
+                aria-label="Time"
+                className={META_INPUT_CLASS}
+              />
+              <span className="text-neutral-400" aria-hidden>
+                ·
+              </span>
+              <DateInput
+                value={post.date}
+                onValueChange={(date) => {
+                  if (date) {
+                    onUpdate({ date });
+                  }
+                }}
+                aria-label="Date"
+                className={META_INPUT_CLASS}
+              />
 
-          <div className="min-h-0 flex-1">
+              <Select
+                value={post.platform}
+                onValueChange={(value) => {
+                  if (isPlatform(value)) {
+                    onUpdate({ platform: value });
+                  }
+                }}
+              >
+                <SelectTrigger
+                  aria-label="Platform"
+                  className="ml-auto h-7 border-transparent bg-transparent px-1.5 shadow-none"
+                >
+                  <SelectValueIcon />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {PLATFORMS.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      <SelectItemIcon>
+                        <PlatformBadge platform={item} size={18} />
+                      </SelectItemIcon>
+                      {PLATFORM_INFO[item].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <PostEditor
               postId={post.id}
               platform={post.platform}
               preview={post.preview}
               onPreviewChange={(preview) => onUpdate({ preview })}
-              onTextChange={setText}
             />
-          </div>
-        </section>
 
-        <aside className="hidden min-h-0 overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5 lg:flex">
-          <div className="w-full">
-            <PostPreview
-              platform={post.platform}
-              text={text}
-              date={post.date}
-              time={post.time}
-            />
+            <PostActions platform={post.platform} />
           </div>
-        </aside>
+        </article>
+
+        <p className="mb-4 text-center text-xs text-neutral-500">
+          Changes save automatically and sync to everyone in realtime.
+        </p>
       </main>
     </div>
   );
