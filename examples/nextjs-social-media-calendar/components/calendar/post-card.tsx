@@ -38,15 +38,12 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
           "data-moving:ring-2 data-moving:ring-primary/60 data-dragging:opacity-40"
         )}
       >
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center justify-between gap-1.5">
           <PlatformBadge platform={post.platform} size={20} />
-          <span className="text-[11px] font-medium text-neutral-500">
+          {/* Fades out on hover to make room for the move handle. */}
+          <span className="text-[11px] font-medium text-neutral-500 tabular-nums transition-opacity group-hover/card:opacity-0 group-has-data-moving/card:opacity-0 group-has-[[data-slot=post-board-handle]:focus-visible]/card:opacity-0">
             {formatTime(post.time)}
           </span>
-          <span
-            className={cn("mr-5 ml-auto size-2 rounded-full", status.dot)}
-            aria-hidden
-          />
         </span>
         <span className="line-clamp-2 text-xs leading-snug text-neutral-800">
           {post.preview || (
