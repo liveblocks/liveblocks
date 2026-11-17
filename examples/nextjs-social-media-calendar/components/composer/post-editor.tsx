@@ -182,7 +182,23 @@ export function PostEditor({
         className="composer-editor cursor-text"
         onClick={() => editor?.commands.focus()}
       >
-        <EditorContent editor={editor} />
+        {/* Until the LiveText document has loaded, pulsing lines stand in
+            for the text instead of the empty editor's placeholder. The
+            editor stays mounted (collapsed) so it's ready to show. */}
+        {isReady ? null : (
+          <div
+            className="flex min-h-[120px] flex-col gap-2 py-1"
+            aria-busy
+            aria-label="Loading post"
+          >
+            <div className="h-3.5 w-full animate-pulse rounded bg-neutral-100" />
+            <div className="h-3.5 w-[92%] animate-pulse rounded bg-neutral-100" />
+            <div className="h-3.5 w-[58%] animate-pulse rounded bg-neutral-100" />
+          </div>
+        )}
+        <div className={isReady ? undefined : "invisible h-0 overflow-hidden"}>
+          <EditorContent editor={editor} />
+        </div>
       </div>
       {/* No formatting here either: the floating toolbar only comments. */}
       <FloatingToolbar editor={editor}>
