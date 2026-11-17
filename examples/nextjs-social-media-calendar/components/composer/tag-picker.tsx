@@ -1,10 +1,9 @@
 "use client";
 
 import { shallow, useStorage } from "@liveblocks/react/suspense";
-import { CheckIcon, PlusIcon, TagIcon, XIcon } from "lucide-react";
+import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { TagChip } from "@/components/tag-chip";
-import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -80,16 +79,16 @@ export function TagPicker({ tags, onTagsChange }: TagPickerProps) {
       <Popover>
         <PopoverTrigger
           render={
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1 px-2 text-xs text-neutral-500"
+            // Shaped like a label chip, dashed and gray: the empty slot
+            // where the next label goes.
+            <button
+              type="button"
+              className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-dashed border-neutral-300 px-2 py-0.5 text-[13px] font-medium whitespace-nowrap text-neutral-500 transition-colors outline-none hover:border-neutral-400 hover:text-neutral-700 focus-visible:ring-2 focus-visible:ring-ring"
             />
           }
         >
-          <TagIcon className="size-3.5" />
-          {tags.length === 0 ? "Labels" : null}
-          <PlusIcon className="size-3" />
+          <PlusIcon className="size-3.5" />
+          Add label
         </PopoverTrigger>
         <PopoverContent align="start" className="w-64">
           <input
