@@ -5,7 +5,7 @@ import { ReactNode, Suspense } from "react";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Social Media Calendar - Liveblocks",
+  title: "Liveblocks",
 };
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-inter" });
