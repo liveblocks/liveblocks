@@ -62,13 +62,13 @@ export function TagPicker({ tags, onTagsChange }: TagPickerProps) {
     <div className="flex flex-wrap items-center gap-1.5">
       {tags.map((tag) => (
         <span key={tag} className="group/tag relative inline-flex">
-          <TagChip tag={tag} className="pr-5" />
+          <TagChip tag={tag} size="md" className="pr-6" />
           <button
             type="button"
             onClick={() => toggle(tag)}
             aria-label={`Remove label ${tag}`}
             className={cn(
-              "absolute top-1/2 right-1 flex size-3.5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full opacity-60 outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring",
+              "absolute top-1/2 right-1 flex size-4 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full opacity-60 outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring",
               tagColor(tag)
             )}
           >
@@ -121,7 +121,7 @@ export function TagPicker({ tags, onTagsChange }: TagPickerProps) {
                     aria-pressed={selected}
                     className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm outline-none hover:bg-neutral-100 focus-visible:bg-neutral-100"
                   >
-                    <TagChip tag={tag} />
+                    <TagChip tag={tag} size="md" />
                     {selected ? (
                       <CheckIcon className="ml-auto size-4 text-neutral-500" />
                     ) : null}
@@ -137,7 +137,7 @@ export function TagPicker({ tags, onTagsChange }: TagPickerProps) {
                   className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm outline-none hover:bg-neutral-100 focus-visible:bg-neutral-100"
                 >
                   <PlusIcon className="size-4 text-neutral-500" />
-                  Create <TagChip tag={typed} />
+                  Create <TagChip tag={typed} size="md" />
                 </button>
               </li>
             ) : null}

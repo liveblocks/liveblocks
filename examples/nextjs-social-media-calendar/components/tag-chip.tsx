@@ -8,14 +8,18 @@ export function TagChip({
   className,
 }: {
   tag: string;
-  size?: "xs" | "sm";
+  size?: "xs" | "sm" | "md";
   className?: string;
 }) {
   return (
     <span
       className={cn(
         "inline-flex max-w-full items-center truncate rounded-md border font-medium whitespace-nowrap",
-        size === "xs" ? "px-1.5 py-px text-[10px]" : "px-2 py-0.5 text-[11px]",
+        size === "xs"
+          ? "px-1.5 py-px text-[10px]"
+          : size === "md"
+            ? "px-2 py-0.5 text-[13px]"
+            : "px-2 py-0.5 text-[11px]",
         tagColor(tag),
         className
       )}
