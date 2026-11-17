@@ -200,7 +200,7 @@ export function CalendarApp() {
               <button
                 type="button"
                 onClick={() => setDate(new Date())}
-                className="cursor-pointer rounded-sm text-sm text-neutral-500 transition-colors outline-none hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-ring"
+                className="cursor-pointer rounded-sm text-xs font-medium text-neutral-500 transition-colors outline-none hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Today
               </button>
