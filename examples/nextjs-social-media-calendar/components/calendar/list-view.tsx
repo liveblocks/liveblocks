@@ -153,7 +153,7 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
               <span className="text-neutral-400 italic">Empty post</span>
             )}
           </p>
-          <TagSummary tags={post.tags} />
+          <TagSummary tags={post.tags} className="self-start" />
         </div>
         <PlatformBadges
           platforms={post.platforms}
