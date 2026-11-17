@@ -383,7 +383,7 @@ function PostComposer({
             media={<PostMedia {...media} />}
             link={url ? <LinkCard url={url} /> : null}
             footer={
-              <div className="flex items-center justify-end gap-1">
+              <div className="-mt-2 flex items-center justify-end gap-1">
                 <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
                 <CharacterRing
                   length={length}
