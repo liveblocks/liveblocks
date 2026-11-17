@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { normalizeTag, tagColor } from "@/lib/tags";
+import { normalizeTag, SUGGESTED_TAGS, tagColor } from "@/lib/tags";
 import { cn } from "@/lib/utils";
 
 type TagPickerProps = {
@@ -26,11 +26,15 @@ type TagPickerProps = {
 export function TagPicker({ tags, onTagsChange }: TagPickerProps) {
   const [query, setQuery] = useState("");
 
-  // Every label in use across the project, so people reuse the same names.
+  // The suggested labels plus every one in use across the project, so people
+  // reuse the same names.
   const projectTags = useStorage(
     (root) =>
       Array.from(
-        new Set(Object.values(root.posts).flatMap((post) => post.tags ?? []))
+        new Set([
+          ...SUGGESTED_TAGS,
+          ...Object.values(root.posts).flatMap((post) => post.tags ?? []),
+        ])
       ).sort((a, b) => a.localeCompare(b)),
     shallow
   );

@@ -130,7 +130,7 @@ const SEED_POSTS: SeedPost[] = [
   {
     id: "post-livetext",
     platforms: ["x", "threads", "mastodon"],
-    tags: ["Launch", "Engineering"],
+    tags: ["Launch", "Guide"],
     day: 6,
     time: "10:30",
     paragraphs: [
@@ -142,7 +142,7 @@ const SEED_POSTS: SeedPost[] = [
   {
     id: "post-livefile",
     platforms: ["linkedin", "x"],
-    tags: ["Product"],
+    tags: ["Update", "Example"],
     day: 11,
     time: "14:00",
     paragraphs: [
@@ -154,7 +154,7 @@ const SEED_POSTS: SeedPost[] = [
   {
     id: "post-private-threads",
     platforms: ["linkedin", "threads", "bluesky"],
-    tags: ["Product", "AI"],
+    tags: ["Update"],
     day: 17,
     time: "16:00",
     paragraphs: [
@@ -166,7 +166,7 @@ const SEED_POSTS: SeedPost[] = [
   {
     id: "post-whats-new-october",
     platforms: ["x", "threads", "bluesky", "mastodon", "linkedin"],
-    tags: ["Monthly"],
+    tags: ["Changelog"],
     day: 24,
     time: "09:00",
     paragraphs: [

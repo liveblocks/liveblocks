@@ -1,3 +1,12 @@
+/** Labels always on offer, before anyone has made their own. */
+export const SUGGESTED_TAGS = [
+  "Launch",
+  "Example",
+  "Guide",
+  "Update",
+  "Changelog",
+] as const;
+
 /** Trims and tidies a label typed by someone; empty when nothing's left. */
 export function normalizeTag(input: string) {
   return input.trim().replace(/\s+/g, " ").slice(0, 24);

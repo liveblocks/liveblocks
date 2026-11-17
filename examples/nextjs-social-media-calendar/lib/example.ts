@@ -11,7 +11,7 @@ import { getRandomUser, getUsers } from "@/app/database";
 // The version suffix starts a fresh set of rooms whenever the post shape or
 // the seeded posts change (seeds only apply when a room is first created).
 export const BASE_ROOM_ID =
-  "liveblocks:examples:nextjs-social-media-calendar-v3";
+  "liveblocks:examples:nextjs-social-media-calendar-v4";
 
 let cachedUserId: string | null = null;
 
