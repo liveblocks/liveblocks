@@ -1,7 +1,7 @@
 import { tagColor } from "@/lib/tags";
 import { cn } from "@/lib/utils";
 
-/** A label as shown on a post: a small colored pill. */
+/** A label as shown on a post: a small tinted, bordered chip. */
 export function TagChip({
   tag,
   size = "sm",
@@ -14,7 +14,7 @@ export function TagChip({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full items-center truncate rounded-full font-medium whitespace-nowrap",
+        "inline-flex max-w-full items-center truncate rounded-md border font-medium whitespace-nowrap",
         size === "xs" ? "px-1.5 py-px text-[10px]" : "px-2 py-0.5 text-[11px]",
         tagColor(tag),
         className

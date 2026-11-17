@@ -3,15 +3,16 @@ export function normalizeTag(input: string) {
   return input.trim().replace(/\s+/g, " ").slice(0, 24);
 }
 
+// A light tint with a border and text in the same hue.
 const TAG_COLORS = [
-  "bg-violet-100 text-violet-800",
-  "bg-sky-100 text-sky-800",
-  "bg-emerald-100 text-emerald-800",
-  "bg-amber-100 text-amber-800",
-  "bg-rose-100 text-rose-800",
-  "bg-teal-100 text-teal-800",
-  "bg-orange-100 text-orange-800",
-  "bg-fuchsia-100 text-fuchsia-800",
+  "border-indigo-300 bg-indigo-50 text-indigo-600",
+  "border-sky-300 bg-sky-50 text-sky-700",
+  "border-emerald-300 bg-emerald-50 text-emerald-700",
+  "border-amber-300 bg-amber-50 text-amber-700",
+  "border-rose-300 bg-rose-50 text-rose-700",
+  "border-teal-300 bg-teal-50 text-teal-700",
+  "border-orange-300 bg-orange-50 text-orange-700",
+  "border-fuchsia-300 bg-fuchsia-50 text-fuchsia-700",
 ] as const;
 
 /**
