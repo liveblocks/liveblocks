@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const SIZE = 16;
-const STROKE = 1.5;
+const SIZE = 14;
+const STROKE = 1.75;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -45,7 +45,7 @@ export function CharacterRing({
       <TooltipTrigger
         render={
           <span
-            className="flex size-7 items-center justify-center"
+            className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-neutral-100"
             role="status"
             aria-live="polite"
             aria-label={description}
