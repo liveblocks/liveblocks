@@ -173,9 +173,10 @@ function DraftPlatformsDialog({
             const last = checked && platforms.length === 1;
             const id = `draft-platform-${platform}`;
             return (
-              <li key={platform} className="flex items-center gap-4 py-3">
+              <li key={platform} className="flex items-center gap-3 py-2.5">
                 <Switch
                   id={id}
+                  size="sm"
                   checked={checked}
                   disabled={last}
                   aria-label={`Publish to ${info.label}`}
@@ -194,10 +195,11 @@ function DraftPlatformsDialog({
                   className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
                 >
                   <span className="relative shrink-0">
-                    <BrandAvatar className="size-10" />
+                    <BrandAvatar className="size-8 text-xs" />
                     <PlatformBadge
                       platform={platform}
-                      size={18}
+                      size={16}
+                      variant="solid"
                       className="absolute -right-1 -bottom-1 ring-2 ring-white"
                       style={{ borderRadius: 9999 }}
                     />

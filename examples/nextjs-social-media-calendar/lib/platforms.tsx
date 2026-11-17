@@ -205,20 +205,25 @@ export function PlatformBadges({
 
 /**
  * A small rounded badge with the platform's brand icon, used on calendar
- * cards, list rows, and the composer header.
+ * cards, list rows, and the composer header. `soft` is the icon in the brand
+ * color on a tinted background; `solid` is a white icon on the brand color,
+ * the way networks badge an account's avatar.
  */
 export function PlatformBadge({
   platform,
   size = 24,
+  variant = "soft",
   className,
   style,
 }: {
   platform: Platform;
   size?: number;
+  variant?: "soft" | "solid";
   className?: string;
   style?: CSSProperties;
 }) {
   const info = PLATFORM_INFO[platform];
+  const solid = variant === "solid";
   return (
     <span
       className={className}
@@ -230,8 +235,8 @@ export function PlatformBadge({
         width: size,
         height: size,
         borderRadius: size / 3,
-        background: info.background,
-        color: info.color,
+        background: solid ? info.color : info.background,
+        color: solid ? "#fff" : info.color,
         flexShrink: 0,
         ...style,
       }}
