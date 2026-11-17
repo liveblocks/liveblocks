@@ -1,7 +1,6 @@
 "use client";
 
-import { EllipsisIcon, XIcon } from "lucide-react";
-import { useState } from "react";
+import { XIcon } from "lucide-react";
 import { BrandAvatar, PROJECT_NAME } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,21 +38,25 @@ type PlatformPickerProps = {
   preview: Platform;
   onPreviewChange: (platform: Platform) => void;
   onPlatformsChange: (platforms: Platform[]) => void;
+  /** Whether the "Draft platforms" dialog is open; the composer owns it. */
+  dialogOpen: boolean;
+  onDialogOpenChange: (open: boolean) => void;
 };
 
 /**
  * Top left of the composer: one segment per network the post goes to, which
  * switches the preview to look like that network. Clicking the network
- * that's already shown, or the ellipsis, opens the dialog that chooses which
- * networks the draft is published to.
+ * that's already shown opens the dialog that chooses which networks the
+ * draft is published to (also reachable from the composer's "…" menu).
  */
 export function PlatformPicker({
   platforms,
   preview,
   onPreviewChange,
   onPlatformsChange,
+  dialogOpen,
+  onDialogOpenChange,
 }: PlatformPickerProps) {
-  const [open, setOpen] = useState(false);
   const sorted = sortPlatforms(platforms);
 
   return (
@@ -77,7 +80,7 @@ export function PlatformPicker({
                   className="px-2.5 data-checked:text-neutral-900"
                   onClick={() => {
                     if (platform === preview) {
-                      setOpen(true);
+                      onDialogOpenChange(true);
                     }
                   }}
                 />
@@ -99,26 +102,9 @@ export function PlatformPicker({
         ))}
       </SegmentedControl>
 
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-neutral-500"
-              aria-label="Choose platforms"
-              onClick={() => setOpen(true)}
-            />
-          }
-        >
-          <EllipsisIcon />
-        </TooltipTrigger>
-        <TooltipContent>Choose platforms</TooltipContent>
-      </Tooltip>
-
       <DraftPlatformsDialog
-        open={open}
-        onOpenChange={setOpen}
+        open={dialogOpen}
+        onOpenChange={onDialogOpenChange}
         platforms={sorted}
         onPlatformsChange={onPlatformsChange}
       />

@@ -9,7 +9,13 @@ import {
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { LiveblocksUiConfig } from "@liveblocks/react-ui";
-import { Trash2Icon, XIcon } from "lucide-react";
+import {
+  CircleHelpIcon,
+  EllipsisIcon,
+  Share2Icon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentProps } from "react";
 import { CharacterRing } from "@/components/composer/character-ring";
@@ -27,8 +33,16 @@ import {
 import { findLastUrl } from "@/lib/urls";
 import { cn } from "@/lib/utils";
 import { EditingAvatars } from "@/components/editing-avatars";
-import { HelpButton } from "@/components/help-button";
+import { HelpDialog } from "@/components/help-button";
 import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuItemIcon,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import {
   Dialog,
   DialogBackdrop,
@@ -224,6 +238,9 @@ function PostComposer({
     null
   );
   const [hasOpenThreads, setHasOpenThreads] = useState(false);
+  // Dialogs reachable from the "…" menu (and, for platforms, the picker).
+  const [platformsOpen, setPlatformsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   // The same text goes to every network, so it has to fit the strictest.
   const strictest = PLATFORM_INFO[strictestPlatform(platforms)];
 
@@ -242,9 +259,18 @@ function PostComposer({
               onUpdate({ platforms: next });
             }
           }}
+          dialogOpen={platformsOpen}
+          onDialogOpenChange={setPlatformsOpen}
         />
 
         <Separator orientation="vertical" />
+
+        <SchedulePicker
+          date={post.date}
+          time={post.time}
+          onDateChange={(date) => onUpdate({ date })}
+          onTimeChange={(time) => onUpdate({ time })}
+        />
 
         <TagPicker
           tags={post.tags}
@@ -254,57 +280,91 @@ function PostComposer({
         <div className="ml-auto flex items-center gap-3">
           <EditingAvatars postId={post.id} size={28} max={5} />
 
-          <SchedulePicker
-            date={post.date}
-            time={post.time}
-            onDateChange={(date) => onUpdate({ date })}
-            onTimeChange={(time) => onUpdate({ time })}
-          />
-
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={onDelete}
-                  aria-label="Delete post"
-                  // Destructive and irreversible: an agent driving the UI
-                  // should confirm before pressing it.
-                  data-agent-confirm=""
-                  className="text-neutral-500 hover:bg-red-50 hover:text-red-600"
-                />
-              }
-            >
-              <Trash2Icon />
-            </TooltipTrigger>
-            <TooltipContent>Delete post</TooltipContent>
-          </Tooltip>
-
-          <HelpButton />
-
           <Separator orientation="vertical" />
 
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <DialogClose
+          <div className="flex items-center gap-1">
+            <Menu
+              onAction={(value) => {
+                switch (value) {
+                  case "platforms":
+                    setPlatformsOpen(true);
+                    break;
+                  case "info":
+                    setHelpOpen(true);
+                    break;
+                  case "delete":
+                    onDelete();
+                    break;
+                }
+              }}
+            >
+              <Tooltip>
+                <TooltipTrigger
                   render={
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="-mr-1 text-neutral-500"
-                      aria-label="Close"
+                    <MenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-neutral-500"
+                          aria-label="More"
+                        />
+                      }
                     />
                   }
-                />
-              }
-            >
-              <XIcon />
-            </TooltipTrigger>
-            <TooltipContent>Back to calendar</TooltipContent>
-          </Tooltip>
+                >
+                  <EllipsisIcon />
+                </TooltipTrigger>
+                <TooltipContent>More</TooltipContent>
+              </Tooltip>
+              <MenuContent align="end" className="w-48">
+                <MenuItem value="platforms">
+                  <MenuItemIcon>
+                    <Share2Icon className="size-4" />
+                  </MenuItemIcon>
+                  Choose platforms
+                </MenuItem>
+                <MenuItem value="info">
+                  <MenuItemIcon>
+                    <CircleHelpIcon className="size-4" />
+                  </MenuItemIcon>
+                  Info
+                </MenuItem>
+                <MenuSeparator />
+                {/* Destructive and irreversible: an agent driving the UI
+                    should confirm before choosing it. */}
+                <MenuItem value="delete" destructive data-agent-confirm="">
+                  <MenuItemIcon>
+                    <Trash2Icon className="size-4" />
+                  </MenuItemIcon>
+                  Delete post
+                </MenuItem>
+              </MenuContent>
+            </Menu>
+
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <DialogClose
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="-mr-1 text-neutral-500"
+                        aria-label="Close"
+                      />
+                    }
+                  />
+                }
+              >
+                <XIcon />
+              </TooltipTrigger>
+              <TooltipContent>Back to calendar</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
+
+        <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto px-4">

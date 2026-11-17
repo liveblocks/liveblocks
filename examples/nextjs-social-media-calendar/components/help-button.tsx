@@ -58,28 +58,20 @@ const FEATURES: Feature[] = [
   },
 ];
 
-export function HelpButton() {
+/** The help dialog, controlled: opened from the help button or a menu. */
+export function HelpDialog({
+  open,
+  onOpenChange,
+  children,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** An optional trigger, rendered inside the dialog's scope. */
+  children?: ReactNode;
+}) {
   return (
-    <Dialog>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <DialogTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-neutral-500"
-                  aria-label="How to use this example"
-                />
-              }
-            />
-          }
-        >
-          <CircleHelpIcon />
-        </TooltipTrigger>
-        <TooltipContent>How to use this example</TooltipContent>
-      </Tooltip>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {children}
 
       <DialogBackdrop />
       <DialogContent>
@@ -130,5 +122,31 @@ export function HelpButton() {
         </ul>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function HelpButton() {
+  return (
+    <HelpDialog>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <DialogTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-neutral-500"
+                  aria-label="How to use this example"
+                />
+              }
+            />
+          }
+        >
+          <CircleHelpIcon />
+        </TooltipTrigger>
+        <TooltipContent>How to use this example</TooltipContent>
+      </Tooltip>
+    </HelpDialog>
   );
 }

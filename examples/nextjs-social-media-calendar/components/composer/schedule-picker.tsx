@@ -41,7 +41,7 @@ export function SchedulePicker({
       <PopoverTrigger
         render={
           <Button
-            variant="outline"
+            variant="soft"
             size="sm"
             className="gap-1.5 text-xs font-normal text-neutral-700 tabular-nums [&_svg]:size-3.5"
             aria-label="Schedule"

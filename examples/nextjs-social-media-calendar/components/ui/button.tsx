@@ -9,6 +9,7 @@ const VARIANTS = {
   outline:
     "border border-border bg-white text-neutral-900 shadow-xs hover:bg-neutral-50",
   ghost: "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900",
+  soft: "bg-neutral-100 text-neutral-900 hover:bg-neutral-200/70",
 } as const;
 
 const SIZES = {
