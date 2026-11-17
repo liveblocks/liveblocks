@@ -305,7 +305,7 @@ function DayPosts({
             type="button"
             className={cn(
               // Shown while the pointer is anywhere over the day.
-              "flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-neutral-300 text-xs font-medium text-neutral-500 opacity-0 transition-opacity outline-none group-hover/day:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring data-open:opacity-100",
+              "flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-neutral-300 text-xs font-medium text-neutral-500 opacity-0 transition-[opacity,color,background-color,border-color] outline-none group-hover/day:opacity-100 hover:border-neutral-400 hover:bg-neutral-100 hover:text-neutral-800 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring data-open:border-neutral-400 data-open:bg-neutral-100 data-open:text-neutral-800 data-open:opacity-100",
               // Out of the way of a drop, but still taking up its space.
               moving && "invisible"
             )}
