@@ -115,7 +115,7 @@ type SeedPost = {
 const SEED_POSTS: SeedPost[] = [
   {
     id: "post-launch-teaser",
-    platforms: ["instagram", "facebook"],
+    platforms: ["threads", "bluesky"],
     tags: ["Launch"],
     day: 2,
     time: "09:00",
@@ -127,7 +127,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-behind-the-scenes",
-    platforms: ["tiktok"],
+    platforms: ["bluesky"],
     day: 4,
     time: "17:30",
     status: "approved",
@@ -137,7 +137,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-customer-story",
-    platforms: ["linkedin", "facebook"],
+    platforms: ["linkedin", "mastodon"],
     tags: ["Case study"],
     day: 6,
     time: "11:00",
@@ -161,13 +161,13 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-launch-day",
-    platforms: ["instagram"],
+    platforms: ["threads"],
     day: 11,
     time: "10:00",
     status: "in-review",
     paragraphs: [
       "It's here. ✨ Meet the all-new Acme Studio.",
-      "Plan, write, and approve your content together, in realtime. Link in bio to try it free.",
+      "Plan, write, and approve your content together, in realtime. Try it free at acme.studio.",
     ],
   },
   {
@@ -183,7 +183,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-tips",
-    platforms: ["facebook"],
+    platforms: ["mastodon"],
     day: 15,
     time: "12:00",
     status: "approved",
@@ -206,13 +206,11 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-reel",
-    platforms: ["instagram"],
+    platforms: ["threads"],
     day: 21,
     time: "18:00",
     status: "draft",
-    paragraphs: [
-      "A day in the life of our content team, in 30 seconds. 🎬 #BTS",
-    ],
+    paragraphs: ["A day in the life of our content team, in 30 seconds. 🎬"],
   },
   {
     id: "post-webinar",
@@ -227,12 +225,12 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-trend",
-    platforms: ["tiktok"],
+    platforms: ["bluesky", "threads"],
     day: 26,
     time: "19:00",
     status: "in-review",
     paragraphs: [
-      "Replying to @everyone asking how we keep up with trends: we don't, we plan 😌 #marketingtok",
+      "Replying to @everyone asking how we keep up with trends: we don't, we plan 😌 #marketing",
     ],
   },
   {

@@ -3,10 +3,10 @@ import {
   GlobeIcon,
   HeartIcon,
   MessageCircleIcon,
-  MusicIcon,
   Repeat2Icon,
   SendIcon,
   Share2Icon,
+  StarIcon,
   ThumbsUpIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -31,23 +31,20 @@ type PostFrameProps = {
 
 /**
  * Lays the post out the way the chosen network shows it, so the composer
- * reads as the post it will become: X's single column with the byline
- * inline, LinkedIn's and Facebook's header card with labeled reactions,
- * Instagram's media-first post with the caption under the actions, TikTok's
- * handle-first caption. The editable parts are the same in each; only the
- * frame changes.
+ * reads as the post it will become: the microblogs (X, Threads, Bluesky,
+ * Mastodon) as a single column with the byline inline and each network's own
+ * action row, LinkedIn as a header card with labeled reactions. The editable
+ * parts are the same in each; only the frame changes.
  */
 export function PostFrame(props: PostFrameProps) {
   switch (props.platform) {
     case "x":
-      return <XFrame {...props} />;
+    case "threads":
+    case "bluesky":
+    case "mastodon":
+      return <MicroblogFrame {...props} platform={props.platform} />;
     case "linkedin":
-    case "facebook":
-      return <FeedFrame {...props} />;
-    case "instagram":
-      return <InstagramFrame {...props} />;
-    case "tiktok":
-      return <TikTokFrame {...props} />;
+      return <LinkedInFrame {...props} />;
   }
 }
 
@@ -65,16 +62,79 @@ function Dot() {
   );
 }
 
-function XFrame({ meta, body, media, link, footer }: PostFrameProps) {
-  const info = PLATFORM_INFO.x;
+type Microblog = Exclude<Platform, "linkedin">;
+
+/** Each network's action row, in its own order. */
+const MICROBLOG_ACTIONS: Record<Microblog, ReactNode> = {
+  x: (
+    <>
+      <MessageCircleIcon />
+      <Repeat2Icon />
+      <HeartIcon />
+      <BookmarkIcon />
+      <Share2Icon />
+    </>
+  ),
+  threads: (
+    <>
+      <HeartIcon />
+      <MessageCircleIcon />
+      <Repeat2Icon />
+      <SendIcon />
+    </>
+  ),
+  bluesky: (
+    <>
+      <MessageCircleIcon />
+      <Repeat2Icon />
+      <HeartIcon />
+      <Share2Icon />
+    </>
+  ),
+  mastodon: (
+    <>
+      <MessageCircleIcon />
+      <Repeat2Icon />
+      <StarIcon />
+      <BookmarkIcon />
+      <Share2Icon />
+    </>
+  ),
+};
+
+/**
+ * X, Threads, Bluesky, and Mastodon: avatar on the left, the byline inline
+ * with the text under it. Threads leads with the handle alone; Mastodon puts
+ * its long handle on its own line.
+ */
+function MicroblogFrame({
+  platform,
+  meta,
+  body,
+  media,
+  link,
+  footer,
+}: Omit<PostFrameProps, "platform"> & { platform: Microblog }) {
+  const info = PLATFORM_INFO[platform];
+  const stacked = platform === "mastodon";
+  const threads = platform === "threads";
   return (
     <article className={cn(ARTICLE_CLASS, "flex gap-3 p-4")} aria-label="Post">
       <BrandAvatar />
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-1 text-[15px] leading-6">
-          <span className="font-bold text-neutral-900">{PROJECT_NAME}</span>
-          <span className="text-neutral-500">{info.handle}</span>
-          <Dot />
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-x-1 text-[15px] leading-6",
+            stacked && "flex-col items-start gap-x-0 leading-5"
+          )}
+        >
+          <span className="font-bold text-neutral-900">
+            {threads ? info.handle.replace(/^@/, "") : PROJECT_NAME}
+          </span>
+          {threads ? null : (
+            <span className="truncate text-neutral-500">{info.handle}</span>
+          )}
+          {stacked ? null : <Dot />}
           {meta}
         </div>
         <div className="flex flex-col gap-3">
@@ -84,43 +144,31 @@ function XFrame({ meta, body, media, link, footer }: PostFrameProps) {
           {footer}
         </div>
         <div
-          className={cn(ACTIONS_CLASS, "justify-between px-2 pt-2")}
+          className={cn(
+            ACTIONS_CLASS,
+            threads ? "gap-5 px-1 pt-2" : "justify-between px-2 pt-2"
+          )}
           aria-hidden
         >
-          <MessageCircleIcon />
-          <Repeat2Icon />
-          <HeartIcon />
-          <BookmarkIcon />
-          <Share2Icon />
+          {MICROBLOG_ACTIONS[platform]}
         </div>
       </div>
     </article>
   );
 }
 
-/** LinkedIn and Facebook: a header card, then the text, then labeled reactions. */
-function FeedFrame({
-  platform,
-  meta,
-  body,
-  media,
-  link,
-  footer,
-}: PostFrameProps) {
-  const info = PLATFORM_INFO[platform];
-  const linkedin = platform === "linkedin";
+/** LinkedIn: a header card, then the text, then labeled reactions. */
+function LinkedInFrame({ meta, body, media, link, footer }: PostFrameProps) {
   return (
     <article className={cn(ARTICLE_CLASS, "p-4")} aria-label="Post">
       <header className="flex items-center gap-3">
-        <BrandAvatar
-          className={cn("size-12 text-base", linkedin && "rounded-md")}
-        />
+        <BrandAvatar className="size-12 rounded-md text-base" />
         <div className="min-w-0 flex-1 leading-tight">
           <p className="text-[15px] font-semibold text-neutral-900">
             {PROJECT_NAME}
           </p>
           <p className="truncate text-xs text-neutral-500">
-            {linkedin ? "Planning content, together" : info.handle}
+            Planning content, together
           </p>
           <div className="flex flex-wrap items-center gap-x-1 text-xs text-neutral-500 [&_[data-slot]]:text-xs">
             {meta}
@@ -144,11 +192,8 @@ function FeedFrame({
       >
         <Reaction icon={<ThumbsUpIcon />} label="Like" />
         <Reaction icon={<MessageCircleIcon />} label="Comment" />
-        <Reaction
-          icon={linkedin ? <Repeat2Icon /> : <Share2Icon />}
-          label={linkedin ? "Repost" : "Share"}
-        />
-        {linkedin ? <Reaction icon={<SendIcon />} label="Send" /> : null}
+        <Reaction icon={<Repeat2Icon />} label="Repost" />
+        <Reaction icon={<SendIcon />} label="Send" />
       </div>
     </article>
   );
@@ -160,83 +205,5 @@ function Reaction({ icon, label }: { icon: ReactNode; label: string }) {
       {icon}
       {label}
     </span>
-  );
-}
-
-/** Instagram: media first, actions, then the caption led by the account name. */
-function InstagramFrame({ meta, body, media, link, footer }: PostFrameProps) {
-  const info = PLATFORM_INFO.instagram;
-  return (
-    <article className={ARTICLE_CLASS} aria-label="Post">
-      <header className="flex items-center gap-3 px-4 py-3">
-        <span className="rounded-full bg-gradient-to-tr from-amber-400 via-pink-500 to-fuchsia-600 p-0.5">
-          <BrandAvatar className="size-8 text-xs ring-2 ring-white" />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 text-sm leading-5">
-          <span className="font-semibold text-neutral-900">
-            {info.handle.replace(/^@/, "")}
-          </span>
-          <Dot />
-          <span className="flex items-center gap-x-1 text-neutral-500 [&_[data-slot]]:text-sm">
-            {meta}
-          </span>
-        </div>
-      </header>
-      <div className="px-4 empty:hidden">{media}</div>
-      <div className={cn(ACTIONS_CLASS, "gap-4 px-4 py-3")} aria-hidden>
-        <HeartIcon />
-        <MessageCircleIcon />
-        <SendIcon />
-        <BookmarkIcon className="ml-auto" />
-      </div>
-      <div className="flex flex-col gap-3 px-4 pb-4">
-        <div className="text-sm">
-          <span className="mr-1.5 font-semibold text-neutral-900">
-            {info.handle.replace(/^@/, "")}
-          </span>
-          {body}
-        </div>
-        {link}
-        {footer}
-      </div>
-    </article>
-  );
-}
-
-/** TikTok: handle first, the caption, a sound line, and the usual reactions. */
-function TikTokFrame({ meta, body, media, link, footer }: PostFrameProps) {
-  const info = PLATFORM_INFO.tiktok;
-  return (
-    <article className={cn(ARTICLE_CLASS, "p-4")} aria-label="Post">
-      <header className="flex items-center gap-3">
-        <BrandAvatar className="size-11" />
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-[15px] font-bold text-neutral-900">
-            {info.handle.replace(/^@/, "")}
-          </p>
-          <div className="flex flex-wrap items-center gap-x-1 text-xs text-neutral-500 [&_[data-slot]]:text-xs">
-            <span>{PROJECT_NAME}</span>
-            <Dot />
-            {meta}
-          </div>
-        </div>
-      </header>
-      <div className="mt-3 flex flex-col gap-3">
-        {body}
-        <p className="flex items-center gap-1.5 text-xs text-neutral-500">
-          <MusicIcon className="size-3.5" aria-hidden />
-          original sound – {info.handle.replace(/^@/, "")}
-        </p>
-        {media}
-        {link}
-        {footer}
-      </div>
-      <div className={cn(ACTIONS_CLASS, "mt-3 gap-6 px-2")} aria-hidden>
-        <HeartIcon />
-        <MessageCircleIcon />
-        <BookmarkIcon />
-        <Share2Icon className="ml-auto" />
-      </div>
-    </article>
   );
 }

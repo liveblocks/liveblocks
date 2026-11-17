@@ -27,7 +27,7 @@ export type PostBoardOptions = {
   ) => void;
   /** The days in the order Left and Right travel through them. */
   order?: string[];
-  /** What screen readers call a post, like "Instagram post at 9:00 AM". */
+  /** What screen readers call a post, like "X post at 9:00 AM". */
   postLabel?: (postId: string) => string | undefined;
   /** What screen readers call a day, like "Monday, November 16". */
   dayLabel?: (day: string) => string | undefined;
