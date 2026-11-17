@@ -8,6 +8,13 @@ type PreviewImageProps = Omit<ComponentProps<"img">, "src"> & {
   src: string | undefined;
 };
 
+// Every image URL that has finished loading somewhere on the page. A card
+// that remounts with one of these (the in-flight card landing in another day,
+// the ghost left where it was picked up) shows it at once, with no
+// placeholder or fade: the browser has it cached, and a fade there would
+// look like a flicker.
+const loadedSources = new Set<string>();
+
 /**
  * An image that holds its place before it shows: the wrapper has the final
  * size (from `className`) and a pulsing gray fill until the image has both a
@@ -23,7 +30,8 @@ export function PreviewImage({
   ...props
 }: PreviewImageProps) {
   const [loadedSrc, setLoadedSrc] = useState<string>();
-  const loaded = src !== undefined && loadedSrc === src;
+  const loaded =
+    src !== undefined && (loadedSrc === src || loadedSources.has(src));
 
   return (
     <span
@@ -43,6 +51,7 @@ export function PreviewImage({
           src={src}
           alt={alt}
           onLoad={(event) => {
+            loadedSources.add(src);
             setLoadedSrc(src);
             onLoad?.(event);
           }}
@@ -52,8 +61,11 @@ export function PreviewImage({
             onError?.(event);
           }}
           className={cn(
-            "size-full object-cover transition-opacity",
-            loaded ? "opacity-100" : "opacity-0"
+            "size-full object-cover",
+            loaded ? "opacity-100" : "opacity-0",
+            // Only fade when the image is actually arriving; one already seen
+            // (e.g. a dragged card's copy) is shown instantly.
+            !loadedSources.has(src) && "transition-opacity"
           )}
         />
       ) : null}
