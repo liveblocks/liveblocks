@@ -165,8 +165,8 @@ export function PlatformIcon({
 }
 
 /**
- * The badges of every platform a post goes to, in a row. Overlap slightly
- * when there are several so a card stays narrow.
+ * The badges of every platform a post goes to, in a row — solid brand-colored
+ * badges side by side with a small gap between them.
  */
 export function PlatformBadges({
   platforms,
@@ -181,22 +181,20 @@ export function PlatformBadges({
   return (
     <span
       className={className}
-      style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        flexShrink: 0,
+      }}
       aria-label={describePlatforms(sorted)}
     >
-      {sorted.map((platform, index) => (
+      {sorted.map((platform) => (
         <PlatformBadge
           key={platform}
           platform={platform}
           size={size}
-          style={
-            index > 0
-              ? {
-                  marginLeft: sorted.length > 1 ? -size / 5 : 0,
-                  boxShadow: "0 0 0 2px #fff",
-                }
-              : undefined
-          }
+          variant="solid"
         />
       ))}
     </span>
