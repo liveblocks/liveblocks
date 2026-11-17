@@ -83,10 +83,13 @@ function paragraphToNodes(text: string): TiptapText[] {
 function paragraphsToDocument(paragraphs: string[]): TiptapDoc {
   return {
     type: "doc",
-    content: paragraphs.map((text) => ({
-      type: "paragraph",
-      content: paragraphToNodes(text),
-    })),
+    content: paragraphs.map((text) => {
+      // An empty string is a blank line: a paragraph with no content.
+      const nodes = paragraphToNodes(text);
+      return nodes.length > 0
+        ? { type: "paragraph", content: nodes }
+        : { type: "paragraph" };
+    }),
   };
 }
 
@@ -104,7 +107,8 @@ const BLOG = "https://liveblocks.io/blog";
 
 /**
  * A month of posts about Liveblocks, each ending with the blog post it
- * announces so the calendar cards show the article's image.
+ * announces, after a blank line, so the calendar cards show the article's
+ * image.
  */
 const SEED_POSTS: SeedPost[] = [
   {
@@ -115,6 +119,7 @@ const SEED_POSTS: SeedPost[] = [
     time: "15:00",
     paragraphs: [
       "Introducing Liveblocks Sync: the sync engine for the agentic web. Humans, agents, or both, editing the same document in realtime. Previously known as Storage, now with LiveText.",
+      "",
       `${BLOG}/introducing-liveblocks-sync-the-sync-engine-for-the-agentic-web`,
     ],
   },
@@ -126,6 +131,7 @@ const SEED_POSTS: SeedPost[] = [
     time: "10:30",
     paragraphs: [
       "LiveText is a new data type for collaborative text editing. It works with Tiptap, BlockNote, ProseMirror, and CodeMirror, and lives in your room next to the rest of your data.",
+      "",
       `${BLOG}/livetext-a-new-data-type-for-collaborative-text-editing`,
     ],
   },
@@ -137,6 +143,7 @@ const SEED_POSTS: SeedPost[] = [
     time: "14:00",
     paragraphs: [
       "Files are part of collaboration too. LiveFile lets you upload, store, and share files directly inside Liveblocks Storage, so images and attachments sync like the rest of the document.",
+      "",
       `${BLOG}/livefile-upload-and-share-files-on-collaborative-apps`,
     ],
   },
@@ -148,6 +155,7 @@ const SEED_POSTS: SeedPost[] = [
     time: "16:00",
     paragraphs: [
       "Comment threads can now be private to certain users: internal-only notes, private review workflows, and feedback only the right people can see. Plus, adding AI to a thread is easier than ever.",
+      "",
       `${BLOG}/comments-private-threads-and-a-natural-home-for-ai`,
     ],
   },
@@ -159,6 +167,7 @@ const SEED_POSTS: SeedPost[] = [
     time: "09:00",
     paragraphs: [
       "What's new in Liveblocks: custom headers and test endpoints for webhooks, clearer analytics in the dashboard, and a new Slack-like messaging example built with Feeds.",
+      "",
       `${BLOG}/whats-new-in-liveblocks-october-2026`,
     ],
   },
@@ -198,8 +207,9 @@ export function createInitialStorage(): Liveblocks["Storage"] {
           tags: post.tags ?? [],
           date: toDateKey(addDays(monthStart, Math.min(post.day, lastDay) - 1)),
           time: post.time,
-          preview: post.paragraphs.join(" "),
-          linkUrl: findLastUrl(post.paragraphs.join(" ")) ?? undefined,
+          preview: post.paragraphs.filter(Boolean).join(" "),
+          linkUrl:
+            findLastUrl(post.paragraphs.filter(Boolean).join(" ")) ?? undefined,
           createdAt: Date.now() + index,
           media: new LiveList([]),
         }),

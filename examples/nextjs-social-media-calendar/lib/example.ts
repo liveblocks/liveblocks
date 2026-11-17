@@ -8,10 +8,10 @@ import { getRandomUser, getUsers } from "@/app/database";
  * locally: a random demo user is picked instead.
  */
 
-// The `-v2` suffix starts a fresh set of rooms: the post shape changed
-// (`platforms[]`, `tags`, Liveblocks seeds), and old rooms can't be read.
+// The version suffix starts a fresh set of rooms whenever the post shape or
+// the seeded posts change (seeds only apply when a room is first created).
 export const BASE_ROOM_ID =
-  "liveblocks:examples:nextjs-social-media-calendar-v2";
+  "liveblocks:examples:nextjs-social-media-calendar-v3";
 
 let cachedUserId: string | null = null;
 
