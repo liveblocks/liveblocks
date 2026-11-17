@@ -16,7 +16,7 @@ export function TagChip({
       className={cn(
         "inline-flex max-w-full items-center truncate rounded-md border font-medium whitespace-nowrap",
         size === "xs"
-          ? "px-1.5 py-px text-[10px]"
+          ? "px-1.5 py-px text-[11px]"
           : size === "md"
             ? "px-2 py-0.5 text-[13px]"
             : "px-2 py-0.5 text-[11px]",
@@ -55,14 +55,7 @@ export function TagChips({
         <TagChip key={tag} tag={tag} size={size} />
       ))}
       {rest > 0 ? (
-        <span
-          className={cn(
-            "text-neutral-500",
-            size === "xs" ? "text-[10px]" : "text-[11px]"
-          )}
-        >
-          +{rest}
-        </span>
+        <span className="text-[11px] text-neutral-500">+{rest}</span>
       ) : null}
     </span>
   );

@@ -101,7 +101,7 @@ function PostCardContent({ post }: { post: PostData }) {
       <span className="flex items-center justify-between gap-1.5">
         <PlatformBadges platforms={post.platforms} size={20} />
         {/* Gives way to the move handle while that has keyboard focus. */}
-        <span className="text-[11px] font-medium text-neutral-500 tabular-nums transition-opacity group-has-[[data-slot=post-board-handle]:focus-visible]/card:opacity-0">
+        <span className="text-xs font-medium text-neutral-500 tabular-nums transition-opacity group-has-[[data-slot=post-board-handle]:focus-visible]/card:opacity-0">
           {formatTime(post.time)}
         </span>
       </span>
@@ -110,7 +110,7 @@ function PostCardContent({ post }: { post: PostData }) {
       ) : post.linkUrl ? (
         <LinkThumbnail url={post.linkUrl} />
       ) : null}
-      <span className="truncate text-xs leading-snug text-neutral-800">
+      <span className="truncate text-[13px] leading-snug text-neutral-800">
         {post.preview || (
           <span className="text-neutral-400 italic">Empty post</span>
         )}
@@ -118,7 +118,7 @@ function PostCardContent({ post }: { post: PostData }) {
       <TagChips tags={post.tags} max={2} size="xs" />
       {post.openThreads ? (
         <span
-          className="flex items-center gap-1 text-[10px] font-medium text-neutral-500 tabular-nums"
+          className="flex items-center gap-1 text-[11px] font-medium text-neutral-500 tabular-nums"
           aria-label={`${post.openThreads} open ${post.openThreads === 1 ? "comment" : "comments"}`}
         >
           <MessageSquareIcon className="size-3" aria-hidden />
