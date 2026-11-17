@@ -19,12 +19,7 @@ import {
   type DateKey,
   type Period,
 } from "@/lib/dates";
-import {
-  describePlatforms,
-  PLATFORM_INFO,
-  PlatformBadges,
-  type Platform,
-} from "@/lib/platforms";
+import { PlatformBadges, type Platform } from "@/lib/platforms";
 import type { PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 
@@ -143,12 +138,6 @@ export function ListView({
 }
 
 function ListRow({ post, href }: { post: PostData; href: string }) {
-  // One network: its handle too. Several: just their names.
-  const where =
-    post.platforms.length === 1
-      ? `${PLATFORM_INFO[post.platforms[0]].label} · ${PLATFORM_INFO[post.platforms[0]].handle}`
-      : describePlatforms(post.platforms);
-
   return (
     <li>
       <Link
@@ -158,16 +147,17 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
         <span className="w-16 shrink-0 text-xs font-medium text-neutral-500 tabular-nums">
           {formatTime(post.time)}
         </span>
-        <PlatformBadges platforms={post.platforms} size={28} />
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <p className="truncate text-sm text-neutral-900">
             {post.preview || (
               <span className="text-neutral-400 italic">Empty post</span>
             )}
           </p>
-          <p className="mt-0.5 text-xs text-neutral-500">{where}</p>
+          <span className="flex items-center gap-2">
+            <PlatformBadges platforms={post.platforms} size={16} />
+            <TagChips tags={post.tags} size="xs" />
+          </span>
         </div>
-        <TagChips tags={post.tags} className="hidden md:flex" />
         <EditingAvatars postId={post.id} size={22} />
         <ChevronRightIcon className="size-4 shrink-0 text-neutral-300 transition-colors group-hover/row:text-neutral-500" />
       </Link>
