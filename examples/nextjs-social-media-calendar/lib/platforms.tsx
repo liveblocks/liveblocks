@@ -184,7 +184,7 @@ export function PlatformBadges({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 4,
+        gap: 3,
         flexShrink: 0,
       }}
       aria-label={describePlatforms(sorted)}
