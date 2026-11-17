@@ -244,17 +244,11 @@ function PostComposer({
         <DialogTitle className="sr-only">
           {describePlatforms(platforms)} post
         </DialogTitle>
-        <PlatformPicker
-          platforms={platforms}
-          preview={previewPlatform}
-          onPreviewChange={setPreviewChoice}
-          onPlatformsChange={(next) => {
-            if (next.length > 0) {
-              onUpdate({ platforms: next });
-            }
-          }}
-          dialogOpen={platformsOpen}
-          onDialogOpenChange={setPlatformsOpen}
+        <SchedulePicker
+          date={post.date}
+          time={post.time}
+          onDateChange={(date) => onUpdate({ date })}
+          onTimeChange={(time) => onUpdate({ time })}
         />
 
         <Separator orientation="vertical" />
@@ -267,11 +261,17 @@ function PostComposer({
         <div className="ml-auto flex items-center gap-3">
           <EditingAvatars postId={post.id} size={28} max={5} />
 
-          <SchedulePicker
-            date={post.date}
-            time={post.time}
-            onDateChange={(date) => onUpdate({ date })}
-            onTimeChange={(time) => onUpdate({ time })}
+          <PlatformPicker
+            platforms={platforms}
+            preview={previewPlatform}
+            onPreviewChange={setPreviewChoice}
+            onPlatformsChange={(next) => {
+              if (next.length > 0) {
+                onUpdate({ platforms: next });
+              }
+            }}
+            dialogOpen={platformsOpen}
+            onDialogOpenChange={setPlatformsOpen}
           />
 
           <Separator orientation="vertical" />
