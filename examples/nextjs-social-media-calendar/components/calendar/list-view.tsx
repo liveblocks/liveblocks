@@ -148,15 +148,13 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
           {formatTime(post.time)}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <PlatformBadges platforms={post.platforms} size={16} />
           <p className="truncate text-sm text-neutral-900">
             {post.preview || (
               <span className="text-neutral-400 italic">Empty post</span>
             )}
           </p>
-          <span className="flex items-center gap-2">
-            <PlatformBadges platforms={post.platforms} size={16} />
-            <TagChips tags={post.tags} size="xs" />
-          </span>
+          <TagChips tags={post.tags} size="xs" />
         </div>
         <EditingAvatars postId={post.id} size={22} />
         <ChevronRightIcon className="size-4 shrink-0 text-neutral-300 transition-colors group-hover/row:text-neutral-500" />
