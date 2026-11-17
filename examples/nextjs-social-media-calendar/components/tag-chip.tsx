@@ -1,4 +1,3 @@
-import { TagIcon } from "lucide-react";
 import { tagColor } from "@/lib/tags";
 import { cn } from "@/lib/utils";
 
@@ -57,42 +56,6 @@ export function TagChips({
       ))}
       {rest > 0 ? (
         <span className="text-[11px] text-neutral-500">+{rest}</span>
-      ) : null}
-    </span>
-  );
-}
-
-/**
- * Every label in one chip: a tag icon, the first label, and a "+n" for the
- * rest behind a divider. For rows where a run of chips would be too wide.
- */
-export function TagSummary({
-  tags,
-  className,
-}: {
-  tags: readonly string[];
-  className?: string;
-}) {
-  if (tags.length === 0) {
-    return null;
-  }
-  const [first, ...rest] = tags;
-  return (
-    <span
-      className={cn(
-        "inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
-        tagColor(first),
-        className
-      )}
-      aria-label={`Labels: ${tags.join(", ")}`}
-    >
-      <TagIcon className="size-3 shrink-0" aria-hidden />
-      <span className="truncate">{first}</span>
-      {rest.length > 0 ? (
-        <>
-          <span className="h-3 w-px bg-current opacity-30" aria-hidden />
-          <span>+{rest.length}</span>
-        </>
       ) : null}
     </span>
   );

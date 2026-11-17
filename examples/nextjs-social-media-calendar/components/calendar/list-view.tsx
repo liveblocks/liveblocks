@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { EditingAvatars } from "@/components/editing-avatars";
 import { NewPostMenu } from "@/components/new-post-menu";
-import { TagSummary } from "@/components/tag-chip";
+import { TagChips } from "@/components/tag-chip";
 import { Button } from "@/components/ui/button";
 import {
   compareByDateTime,
@@ -153,7 +153,7 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
               <span className="text-neutral-400 italic">Empty post</span>
             )}
           </p>
-          <TagSummary tags={post.tags} className="self-start" />
+          <TagChips tags={post.tags} max={Infinity} size="xs" />
         </div>
         <PlatformBadges
           platforms={post.platforms}
