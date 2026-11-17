@@ -47,7 +47,7 @@ type PlatformPickerProps = {
  * Top left of the composer: one segment per network the post goes to, which
  * switches the preview to look like that network. Clicking the network
  * that's already shown opens the dialog that chooses which networks the
- * draft is published to (also reachable from the composer's "…" menu).
+ * draft is published to.
  */
 export function PlatformPicker({
   platforms,

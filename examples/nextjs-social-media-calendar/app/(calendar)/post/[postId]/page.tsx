@@ -9,13 +9,7 @@ import {
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { LiveblocksUiConfig } from "@liveblocks/react-ui";
-import {
-  CircleHelpIcon,
-  EllipsisIcon,
-  Share2Icon,
-  Trash2Icon,
-  XIcon,
-} from "lucide-react";
+import { CircleHelpIcon, EllipsisIcon, Trash2Icon, XIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentProps } from "react";
 import { CharacterRing } from "@/components/composer/character-ring";
@@ -238,7 +232,7 @@ function PostComposer({
     null
   );
   const [hasOpenThreads, setHasOpenThreads] = useState(false);
-  // Dialogs reachable from the "…" menu (and, for platforms, the picker).
+  // The platforms dialog (opened from the picker) and the "…" menu's help.
   const [platformsOpen, setPlatformsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   // The same text goes to every network, so it has to fit the strictest.
@@ -286,9 +280,6 @@ function PostComposer({
             <Menu
               onAction={(value) => {
                 switch (value) {
-                  case "platforms":
-                    setPlatformsOpen(true);
-                    break;
                   case "info":
                     setHelpOpen(true);
                     break;
@@ -318,12 +309,6 @@ function PostComposer({
                 <TooltipContent>More</TooltipContent>
               </Tooltip>
               <MenuContent align="end" className="w-48">
-                <MenuItem value="platforms">
-                  <MenuItemIcon>
-                    <Share2Icon className="size-4" />
-                  </MenuItemIcon>
-                  Choose platforms
-                </MenuItem>
                 <MenuItem value="info">
                   <MenuItemIcon>
                     <CircleHelpIcon className="size-4" />
