@@ -60,7 +60,7 @@ export function PostFrame({
           // On the microblogs it spans the byline and content rows, so the
           // first row is only as tall as the byline and the text starts right
           // under the name.
-          linkedin ? "size-11 rounded-md text-sm" : "row-span-2 size-10"
+          linkedin ? "size-11 rounded-md" : "row-span-2 size-10"
         )}
       />
       <div

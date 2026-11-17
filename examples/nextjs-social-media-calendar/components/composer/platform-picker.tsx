@@ -195,7 +195,7 @@ function DraftPlatformsDialog({
                   className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
                 >
                   <span className="relative shrink-0">
-                    <BrandAvatar className="size-8 text-xs" />
+                    <BrandAvatar className="size-8" />
                     <PlatformBadge
                       platform={platform}
                       size={16}
