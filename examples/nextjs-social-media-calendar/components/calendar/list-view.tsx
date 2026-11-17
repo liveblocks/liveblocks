@@ -25,7 +25,7 @@ import {
   PlatformBadges,
   type Platform,
 } from "@/lib/platforms";
-import { STATUS_INFO, type PostData } from "@/lib/posts";
+import type { PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 
 type ListViewProps = {
@@ -143,7 +143,6 @@ export function ListView({
 }
 
 function ListRow({ post, href }: { post: PostData; href: string }) {
-  const status = STATUS_INFO[post.status];
   // One network: its handle too. Several: just their names.
   const where =
     post.platforms.length === 1
@@ -170,14 +169,6 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
         </div>
         <TagChips tags={post.tags} className="hidden md:flex" />
         <EditingAvatars postId={post.id} size={22} />
-        <span
-          className={cn(
-            "hidden shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline-flex",
-            status.badge
-          )}
-        >
-          {status.label}
-        </span>
         <ChevronRightIcon className="size-4 shrink-0 text-neutral-300 transition-colors group-hover/row:text-neutral-500" />
       </Link>
     </li>

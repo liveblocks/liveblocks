@@ -14,7 +14,7 @@ import {
 import { useLinkPreview } from "@/hooks/use-link-preview";
 import { formatTime } from "@/lib/dates";
 import { describePlatforms, PlatformBadges } from "@/lib/platforms";
-import { STATUS_INFO, type PostData } from "@/lib/posts";
+import type { PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 import { PostBoardHandle, PostBoardPost } from "./post-board";
 
@@ -30,8 +30,7 @@ const CARD_LAYOUT_CLASS = "flex flex-col gap-1.5 rounded-md p-2 text-left";
  * rest and in flight.
  */
 export function PostCard({ post, href }: { post: PostData; href: string }) {
-  const status = STATUS_INFO[post.status];
-  const label = `${describePlatforms(post.platforms)} post at ${formatTime(post.time)}, ${status.label}`;
+  const label = `${describePlatforms(post.platforms)} post at ${formatTime(post.time)}`;
 
   return (
     <div className="group/card relative">

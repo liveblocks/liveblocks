@@ -21,8 +21,8 @@ declare global {
       editingPostId: string | null;
     };
 
-    // The project room stores every post's metadata (platform, date, status,
-    // text preview) and its media (LiveFiles uploaded to this room) in a
+    // The project room stores every post's metadata (platforms, labels, date,
+    // time, text preview) and its media (LiveFiles uploaded to this room) in a
     // LiveMap. Each post's body lives in its own room as a Tiptap document
     // backed by LiveText, under `_tiptap_docs`.
     Storage: {

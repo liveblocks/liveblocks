@@ -33,8 +33,8 @@ platforms and labels, attach photos and short videos (uploaded as
 leave [comments](https://liveblocks.io/docs/products/comments) on a selection of
 the text, and see a preview card for the last link. Avatars show who's in the
 project and who's editing each post. The interface is built with
-[ui-sdk](https://ui-sdk.dev): its unstyled components (menus, selects, tabs,
-dialogs, date and time inputs) styled with Tailwind, plus a small custom
+[ui-sdk](https://ui-sdk.dev): its unstyled components (menus, tabs, dialogs,
+popovers, a calendar, time inputs) styled with Tailwind, plus a small custom
 primitive on `@ui-sdk/core`'s `createTransfer` for dragging posts between days
 with the pointer or the keyboard.
 

@@ -9,41 +9,6 @@ import { addDays, startOfMonth, toDateKey, type DateKey } from "./dates";
 import type { Platform } from "./platforms";
 import { findLastUrl, URL_PATTERN } from "./urls";
 
-export type PostStatus = "draft" | "in-review" | "approved" | "scheduled";
-
-export const POST_STATUSES: PostStatus[] = [
-  "draft",
-  "in-review",
-  "approved",
-  "scheduled",
-];
-
-export const STATUS_INFO: Record<
-  PostStatus,
-  { label: string; dot: string; badge: string }
-> = {
-  draft: {
-    label: "Draft",
-    dot: "bg-neutral-400",
-    badge: "bg-neutral-100 text-neutral-600",
-  },
-  "in-review": {
-    label: "In review",
-    dot: "bg-amber-400",
-    badge: "bg-amber-50 text-amber-700",
-  },
-  approved: {
-    label: "Approved",
-    dot: "bg-emerald-500",
-    badge: "bg-emerald-50 text-emerald-700",
-  },
-  scheduled: {
-    label: "Scheduled",
-    dot: "bg-violet-500",
-    badge: "bg-violet-50 text-violet-700",
-  },
-};
-
 /**
  * A post's plain fields, stored in the project room. The post body itself is
  * a Tiptap document backed by LiveText in the post's own room.
@@ -57,7 +22,6 @@ export type PostFields = {
   date: DateKey;
   // Planned time of day, as `HH:MM`.
   time: string;
-  status: PostStatus;
   // Plain-text snippet of the body, synced from the composer so the calendar
   // can show a preview without joining every post's room.
   preview: string;
@@ -133,7 +97,6 @@ type SeedPost = {
   // Day of the month (1-based), relative to the month the room is created in.
   day: number;
   time: string;
-  status: PostStatus;
   paragraphs: string[];
 };
 
@@ -150,7 +113,6 @@ const SEED_POSTS: SeedPost[] = [
     tags: ["Launch"],
     day: 2,
     time: "15:00",
-    status: "scheduled",
     paragraphs: [
       "Introducing Liveblocks Sync: the sync engine for the agentic web. Humans, agents, or both, editing the same document in realtime. Previously known as Storage, now with LiveText.",
       `${BLOG}/introducing-liveblocks-sync-the-sync-engine-for-the-agentic-web`,
@@ -162,7 +124,6 @@ const SEED_POSTS: SeedPost[] = [
     tags: ["Launch", "Engineering"],
     day: 6,
     time: "10:30",
-    status: "approved",
     paragraphs: [
       "LiveText is a new data type for collaborative text editing. It works with Tiptap, BlockNote, ProseMirror, and CodeMirror, and lives in your room next to the rest of your data.",
       `${BLOG}/livetext-a-new-data-type-for-collaborative-text-editing`,
@@ -174,7 +135,6 @@ const SEED_POSTS: SeedPost[] = [
     tags: ["Product"],
     day: 11,
     time: "14:00",
-    status: "in-review",
     paragraphs: [
       "Files are part of collaboration too. LiveFile lets you upload, store, and share files directly inside Liveblocks Storage, so images and attachments sync like the rest of the document.",
       `${BLOG}/livefile-upload-and-share-files-on-collaborative-apps`,
@@ -186,7 +146,6 @@ const SEED_POSTS: SeedPost[] = [
     tags: ["Product", "AI"],
     day: 17,
     time: "16:00",
-    status: "scheduled",
     paragraphs: [
       "Comment threads can now be private to certain users: internal-only notes, private review workflows, and feedback only the right people can see. Plus, adding AI to a thread is easier than ever.",
       `${BLOG}/comments-private-threads-and-a-natural-home-for-ai`,
@@ -198,7 +157,6 @@ const SEED_POSTS: SeedPost[] = [
     tags: ["Monthly"],
     day: 24,
     time: "09:00",
-    status: "draft",
     paragraphs: [
       "What's new in Liveblocks: custom headers and test endpoints for webhooks, clearer analytics in the dashboard, and a new Slack-like messaging example built with Feeds.",
       `${BLOG}/whats-new-in-liveblocks-october-2026`,
@@ -240,7 +198,6 @@ export function createInitialStorage(): Liveblocks["Storage"] {
           tags: post.tags ?? [],
           date: toDateKey(addDays(monthStart, Math.min(post.day, lastDay) - 1)),
           time: post.time,
-          status: post.status,
           preview: post.paragraphs.join(" "),
           linkUrl: findLastUrl(post.paragraphs.join(" ")) ?? undefined,
           createdAt: Date.now() + index,

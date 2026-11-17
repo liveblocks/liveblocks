@@ -98,7 +98,6 @@ export function CalendarApp() {
         tags: [],
         date,
         time: "12:00",
-        status: "draft",
         preview: "",
         createdAt: Date.now(),
         media: new LiveList([]),

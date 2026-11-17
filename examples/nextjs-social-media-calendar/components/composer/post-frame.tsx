@@ -1,14 +1,4 @@
-import {
-  BookmarkIcon,
-  GlobeIcon,
-  HeartIcon,
-  MessageCircleIcon,
-  Repeat2Icon,
-  SendIcon,
-  Share2Icon,
-  StarIcon,
-  ThumbsUpIcon,
-} from "lucide-react";
+import { GlobeIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { BrandAvatar, PROJECT_NAME } from "@/components/brand";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
@@ -32,9 +22,8 @@ type PostFrameProps = {
 /**
  * Lays the post out the way the chosen network shows it, so the composer
  * reads as the post it will become: the microblogs (X, Threads, Bluesky,
- * Mastodon) as a single column with the byline inline and each network's own
- * action row, LinkedIn as a header card with labeled reactions. The editable
- * parts are the same in each; only the frame changes.
+ * Mastodon) as a single column with the byline inline, LinkedIn as a header
+ * card. The editable parts are the same in each; only the frame changes.
  */
 export function PostFrame(props: PostFrameProps) {
   switch (props.platform) {
@@ -51,9 +40,6 @@ export function PostFrame(props: PostFrameProps) {
 const ARTICLE_CLASS =
   "mx-auto my-4 w-full max-w-[600px] overflow-hidden rounded-xl bg-white shadow ring-1 ring-neutral-950/5 sm:my-8";
 
-const ACTIONS_CLASS =
-  "flex items-center text-neutral-500 select-none [&_svg]:size-[18px]";
-
 function Dot() {
   return (
     <span className="text-neutral-400" aria-hidden>
@@ -63,44 +49,6 @@ function Dot() {
 }
 
 type Microblog = Exclude<Platform, "linkedin">;
-
-/** Each network's action row, in its own order. */
-const MICROBLOG_ACTIONS: Record<Microblog, ReactNode> = {
-  x: (
-    <>
-      <MessageCircleIcon />
-      <Repeat2Icon />
-      <HeartIcon />
-      <BookmarkIcon />
-      <Share2Icon />
-    </>
-  ),
-  threads: (
-    <>
-      <HeartIcon />
-      <MessageCircleIcon />
-      <Repeat2Icon />
-      <SendIcon />
-    </>
-  ),
-  bluesky: (
-    <>
-      <MessageCircleIcon />
-      <Repeat2Icon />
-      <HeartIcon />
-      <Share2Icon />
-    </>
-  ),
-  mastodon: (
-    <>
-      <MessageCircleIcon />
-      <Repeat2Icon />
-      <StarIcon />
-      <BookmarkIcon />
-      <Share2Icon />
-    </>
-  ),
-};
 
 /**
  * X, Threads, Bluesky, and Mastodon: avatar on the left, the byline inline
@@ -143,21 +91,12 @@ function MicroblogFrame({
           {link}
           {footer}
         </div>
-        <div
-          className={cn(
-            ACTIONS_CLASS,
-            threads ? "gap-5 px-1 pt-2" : "justify-between px-2 pt-2"
-          )}
-          aria-hidden
-        >
-          {MICROBLOG_ACTIONS[platform]}
-        </div>
       </div>
     </article>
   );
 }
 
-/** LinkedIn: a header card, then the text, then labeled reactions. */
+/** LinkedIn: a header card, then the text. */
 function LinkedInFrame({ meta, body, media, link, footer }: PostFrameProps) {
   return (
     <article className={cn(ARTICLE_CLASS, "p-4")} aria-label="Post">
@@ -183,27 +122,6 @@ function LinkedInFrame({ meta, body, media, link, footer }: PostFrameProps) {
         {link}
         {footer}
       </div>
-      <div
-        className={cn(
-          ACTIONS_CLASS,
-          "mt-3 justify-around border-t border-neutral-950/5 pt-2 text-[13px] font-medium"
-        )}
-        aria-hidden
-      >
-        <Reaction icon={<ThumbsUpIcon />} label="Like" />
-        <Reaction icon={<MessageCircleIcon />} label="Comment" />
-        <Reaction icon={<Repeat2Icon />} label="Repost" />
-        <Reaction icon={<SendIcon />} label="Send" />
-      </div>
     </article>
-  );
-}
-
-function Reaction({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5 px-2 py-1">
-      {icon}
-      {label}
-    </span>
   );
 }
