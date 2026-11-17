@@ -3,6 +3,7 @@
 import { LIVEBLOCKS_COLLABORATION_PLUGIN_KEY } from "@liveblocks/prosemirror";
 import { useThreads } from "@liveblocks/react/suspense";
 import {
+  AnchoredThreads,
   FloatingComposer,
   FloatingThreads,
   FloatingToolbar,
@@ -13,6 +14,7 @@ import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
 import { getInitialDocument, truncatePreview } from "@/lib/posts";
 import { findLastUrl } from "@/lib/urls";
@@ -28,6 +30,12 @@ type PostEditorProps = {
   onPreviewChange: (preview: string, linkUrl: string | undefined) => void;
   /** The current plain text, for the character count and link card. */
   onTextChange: (text: string) => void;
+  /**
+   * The column beside the post where threads are shown anchored to their
+   * text on wide screens. The editor renders them there through a portal,
+   * since they need the editor and the post's room.
+   */
+  threadsContainer: HTMLElement | null;
 };
 
 /**
@@ -38,8 +46,10 @@ type PostEditorProps = {
  * recognized as they're typed and open on click. No other formatting.
  *
  * Selecting text shows a floating "comment" button; comments are Liveblocks
- * threads anchored to the text (`FloatingComposer` to write one,
- * `FloatingThreads` to read and reply).
+ * threads anchored to the text (`FloatingComposer` to write one). On wide
+ * screens the threads sit in a column beside the post, level with the text
+ * they're about (`AnchoredThreads`); on narrow ones they open as a popup
+ * from the highlight (`FloatingThreads`).
  */
 export function PostEditor({
   postId,
@@ -48,6 +58,7 @@ export function PostEditor({
   linkUrl,
   onPreviewChange,
   onTextChange,
+  threadsContainer,
 }: PostEditorProps) {
   const liveblocks = useLiveblocksExtension({
     collaborationMode: "liveblocks",
@@ -166,8 +177,18 @@ export function PostEditor({
       <FloatingThreads
         editor={editor}
         threads={threads}
-        className="w-[350px]"
+        className="w-[350px] xl:hidden"
       />
+      {threadsContainer
+        ? createPortal(
+            <AnchoredThreads
+              editor={editor}
+              threads={threads}
+              className="w-[350px]"
+            />,
+            threadsContainer
+          )
+        : null}
     </>
   );
 }

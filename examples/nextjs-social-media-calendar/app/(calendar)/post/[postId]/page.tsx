@@ -216,6 +216,10 @@ function PostComposer({
   const hasMedia = media.media.length > 0 || media.pending.length > 0;
   const url = hasMedia ? null : findLastUrl(text);
   const length = text.length;
+  // Where anchored threads go on wide screens: a column beside the post.
+  const [threadsColumn, setThreadsColumn] = useState<HTMLDivElement | null>(
+    null
+  );
   // The same text goes to every network, so it has to fit the strictest.
   const strictest = PLATFORM_INFO[strictestPlatform(platforms)];
 
@@ -300,33 +304,42 @@ function PostComposer({
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto px-4">
-        <PostFrame
-          platform={previewPlatform}
-          body={
-            <PostBody
-              postId={post.id}
-              platforms={platforms}
-              preview={post.preview}
-              linkUrl={post.linkUrl}
-              onPreviewChange={(preview, linkUrl) =>
-                onUpdate({ preview, linkUrl })
-              }
-              onTextChange={setText}
-            />
-          }
-          media={<PostMedia {...media} />}
-          link={url ? <LinkCard url={url} /> : null}
-          footer={
-            <div className="flex items-center justify-end gap-1">
-              <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
-              <CharacterRing
-                length={length}
-                max={strictest.maxLength}
-                label={platforms.length > 1 ? strictest.label : undefined}
+        <div className="mx-auto grid w-full max-w-[600px] xl:max-w-[974px] xl:grid-cols-[minmax(0,600px)_350px] xl:gap-6">
+          <PostFrame
+            platform={previewPlatform}
+            body={
+              <PostBody
+                postId={post.id}
+                platforms={platforms}
+                preview={post.preview}
+                linkUrl={post.linkUrl}
+                onPreviewChange={(preview, linkUrl) =>
+                  onUpdate({ preview, linkUrl })
+                }
+                onTextChange={setText}
+                threadsContainer={threadsColumn}
               />
-            </div>
-          }
-        />
+            }
+            media={<PostMedia {...media} />}
+            link={url ? <LinkCard url={url} /> : null}
+            footer={
+              <div className="flex items-center justify-end gap-1">
+                <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
+                <CharacterRing
+                  length={length}
+                  max={strictest.maxLength}
+                  label={platforms.length > 1 ? strictest.label : undefined}
+                />
+              </div>
+            }
+          />
+          {/* Same vertical margins as the post, so the column's top is level
+              with it; threads are placed from there to sit beside their text. */}
+          <div
+            ref={setThreadsColumn}
+            className="relative my-4 hidden xl:block sm:my-8"
+          />
+        </div>
       </main>
     </div>
   );
