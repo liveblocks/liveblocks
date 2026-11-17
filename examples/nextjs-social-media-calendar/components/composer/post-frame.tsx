@@ -34,8 +34,12 @@ export function PostFrame(props: PostFrameProps) {
   }
 }
 
-const ARTICLE_CLASS =
-  "mx-auto my-4 w-full max-w-[600px] overflow-hidden rounded-xl bg-white shadow ring-1 ring-neutral-950/5 sm:my-8";
+/** The post's column: centered, as wide as a feed. */
+const ARTICLE_CLASS = "mx-auto my-4 w-full max-w-[600px] sm:my-8";
+
+/** LinkedIn shows posts as cards; the microblogs lay them straight on the feed. */
+const CARD_CLASS =
+  "overflow-hidden rounded-xl bg-white ring-1 ring-neutral-950/10";
 
 type Microblog = Exclude<Platform, "linkedin">;
 
@@ -55,7 +59,7 @@ function MicroblogFrame({
   const stacked = platform === "mastodon";
   const threads = platform === "threads";
   return (
-    <article className={cn(ARTICLE_CLASS, "flex gap-3 p-4")} aria-label="Post">
+    <article className={cn(ARTICLE_CLASS, "flex gap-3")} aria-label="Post">
       <BrandAvatar />
       <div className="min-w-0 flex-1">
         <div
@@ -85,7 +89,7 @@ function MicroblogFrame({
 /** LinkedIn: a header card, then the text. */
 function LinkedInFrame({ body, media, link, footer }: PostFrameProps) {
   return (
-    <article className={cn(ARTICLE_CLASS, "p-4")} aria-label="Post">
+    <article className={cn(ARTICLE_CLASS, CARD_CLASS, "p-4")} aria-label="Post">
       <header className="flex items-center gap-3">
         <BrandAvatar className="size-11 rounded-md text-sm" />
         <div className="min-w-0 flex-1 leading-tight">
