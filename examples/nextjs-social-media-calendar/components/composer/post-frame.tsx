@@ -46,7 +46,7 @@ export function PostFrame({
       className={cn(
         "mx-auto my-4 grid w-full max-w-[600px] grid-cols-[auto_1fr] gap-x-3 text-[15px] sm:my-8",
         // LinkedIn shows posts as cards; the microblogs lay them on the feed.
-        linkedin && "rounded-xl bg-white p-4 ring-1 ring-neutral-950/10"
+        linkedin && "rounded-xl bg-white p-4 pb-1 ring-1 ring-neutral-950/10"
       )}
       aria-label="Post"
     >
