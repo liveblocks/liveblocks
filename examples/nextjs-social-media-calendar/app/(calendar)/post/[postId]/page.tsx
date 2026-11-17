@@ -165,7 +165,7 @@ function PostBody(props: ComponentProps<typeof PostEditor>) {
     >
       <ClientSideSuspense
         fallback={
-          <div className="composer-editor pt-1">
+          <div className="composer-editor">
             <div className="h-6 w-2/3 animate-pulse rounded bg-neutral-100" />
           </div>
         }

@@ -5,6 +5,7 @@ import { useFileUrl } from "@liveblocks/react";
 import { GripVerticalIcon, PlayIcon } from "lucide-react";
 import Link from "next/link";
 import { EditingAvatars } from "@/components/editing-avatars";
+import { PreviewImage } from "@/components/preview-image";
 import { TagChips } from "@/components/tag-chip";
 import {
   Tooltip,
@@ -148,16 +149,11 @@ function MediaThumbnail({ file }: { file: LiveFileData }) {
             aria-label={file.name}
           />
         ) : (
-          // Presigned URLs from Liveblocks: plain <img>, not next/image.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={url}
-            alt=""
-            draggable={false}
-            className="size-full object-cover"
-          />
+          <PreviewImage src={url} draggable={false} className="size-full" />
         )
-      ) : null}
+      ) : (
+        <PreviewImage src={undefined} className="size-full" />
+      )}
       {isVideo ? (
         <span className="absolute right-1 bottom-1 flex size-5 items-center justify-center rounded-full bg-neutral-900/70 text-white">
           <PlayIcon className="size-2.5 fill-current" aria-hidden />
@@ -170,25 +166,19 @@ function MediaThumbnail({ file }: { file: LiveFileData }) {
 /**
  * For a post without media of its own: the Open Graph image of the last
  * link in its text, as the network would show it (read from the page's Open
- * Graph tags by the `getLinkPreview` action). Nothing while it loads or when
- * the page has no image.
+ * Graph tags by the `getLinkPreview` action). A placeholder of the same size
+ * while the page and then the image load, so the card doesn't grow when it
+ * arrives; nothing once the page is known to have no image.
  */
 function LinkThumbnail({ url }: { url: string }) {
-  const { metadata } = useLinkPreview(url);
-  const image = metadata?.image;
-  if (!image) {
+  const { metadata, isLoading } = useLinkPreview(url);
+  const image = metadata?.image ?? undefined;
+  if (!image && !isLoading) {
     return null;
   }
   return (
     <span className={THUMBNAIL_CLASS}>
-      {/* Remote OG image: plain <img>, not next/image (unknown hosts). */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={image}
-        alt=""
-        draggable={false}
-        className="size-full object-cover"
-      />
+      <PreviewImage src={image} draggable={false} className="size-full" />
     </span>
   );
 }

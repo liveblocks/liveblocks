@@ -153,7 +153,7 @@ export function PostEditor({
   return (
     <>
       <div
-        className="composer-editor cursor-text pt-1"
+        className="composer-editor cursor-text"
         onClick={() => editor?.commands.focus()}
       >
         <EditorContent editor={editor} />

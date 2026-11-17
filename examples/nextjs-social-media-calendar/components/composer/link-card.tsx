@@ -2,6 +2,7 @@
 
 import { LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { PreviewImage } from "@/components/preview-image";
 import { useLinkPreview } from "@/hooks/use-link-preview";
 import { displayHost } from "@/lib/urls";
 
@@ -29,21 +30,27 @@ export function LinkCard({ url }: { url: string }) {
   return <SettledLinkCard key={settledUrl} url={settledUrl} />;
 }
 
+// Open Graph images are 1.91:1, the size networks show them at.
+const IMAGE_CLASS = "aspect-[1.91/1] w-full";
+
 function SettledLinkCard({ url }: { url: string }) {
   const { metadata, isLoading, error } = useLinkPreview(url);
   const host = displayHost(url);
 
+  // While the page loads, a card the size of the one most links get: an
+  // image-sized block over two lines of text. Then, while the image itself
+  // downloads, `PreviewImage` holds its place at the same aspect ratio.
   if (isLoading) {
     return (
       <div
-        className="flex h-[72px] animate-pulse items-center gap-3 rounded-2xl border border-neutral-950/10 p-3"
+        className="overflow-hidden rounded-2xl border border-neutral-950/10"
         aria-busy
         aria-label={`Loading a preview of ${host}`}
       >
-        <div className="size-12 shrink-0 rounded-lg bg-neutral-100" />
-        <div className="flex-1 space-y-2">
-          <div className="h-3 w-1/4 rounded bg-neutral-100" />
-          <div className="h-3 w-2/3 rounded bg-neutral-100" />
+        <PreviewImage src={undefined} className={IMAGE_CLASS} />
+        <div className="space-y-2 p-3">
+          <div className="h-3 w-1/4 animate-pulse rounded bg-neutral-100" />
+          <div className="h-3 w-2/3 animate-pulse rounded bg-neutral-100" />
         </div>
       </div>
     );
@@ -63,15 +70,7 @@ function SettledLinkCard({ url }: { url: string }) {
       className="block overflow-hidden rounded-2xl border border-neutral-950/10 text-left no-underline transition-colors outline-none hover:bg-neutral-50 focus-visible:ring-2 focus-visible:ring-ring"
       aria-label={`${title ?? host} (opens in a new tab)`}
     >
-      {image ? (
-        // Remote OG images: plain <img>, not next/image (unknown hosts).
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={image}
-          alt=""
-          className="aspect-[1.91/1] w-full bg-neutral-100 object-cover"
-        />
-      ) : null}
+      {image ? <PreviewImage src={image} className={IMAGE_CLASS} /> : null}
       <div className="flex items-center gap-3 p-3">
         {image ? null : (
           <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500">

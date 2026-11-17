@@ -40,28 +40,38 @@ export function PostFrame({
   const info = PLATFORM_INFO[platform];
   const linkedin = platform === "linkedin";
   const threads = platform === "threads";
-  const mastodon = platform === "mastodon";
 
   return (
     <article
       className={cn(
-        "mx-auto my-4 grid w-full max-w-[600px] grid-cols-[auto_1fr] gap-x-3 sm:my-8",
+        "mx-auto my-4 grid w-full max-w-[600px] grid-cols-[auto_1fr] gap-x-3 text-[15px] sm:my-8",
         // LinkedIn shows posts as cards; the microblogs lay them on the feed.
         linkedin && "rounded-xl bg-white p-4 ring-1 ring-neutral-950/10"
       )}
       aria-label="Post"
     >
-      <BrandAvatar className={cn(linkedin && "size-11 rounded-md text-sm")} />
+      {/* Microblogs: a large avatar whose top lines up with the name, the
+          handle inline after it, and the text starting right under the name.
+          LinkedIn: a smaller square avatar beside a stacked name and tagline,
+          with the text under both. */}
+      <BrandAvatar
+        className={cn(
+          "self-start",
+          linkedin ? "size-11 rounded-md text-sm" : "size-12 text-base"
+        )}
+      />
       <div
         className={cn(
-          "flex min-w-0 flex-wrap items-center gap-x-1 self-center text-sm leading-6",
-          (linkedin || mastodon) && "flex-col items-start gap-x-0 leading-5"
+          "flex min-w-0 self-start leading-5",
+          linkedin
+            ? "flex-col justify-center self-stretch text-sm"
+            : "flex-wrap items-baseline gap-x-1"
         )}
         data-slot="byline"
       >
         <span
           className={cn(
-            "font-bold text-neutral-900",
+            "truncate font-bold text-neutral-900",
             linkedin && "font-semibold"
           )}
         >

@@ -101,8 +101,9 @@
   margin: 0;
 }
 
+/* Each Enter is a new line, as on the networks: no gap between paragraphs. */
 .composer-editor .tiptap p + p {
-  margin-top: 0.75em;
+  margin-top: 0;
 }
 
 .composer-editor .tiptap a {
