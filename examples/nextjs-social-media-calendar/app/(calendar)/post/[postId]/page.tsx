@@ -259,19 +259,19 @@ function PostComposer({
 
         <Separator orientation="vertical" />
 
-        <SchedulePicker
-          date={post.date}
-          time={post.time}
-          onDateChange={(date) => onUpdate({ date })}
-          onTimeChange={(time) => onUpdate({ time })}
+        <TagPicker
+          tags={post.tags}
+          onTagsChange={(tags) => onUpdate({ tags })}
         />
 
         <div className="ml-auto flex items-center gap-3">
           <EditingAvatars postId={post.id} size={28} max={5} />
 
-          <TagPicker
-            tags={post.tags}
-            onTagsChange={(tags) => onUpdate({ tags })}
+          <SchedulePicker
+            date={post.date}
+            time={post.time}
+            onDateChange={(date) => onUpdate({ date })}
+            onTimeChange={(time) => onUpdate({ time })}
           />
 
           <Separator orientation="vertical" />
