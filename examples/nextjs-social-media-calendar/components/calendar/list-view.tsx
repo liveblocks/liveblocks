@@ -157,7 +157,7 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
         </div>
         <PlatformBadges
           platforms={post.platforms}
-          size={20}
+          size={18}
           className="hidden sm:inline-flex"
         />
         <EditingAvatars postId={post.id} size={22} />

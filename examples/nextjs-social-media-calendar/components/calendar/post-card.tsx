@@ -99,7 +99,7 @@ function PostCardContent({ post }: { post: PostData }) {
   return (
     <>
       <span className="flex items-center justify-between gap-1.5">
-        <PlatformBadges platforms={post.platforms} size={20} />
+        <PlatformBadges platforms={post.platforms} size={18} />
         {/* Gives way to the move handle while that has keyboard focus. */}
         <span className="text-xs font-medium text-neutral-500 tabular-nums transition-opacity group-has-[[data-slot=post-board-handle]:focus-visible]/card:opacity-0">
           {formatTime(post.time)}
