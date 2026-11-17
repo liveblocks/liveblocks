@@ -13,7 +13,7 @@ import {
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
 import { getInitialDocument, truncatePreview } from "@/lib/posts";
@@ -36,6 +36,8 @@ type PostEditorProps = {
    * since they need the editor and the post's room.
    */
   threadsContainer: HTMLElement | null;
+  /** Called when whether the post has unresolved threads changes. */
+  onOpenThreadsChange: (hasOpenThreads: boolean) => void;
 };
 
 /**
@@ -59,6 +61,7 @@ export function PostEditor({
   onPreviewChange,
   onTextChange,
   threadsContainer,
+  onOpenThreadsChange,
 }: PostEditorProps) {
   const liveblocks = useLiveblocksExtension({
     collaborationMode: "liveblocks",
@@ -160,6 +163,18 @@ export function PostEditor({
   }, [text, isReady]);
 
   const { threads } = useThreads();
+  // Resolved threads keep their highlight (and open as a popup from it) but
+  // don't take a place in the column beside the post.
+  const openThreads = useMemo(
+    () => threads.filter((thread) => !thread.resolved),
+    [threads]
+  );
+  const onOpenThreadsChangeRef = useRef(onOpenThreadsChange);
+  onOpenThreadsChangeRef.current = onOpenThreadsChange;
+  const hasOpenThreads = openThreads.length > 0;
+  useEffect(() => {
+    onOpenThreadsChangeRef.current(hasOpenThreads);
+  }, [hasOpenThreads]);
 
   return (
     <>
@@ -183,7 +198,7 @@ export function PostEditor({
         ? createPortal(
             <AnchoredThreads
               editor={editor}
-              threads={threads}
+              threads={openThreads}
               className="w-[350px]"
             />,
             threadsContainer
