@@ -7,6 +7,7 @@ import {
 } from "@liveblocks/client";
 import { addDays, startOfMonth, toDateKey, type DateKey } from "./dates";
 import type { Platform } from "./platforms";
+import { findLastUrl, URL_PATTERN } from "./urls";
 
 export type PostStatus = "draft" | "in-review" | "approved" | "scheduled";
 
@@ -81,9 +82,11 @@ export type PostData = Omit<PostFields, "platforms" | "tags"> & {
   media?: readonly LiveFileData[];
 };
 
+type TiptapMark = { type: "link"; attrs: { href: string } };
+type TiptapText = { type: "text"; text: string; marks?: TiptapMark[] };
 type TiptapDoc = {
   type: "doc";
-  content: { type: "paragraph"; content?: { type: "text"; text: string }[] }[];
+  content: { type: "paragraph"; content?: TiptapText[] }[];
 };
 
 export const EMPTY_DOCUMENT: TiptapDoc = {
@@ -91,12 +94,34 @@ export const EMPTY_DOCUMENT: TiptapDoc = {
   content: [{ type: "paragraph" }],
 };
 
+/** Splits a paragraph into text nodes, marking its URLs as links. */
+function paragraphToNodes(text: string): TiptapText[] {
+  const nodes: TiptapText[] = [];
+  let last = 0;
+  for (const match of text.matchAll(URL_PATTERN)) {
+    const index = match.index ?? 0;
+    if (index > last) {
+      nodes.push({ type: "text", text: text.slice(last, index) });
+    }
+    nodes.push({
+      type: "text",
+      text: match[0],
+      marks: [{ type: "link", attrs: { href: match[0] } }],
+    });
+    last = index + match[0].length;
+  }
+  if (last < text.length) {
+    nodes.push({ type: "text", text: text.slice(last) });
+  }
+  return nodes;
+}
+
 function paragraphsToDocument(paragraphs: string[]): TiptapDoc {
   return {
     type: "doc",
     content: paragraphs.map((text) => ({
       type: "paragraph",
-      content: [{ type: "text", text }],
+      content: paragraphToNodes(text),
     })),
   };
 }
@@ -112,135 +137,71 @@ type SeedPost = {
   paragraphs: string[];
 };
 
+const BLOG = "https://liveblocks.io/blog";
+
+/**
+ * A month of posts about Liveblocks, each ending with the blog post it
+ * announces so the calendar cards show the article's image.
+ */
 const SEED_POSTS: SeedPost[] = [
   {
-    id: "post-launch-teaser",
-    platforms: ["threads", "bluesky"],
+    id: "post-liveblocks-sync",
+    platforms: ["x", "bluesky", "linkedin"],
     tags: ["Launch"],
     day: 2,
-    time: "09:00",
+    time: "15:00",
     status: "scheduled",
     paragraphs: [
-      "Something new is landing next week. 👀",
-      "We've been quietly rebuilding our favorite product from the ground up, and we can't wait to show you. Turn on notifications so you don't miss it.",
+      "Introducing Liveblocks Sync: the sync engine for the agentic web. Humans, agents, or both, editing the same document in realtime. Previously known as Storage, now with LiveText.",
+      `${BLOG}/introducing-liveblocks-sync-the-sync-engine-for-the-agentic-web`,
     ],
   },
   {
-    id: "post-behind-the-scenes",
-    platforms: ["bluesky"],
-    day: 4,
-    time: "17:30",
-    status: "approved",
-    paragraphs: [
-      "POV: the design team arguing about a 2px border radius for 45 minutes 😅 #designlife #startup",
-    ],
-  },
-  {
-    id: "post-customer-story",
-    platforms: ["linkedin", "mastodon"],
-    tags: ["Case study"],
+    id: "post-livetext",
+    platforms: ["x", "threads", "mastodon"],
+    tags: ["Launch", "Engineering"],
     day: 6,
-    time: "11:00",
-    status: "in-review",
-    paragraphs: [
-      "How Northwind cut their content review cycle from 5 days to 1.",
-      "When Northwind's marketing team started working across three time zones, approvals became the bottleneck. Here's what changed when they moved planning, drafting, and feedback into a single shared calendar.",
-      "Read the full story on our blog. 👇",
-    ],
-  },
-  {
-    id: "post-poll",
-    platforms: ["x"],
-    tags: ["Community"],
-    day: 9,
-    time: "14:00",
-    status: "draft",
-    paragraphs: [
-      "Quick poll for the marketers out there: how many tools does it take to publish ONE social post at your company?",
-    ],
-  },
-  {
-    id: "post-launch-day",
-    platforms: ["threads"],
-    day: 11,
-    time: "10:00",
-    status: "in-review",
-    paragraphs: [
-      "It's here. ✨ Meet the all-new Acme Studio.",
-      "Plan, write, and approve your content together, in realtime. Try it free at acme.studio.",
-    ],
-  },
-  {
-    id: "post-launch-thread",
-    platforms: ["x"],
-    day: 11,
-    time: "10:05",
-    status: "draft",
-    paragraphs: [
-      "Today we're launching the all-new Acme Studio 🚀",
-      "A thread on what's new, and why we rebuilt everything (1/7)",
-    ],
-  },
-  {
-    id: "post-tips",
-    platforms: ["mastodon"],
-    day: 15,
-    time: "12:00",
+    time: "10:30",
     status: "approved",
     paragraphs: [
-      "3 tips for a content calendar your whole team will actually use:",
-      '1. Plan a month ahead, but leave room for reactive posts. 2. Review drafts where they live, not in email threads. 3. Agree on one definition of "approved".',
+      "LiveText is a new data type for collaborative text editing. It works with Tiptap, BlockNote, ProseMirror, and CodeMirror, and lives in your room next to the rest of your data.",
+      `${BLOG}/livetext-a-new-data-type-for-collaborative-text-editing`,
     ],
   },
   {
-    id: "post-hiring",
+    id: "post-livefile",
     platforms: ["linkedin", "x"],
-    tags: ["Hiring"],
-    day: 18,
-    time: "09:30",
-    status: "draft",
+    tags: ["Product"],
+    day: 11,
+    time: "14:00",
+    status: "in-review",
     paragraphs: [
-      "We're hiring a Senior Product Designer to join our fully remote team.",
-      "You'll work closely with engineering and marketing to shape how teams plan content together. Apply through the link in the comments.",
+      "Files are part of collaboration too. LiveFile lets you upload, store, and share files directly inside Liveblocks Storage, so images and attachments sync like the rest of the document.",
+      `${BLOG}/livefile-upload-and-share-files-on-collaborative-apps`,
     ],
   },
   {
-    id: "post-reel",
-    platforms: ["threads"],
-    day: 21,
-    time: "18:00",
-    status: "draft",
-    paragraphs: ["A day in the life of our content team, in 30 seconds. 🎬"],
-  },
-  {
-    id: "post-webinar",
-    platforms: ["linkedin"],
-    day: 24,
+    id: "post-private-threads",
+    platforms: ["linkedin", "threads", "bluesky"],
+    tags: ["Product", "AI"],
+    day: 17,
     time: "16:00",
     status: "scheduled",
     paragraphs: [
-      'Join us live on Thursday: "Planning social content as a team" with our Head of Marketing.',
-      "We'll share the exact workflow we use internally, from the first idea to the published post. Save your seat with the link below.",
+      "Comment threads can now be private to certain users: internal-only notes, private review workflows, and feedback only the right people can see. Plus, adding AI to a thread is easier than ever.",
+      `${BLOG}/comments-private-threads-and-a-natural-home-for-ai`,
     ],
   },
   {
-    id: "post-trend",
-    platforms: ["bluesky", "threads"],
-    day: 26,
-    time: "19:00",
-    status: "in-review",
-    paragraphs: [
-      "Replying to @everyone asking how we keep up with trends: we don't, we plan 😌 #marketing",
-    ],
-  },
-  {
-    id: "post-month-recap",
-    platforms: ["x"],
-    day: 29,
-    time: "15:00",
+    id: "post-whats-new-october",
+    platforms: ["x", "threads", "bluesky", "mastodon", "linkedin"],
+    tags: ["Monthly"],
+    day: 24,
+    time: "09:00",
     status: "draft",
     paragraphs: [
-      "That's a wrap on this month! Thanks to everyone who tried the new Acme Studio. Here's what we shipped, and what's coming next.",
+      "What's new in Liveblocks: custom headers and test endpoints for webhooks, clearer analytics in the dashboard, and a new Slack-like messaging example built with Feeds.",
+      `${BLOG}/whats-new-in-liveblocks-october-2026`,
     ],
   },
 ];
@@ -281,6 +242,7 @@ export function createInitialStorage(): Liveblocks["Storage"] {
           time: post.time,
           status: post.status,
           preview: post.paragraphs.join(" "),
+          linkUrl: findLastUrl(post.paragraphs.join(" ")) ?? undefined,
           createdAt: Date.now() + index,
           media: new LiveList([]),
         }),

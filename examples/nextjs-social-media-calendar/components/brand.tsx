@@ -1,7 +1,7 @@
 import { CalendarDaysIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const PROJECT_NAME = "Acme Studio";
+export const PROJECT_NAME = "Liveblocks";
 
 export function Brand({ className }: { className?: string }) {
   return (

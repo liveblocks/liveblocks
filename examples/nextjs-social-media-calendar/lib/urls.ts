@@ -1,6 +1,6 @@
 // A link in the text: `https://…`, `http://…`, or a bare `www.…`. Trailing
 // punctuation that usually ends a sentence rather than the URL is left out.
-const URL_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+export const URL_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
 const TRAILING_PUNCTUATION = /[.,:;!?)\]}'"…]+$/;
 
 /**

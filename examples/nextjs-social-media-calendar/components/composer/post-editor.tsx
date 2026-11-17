@@ -15,7 +15,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef } from "react";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
 import { getInitialDocument, truncatePreview } from "@/lib/posts";
-import { findLastUrl } from "./urls";
+import { findLastUrl } from "@/lib/urls";
 
 const PREVIEW_SYNC_DELAY_MS = 400;
 

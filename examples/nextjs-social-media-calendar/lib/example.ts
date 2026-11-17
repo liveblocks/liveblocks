@@ -8,7 +8,10 @@ import { getRandomUser, getUsers } from "@/app/database";
  * locally: a random demo user is picked instead.
  */
 
-export const BASE_ROOM_ID = "liveblocks:examples:nextjs-social-media-calendar";
+// The `-v2` suffix starts a fresh set of rooms: the post shape changed
+// (`platforms[]`, `tags`, Liveblocks seeds), and old rooms can't be read.
+export const BASE_ROOM_ID =
+  "liveblocks:examples:nextjs-social-media-calendar-v2";
 
 let cachedUserId: string | null = null;
 

@@ -21,7 +21,7 @@ import {
   PostMedia,
   usePostMedia,
 } from "@/components/composer/post-media";
-import { findLastUrl } from "@/components/composer/urls";
+import { findLastUrl } from "@/lib/urls";
 import { EditingAvatars } from "@/components/editing-avatars";
 import { HelpButton } from "@/components/help-button";
 import { Button } from "@/components/ui/button";

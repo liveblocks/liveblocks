@@ -3,7 +3,7 @@
 import { LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLinkPreview } from "@/hooks/use-link-preview";
-import { displayHost } from "./urls";
+import { displayHost } from "@/lib/urls";
 
 // Wait for the URL to stop changing before asking for its metadata, so a link
 // being typed doesn't trigger a request per keystroke.
