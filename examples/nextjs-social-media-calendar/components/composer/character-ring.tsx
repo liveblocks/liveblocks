@@ -7,18 +7,19 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const SIZE = 20;
-const STROKE = 2;
+const SIZE = 16;
+const STROKE = 1.5;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-// Like X: the count only appears once the limit is close.
+// Like X: the ring changes color once the limit is close.
 const WARN_WITHIN = 20;
 
 /**
- * The caption's length against the strictest network's limit, as a ring that
- * fills as you type, the way X shows it: gray while there's room, the
- * characters left shown next to it as the limit nears, red once it's over.
+ * The caption's length against the strictest network's limit, as a small
+ * ring that fills as you type, the way X shows it: gray while there's room,
+ * amber as the limit nears, red once it's over. The count itself ("182/280",
+ * plus the network when the post goes to several) shows on hover.
  */
 export function CharacterRing({
   length,
@@ -35,7 +36,7 @@ export function CharacterRing({
   const over = remaining < 0;
   const near = !over && remaining <= WARN_WITHIN;
   const progress = Math.min(length / max, 1);
-  const description = `${length.toLocaleString()} / ${max.toLocaleString()}${
+  const description = `${length.toLocaleString()}/${max.toLocaleString()}${
     label ? ` on ${label}` : ""
   }`;
 
@@ -44,22 +45,13 @@ export function CharacterRing({
       <TooltipTrigger
         render={
           <span
-            className="flex h-7 items-center gap-1.5 text-xs tabular-nums"
+            className="flex size-7 items-center justify-center"
             role="status"
             aria-live="polite"
             aria-label={description}
           />
         }
       >
-        {over || near ? (
-          <span
-            className={cn(
-              over ? "font-medium text-red-600" : "text-neutral-500"
-            )}
-          >
-            {remaining.toLocaleString()}
-          </span>
-        ) : null}
         <svg
           width={SIZE}
           height={SIZE}
