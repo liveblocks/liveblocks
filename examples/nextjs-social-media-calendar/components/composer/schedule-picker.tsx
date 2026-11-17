@@ -43,7 +43,7 @@ export function SchedulePicker({
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 font-normal text-neutral-700 tabular-nums"
+            className="gap-1.5 text-xs font-normal text-neutral-700 tabular-nums [&_svg]:size-3.5"
             aria-label="Schedule"
           />
         }
@@ -66,7 +66,7 @@ export function SchedulePicker({
           today={toDateKey(new Date())}
         />
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-950/5 pt-3">
-          <span className="text-sm text-neutral-500">Time</span>
+          <span className="text-xs text-neutral-500">Time</span>
           {/* Segmented: the value only changes once every segment holds
               something, so a half-typed time never reaches Storage. */}
           <TimeInput
@@ -77,6 +77,7 @@ export function SchedulePicker({
               }
             }}
             aria-label="Time"
+            className="h-7 text-xs"
           />
         </div>
       </PopoverContent>

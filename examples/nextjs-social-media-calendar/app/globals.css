@@ -90,7 +90,7 @@
 .composer-editor .tiptap {
   outline: none;
   min-height: 120px;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.5;
   color: var(--foreground);
   white-space: pre-wrap;

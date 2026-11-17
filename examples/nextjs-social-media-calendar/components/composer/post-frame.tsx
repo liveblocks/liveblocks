@@ -60,7 +60,7 @@ function MicroblogFrame({
       <div className="min-w-0 flex-1">
         <div
           className={cn(
-            "flex flex-wrap items-center gap-x-1 text-[15px] leading-6",
+            "flex flex-wrap items-center gap-x-1 text-sm leading-6",
             stacked && "flex-col items-start gap-x-0 leading-5"
           )}
         >
@@ -87,9 +87,9 @@ function LinkedInFrame({ body, media, link, footer }: PostFrameProps) {
   return (
     <article className={cn(ARTICLE_CLASS, "p-4")} aria-label="Post">
       <header className="flex items-center gap-3">
-        <BrandAvatar className="size-12 rounded-md text-base" />
+        <BrandAvatar className="size-11 rounded-md text-sm" />
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-[15px] font-semibold text-neutral-900">
+          <p className="text-sm font-semibold text-neutral-900">
             {PROJECT_NAME}
           </p>
           <p className="truncate text-xs text-neutral-500">
