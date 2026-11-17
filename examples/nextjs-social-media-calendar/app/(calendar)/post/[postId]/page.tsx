@@ -75,7 +75,7 @@ export default function PostPage() {
       {/* Darker than the default so the calendar clearly recedes behind the post. */}
       <DialogBackdrop className="bg-neutral-950/60" />
       <DialogContent
-        className="h-[calc(100dvh-4rem)] w-[calc(100%-4rem)] max-w-6xl bg-neutral-50"
+        className="h-[calc(100dvh-2.5rem)] max-h-none w-[calc(100%-2.5rem)] max-w-none bg-neutral-50"
         aria-label="Post"
       >
         <PostShell postId={postId} />
