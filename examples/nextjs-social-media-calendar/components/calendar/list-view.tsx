@@ -153,9 +153,13 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
               <span className="text-neutral-400 italic">Empty post</span>
             )}
           </p>
-          <PlatformBadges platforms={post.platforms} size={16} />
+          <TagSummary tags={post.tags} />
         </div>
-        <TagSummary tags={post.tags} className="hidden sm:inline-flex" />
+        <PlatformBadges
+          platforms={post.platforms}
+          size={16}
+          className="hidden sm:inline-flex"
+        />
         <EditingAvatars postId={post.id} size={22} />
         <ChevronRightIcon className="size-4 shrink-0 text-neutral-300 transition-colors group-hover/row:text-neutral-500" />
       </Link>
