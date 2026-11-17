@@ -20,23 +20,12 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build a collaborative social media content calendar
-with [Liveblocks Storage](https://liveblocks.io/docs/products/sync/storage),
+This example shows how to build a collaborative social media calendar with
+[Liveblocks Storage](https://liveblocks.io/docs/products/sync/storage),
 [LiveText](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveText),
 [Tiptap](https://tiptap.dev/), and [Next.js](https://nextjs.org/). Plan posts on
-a shared calendar (by week or month) or list view, drag them between days to
-reschedule, and click any post to open a realtime composer in a dialog over the
-calendar (with its own URL), laid out like the post looks on each platform it's
-going out to. The whole team can write the caption together, choose the
-platforms and labels, attach photos and short videos (uploaded as
-[LiveFiles](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveFile)),
-leave [comments](https://liveblocks.io/docs/products/comments) on a selection of
-the text, and see a preview card for the last link. Avatars show who's in the
-project and who's editing each post. The interface is built with
-[ui-sdk](https://ui-sdk.dev): its unstyled components (menus, tabs, dialogs,
-popovers, a calendar, time inputs) styled with Tailwind, plus a small custom
-primitive on `@ui-sdk/core`'s `createTransfer` for dragging posts between days
-with the pointer or the keyboard.
+a shared calendar, drag them between days, and write each one together in a
+realtime composer with comments and attachments.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/social-media-calendar.png" width="536" alt="Social Media Calendar" />
 
