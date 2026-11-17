@@ -339,7 +339,7 @@ export function AddMediaButton({
               onClick={() => inputRef.current?.click()}
               disabled={!canAdd}
               aria-label="Add photos or videos"
-              className="text-primary hover:text-primary"
+              className="text-neutral-500"
             />
           }
         >

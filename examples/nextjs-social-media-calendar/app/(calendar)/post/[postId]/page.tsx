@@ -8,9 +8,11 @@ import {
   useStorage,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
+import { LiveblocksUiConfig } from "@liveblocks/react-ui";
 import { Trash2Icon, XIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentProps } from "react";
+import { CharacterRing } from "@/components/composer/character-ring";
 import { LinkCard } from "@/components/composer/link-card";
 import { PlatformPicker } from "@/components/composer/platform-picker";
 import { PostEditor } from "@/components/composer/post-editor";
@@ -48,7 +50,6 @@ import {
   type Platform,
 } from "@/lib/platforms";
 import type { PostData, PostFields } from "@/lib/posts";
-import { cn } from "@/lib/utils";
 
 type PostUpdate = Partial<Omit<PostFields, "id" | "createdAt">>;
 
@@ -62,6 +63,12 @@ export default function PostPage() {
   const { postId } = useParams<{ postId: string }>();
   const router = useRouter();
   const calendarHref = useExampleHref("/");
+  // The dialog sits in the browser's top layer, so anything Liveblocks UI
+  // portals to <body> (the floating comment toolbar and composer, the
+  // threads) would render underneath it. Portal them into the dialog instead.
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(
+    null
+  );
 
   return (
     <Dialog
@@ -75,10 +82,14 @@ export default function PostPage() {
       {/* Darker than the default so the calendar clearly recedes behind the post. */}
       <DialogBackdrop className="bg-neutral-950/60" />
       <DialogContent
-        className="h-[calc(100dvh-2.5rem)] max-h-none w-[calc(100%-2.5rem)] max-w-none bg-white"
+        className="h-[calc(100dvh-60px)] max-h-none w-[calc(100%-130px)] max-w-none bg-white"
         aria-label="Post"
       >
-        <PostShell postId={postId} />
+        <div ref={setPortalContainer} className="contents">
+          <LiveblocksUiConfig portalContainer={portalContainer ?? undefined}>
+            <PostShell postId={postId} />
+          </LiveblocksUiConfig>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -207,7 +218,6 @@ function PostComposer({
   const length = text.length;
   // The same text goes to every network, so it has to fit the strictest.
   const strictest = PLATFORM_INFO[strictestPlatform(platforms)];
-  const overLimit = length > strictest.maxLength;
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
@@ -307,19 +317,13 @@ function PostComposer({
           media={<PostMedia {...media} />}
           link={url ? <LinkCard url={url} /> : null}
           footer={
-            <div className="-mx-2 flex items-center justify-between gap-3 border-t border-neutral-950/5 px-2 pt-2">
+            <div className="flex items-center justify-end gap-1">
               <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
-              <span
-                className={cn(
-                  "text-xs text-neutral-500 tabular-nums",
-                  overLimit ? "font-medium text-red-600" : undefined
-                )}
-                aria-live="polite"
-              >
-                {length.toLocaleString()} /{" "}
-                {strictest.maxLength.toLocaleString()}
-                {platforms.length > 1 ? ` on ${strictest.label}` : null}
-              </span>
+              <CharacterRing
+                length={length}
+                max={strictest.maxLength}
+                label={platforms.length > 1 ? strictest.label : undefined}
+              />
             </div>
           }
         />
