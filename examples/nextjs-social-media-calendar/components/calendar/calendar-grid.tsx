@@ -166,8 +166,9 @@ function DayCell({
       role="group"
       aria-label={formatDayHeading(date)}
       className={cn(
-        "group/day relative flex min-h-0 min-w-0 flex-col gap-1.5 border-r border-b border-neutral-950/5 p-1.5 transition-colors [&:nth-child(7n)]:border-r-0",
+        "group/day relative flex min-h-0 min-w-0 flex-col gap-1.5 border-r border-b border-neutral-950/5 p-1.5 [&:nth-child(7n)]:border-r-0",
         !inPeriod && "bg-neutral-50/80",
+        // Snaps on, no fade: a drop target should answer the pointer instantly.
         "data-over:bg-primary/5 data-over:ring-1 data-over:ring-primary/40 data-over:ring-inset"
       )}
     >
