@@ -19,89 +19,72 @@ type PostFrameProps = {
 /**
  * Lays the post out the way the chosen network shows it, so the composer
  * reads as the post it will become: the microblogs (X, Threads, Bluesky,
- * Mastodon) as a single column with the byline inline, LinkedIn as a header
- * card. The editable parts are the same in each; only the frame changes.
+ * Mastodon) as a single column with the byline inline, LinkedIn as a card
+ * with a header. The editable parts are the same in each; only the frame
+ * changes.
+ *
+ * One component with one element tree for every network, varying only in
+ * classes: the editor (and the post room it joins) sits at the same place in
+ * the tree whichever platform is previewed, so switching never remounts it.
+ * A grid does the layout: avatar in the first column, the byline beside it,
+ * and the content either under the byline (microblogs) or across both
+ * columns (LinkedIn).
  */
-export function PostFrame(props: PostFrameProps) {
-  switch (props.platform) {
-    case "x":
-    case "threads":
-    case "bluesky":
-    case "mastodon":
-      return <MicroblogFrame {...props} platform={props.platform} />;
-    case "linkedin":
-      return <LinkedInFrame {...props} />;
-  }
-}
-
-/** The post's column: centered, as wide as a feed. */
-const ARTICLE_CLASS = "mx-auto my-4 w-full max-w-[600px] sm:my-8";
-
-/** LinkedIn shows posts as cards; the microblogs lay them straight on the feed. */
-const CARD_CLASS =
-  "overflow-hidden rounded-xl bg-white ring-1 ring-neutral-950/10";
-
-type Microblog = Exclude<Platform, "linkedin">;
-
-/**
- * X, Threads, Bluesky, and Mastodon: avatar on the left, the byline inline
- * with the text under it. Threads leads with the handle alone; Mastodon puts
- * its long handle on its own line.
- */
-function MicroblogFrame({
+export function PostFrame({
   platform,
   body,
   media,
   link,
   footer,
-}: Omit<PostFrameProps, "platform"> & { platform: Microblog }) {
+}: PostFrameProps) {
   const info = PLATFORM_INFO[platform];
-  const stacked = platform === "mastodon";
+  const linkedin = platform === "linkedin";
   const threads = platform === "threads";
+  const mastodon = platform === "mastodon";
+
   return (
-    <article className={cn(ARTICLE_CLASS, "flex gap-3")} aria-label="Post">
-      <BrandAvatar />
-      <div className="min-w-0 flex-1">
-        <div
+    <article
+      className={cn(
+        "mx-auto my-4 grid w-full max-w-[600px] grid-cols-[auto_1fr] gap-x-3 sm:my-8",
+        // LinkedIn shows posts as cards; the microblogs lay them on the feed.
+        linkedin && "rounded-xl bg-white p-4 ring-1 ring-neutral-950/10"
+      )}
+      aria-label="Post"
+    >
+      <BrandAvatar className={cn(linkedin && "size-11 rounded-md text-sm")} />
+      <div
+        className={cn(
+          "flex min-w-0 flex-wrap items-center gap-x-1 self-center text-sm leading-6",
+          (linkedin || mastodon) && "flex-col items-start gap-x-0 leading-5"
+        )}
+        data-slot="byline"
+      >
+        <span
           className={cn(
-            "flex flex-wrap items-center gap-x-1 text-sm leading-6",
-            stacked && "flex-col items-start gap-x-0 leading-5"
+            "font-bold text-neutral-900",
+            linkedin && "font-semibold"
           )}
         >
-          <span className="font-bold text-neutral-900">
-            {threads ? info.handle.replace(/^@/, "") : PROJECT_NAME}
+          {threads ? info.handle.replace(/^@/, "") : PROJECT_NAME}
+        </span>
+        {threads ? null : (
+          <span
+            className={cn(
+              "max-w-full truncate text-neutral-500",
+              linkedin && "text-xs"
+            )}
+          >
+            {linkedin ? "Planning content, together" : info.handle}
           </span>
-          {threads ? null : (
-            <span className="truncate text-neutral-500">{info.handle}</span>
-          )}
-        </div>
-        <div className="flex flex-col gap-3">
-          {body}
-          {media}
-          {link}
-          {footer}
-        </div>
+        )}
       </div>
-    </article>
-  );
-}
-
-/** LinkedIn: a header card, then the text. */
-function LinkedInFrame({ body, media, link, footer }: PostFrameProps) {
-  return (
-    <article className={cn(ARTICLE_CLASS, CARD_CLASS, "p-4")} aria-label="Post">
-      <header className="flex items-center gap-3">
-        <BrandAvatar className="size-11 rounded-md text-sm" />
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-sm font-semibold text-neutral-900">
-            {PROJECT_NAME}
-          </p>
-          <p className="truncate text-xs text-neutral-500">
-            Planning content, together
-          </p>
-        </div>
-      </header>
-      <div className="mt-3 flex flex-col gap-3">
+      <div
+        className={cn(
+          "flex min-w-0 flex-col gap-3",
+          linkedin ? "col-span-2 mt-3" : "col-start-2"
+        )}
+        data-slot="content"
+      >
         {body}
         {media}
         {link}

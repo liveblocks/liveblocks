@@ -75,7 +75,7 @@ export default function PostPage() {
       {/* Darker than the default so the calendar clearly recedes behind the post. */}
       <DialogBackdrop className="bg-neutral-950/60" />
       <DialogContent
-        className="h-[calc(100dvh-2.5rem)] max-h-none w-[calc(100%-2.5rem)] max-w-none bg-neutral-50"
+        className="h-[calc(100dvh-2.5rem)] max-h-none w-[calc(100%-2.5rem)] max-w-none bg-white"
         aria-label="Post"
       >
         <PostShell postId={postId} />
@@ -210,8 +210,8 @@ function PostComposer({
   const overLimit = length > strictest.maxLength;
 
   return (
-    <div className="flex h-full w-full flex-col gap-2.5 overflow-hidden p-2.5">
-      <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-white px-3 py-2 shadow ring-1 ring-neutral-950/5">
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-neutral-950/10 px-4 py-2.5">
         <DialogTitle className="sr-only">
           {describePlatforms(platforms)} post
         </DialogTitle>
@@ -289,7 +289,7 @@ function PostComposer({
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto">
+      <main className="min-h-0 flex-1 overflow-y-auto px-4">
         <PostFrame
           platform={previewPlatform}
           body={
