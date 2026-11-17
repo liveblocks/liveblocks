@@ -36,8 +36,8 @@ type PostEditorProps = {
    * since they need the editor and the post's room.
    */
   threadsContainer: HTMLElement | null;
-  /** Called when whether the post has unresolved threads changes. */
-  onOpenThreadsChange: (hasOpenThreads: boolean) => void;
+  /** Called when the number of unresolved threads changes. */
+  onOpenThreadsChange: (openThreads: number) => void;
 };
 
 /**
@@ -171,10 +171,10 @@ export function PostEditor({
   );
   const onOpenThreadsChangeRef = useRef(onOpenThreadsChange);
   onOpenThreadsChangeRef.current = onOpenThreadsChange;
-  const hasOpenThreads = openThreads.length > 0;
+  const openThreadCount = openThreads.length;
   useEffect(() => {
-    onOpenThreadsChangeRef.current(hasOpenThreads);
-  }, [hasOpenThreads]);
+    onOpenThreadsChangeRef.current(openThreadCount);
+  }, [openThreadCount]);
 
   return (
     <>

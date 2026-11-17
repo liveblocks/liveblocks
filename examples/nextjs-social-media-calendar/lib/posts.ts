@@ -30,6 +30,10 @@ export type PostFields = {
   linkUrl?: string;
   // Free-form labels like "Campaign" or "Evergreen", shared by the project.
   tags: string[];
+  // How many unresolved comment threads the body has, synced from the
+  // composer (threads live in the post's room) so cards can show a count.
+  // Absent on posts that have never been opened since the field was added.
+  openThreads?: number;
   createdAt: number;
 };
 

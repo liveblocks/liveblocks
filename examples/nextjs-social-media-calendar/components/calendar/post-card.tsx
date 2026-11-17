@@ -2,7 +2,7 @@
 
 import type { LiveFileData } from "@liveblocks/client";
 import { useFileUrl } from "@liveblocks/react";
-import { GripVerticalIcon, PlayIcon } from "lucide-react";
+import { GripVerticalIcon, MessageCircleIcon, PlayIcon } from "lucide-react";
 import Link from "next/link";
 import { EditingAvatars } from "@/components/editing-avatars";
 import { PreviewImage } from "@/components/preview-image";
@@ -115,7 +115,20 @@ function PostCardContent({ post }: { post: PostData }) {
           <span className="text-neutral-400 italic">Empty post</span>
         )}
       </span>
-      <TagChips tags={post.tags} max={2} size="xs" />
+      {post.openThreads || post.tags.length > 0 ? (
+        <span className="flex items-center gap-1.5">
+          {post.openThreads ? (
+            <span
+              className="flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-neutral-500 tabular-nums"
+              aria-label={`${post.openThreads} open ${post.openThreads === 1 ? "comment" : "comments"}`}
+            >
+              {post.openThreads}
+              <MessageCircleIcon className="size-3" aria-hidden />
+            </span>
+          ) : null}
+          <TagChips tags={post.tags} max={2} size="xs" />
+        </span>
+      ) : null}
     </>
   );
 }

@@ -231,7 +231,7 @@ function PostComposer({
   const [threadsColumn, setThreadsColumn] = useState<HTMLDivElement | null>(
     null
   );
-  const [hasOpenThreads, setHasOpenThreads] = useState(false);
+  const hasOpenThreads = (post.openThreads ?? 0) > 0;
   // The platforms dialog (opened from the picker) and the "…" menu's help.
   const [platformsOpen, setPlatformsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -373,7 +373,11 @@ function PostComposer({
                 }
                 onTextChange={setText}
                 threadsContainer={threadsColumn}
-                onOpenThreadsChange={setHasOpenThreads}
+                onOpenThreadsChange={(openThreads) => {
+                  if (openThreads !== (post.openThreads ?? 0)) {
+                    onUpdate({ openThreads });
+                  }
+                }}
               />
             }
             media={<PostMedia {...media} />}
