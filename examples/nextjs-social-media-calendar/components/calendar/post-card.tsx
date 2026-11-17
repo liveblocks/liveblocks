@@ -72,7 +72,10 @@ export function PostCard({ post, href }: { post: PostData; href: string }) {
 /**
  * Marks where a post sat before it was picked up: a faded, dashed copy of
  * the card, shown in its original day while the post is over another one.
- * Not interactive; the post itself renders where it currently hovers.
+ * Not interactive; the post itself renders where it currently hovers. Its
+ * dashed edge is an outline, not a border, and it renders the same children
+ * as the card, so it takes exactly the card's size and nothing shifts when
+ * the two swap places.
  */
 export function PostCardGhost({ post }: { post: PostData }) {
   return (
@@ -81,10 +84,11 @@ export function PostCardGhost({ post }: { post: PostData }) {
       data-slot="post-card-ghost"
       className={cn(
         CARD_LAYOUT_CLASS,
-        "pointer-events-none border border-dashed border-neutral-300 bg-neutral-50 opacity-60 grayscale select-none"
+        "pointer-events-none bg-neutral-50 opacity-60 outline-1 -outline-offset-1 outline-neutral-300 outline-dashed grayscale select-none"
       )}
     >
       <PostCardContent post={post} />
+      <EditingAvatars postId={post.id} size={18} className="mt-0.5" />
     </div>
   );
 }
