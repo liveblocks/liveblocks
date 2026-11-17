@@ -352,7 +352,13 @@ function PostComposer({
         <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-4">
+      <main
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto px-4 transition-colors",
+          // LinkedIn's feed is gray so its white card stands out.
+          previewPlatform === "linkedin" && "bg-neutral-100"
+        )}
+      >
         <div
           className={cn(
             "mx-auto grid w-full max-w-[600px]",
