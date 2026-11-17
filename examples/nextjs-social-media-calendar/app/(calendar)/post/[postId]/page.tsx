@@ -323,10 +323,6 @@ function PostComposer({
             </div>
           }
         />
-
-        <p className="mb-4 text-center text-xs text-neutral-500">
-          Changes save automatically and sync to everyone in realtime.
-        </p>
       </main>
     </div>
   );
