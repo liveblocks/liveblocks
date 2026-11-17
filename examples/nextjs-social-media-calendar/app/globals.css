@@ -70,9 +70,18 @@
 
 /* Align Liveblocks UI (avatars, toolbars, mentions) with the app's primary
    color. Liveblocks styles are em-based, so the root font size scales the
-   comments (text, spacing, radii) down to match the rest of the app. */
+   comments (text, spacing, radii) down to match the rest of the app. The
+   inline marks Tiptap puts around commented text are `.lb-root` too, and
+   must stay at the editor's size. */
 .lb-root {
   --lb-accent: oklch(0.54 0.23 285);
+}
+
+.lb-root:not(
+  .lb-tiptap-thread-mark,
+  .lb-tiptap-thread-mark-selected,
+  .lb-selection
+) {
   font-size: 0.875rem;
 }
 
