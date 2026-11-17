@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { EditingAvatars } from "@/components/editing-avatars";
 import { NewPostMenu } from "@/components/new-post-menu";
+import { TagChips } from "@/components/tag-chip";
 import { Button } from "@/components/ui/button";
 import {
   compareByDateTime,
@@ -18,7 +19,12 @@ import {
   type DateKey,
   type Period,
 } from "@/lib/dates";
-import { PLATFORM_INFO, PlatformBadge, type Platform } from "@/lib/platforms";
+import {
+  describePlatforms,
+  PLATFORM_INFO,
+  PlatformBadges,
+  type Platform,
+} from "@/lib/platforms";
 import { STATUS_INFO, type PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 
@@ -138,7 +144,11 @@ export function ListView({
 
 function ListRow({ post, href }: { post: PostData; href: string }) {
   const status = STATUS_INFO[post.status];
-  const platform = PLATFORM_INFO[post.platform];
+  // One network: its handle too. Several: just their names.
+  const where =
+    post.platforms.length === 1
+      ? `${PLATFORM_INFO[post.platforms[0]].label} · ${PLATFORM_INFO[post.platforms[0]].handle}`
+      : describePlatforms(post.platforms);
 
   return (
     <li>
@@ -149,17 +159,16 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
         <span className="w-16 shrink-0 text-xs font-medium text-neutral-500 tabular-nums">
           {formatTime(post.time)}
         </span>
-        <PlatformBadge platform={post.platform} size={28} />
+        <PlatformBadges platforms={post.platforms} size={28} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm text-neutral-900">
             {post.preview || (
               <span className="text-neutral-400 italic">Empty post</span>
             )}
           </p>
-          <p className="mt-0.5 text-xs text-neutral-500">
-            {platform.label} · {platform.handle}
-          </p>
+          <p className="mt-0.5 text-xs text-neutral-500">{where}</p>
         </div>
+        <TagChips tags={post.tags} className="hidden md:flex" />
         <EditingAvatars postId={post.id} size={22} />
         <span
           className={cn(

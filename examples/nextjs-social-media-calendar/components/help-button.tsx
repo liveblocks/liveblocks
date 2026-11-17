@@ -48,7 +48,7 @@ const FEATURES: Feature[] = [
     icon: <PencilLineIcon />,
     title: "Write posts together",
     description:
-      "Click a post to open its composer: a Tiptap editor synced with LiveText, so several people can write the same caption at once, with live carets. Attach photos or short videos (stored as LiveFiles) and links get a preview card.",
+      "Click a post to open its composer: a Tiptap editor synced with LiveText, so several people can write the same caption at once, with live carets. Pick the platforms it goes out to and preview it as each one, add labels, attach photos or short videos (stored as LiveFiles), and the last link gets a preview card.",
   },
   {
     icon: <UsersIcon />,

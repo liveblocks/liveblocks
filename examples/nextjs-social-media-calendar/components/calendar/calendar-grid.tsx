@@ -3,7 +3,6 @@
 import { PlusIcon } from "lucide-react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { NewPostMenu } from "@/components/new-post-menu";
-import { Button } from "@/components/ui/button";
 import {
   compareByDateTime,
   compareByTime,
@@ -17,7 +16,7 @@ import {
   type DateKey,
   type Period,
 } from "@/lib/dates";
-import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
+import { describePlatforms, type Platform } from "@/lib/platforms";
 import type { PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 import { PostBoard, PostBoardDay } from "./post-board";
@@ -69,7 +68,7 @@ export function CalendarGrid({
   const postLabel = useCallback(
     (postId: string) => {
       const post = postsById.get(postId);
-      return post ? `${PLATFORM_INFO[post.platform].label} post` : undefined;
+      return post ? `${describePlatforms(post.platforms)} post` : undefined;
     },
     [postsById]
   );

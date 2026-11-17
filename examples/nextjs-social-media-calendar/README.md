@@ -25,9 +25,10 @@ with [Liveblocks Storage](https://liveblocks.io/docs/products/sync/storage),
 [LiveText](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveText),
 [Tiptap](https://tiptap.dev/), and [Next.js](https://nextjs.org/). Plan posts on
 a shared calendar (by week or month) or list view, drag them between days to
-reschedule, and click any post to open a realtime composer, laid out like the
-post itself, where the whole team can write the caption together, attach photos
-and short videos (uploaded as
+reschedule, and click any post to open a realtime composer in a dialog over the
+calendar (with its own URL), laid out like the post looks on each platform it's
+going out to. The whole team can write the caption together, choose the
+platforms and labels, attach photos and short videos (uploaded as
 [LiveFiles](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveFile)),
 leave [comments](https://liveblocks.io/docs/products/comments) on a selection of
 the text, and see a preview card for the last link. Avatars show who's in the

@@ -5,6 +5,7 @@ import { useFileUrl } from "@liveblocks/react";
 import { GripVerticalIcon, PlayIcon } from "lucide-react";
 import Link from "next/link";
 import { EditingAvatars } from "@/components/editing-avatars";
+import { TagChips } from "@/components/tag-chip";
 import {
   Tooltip,
   TooltipContent,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useLinkPreview } from "@/hooks/use-link-preview";
 import { formatTime } from "@/lib/dates";
-import { PLATFORM_INFO, PlatformBadge } from "@/lib/platforms";
+import { describePlatforms, PlatformBadges } from "@/lib/platforms";
 import { STATUS_INFO, type PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 import { PostBoardHandle, PostBoardPost } from "./post-board";
@@ -30,8 +31,7 @@ const CARD_LAYOUT_CLASS = "flex flex-col gap-1.5 rounded-md p-2 text-left";
  */
 export function PostCard({ post, href }: { post: PostData; href: string }) {
   const status = STATUS_INFO[post.status];
-  const platform = PLATFORM_INFO[post.platform];
-  const label = `${platform.label} post at ${formatTime(post.time)}, ${status.label}`;
+  const label = `${describePlatforms(post.platforms)} post at ${formatTime(post.time)}, ${status.label}`;
 
   return (
     <div className="group/card relative">
@@ -95,7 +95,7 @@ function PostCardContent({ post }: { post: PostData }) {
   return (
     <>
       <span className="flex items-center justify-between gap-1.5">
-        <PlatformBadge platform={post.platform} size={20} />
+        <PlatformBadges platforms={post.platforms} size={20} />
         {/* Gives way to the move handle while that has keyboard focus. */}
         <span className="text-[11px] font-medium text-neutral-500 tabular-nums transition-opacity group-has-[[data-slot=post-board-handle]:focus-visible]/card:opacity-0">
           {formatTime(post.time)}
@@ -111,6 +111,7 @@ function PostCardContent({ post }: { post: PostData }) {
           <span className="text-neutral-400 italic">Empty post</span>
         )}
       </span>
+      <TagChips tags={post.tags} max={2} size="xs" />
     </>
   );
 }

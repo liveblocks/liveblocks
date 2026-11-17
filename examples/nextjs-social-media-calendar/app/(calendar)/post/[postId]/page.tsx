@@ -8,14 +8,14 @@ import {
   useStorage,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
-import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
-import Link from "next/link";
+import { Trash2Icon, XIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentProps } from "react";
-import { BrandAvatar, PROJECT_NAME } from "@/components/brand";
 import { LinkCard } from "@/components/composer/link-card";
-import { PostActions } from "@/components/composer/post-actions";
+import { PlatformPicker } from "@/components/composer/platform-picker";
 import { PostEditor } from "@/components/composer/post-editor";
+import { PostFrame } from "@/components/composer/post-frame";
+import { TagPicker } from "@/components/composer/tag-picker";
 import {
   AddMediaButton,
   PostMedia,
@@ -24,9 +24,15 @@ import {
 import { findLastUrl } from "@/components/composer/urls";
 import { EditingAvatars } from "@/components/editing-avatars";
 import { HelpButton } from "@/components/help-button";
-import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { DateInput, TimeInput } from "@/components/ui/date-time-input";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -44,13 +50,13 @@ import {
 } from "@/components/ui/tooltip";
 import { useExampleHref, useExampleRoomId } from "@/hooks/use-example-room-id";
 import {
-  isPlatform,
+  describePlatforms,
   PLATFORM_INFO,
-  PLATFORMS,
-  PlatformBadge,
+  sortPlatforms,
+  strictestPlatform,
+  type Platform,
 } from "@/lib/platforms";
 import {
-  createInitialStorage,
   POST_STATUSES,
   STATUS_INFO,
   type PostData,
@@ -65,22 +71,34 @@ type PostUpdate = Partial<Omit<PostFields, "id" | "createdAt">>;
 const META_INPUT_CLASS =
   "h-6 border-transparent bg-transparent px-0.5 text-[15px] text-neutral-500 shadow-none hover:text-neutral-900 focus-within:bg-neutral-100";
 
+/**
+ * A post, as a large dialog over the calendar. The `(calendar)` layout has
+ * already joined the project room, which holds every post's metadata and
+ * presence; the post's own room (entered further down) holds its body as
+ * LiveText. Closing the dialog navigates back to the calendar.
+ */
 export default function PostPage() {
   const { postId } = useParams<{ postId: string }>();
-  const projectRoomId = useExampleRoomId();
+  const router = useRouter();
+  const calendarHref = useExampleHref("/");
 
-  // The project room holds every post's metadata and presence; the post's own
-  // room (entered further down) holds its body as LiveText.
   return (
-    <RoomProvider
-      id={projectRoomId}
-      initialPresence={{ editingPostId: postId }}
-      initialStorage={createInitialStorage}
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          router.push(calendarHref);
+        }
+      }}
     >
-      <ClientSideSuspense fallback={<Loading />}>
+      <DialogBackdrop />
+      <DialogContent
+        className="h-[calc(100dvh-4rem)] w-[calc(100%-4rem)] max-w-6xl bg-neutral-50"
+        aria-label="Post"
+      >
         <PostShell postId={postId} />
-      </ClientSideSuspense>
-    </RoomProvider>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -104,6 +122,7 @@ function PostShell({ postId }: { postId: string }) {
   // calendar can show our avatar on its card.
   useEffect(() => {
     updateMyPresence({ editingPostId: postId });
+    return () => updateMyPresence({ editingPostId: null });
   }, [postId, updateMyPresence]);
 
   const updatePost = useMutation(
@@ -126,21 +145,17 @@ function PostShell({ postId }: { postId: string }) {
 
   if (!post) {
     return (
-      <div className="flex h-dvh flex-col items-center justify-center gap-3 text-center">
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
         <p className="text-sm font-medium text-neutral-900">
           This post no longer exists.
         </p>
         <p className="text-sm text-neutral-500">
           It may have been deleted by someone else in the project.
         </p>
-        <Button
-          variant="outline"
-          size="sm"
-          render={<Link href={calendarHref} />}
-        >
-          <ArrowLeftIcon />
+        <DialogTitle className="sr-only">Post not found</DialogTitle>
+        <DialogClose render={<Button variant="outline" size="sm" />}>
           Back to calendar
-        </Button>
+        </DialogClose>
       </div>
     );
   }
@@ -199,39 +214,46 @@ function PostComposer({
   onUpdate: (update: PostUpdate) => void;
   onDelete: () => void;
 }) {
-  const platform = PLATFORM_INFO[post.platform];
+  const platforms = sortPlatforms(post.platforms);
+  // Which network the post is previewed on. Falls back to the first one when
+  // the previewed network is removed from the post (here or by someone else).
+  const [previewChoice, setPreviewChoice] = useState<Platform>(platforms[0]);
+  const previewPlatform = platforms.includes(previewChoice)
+    ? previewChoice
+    : platforms[0];
   const media = usePostMedia(post.id, post.media);
   const [text, setText] = useState("");
   // Like the networks: a post with media shows the media, not a link card.
   const hasMedia = media.media.length > 0 || media.pending.length > 0;
   const url = hasMedia ? null : findLastUrl(text);
   const length = text.length;
-  const overLimit = length > platform.maxLength;
+  // The same text goes to every network, so it has to fit the strictest.
+  const strictest = PLATFORM_INFO[strictestPlatform(platforms)];
+  const overLimit = length > strictest.maxLength;
 
   return (
-    <div className="flex h-dvh w-full flex-col gap-2.5 overflow-hidden bg-neutral-50 p-2.5">
+    <div className="flex h-full w-full flex-col gap-2.5 overflow-hidden p-2.5">
       <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-white px-3 py-2 shadow ring-1 ring-neutral-950/5">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-1"
-          render={<Link href={calendarHref} />}
-        >
-          <ArrowLeftIcon />
-          Calendar
-        </Button>
+        <DialogTitle className="sr-only">
+          {describePlatforms(platforms)} post
+        </DialogTitle>
+        <PlatformPicker
+          platforms={platforms}
+          preview={previewPlatform}
+          onPreviewChange={setPreviewChoice}
+          onPlatformsChange={(next) => {
+            if (next.length > 0) {
+              onUpdate({ platforms: next });
+            }
+          }}
+        />
 
         <Separator orientation="vertical" />
 
-        <div className="flex items-center gap-2.5">
-          <PlatformBadge platform={post.platform} size={28} />
-          <div className="leading-tight">
-            <h1 className="text-sm font-semibold text-neutral-900">
-              {platform.label} post
-            </h1>
-            <p className="text-[11px] text-neutral-500">{platform.handle}</p>
-          </div>
-        </div>
+        <TagPicker
+          tags={post.tags}
+          onTagsChange={(tags) => onUpdate({ tags })}
+        />
 
         <div className="ml-auto flex items-center gap-3">
           <EditingAvatars postId={post.id} size={28} max={5} />
@@ -286,23 +308,36 @@ function PostComposer({
           </Tooltip>
 
           <HelpButton />
+
+          <Separator orientation="vertical" />
+
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <DialogClose
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="-mr-1 text-neutral-500"
+                      aria-label="Close"
+                    />
+                  }
+                />
+              }
+            >
+              <XIcon />
+            </TooltipTrigger>
+            <TooltipContent>Back to calendar</TooltipContent>
+          </Tooltip>
         </div>
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto">
-        <article
-          className="mx-auto my-4 flex w-full max-w-[600px] gap-3 rounded-xl bg-white p-4 shadow ring-1 ring-neutral-950/5 sm:my-8"
-          aria-label={`${platform.label} post`}
-        >
-          <BrandAvatar />
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-1 text-[15px] leading-6">
-              <span className="font-bold text-neutral-900">{PROJECT_NAME}</span>
-              <span className="text-neutral-500">{platform.handle}</span>
-              <span className="text-neutral-400" aria-hidden>
-                ·
-              </span>
+        <PostFrame
+          platform={previewPlatform}
+          meta={
+            <>
               {/* Segmented inputs: the value only changes once every segment
                   holds something, so a half-typed date never reaches Storage. */}
               <TimeInput
@@ -328,69 +363,39 @@ function PostComposer({
                 aria-label="Date"
                 className={META_INPUT_CLASS}
               />
-
-              <Select
-                value={post.platform}
-                onValueChange={(value) => {
-                  if (isPlatform(value)) {
-                    onUpdate({ platform: value });
-                  }
-                }}
+            </>
+          }
+          body={
+            <PostBody
+              postId={post.id}
+              platforms={platforms}
+              preview={post.preview}
+              linkUrl={post.linkUrl}
+              onPreviewChange={(preview, linkUrl) =>
+                onUpdate({ preview, linkUrl })
+              }
+              onTextChange={setText}
+            />
+          }
+          media={<PostMedia {...media} />}
+          link={url ? <LinkCard url={url} /> : null}
+          footer={
+            <div className="-mx-2 flex items-center justify-between gap-3 border-t border-neutral-950/5 px-2 pt-2">
+              <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
+              <span
+                className={cn(
+                  "text-xs text-neutral-500 tabular-nums",
+                  overLimit ? "font-medium text-red-600" : undefined
+                )}
+                aria-live="polite"
               >
-                <SelectTrigger
-                  aria-label="Platform"
-                  className="ml-auto h-7 border-transparent bg-transparent px-1.5 shadow-none"
-                >
-                  <SelectValueIcon />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent align="end">
-                  {PLATFORMS.map((item) => (
-                    <SelectItem key={item} value={item}>
-                      <SelectItemIcon>
-                        <PlatformBadge platform={item} size={18} />
-                      </SelectItemIcon>
-                      {PLATFORM_INFO[item].label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {length.toLocaleString()} /{" "}
+                {strictest.maxLength.toLocaleString()}
+                {platforms.length > 1 ? ` on ${strictest.label}` : null}
+              </span>
             </div>
-
-            <div className="flex flex-col gap-3">
-              <PostBody
-                postId={post.id}
-                platform={post.platform}
-                preview={post.preview}
-                linkUrl={post.linkUrl}
-                onPreviewChange={(preview, linkUrl) =>
-                  onUpdate({ preview, linkUrl })
-                }
-                onTextChange={setText}
-              />
-
-              <PostMedia {...media} />
-
-              {url ? <LinkCard url={url} /> : null}
-
-              <div className="-mx-2 flex items-center justify-between gap-3 border-t border-neutral-950/5 px-2 pt-2">
-                <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
-                <span
-                  className={cn(
-                    "text-xs text-neutral-500 tabular-nums",
-                    overLimit ? "font-medium text-red-600" : undefined
-                  )}
-                  aria-live="polite"
-                >
-                  {length.toLocaleString()} /{" "}
-                  {platform.maxLength.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            <PostActions platform={post.platform} />
-          </div>
-        </article>
+          }
+        />
 
         <p className="mb-4 text-center text-xs text-neutral-500">
           Changes save automatically and sync to everyone in realtime.

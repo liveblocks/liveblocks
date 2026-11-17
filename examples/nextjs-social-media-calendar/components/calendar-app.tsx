@@ -1,12 +1,7 @@
 "use client";
 
 import { LiveList, LiveObject, shallow } from "@liveblocks/client";
-import {
-  ClientSideSuspense,
-  RoomProvider,
-  useMutation,
-  useStorage,
-} from "@liveblocks/react/suspense";
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
 import { AvatarStack } from "@liveblocks/react-ui";
 import {
   CalendarIcon,
@@ -22,7 +17,6 @@ import { Brand } from "@/components/brand";
 import { ListView } from "@/components/calendar/list-view";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { HelpButton } from "@/components/help-button";
-import { Loading } from "@/components/loading";
 import { NewPostMenu } from "@/components/new-post-menu";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +35,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import {
   addPeriods,
   formatPeriodTitle,
@@ -53,27 +46,16 @@ import {
   type Period,
 } from "@/lib/dates";
 import type { Platform } from "@/lib/platforms";
-import { createInitialStorage, type PostLson } from "@/lib/posts";
+import type { PostLson } from "@/lib/posts";
 
 type View = "calendar" | "list";
 
-export default function Page() {
-  const roomId = useExampleRoomId();
-
-  return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{ editingPostId: null }}
-      initialStorage={createInitialStorage}
-    >
-      <ClientSideSuspense fallback={<Loading />}>
-        <CalendarApp />
-      </ClientSideSuspense>
-    </RoomProvider>
-  );
-}
-
-function CalendarApp() {
+/**
+ * The calendar itself, rendered inside the project room by the `(calendar)`
+ * layout. It stays mounted while a post is open as a dialog over it, so the
+ * view, period and scroll position survive opening and closing posts.
+ */
+export function CalendarApp() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [view, setView] = useState<View>("calendar");
@@ -112,7 +94,8 @@ function CalendarApp() {
       const id = `post-${nanoid(8)}`;
       const post: PostLson = {
         id,
-        platform,
+        platforms: [platform],
+        tags: [],
         date,
         time: "12:00",
         status: "draft",

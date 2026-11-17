@@ -21,7 +21,7 @@ const PREVIEW_SYNC_DELAY_MS = 400;
 
 type PostEditorProps = {
   postId: string;
-  platform: Platform;
+  platforms: Platform[];
   preview: string;
   linkUrl: string | undefined;
   /** Called, debounced, when the snippet or the last link in the text changes. */
@@ -43,7 +43,7 @@ type PostEditorProps = {
  */
 export function PostEditor({
   postId,
-  platform,
+  platforms,
   preview,
   linkUrl,
   onPreviewChange,
@@ -88,7 +88,10 @@ export function PostEditor({
         horizontalRule: false,
       }),
       Placeholder.configure({
-        placeholder: `Write your ${PLATFORM_INFO[platform].label} post…`,
+        placeholder:
+          platforms.length === 1
+            ? `Write your ${PLATFORM_INFO[platforms[0]].label} post…`
+            : "Write your post…",
       }),
     ],
     editorProps: {

@@ -49,7 +49,9 @@ export const STATUS_INFO: Record<
  */
 export type PostFields = {
   id: string;
-  platform: Platform;
+  // The networks the post goes to; at least one. The same text and media
+  // are published to each.
+  platforms: Platform[];
   // Local day the post is planned for, as `YYYY-MM-DD`.
   date: DateKey;
   // Planned time of day, as `HH:MM`.
@@ -61,6 +63,8 @@ export type PostFields = {
   // Last link in the body, synced the same way, so a card can show the
   // page's image when the post has no media of its own. Absent on old posts.
   linkUrl?: string;
+  // Free-form labels like "Campaign" or "Evergreen", shared by the project.
+  tags: string[];
   createdAt: number;
 };
 
@@ -71,7 +75,11 @@ export type PostFields = {
 export type PostLson = PostFields & { media?: LiveList<LiveFile> };
 
 /** The post as read with `useStorage`: plain data, LiveFiles as their data. */
-export type PostData = PostFields & { media?: readonly LiveFileData[] };
+export type PostData = Omit<PostFields, "platforms" | "tags"> & {
+  platforms: readonly Platform[];
+  tags: readonly string[];
+  media?: readonly LiveFileData[];
+};
 
 type TiptapDoc = {
   type: "doc";
@@ -95,7 +103,8 @@ function paragraphsToDocument(paragraphs: string[]): TiptapDoc {
 
 type SeedPost = {
   id: string;
-  platform: Platform;
+  platforms: Platform[];
+  tags?: string[];
   // Day of the month (1-based), relative to the month the room is created in.
   day: number;
   time: string;
@@ -106,7 +115,8 @@ type SeedPost = {
 const SEED_POSTS: SeedPost[] = [
   {
     id: "post-launch-teaser",
-    platform: "instagram",
+    platforms: ["instagram", "facebook"],
+    tags: ["Launch"],
     day: 2,
     time: "09:00",
     status: "scheduled",
@@ -117,7 +127,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-behind-the-scenes",
-    platform: "tiktok",
+    platforms: ["tiktok"],
     day: 4,
     time: "17:30",
     status: "approved",
@@ -127,7 +137,8 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-customer-story",
-    platform: "linkedin",
+    platforms: ["linkedin", "facebook"],
+    tags: ["Case study"],
     day: 6,
     time: "11:00",
     status: "in-review",
@@ -139,7 +150,8 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-poll",
-    platform: "x",
+    platforms: ["x"],
+    tags: ["Community"],
     day: 9,
     time: "14:00",
     status: "draft",
@@ -149,7 +161,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-launch-day",
-    platform: "instagram",
+    platforms: ["instagram"],
     day: 11,
     time: "10:00",
     status: "in-review",
@@ -160,7 +172,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-launch-thread",
-    platform: "x",
+    platforms: ["x"],
     day: 11,
     time: "10:05",
     status: "draft",
@@ -171,7 +183,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-tips",
-    platform: "facebook",
+    platforms: ["facebook"],
     day: 15,
     time: "12:00",
     status: "approved",
@@ -182,7 +194,8 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-hiring",
-    platform: "linkedin",
+    platforms: ["linkedin", "x"],
+    tags: ["Hiring"],
     day: 18,
     time: "09:30",
     status: "draft",
@@ -193,7 +206,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-reel",
-    platform: "instagram",
+    platforms: ["instagram"],
     day: 21,
     time: "18:00",
     status: "draft",
@@ -203,7 +216,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-webinar",
-    platform: "linkedin",
+    platforms: ["linkedin"],
     day: 24,
     time: "16:00",
     status: "scheduled",
@@ -214,7 +227,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-trend",
-    platform: "tiktok",
+    platforms: ["tiktok"],
     day: 26,
     time: "19:00",
     status: "in-review",
@@ -224,7 +237,7 @@ const SEED_POSTS: SeedPost[] = [
   },
   {
     id: "post-month-recap",
-    platform: "x",
+    platforms: ["x"],
     day: 29,
     time: "15:00",
     status: "draft",
@@ -264,7 +277,8 @@ export function createInitialStorage(): Liveblocks["Storage"] {
         post.id,
         new LiveObject<PostLson>({
           id: post.id,
-          platform: post.platform,
+          platforms: post.platforms,
+          tags: post.tags ?? [],
           date: toDateKey(addDays(monthStart, Math.min(post.day, lastDay) - 1)),
           time: post.time,
           status: post.status,

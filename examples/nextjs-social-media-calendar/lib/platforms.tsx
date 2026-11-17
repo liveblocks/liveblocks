@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactElement } from "react";
+import type { ComponentProps, CSSProperties, ReactElement } from "react";
 
 export type Platform = "instagram" | "x" | "linkedin" | "facebook" | "tiktok";
 
@@ -61,6 +61,34 @@ export const PLATFORM_INFO: Record<Platform, PlatformInfo> = {
 
 export function isPlatform(value: unknown): value is Platform {
   return PLATFORMS.some((platform) => platform === value);
+}
+
+/** The platforms in their canonical order, without duplicates. */
+export function sortPlatforms(platforms: readonly Platform[]): Platform[] {
+  return PLATFORMS.filter((platform) => platforms.includes(platform));
+}
+
+/** "Instagram", "Instagram and X", "Instagram, X and LinkedIn". */
+export function describePlatforms(platforms: readonly Platform[]) {
+  const labels = sortPlatforms(platforms).map(
+    (platform) => PLATFORM_INFO[platform].label
+  );
+  if (labels.length <= 1) {
+    return labels[0] ?? "";
+  }
+  return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
+}
+
+/**
+ * The platform with the shortest caption limit among those selected: the one
+ * the whole post has to fit, since the same text goes everywhere.
+ */
+export function strictestPlatform(platforms: readonly Platform[]): Platform {
+  return sortPlatforms(platforms).reduce((strictest, platform) =>
+    PLATFORM_INFO[platform].maxLength < PLATFORM_INFO[strictest].maxLength
+      ? platform
+      : strictest
+  );
 }
 
 type IconProps = Omit<ComponentProps<"svg">, "children">;
@@ -137,6 +165,45 @@ export function PlatformIcon({
 }
 
 /**
+ * The badges of every platform a post goes to, in a row. Overlap slightly
+ * when there are several so a card stays narrow.
+ */
+export function PlatformBadges({
+  platforms,
+  size = 24,
+  className,
+}: {
+  platforms: readonly Platform[];
+  size?: number;
+  className?: string;
+}) {
+  const sorted = sortPlatforms(platforms);
+  return (
+    <span
+      className={className}
+      style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}
+      aria-label={describePlatforms(sorted)}
+    >
+      {sorted.map((platform, index) => (
+        <PlatformBadge
+          key={platform}
+          platform={platform}
+          size={size}
+          style={
+            index > 0
+              ? {
+                  marginLeft: sorted.length > 1 ? -size / 5 : 0,
+                  boxShadow: "0 0 0 2px #fff",
+                }
+              : undefined
+          }
+        />
+      ))}
+    </span>
+  );
+}
+
+/**
  * A small rounded badge with the platform's brand icon, used on calendar
  * cards, list rows, and the composer header.
  */
@@ -144,10 +211,12 @@ export function PlatformBadge({
   platform,
   size = 24,
   className,
+  style,
 }: {
   platform: Platform;
   size?: number;
   className?: string;
+  style?: CSSProperties;
 }) {
   const info = PLATFORM_INFO[platform];
   return (
@@ -164,6 +233,7 @@ export function PlatformBadge({
         background: info.background,
         color: info.color,
         flexShrink: 0,
+        ...style,
       }}
     >
       <PlatformIcon
