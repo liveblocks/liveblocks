@@ -57,7 +57,10 @@ export function PostFrame({
       <BrandAvatar
         className={cn(
           "self-start",
-          linkedin ? "size-11 rounded-md text-sm" : "size-12 text-base"
+          // On the microblogs it spans the byline and content rows, so the
+          // first row is only as tall as the byline and the text starts right
+          // under the name.
+          linkedin ? "size-11 rounded-md text-sm" : "row-span-2 size-10"
         )}
       />
       <div
@@ -91,7 +94,7 @@ export function PostFrame({
       <div
         className={cn(
           "flex min-w-0 flex-col gap-3",
-          linkedin ? "col-span-2 mt-3" : "col-start-2"
+          linkedin ? "col-span-2 mt-3" : "col-start-2 row-start-2"
         )}
         data-slot="content"
       >
