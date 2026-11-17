@@ -68,9 +68,12 @@
   }
 }
 
-/* Align Liveblocks UI (avatars, toolbars, mentions) with the app's primary color. */
+/* Align Liveblocks UI (avatars, toolbars, mentions) with the app's primary
+   color. Liveblocks styles are em-based, so the root font size scales the
+   comments (text, spacing, radii) down to match the rest of the app. */
 .lb-root {
   --lb-accent: oklch(0.54 0.23 285);
+  font-size: 0.875rem;
 }
 
 /* While a post is dragged, ui-sdk follows the pointer with a copy of the
