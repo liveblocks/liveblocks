@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { EditingAvatars } from "@/components/editing-avatars";
 import { NewPostMenu } from "@/components/new-post-menu";
-import { TagChips } from "@/components/tag-chip";
+import { TagSummary } from "@/components/tag-chip";
 import { Button } from "@/components/ui/button";
 import {
   compareByDateTime,
@@ -149,13 +149,13 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <PlatformBadges platforms={post.platforms} size={16} />
-          <p className="truncate text-sm text-neutral-900">
+          <p className="max-w-lg truncate text-sm text-neutral-900">
             {post.preview || (
               <span className="text-neutral-400 italic">Empty post</span>
             )}
           </p>
-          <TagChips tags={post.tags} size="xs" />
         </div>
+        <TagSummary tags={post.tags} className="hidden sm:inline-flex" />
         <EditingAvatars postId={post.id} size={22} />
         <ChevronRightIcon className="size-4 shrink-0 text-neutral-300 transition-colors group-hover/row:text-neutral-500" />
       </Link>
