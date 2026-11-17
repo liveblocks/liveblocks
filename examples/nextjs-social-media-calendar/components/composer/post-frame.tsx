@@ -1,4 +1,3 @@
-import { GlobeIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { BrandAvatar, PROJECT_NAME } from "@/components/brand";
 import { PLATFORM_INFO, type Platform } from "@/lib/platforms";
@@ -7,8 +6,6 @@ import { cn } from "@/lib/utils";
 type PostFrameProps = {
   /** The network the post is previewed on. */
   platform: Platform;
-  /** The time and date, as editable inputs. */
-  meta: ReactNode;
   /** The caption editor. */
   body: ReactNode;
   /** Attached photos and videos. */
@@ -40,14 +37,6 @@ export function PostFrame(props: PostFrameProps) {
 const ARTICLE_CLASS =
   "mx-auto my-4 w-full max-w-[600px] overflow-hidden rounded-xl bg-white shadow ring-1 ring-neutral-950/5 sm:my-8";
 
-function Dot() {
-  return (
-    <span className="text-neutral-400" aria-hidden>
-      ·
-    </span>
-  );
-}
-
 type Microblog = Exclude<Platform, "linkedin">;
 
 /**
@@ -57,7 +46,6 @@ type Microblog = Exclude<Platform, "linkedin">;
  */
 function MicroblogFrame({
   platform,
-  meta,
   body,
   media,
   link,
@@ -82,8 +70,6 @@ function MicroblogFrame({
           {threads ? null : (
             <span className="truncate text-neutral-500">{info.handle}</span>
           )}
-          {stacked ? null : <Dot />}
-          {meta}
         </div>
         <div className="flex flex-col gap-3">
           {body}
@@ -97,7 +83,7 @@ function MicroblogFrame({
 }
 
 /** LinkedIn: a header card, then the text. */
-function LinkedInFrame({ meta, body, media, link, footer }: PostFrameProps) {
+function LinkedInFrame({ body, media, link, footer }: PostFrameProps) {
   return (
     <article className={cn(ARTICLE_CLASS, "p-4")} aria-label="Post">
       <header className="flex items-center gap-3">
@@ -109,11 +95,6 @@ function LinkedInFrame({ meta, body, media, link, footer }: PostFrameProps) {
           <p className="truncate text-xs text-neutral-500">
             Planning content, together
           </p>
-          <div className="flex flex-wrap items-center gap-x-1 text-xs text-neutral-500 [&_[data-slot]]:text-xs">
-            {meta}
-            <Dot />
-            <GlobeIcon className="size-3" aria-hidden />
-          </div>
         </div>
       </header>
       <div className="mt-3 flex flex-col gap-3">

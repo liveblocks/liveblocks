@@ -47,7 +47,6 @@ import {
   strictestPlatform,
   type Platform,
 } from "@/lib/platforms";
-import { formatShortDate, formatTime, parseDateKey } from "@/lib/dates";
 import type { PostData, PostFields } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 
@@ -73,9 +72,10 @@ export default function PostPage() {
         }
       }}
     >
-      <DialogBackdrop />
+      {/* Darker than the default so the calendar clearly recedes behind the post. */}
+      <DialogBackdrop className="bg-neutral-950/60" />
       <DialogContent
-        className="h-[calc(100dvh-4rem)] w-[calc(100%-4rem)] max-w-6xl bg-neutral-200"
+        className="h-[calc(100dvh-4rem)] w-[calc(100%-4rem)] max-w-6xl bg-neutral-50"
         aria-label="Post"
       >
         <PostShell postId={postId} />
@@ -292,12 +292,6 @@ function PostComposer({
       <main className="min-h-0 flex-1 overflow-y-auto">
         <PostFrame
           platform={previewPlatform}
-          meta={
-            <span className="text-neutral-500">
-              {formatTime(post.time)} ·{" "}
-              {formatShortDate(parseDateKey(post.date))}
-            </span>
-          }
           body={
             <PostBody
               postId={post.id}
