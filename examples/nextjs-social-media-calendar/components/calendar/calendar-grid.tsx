@@ -2,7 +2,6 @@
 
 import { PlusIcon } from "lucide-react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { NewPostMenu } from "@/components/new-post-menu";
 import {
   compareByDateTime,
   compareByTime,
@@ -16,7 +15,7 @@ import {
   type DateKey,
   type Period,
 } from "@/lib/dates";
-import { describePlatforms, type Platform } from "@/lib/platforms";
+import { describePlatforms } from "@/lib/platforms";
 import type { PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 import { PostBoard, PostBoardDay } from "./post-board";
@@ -29,7 +28,7 @@ type CalendarGridProps = {
   posts: PostData[];
   postHref: (postId: string) => string;
   onMovePost: (postId: string, date: DateKey) => void;
-  onCreatePost: (date: DateKey, platform: Platform) => void;
+  onCreatePost: (date: DateKey) => void;
 };
 
 /**
@@ -159,7 +158,7 @@ function DayCell({
   scrollsPosts: boolean;
   isToday: boolean;
   postHref: (postId: string) => string;
-  onCreatePost: (date: DateKey, platform: Platform) => void;
+  onCreatePost: (date: DateKey) => void;
 }) {
   return (
     <PostBoardDay
@@ -237,7 +236,7 @@ function DayPosts({
   postsById: Map<string, PostData>;
   scrollsPosts: boolean;
   postHref: (postId: string) => string;
-  onCreatePost: (date: DateKey, platform: Platform) => void;
+  onCreatePost: (date: DateKey) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   // The height as of the last render with nothing moving: what to hold while
@@ -297,29 +296,20 @@ function DayPosts({
         return left?.index === index ? [ghost(left.id), card] : card;
       })}
       {left && left.index >= sorted.length ? ghost(left.id) : null}
-      <NewPostMenu
-        align="start"
-        label={`New post on ${date.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })}`}
-        onSelect={(platform) => onCreatePost(dateKey, platform)}
-        trigger={
-          <button
-            type="button"
-            className={cn(
-              // Shown while the pointer is anywhere over the day.
-              "flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-neutral-300 text-xs font-medium text-neutral-500 opacity-0 transition-[opacity,color,background-color,border-color] outline-none group-hover/day:opacity-100 hover:border-neutral-400 hover:bg-neutral-100 hover:text-neutral-800 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring data-open:border-neutral-400 data-open:bg-neutral-100 data-open:text-neutral-800 data-open:opacity-100",
-              // Out of the way of a drop, but still taking up its space.
-              moving && "invisible"
-            )}
-            aria-label={`Add a post on ${formatDayHeading(date)}`}
-          >
-            <PlusIcon className="size-3.5" aria-hidden />
-            New post
-          </button>
-        }
-      />
+      <button
+        type="button"
+        onClick={() => onCreatePost(dateKey)}
+        className={cn(
+          // Shown while the pointer is anywhere over the day.
+          "flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-neutral-300 text-xs font-medium text-neutral-500 opacity-0 transition-[opacity,color,background-color,border-color] outline-none group-hover/day:opacity-100 hover:border-neutral-400 hover:bg-neutral-100 hover:text-neutral-800 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring",
+          // Out of the way of a drop, but still taking up its space.
+          moving && "invisible"
+        )}
+        aria-label={`Add a post on ${formatDayHeading(date)}`}
+      >
+        <PlusIcon className="size-3.5" aria-hidden />
+        New post
+      </button>
     </div>
   );
 }

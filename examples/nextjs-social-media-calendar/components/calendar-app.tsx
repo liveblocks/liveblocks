@@ -17,7 +17,6 @@ import { Brand } from "@/components/brand";
 import { ListView } from "@/components/calendar/list-view";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { HelpButton } from "@/components/help-button";
-import { NewPostMenu } from "@/components/new-post-menu";
 import { Button } from "@/components/ui/button";
 import {
   SegmentedControl,
@@ -45,7 +44,6 @@ import {
   type DateKey,
   type Period,
 } from "@/lib/dates";
-import type { Platform } from "@/lib/platforms";
 import type { PostLson } from "@/lib/posts";
 
 type View = "calendar" | "list";
@@ -89,28 +87,26 @@ export function CalendarApp() {
     storage.get("posts").get(postId)?.set("date", date);
   }, []);
 
-  const createPost = useMutation(
-    ({ storage }, date: DateKey, platform: Platform) => {
-      const id = `post-${nanoid(8)}`;
-      const post: PostLson = {
-        id,
-        platforms: [platform],
-        tags: [],
-        date,
-        time: "12:00",
-        preview: "",
-        createdAt: Date.now(),
-        media: new LiveList([]),
-      };
-      storage.get("posts").set(id, new LiveObject(post));
-      return id;
-    },
-    []
-  );
+  const createPost = useMutation(({ storage }, date: DateKey) => {
+    const id = `post-${nanoid(8)}`;
+    // New posts start on X; other networks are added in the composer.
+    const post: PostLson = {
+      id,
+      platforms: ["x"],
+      tags: [],
+      date,
+      time: "12:00",
+      preview: "",
+      createdAt: Date.now(),
+      media: new LiveList([]),
+    };
+    storage.get("posts").set(id, new LiveObject(post));
+    return id;
+  }, []);
 
   const createAndOpenPost = useCallback(
-    (date: DateKey, platform: Platform) => {
-      const id = createPost(date, platform);
+    (date: DateKey) => {
+      const id = createPost(date);
       router.push(postHref(id));
     },
     [createPost, postHref, router]
@@ -134,18 +130,14 @@ export function CalendarApp() {
       <aside className="flex w-56 shrink-0 flex-col gap-5 p-4">
         <Brand />
 
-        <NewPostMenu
-          align="start"
-          onSelect={(platform) =>
-            createAndOpenPost(defaultNewPostDate, platform)
-          }
-          trigger={
-            <Button size="sm" className="w-full justify-center">
-              <PlusIcon />
-              New post
-            </Button>
-          }
-        />
+        <Button
+          size="sm"
+          className="w-full justify-center"
+          onClick={() => createAndOpenPost(defaultNewPostDate)}
+        >
+          <PlusIcon />
+          New post
+        </Button>
 
         <nav className="flex flex-col gap-1.5">
           <p className="px-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase">

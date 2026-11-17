@@ -4,7 +4,6 @@ import { CalendarDaysIcon, ChevronRightIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 import { EditingAvatars } from "@/components/editing-avatars";
-import { NewPostMenu } from "@/components/new-post-menu";
 import { TagChips } from "@/components/tag-chip";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +18,7 @@ import {
   type DateKey,
   type Period,
 } from "@/lib/dates";
-import { PlatformBadges, type Platform } from "@/lib/platforms";
+import { PlatformBadges } from "@/lib/platforms";
 import type { PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +29,7 @@ type ListViewProps = {
   /** The posts in that week or month. */
   posts: PostData[];
   postHref: (postId: string) => string;
-  onCreatePost: (date: DateKey, platform: Platform) => void;
+  onCreatePost: (date: DateKey) => void;
 };
 
 export function ListView({
@@ -70,16 +69,10 @@ export function ListView({
             Create a post to start filling the {period}.
           </p>
         </div>
-        <NewPostMenu
-          align="center"
-          onSelect={(platform) => onCreatePost(firstDay, platform)}
-          trigger={
-            <Button size="sm">
-              <PlusIcon />
-              New post
-            </Button>
-          }
-        />
+        <Button size="sm" onClick={() => onCreatePost(firstDay)}>
+          <PlusIcon />
+          New post
+        </Button>
       </div>
     );
   }
@@ -109,20 +102,15 @@ export function ListView({
                 <span className="text-xs text-neutral-400">
                   {dayPosts.length} {dayPosts.length === 1 ? "post" : "posts"}
                 </span>
-                <NewPostMenu
-                  align="start"
-                  onSelect={(platform) => onCreatePost(dateKey, platform)}
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      className="ml-auto text-neutral-400"
-                      aria-label={`Add a post on ${formatDayHeading(date)}`}
-                    >
-                      <PlusIcon />
-                    </Button>
-                  }
-                />
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="ml-auto text-neutral-400"
+                  aria-label={`Add a post on ${formatDayHeading(date)}`}
+                  onClick={() => onCreatePost(dateKey)}
+                >
+                  <PlusIcon />
+                </Button>
               </header>
               <ul className="divide-y divide-neutral-950/5 overflow-hidden rounded-lg bg-white ring-1 ring-neutral-950/5">
                 {dayPosts.map((post) => (
