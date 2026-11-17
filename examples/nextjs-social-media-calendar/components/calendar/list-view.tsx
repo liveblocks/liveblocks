@@ -144,16 +144,16 @@ function ListRow({ post, href }: { post: PostData; href: string }) {
         href={href}
         className="group/row flex items-center gap-4 px-4 py-3 transition-colors hover:bg-neutral-50 focus-visible:bg-neutral-50 focus-visible:outline-none"
       >
-        <span className="w-16 shrink-0 text-xs font-medium text-neutral-500 tabular-nums">
+        <span className="w-10 shrink-0 text-xs font-medium text-neutral-500 tabular-nums">
           {formatTime(post.time)}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <PlatformBadges platforms={post.platforms} size={16} />
           <p className="max-w-lg truncate text-sm text-neutral-900">
             {post.preview || (
               <span className="text-neutral-400 italic">Empty post</span>
             )}
           </p>
+          <PlatformBadges platforms={post.platforms} size={16} />
         </div>
         <TagSummary tags={post.tags} className="hidden sm:inline-flex" />
         <EditingAvatars postId={post.id} size={22} />
