@@ -139,13 +139,14 @@ export function formatShortDate(date: Date) {
   }).format(date);
 }
 
-/** Formats a `HH:MM` string as `9:00 AM`. */
+/** Formats a `HH:MM` string on a 24-hour clock, as `09:00`. */
 export function formatTime(time: string) {
   const [hours, minutes] = time.split(":").map(Number);
   const date = new Date(2000, 0, 1, hours, minutes);
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
     minute: "2-digit",
+    hourCycle: "h23",
   }).format(date);
 }
 

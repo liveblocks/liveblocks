@@ -77,6 +77,7 @@ export function SchedulePicker({
               }
             }}
             aria-label="Time"
+            hourCycle={24}
             className="h-7 text-xs"
           />
         </div>
