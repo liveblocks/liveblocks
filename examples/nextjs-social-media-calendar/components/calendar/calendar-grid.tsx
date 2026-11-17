@@ -81,57 +81,61 @@ export function CalendarGrid({
   const today = new Date();
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="grid shrink-0 grid-cols-7 border-b border-neutral-950/5">
-        {WEEKDAYS.map((day) => (
-          <div
-            key={day}
-            className="py-2 text-center text-[11px] font-medium tracking-wide text-neutral-500 uppercase"
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <PostBoard
-          lists={lists}
-          order={dayKeys}
-          postLabel={postLabel}
-          dayLabel={dayLabel}
-          onListsChange={(_lists, details) => {
-            // Only a change of day is stored; the order within a day follows
-            // each post's time.
-            if (details.from !== details.to) {
-              onMovePost(details.key, details.to);
+    // Days keep a minimum width; on narrow screens the whole calendar (weekday
+    // row and days together) scrolls sideways rather than squeezing.
+    <div className="h-full min-h-0 overflow-x-auto">
+      <div className="flex h-full min-w-[980px] flex-col">
+        <div className="grid shrink-0 grid-cols-7 border-b border-neutral-950/5">
+          {WEEKDAYS.map((day) => (
+            <div
+              key={day}
+              className="py-2 text-center text-[11px] font-medium tracking-wide text-neutral-500 uppercase"
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <PostBoard
+            lists={lists}
+            order={dayKeys}
+            postLabel={postLabel}
+            dayLabel={dayLabel}
+            onListsChange={(_lists, details) => {
+              // Only a change of day is stored; the order within a day follows
+              // each post's time.
+              if (details.from !== details.to) {
+                onMovePost(details.key, details.to);
+              }
+            }}
+            aria-label="Posts by day"
+            className="grid grid-cols-7"
+            style={
+              period === "week"
+                ? // One row filling the view; a busy day scrolls inside its cell.
+                  { height: "100%", gridTemplateRows: "minmax(0, 1fr)" }
+                : // Rows grow with their posts and the month scrolls.
+                  { minHeight: "100%", gridAutoRows: "minmax(132px, auto)" }
             }
-          }}
-          aria-label="Posts by day"
-          className="grid grid-cols-7"
-          style={
-            period === "week"
-              ? // One row filling the view; a busy day scrolls inside its cell.
-                { height: "100%", gridTemplateRows: "minmax(0, 1fr)" }
-              : // Rows grow with their posts and the month scrolls.
-                { minHeight: "100%", gridAutoRows: "minmax(132px, auto)" }
-          }
-        >
-          {days.map((day, index) => {
-            const key = dayKeys[index];
-            return (
-              <DayCell
-                key={key}
-                date={day}
-                dateKey={key}
-                postsById={postsById}
-                inPeriod={isSamePeriod(period, day, date)}
-                scrollsPosts={period === "week"}
-                isToday={isSameDay(day, today)}
-                postHref={postHref}
-                onCreatePost={onCreatePost}
-              />
-            );
-          })}
-        </PostBoard>
+          >
+            {days.map((day, index) => {
+              const key = dayKeys[index];
+              return (
+                <DayCell
+                  key={key}
+                  date={day}
+                  dateKey={key}
+                  postsById={postsById}
+                  inPeriod={isSamePeriod(period, day, date)}
+                  scrollsPosts={period === "week"}
+                  isToday={isSameDay(day, today)}
+                  postHref={postHref}
+                  onCreatePost={onCreatePost}
+                />
+              );
+            })}
+          </PostBoard>
+        </div>
       </div>
     </div>
   );
