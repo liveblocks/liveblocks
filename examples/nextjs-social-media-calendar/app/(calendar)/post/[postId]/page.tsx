@@ -80,9 +80,9 @@ export default function PostPage() {
       }}
     >
       {/* Darker than the default so the calendar clearly recedes behind the post. */}
-      <DialogBackdrop className="bg-neutral-950/60" />
+      <DialogBackdrop className="bg-neutral-950/50" />
       <DialogContent
-        className="h-[calc(100dvh-60px)] max-h-none w-[calc(100%-130px)] max-w-none bg-white"
+        className="h-[calc(100dvh-60px)] max-h-none w-[calc(100%-260px)] max-w-none bg-white"
         aria-label="Post"
       >
         <div ref={setPortalContainer} className="contents">
