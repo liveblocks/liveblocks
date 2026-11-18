@@ -14,14 +14,15 @@ export function TagChip({
   return (
     <span
       className={cn(
+        "inline-flex max-w-full items-center truncate rounded-md border font-medium whitespace-nowrap",
         // Explicit line-height: the drag preview copies the card's computed
         // (px) line-height inline, which the chips would otherwise inherit.
-        "inline-flex max-w-full items-center truncate rounded-md border font-medium leading-[1.5] whitespace-nowrap",
+        // It must follow the font size, or tailwind-merge drops it.
         size === "xs"
-          ? "px-1.5 py-px text-[11px]"
+          ? "px-1.5 py-px text-[11px] leading-[1.5]"
           : size === "md"
-            ? "px-2 py-0.5 text-[13px]"
-            : "px-2 py-0.5 text-[11px]",
+            ? "px-2 py-0.5 text-[13px] leading-[1.5]"
+            : "px-2 py-0.5 text-[11px] leading-[1.5]",
         tagColor(tag),
         className
       )}
