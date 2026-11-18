@@ -350,74 +350,79 @@ function PostComposer({
         <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
       </header>
 
-      <main
-        className={cn(
-          "min-h-0 flex-1 overflow-y-auto px-4 transition-colors",
-          // LinkedIn's feed is gray so its white card stands out.
-          previewPlatform === "linkedin" && "bg-neutral-100"
-        )}
-      >
-        <div
+      <div className="relative min-h-0 flex-1">
+        {/* Who else has this post open: pinned in the top right corner on
+            wide screens, where the post column leaves room for it. */}
+        <EditingAvatars
+          postId={post.id}
+          size={28}
+          max={5}
+          className="absolute top-4 right-4 z-10 hidden lg:flex"
+        />
+        <main
           className={cn(
-            "mx-auto grid w-full max-w-[600px]",
-            hasOpenThreads &&
-              "xl:max-w-[974px] xl:grid-cols-[minmax(0,600px)_350px] xl:gap-6"
+            "h-full overflow-y-auto px-4 transition-colors",
+            // LinkedIn's feed is gray so its white card stands out.
+            previewPlatform === "linkedin" && "bg-neutral-100"
           )}
         >
-          {/* Who else has this post open, above the post's top right corner
-              (kept over the post, not the threads column, when that shows). */}
           <div
             className={cn(
-              "col-span-full -mb-2 mt-4 flex h-7 justify-end sm:-mb-4 sm:mt-6",
-              hasOpenThreads && "xl:pr-[374px]"
+              "mx-auto grid w-full max-w-[600px]",
+              hasOpenThreads &&
+                "xl:max-w-[974px] xl:grid-cols-[minmax(0,600px)_350px] xl:gap-6"
             )}
           >
-            <EditingAvatars postId={post.id} size={28} max={5} />
-          </div>
-          <PostFrame
-            platform={previewPlatform}
-            body={
-              <PostBody
-                postId={post.id}
-                platforms={platforms}
-                preview={post.preview}
-                linkUrl={post.linkUrl}
-                onPreviewChange={(preview, linkUrl) =>
-                  onUpdate({ preview, linkUrl })
-                }
-                onTextChange={setText}
-                threadsContainer={threadsColumn}
-                onOpenThreadsChange={(openThreads) => {
-                  if (openThreads !== (post.openThreads ?? 0)) {
-                    onUpdate({ openThreads });
+            {/* On narrow screens the post fills the width, so the avatars go
+              right above it instead. */}
+            <div className="-mb-2 mt-4 flex h-7 justify-end lg:hidden">
+              <EditingAvatars postId={post.id} size={28} max={5} />
+            </div>
+            <PostFrame
+              platform={previewPlatform}
+              body={
+                <PostBody
+                  postId={post.id}
+                  platforms={platforms}
+                  preview={post.preview}
+                  linkUrl={post.linkUrl}
+                  onPreviewChange={(preview, linkUrl) =>
+                    onUpdate({ preview, linkUrl })
                   }
-                }}
-              />
-            }
-            media={<PostMedia {...media} />}
-            link={url ? <LinkCard url={url} /> : null}
-            footer={
-              <div className="-mt-2 flex items-center justify-end gap-1">
-                <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
-                <CharacterRing
-                  length={length}
-                  max={strictest.maxLength}
-                  label={platforms.length > 1 ? strictest.label : undefined}
+                  onTextChange={setText}
+                  threadsContainer={threadsColumn}
+                  onOpenThreadsChange={(openThreads) => {
+                    if (openThreads !== (post.openThreads ?? 0)) {
+                      onUpdate({ openThreads });
+                    }
+                  }}
                 />
-              </div>
-            }
-          />
-          {/* Same vertical margins as the post, so the column's top is level
+              }
+              media={<PostMedia {...media} />}
+              link={url ? <LinkCard url={url} /> : null}
+              footer={
+                <div className="-mt-2 flex items-center justify-end gap-1">
+                  <AddMediaButton canAdd={media.canAdd} upload={media.upload} />
+                  <CharacterRing
+                    length={length}
+                    max={strictest.maxLength}
+                    label={platforms.length > 1 ? strictest.label : undefined}
+                  />
+                </div>
+              }
+            />
+            {/* Same vertical margins as the post, so the column's top is level
               with it; threads are placed from there to sit beside their text. */}
-          <div
-            ref={setThreadsColumn}
-            className={cn(
-              "relative my-4 hidden sm:my-8",
-              hasOpenThreads && "xl:block"
-            )}
-          />
-        </div>
-      </main>
+            <div
+              ref={setThreadsColumn}
+              className={cn(
+                "relative my-4 hidden sm:my-8",
+                hasOpenThreads && "xl:block"
+              )}
+            />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
