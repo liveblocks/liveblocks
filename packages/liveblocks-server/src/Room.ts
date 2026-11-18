@@ -1413,7 +1413,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     if (session === undefined) {
       this.#logger
         .withContext({ sessionKey })
-        .warn("[probe] in handlePing, no such session exists");
+        .warn("In handlePing, no such session exists");
       return;
     }
 
@@ -1436,7 +1436,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     if (!session) {
       this.#logger
         .withContext({ sessionKey })
-        .warn("[probe] in handleClientMsgs, no such session exists");
+        .warn("In handleClientMsgs, no such session exists");
       return;
     }
 
