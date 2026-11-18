@@ -78,7 +78,7 @@ export function SchedulePicker({
             }}
             aria-label="Time"
             hourCycle={24}
-            className="h-7 text-xs"
+            className="h-7 px-1.5 text-xs"
           />
         </div>
       </PopoverContent>
