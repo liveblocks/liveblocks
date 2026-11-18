@@ -265,8 +265,6 @@ function PostComposer({
         />
 
         <div className="ml-auto flex items-center gap-3">
-          <EditingAvatars postId={post.id} size={28} max={5} />
-
           <SchedulePicker
             date={post.date}
             time={post.time}
@@ -366,6 +364,16 @@ function PostComposer({
               "xl:max-w-[974px] xl:grid-cols-[minmax(0,600px)_350px] xl:gap-6"
           )}
         >
+          {/* Who else has this post open, above the post's top right corner
+              (kept over the post, not the threads column, when that shows). */}
+          <div
+            className={cn(
+              "col-span-full -mb-2 mt-4 flex h-7 justify-end sm:-mb-4 sm:mt-6",
+              hasOpenThreads && "xl:pr-[374px]"
+            )}
+          >
+            <EditingAvatars postId={post.id} size={28} max={5} />
+          </div>
           <PostFrame
             platform={previewPlatform}
             body={

@@ -168,8 +168,7 @@ export function CalendarApp() {
           </TabsList>
         </nav>
 
-        <div className="mt-auto flex items-center justify-between gap-2 px-1">
-          <AvatarStack size={28} />
+        <div className="mt-auto flex items-center justify-end px-1">
           <HelpButton />
         </div>
       </aside>
@@ -238,8 +237,10 @@ export function CalendarApp() {
               </Tooltip>
             </div>
 
-            {/* Empty third column keeps the title centered. */}
-            <span aria-hidden />
+            {/* Who's in the project, on the right; the title stays centered. */}
+            <div className="flex justify-end">
+              <AvatarStack size={28} />
+            </div>
           </header>
 
           <TabsPanel value="calendar" className="min-h-0 flex-1">
