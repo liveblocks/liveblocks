@@ -272,7 +272,9 @@ function PostComposer({
             onTimeChange={(time) => onUpdate({ time })}
           />
 
-          <div className="flex items-center gap-3">
+          <Separator orientation="vertical" />
+
+          <div className="flex items-center gap-1">
             <Menu
               onAction={(value) => {
                 switch (value) {
@@ -322,8 +324,6 @@ function PostComposer({
                 </MenuItem>
               </MenuContent>
             </Menu>
-
-            <Separator orientation="vertical" />
 
             <Tooltip>
               <TooltipTrigger
