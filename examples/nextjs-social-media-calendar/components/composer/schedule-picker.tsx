@@ -43,7 +43,7 @@ export function SchedulePicker({
           <Button
             variant="soft"
             size="sm"
-            className="gap-1.5 text-[13px] font-normal text-neutral-700 tabular-nums [&_svg]:size-3.5"
+            className="gap-1.5 text-[13px] font-medium text-neutral-700 tabular-nums [&_svg]:size-3.5"
             aria-label="Schedule"
           />
         }

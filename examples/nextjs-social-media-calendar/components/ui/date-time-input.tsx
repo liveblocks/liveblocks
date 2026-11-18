@@ -14,7 +14,7 @@ const ROOT_CLASS =
   "inline-flex h-8 items-center rounded-md border border-border bg-white px-2 text-sm text-neutral-900 shadow-xs transition-colors select-none focus-within:ring-[3px] focus-within:ring-ring data-disabled:pointer-events-none data-disabled:opacity-50 data-invalid:border-red-500";
 
 const SEGMENT_CLASS =
-  "[&_[data-slot$=-segment]]:rounded-sm [&_[data-slot$=-segment]]:px-0.5 [&_[data-slot$=-segment]]:tabular-nums [&_[data-slot$=-segment]]:outline-none [&_[data-slot$=-segment]:focus]:bg-primary [&_[data-slot$=-segment]:focus]:text-primary-foreground [&_[data-slot$=-segment][data-empty]]:text-neutral-400 [&_[data-slot$=-segment][data-type=literal]]:px-0 [&_[data-slot$=-segment][data-type=literal]]:text-neutral-400";
+  "[&_[data-slot$=-segment]]:rounded-sm [&_[data-slot$=-segment]]:px-0.5 [&_[data-slot$=-segment]]:text-center [&_[data-slot$=-segment]]:field-sizing-content [&_[data-slot$=-segment]]:tabular-nums [&_[data-slot$=-segment]]:outline-none [&_[data-slot$=-segment]:focus]:bg-primary [&_[data-slot$=-segment]:focus]:text-primary-foreground [&_[data-slot$=-segment][data-empty]]:text-neutral-400 [&_[data-slot$=-segment][data-type=literal]]:px-0 [&_[data-slot$=-segment][data-type=literal]]:text-neutral-400";
 
 export function DateInput({
   className,
