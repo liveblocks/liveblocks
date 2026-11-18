@@ -132,7 +132,7 @@ export function CalendarApp() {
 
         <Button
           size="sm"
-          className="w-full justify-center text-[13px] font-semibold [&_svg]:size-3"
+          className="w-full justify-center gap-[5px] text-[13px] font-semibold [&_svg]:size-3"
           onClick={() => createAndOpenPost(defaultNewPostDate)}
         >
           <PlusIcon />
