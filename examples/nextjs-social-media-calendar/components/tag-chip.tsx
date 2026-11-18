@@ -14,7 +14,9 @@ export function TagChip({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full items-center truncate rounded-md border font-medium whitespace-nowrap",
+        // Explicit line-height: the drag preview copies the card's computed
+        // (px) line-height inline, which the chips would otherwise inherit.
+        "inline-flex max-w-full items-center truncate rounded-md border font-medium leading-[1.5] whitespace-nowrap",
         size === "xs"
           ? "px-1.5 py-px text-[11px]"
           : size === "md"
@@ -55,7 +57,9 @@ export function TagChips({
         <TagChip key={tag} tag={tag} size={size} />
       ))}
       {rest > 0 ? (
-        <span className="text-[11px] text-neutral-500">+{rest}</span>
+        <span className="text-[11px] leading-[1.5] text-neutral-500">
+          +{rest}
+        </span>
       ) : null}
     </span>
   );

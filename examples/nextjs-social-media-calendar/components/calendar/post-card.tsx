@@ -118,7 +118,7 @@ function PostCardContent({ post }: { post: PostData }) {
       <TagChips tags={post.tags} max={2} size="xs" />
       {post.openThreads ? (
         <span
-          className="flex items-center gap-1 text-[11px] font-medium text-neutral-500 tabular-nums"
+          className="flex items-center gap-1 text-[11px] leading-[1.5] font-medium text-neutral-500 tabular-nums"
           aria-label={`${post.openThreads} open ${post.openThreads === 1 ? "comment" : "comments"}`}
         >
           <MessageSquareIcon className="size-3" aria-hidden />
