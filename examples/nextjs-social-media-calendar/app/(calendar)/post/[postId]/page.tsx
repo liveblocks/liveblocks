@@ -265,6 +265,56 @@ function PostComposer({
         />
 
         <div className="ml-auto flex items-center gap-3">
+          <Menu
+            onAction={(value) => {
+              switch (value) {
+                case "info":
+                  setHelpOpen(true);
+                  break;
+                case "delete":
+                  onDelete();
+                  break;
+              }
+            }}
+          >
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <MenuTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-neutral-500"
+                        aria-label="More"
+                      />
+                    }
+                  />
+                }
+              >
+                <EllipsisIcon />
+              </TooltipTrigger>
+              <TooltipContent>More</TooltipContent>
+            </Tooltip>
+            <MenuContent align="end" className="w-48">
+              <MenuItem value="info">
+                <MenuItemIcon>
+                  <CircleHelpIcon className="size-4" />
+                </MenuItemIcon>
+                Info
+              </MenuItem>
+              <MenuSeparator />
+              {/* Destructive and irreversible: an agent driving the UI
+                    should confirm before choosing it. */}
+              <MenuItem value="delete" destructive data-agent-confirm="">
+                <MenuItemIcon>
+                  <Trash2Icon className="size-4" />
+                </MenuItemIcon>
+                Delete post
+              </MenuItem>
+            </MenuContent>
+          </Menu>
+
           <SchedulePicker
             date={post.date}
             time={post.time}
@@ -272,79 +322,27 @@ function PostComposer({
             onTimeChange={(time) => onUpdate({ time })}
           />
 
-          <div className="flex items-center gap-3">
-            <Menu
-              onAction={(value) => {
-                switch (value) {
-                  case "info":
-                    setHelpOpen(true);
-                    break;
-                  case "delete":
-                    onDelete();
-                    break;
-                }
-              }}
-            >
-              <Tooltip>
-                <TooltipTrigger
+          <Separator orientation="vertical" />
+
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <DialogClose
                   render={
-                    <MenuTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-neutral-500"
-                          aria-label="More"
-                        />
-                      }
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="-mr-1 text-neutral-500"
+                      aria-label="Close"
                     />
                   }
-                >
-                  <EllipsisIcon />
-                </TooltipTrigger>
-                <TooltipContent>More</TooltipContent>
-              </Tooltip>
-              <MenuContent align="end" className="w-48">
-                <MenuItem value="info">
-                  <MenuItemIcon>
-                    <CircleHelpIcon className="size-4" />
-                  </MenuItemIcon>
-                  Info
-                </MenuItem>
-                <MenuSeparator />
-                {/* Destructive and irreversible: an agent driving the UI
-                    should confirm before choosing it. */}
-                <MenuItem value="delete" destructive data-agent-confirm="">
-                  <MenuItemIcon>
-                    <Trash2Icon className="size-4" />
-                  </MenuItemIcon>
-                  Delete post
-                </MenuItem>
-              </MenuContent>
-            </Menu>
-
-            <Separator orientation="vertical" />
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <DialogClose
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="-mr-1 text-neutral-500"
-                        aria-label="Close"
-                      />
-                    }
-                  />
-                }
-              >
-                <XIcon />
-              </TooltipTrigger>
-              <TooltipContent>Back to calendar</TooltipContent>
-            </Tooltip>
-          </div>
+                />
+              }
+            >
+              <XIcon />
+            </TooltipTrigger>
+            <TooltipContent>Back to calendar</TooltipContent>
+          </Tooltip>
         </div>
 
         <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
