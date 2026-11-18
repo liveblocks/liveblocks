@@ -132,7 +132,7 @@ export function CalendarApp() {
 
         <Button
           size="sm"
-          className="w-full justify-center"
+          className="w-full justify-center text-[13px] [&_svg]:size-3.5"
           onClick={() => createAndOpenPost(defaultNewPostDate)}
         >
           <PlusIcon />
@@ -149,7 +149,7 @@ export function CalendarApp() {
           >
             <TabsTab
               value="calendar"
-              className="h-8 justify-start px-2 text-sm text-neutral-700 hover:bg-neutral-200/60 data-selected:bg-white data-selected:shadow-xs [&_svg]:size-4"
+              className="h-8 justify-start px-2 text-[13px] text-neutral-700 hover:bg-neutral-200/60 data-selected:bg-white data-selected:shadow-xs [&_svg]:size-3.5"
             >
               <TabsTabIcon>
                 <CalendarIcon />
@@ -158,7 +158,7 @@ export function CalendarApp() {
             </TabsTab>
             <TabsTab
               value="list"
-              className="h-8 justify-start px-2 text-sm text-neutral-700 hover:bg-neutral-200/60 data-selected:bg-white data-selected:shadow-xs [&_svg]:size-4"
+              className="h-8 justify-start px-2 text-[13px] text-neutral-700 hover:bg-neutral-200/60 data-selected:bg-white data-selected:shadow-xs [&_svg]:size-3.5"
             >
               <TabsTabIcon>
                 <ListIcon />
