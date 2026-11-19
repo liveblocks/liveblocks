@@ -241,6 +241,10 @@ function increaseBackoffDelayAggressively(context: Patchable<Context>) {
   });
 }
 
+function resetBackoffDelay(context: Patchable<Context>) {
+  context.patch({ backoffDelay: RESET_DELAY });
+}
+
 function resetSuccessCount(context: Patchable<Context>) {
   context.patch({ successCount: 0 });
 }
@@ -429,10 +433,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   // from the user.
   //
   machine.addTransitions("*", {
-    RECONNECT: {
+    RECONNECT: (_, ctx) => ({
       target: "@auth.backoff",
-      effect: [increaseBackoffDelay, resetSuccessCount],
-    },
+      // Closing a connection is the app's choice, so it should not count as
+      // a failed attempt that would increase the backoff delay
+      effect:
+        ctx.socket !== null
+          ? [resetBackoffDelay, increaseBackoffDelay, resetSuccessCount]
+          : [increaseBackoffDelay, resetSuccessCount],
+    }),
 
     DISCONNECT: "@idle.initial",
   });

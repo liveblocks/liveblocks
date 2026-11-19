@@ -32,14 +32,14 @@ function SOCKET_DROPS_AFTER(ms: number) {
 }
 
 /**
- * Connects using the given socket behavior, lets the given amount of (fake)
- * time pass, and returns the time between consecutive connection attempts.
- * `Math.random` is fixed to the given value, to make jitter deterministic.
+ * Creates a ManagedSocket (using fake timers) for the given socket behavior,
+ * and records the time of each connection attempt. `Math.random` is fixed to
+ * the given value, to make jitter deterministic.
  */
-async function retryGaps(
+function setup(
   behavior: (wss: MockWebSocketServer) => MockWebSocket,
-  { runFor, random }: { runFor: number; random: number }
-): Promise<number[]> {
+  { random }: { random: number }
+) {
   vi.useFakeTimers();
   vi.spyOn(Math, "random").mockReturnValue(random);
 
@@ -49,7 +49,19 @@ async function retryGaps(
     return behavior(wss);
   });
 
-  const mgr = new ManagedSocket(delegates);
+  return { mgr: new ManagedSocket(delegates), attempts };
+}
+
+/**
+ * Connects using the given socket behavior, lets the given amount of (fake)
+ * time pass, and returns the time between consecutive connection attempts.
+ */
+async function retryGaps(
+  behavior: (wss: MockWebSocketServer) => MockWebSocket,
+  { runFor, random }: { runFor: number; random: number }
+): Promise<number[]> {
+  const { mgr, attempts } = setup(behavior, { random });
+
   mgr.connect();
   await vi.advanceTimersByTimeAsync(runFor);
   mgr.disconnect();
@@ -168,5 +180,53 @@ describe("ManagedSocket", () => {
 
     // Each delay is extended by a random amount of up to 20%
     expect(gaps).toEqual([2300 + 275, 2300 + 550, 2300 + 1100]);
+  });
+
+  test("calling reconnect() on a working connection does not back off", async () => {
+    const { mgr, attempts } = setup(SOCKET_AUTOCONNECT_AND_ROOM_STATE(), {
+      random: 0, // No jitter
+    });
+
+    // Calls reconnect() after the connection has been open for the given
+    // time, and returns how long it took until the next connection attempt
+    async function reconnectAfter(ms: number): Promise<number> {
+      await vi.advanceTimersByTimeAsync(ms);
+      const reconnectedAt = Date.now();
+      mgr.reconnect();
+      await vi.advanceTimersByTimeAsync(2000);
+      return attempts[attempts.length - 1] - reconnectedAt;
+    }
+
+    // The app chose to close a working connection, which says nothing about
+    // the network, so this should not count as a failed attempt
+    mgr.connect();
+    expect(await reconnectAfter(3000)).toBe(250);
+    expect(await reconnectAfter(3000)).toBe(250);
+    expect(await reconnectAfter(3000)).toBe(250);
+    mgr.disconnect();
+  });
+
+  test("calling reconnect() on a working connection resets an escalated backoff", async () => {
+    const { mgr, attempts } = setup(
+      SOCKET_SEQUENCE(
+        SOCKET_DROPS_AFTER(2300),
+        SOCKET_DROPS_AFTER(2300),
+        SOCKET_DROPS_AFTER(2300),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Stays open
+      ),
+      { random: 0 /* No jitter */ }
+    );
+
+    // Three flapping connections escalate the backoff (250, 500, 1000ms),
+    // after which the fourth connection stays open
+    mgr.connect();
+    await vi.advanceTimersByTimeAsync(3 * 2300 + 250 + 500 + 1000 + 1000);
+    expect(attempts.length).toBe(4);
+
+    const reconnectedAt = Date.now();
+    mgr.reconnect();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(attempts[4] - reconnectedAt).toBe(250);
+    mgr.disconnect();
   });
 });
