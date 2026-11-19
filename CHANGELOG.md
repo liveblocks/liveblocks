@@ -6,9 +6,9 @@
   that dropped shortly after opening would be retried almost immediately, over
   and over. Now, the reconnection delay only resets once a connection has stayed
   open for a while, so repeatedly dropping connections back off as expected.
-- Add a small random delay to reconnection attempts, so that many clients losing
-  their connection at the same time don't all reconnect at the exact same
-  moment.
+- Add a random delay (up to 20% longer) to reconnection attempts, so that many
+  clients losing their connection at the same time don't all reconnect at the
+  exact same moment.
 
 ## v3.25.1
 
