@@ -11,7 +11,7 @@ import {
   PlusIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { nanoid } from "nanoid";
 import { Brand } from "@/components/brand";
 import { ListView } from "@/components/calendar/list-view";
@@ -127,48 +127,48 @@ export function CalendarApp() {
       orientation="vertical"
       className="flex h-dvh w-full overflow-hidden bg-neutral-100 text-neutral-900"
     >
-      <aside className="flex w-56 shrink-0 flex-col gap-5 p-4">
+      {/* Below `xl` the sidebar collapses to a 32px column of icons, with
+          tooltips standing in for the hidden labels. */}
+      <aside className="flex w-16 shrink-0 flex-col gap-5 p-4 xl:w-56">
         <Brand />
 
-        <Button
-          size="sm"
-          className="w-full justify-center gap-[5px] text-[13px] font-semibold [&_svg]:size-3"
-          onClick={() => createAndOpenPost(defaultNewPostDate)}
-        >
-          <PlusIcon />
-          New post
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                size="sm"
+                className="size-8 justify-center gap-[5px] p-0 text-[13px] font-semibold xl:w-full xl:px-3 [&_svg]:size-3"
+                onClick={() => createAndOpenPost(defaultNewPostDate)}
+                aria-label="New post"
+              />
+            }
+          >
+            <PlusIcon />
+            <span className="hidden xl:inline">New post</span>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="xl:hidden">
+            New post
+          </TooltipContent>
+        </Tooltip>
 
         <nav className="flex flex-col gap-1.5">
-          <p className="px-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase">
+          <p className="hidden px-2 text-[11px] font-medium tracking-wide text-neutral-500 uppercase xl:block">
             Workspace
           </p>
           <TabsList
             aria-label="View"
             className="flex h-auto flex-col items-stretch gap-0.5 rounded-none bg-transparent p-0"
           >
-            <TabsTab
-              value="calendar"
-              className="h-8 justify-start px-2 text-[13px] text-neutral-700 hover:bg-neutral-200/60 data-selected:bg-white data-selected:shadow-xs [&_svg]:size-3.5"
-            >
-              <TabsTabIcon>
-                <CalendarIcon />
-              </TabsTabIcon>
-              Calendar
-            </TabsTab>
-            <TabsTab
-              value="list"
-              className="h-8 justify-start px-2 text-[13px] text-neutral-700 hover:bg-neutral-200/60 data-selected:bg-white data-selected:shadow-xs [&_svg]:size-3.5"
-            >
-              <TabsTabIcon>
-                <ListIcon />
-              </TabsTabIcon>
-              List
-            </TabsTab>
+            <SidebarTab value="calendar" label="Calendar">
+              <CalendarIcon />
+            </SidebarTab>
+            <SidebarTab value="list" label="List">
+              <ListIcon />
+            </SidebarTab>
           </TabsList>
         </nav>
 
-        <div className="mt-auto flex items-center justify-end px-1">
+        <div className="mt-auto flex items-center justify-center xl:justify-end xl:px-1">
           <HelpButton />
         </div>
       </aside>
@@ -267,5 +267,39 @@ export function CalendarApp() {
         </div>
       </main>
     </Tabs>
+  );
+}
+
+/**
+ * A view switcher entry in the sidebar: icon and label, or only the icon
+ * with the label as a tooltip when the sidebar is collapsed.
+ */
+function SidebarTab({
+  value,
+  label,
+  children,
+}: {
+  value: View;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <TabsTab
+            value={value}
+            aria-label={label}
+            className="size-8 justify-center px-0 text-[13px] text-neutral-700 hover:bg-neutral-200/60 data-selected:bg-white data-selected:shadow-xs xl:w-auto xl:justify-start xl:px-2 [&_svg]:size-3.5"
+          />
+        }
+      >
+        <TabsTabIcon>{children}</TabsTabIcon>
+        <span className="hidden xl:inline">{label}</span>
+      </TooltipTrigger>
+      <TooltipContent side="right" className="xl:hidden">
+        {label}
+      </TooltipContent>
+    </Tooltip>
   );
 }

@@ -2,16 +2,17 @@ import { cn } from "@/lib/utils";
 
 export const PROJECT_NAME = "Liveblocks";
 
+/** Logo mark and name. The name hides when the sidebar collapses to icons. */
 export function Brand({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
       <span
-        className="flex size-8 items-center justify-center rounded-lg bg-black text-white"
+        className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-black text-white"
         aria-hidden
       >
         <LiveblocksMark className="w-[55%]" />
       </span>
-      <div className="leading-tight">
+      <div className="hidden leading-tight xl:block">
         <p className="text-sm font-semibold text-neutral-900">{PROJECT_NAME}</p>
         <p className="text-[11px] text-neutral-500">Social calendar</p>
       </div>
