@@ -129,8 +129,8 @@ export function CalendarApp() {
     >
       {/* Below `xl` the sidebar collapses to a 32px column of icons, with
           tooltips standing in for the hidden labels. */}
-      <aside className="flex w-14 shrink-0 flex-col gap-5 px-3 py-3 xl:w-56 xl:px-4">
-        <Brand />
+      <aside className="flex w-14 shrink-0 flex-col gap-2 px-3 py-3 xl:w-56 xl:gap-5 xl:px-4">
+        <Brand className="mb-4 xl:mb-0" />
 
         <Tooltip>
           <TooltipTrigger
@@ -157,7 +157,7 @@ export function CalendarApp() {
           </p>
           <TabsList
             aria-label="View"
-            className="flex h-auto flex-col items-stretch gap-0.5 rounded-none bg-transparent p-0"
+            className="flex h-auto flex-col items-stretch gap-2 rounded-none bg-transparent p-0 xl:gap-0.5"
           >
             <SidebarTab value="calendar" label="Calendar">
               <CalendarIcon />
