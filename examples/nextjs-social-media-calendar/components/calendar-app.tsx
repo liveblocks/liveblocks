@@ -129,7 +129,7 @@ export function CalendarApp() {
     >
       {/* Below `xl` the sidebar collapses to a 32px column of icons, with
           tooltips standing in for the hidden labels. */}
-      <aside className="flex w-14 shrink-0 flex-col gap-5 px-3 py-4 xl:w-56 xl:px-4">
+      <aside className="flex w-14 shrink-0 flex-col gap-5 px-3 py-3 xl:w-56 xl:px-4">
         <Brand />
 
         <Tooltip>
