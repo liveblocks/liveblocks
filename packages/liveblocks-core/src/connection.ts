@@ -149,19 +149,30 @@ type Context = {
 
   /**
    * The current retry delay when automatically retrying. Will get bumped to
-   * the next "tier" every time a connection attempt fails. Reset every time
-   * a connection succeeded.
+   * the next "tier" every time a connection attempt fails, or when an opened
+   * connection drops before it was considered healthy. Reset when a healthy
+   * connection drops.
    */
   backoffDelay: number;
 };
 
 const BACKOFF_DELAYS = [250, 500, 1_000, 2_000, 4_000, 8_000, 10_000] as const;
 
-// Resetting the delay happens upon success. We could reset to 0, but that
+// Resetting the delay happens when a healthy connection drops (see
+// HEALTHY_CONNECTION_THRESHOLD). We could reset to 0, but that
 // would risk no delay, which generally isn't wise. Instead, we'll reset it to
 // the lowest safe delay minus 1 millisecond. The reason is that every time
 // a retry happens, the retry delay will first be bumped to the next "tier".
 const RESET_DELAY = BACKOFF_DELAYS[0] - 1;
+
+/**
+ * Extends the given backoff delay by a random amount (up to 20%), so that
+ * many clients that lose their connections at the same time (e.g. during
+ * a server deploy) don't all retry in lockstep.
+ */
+function withJitter(delay: number): number {
+  return Math.round(delay * (1 + Math.random() * 0.2));
+}
 
 /**
  * Used to back off from WebSocket reconnection attempts after a known
@@ -177,6 +188,15 @@ const BACKOFF_DELAYS_SLOW = [2_000, 30_000, 60_000, 300_000] as const;
  */
 const HEARTBEAT_INTERVAL = 30_000;
 const PONG_TIMEOUT = 2_000;
+
+/**
+ * A connection that stays open for at least this long is considered healthy.
+ * Only when a healthy connection drops will the backoff delay be reset.
+ * A connection that drops sooner counts as a failed attempt, so that flaky
+ * networks that drop sockets shortly after opening them don't cause a tight
+ * reconnection loop.
+ */
+const HEALTHY_CONNECTION_THRESHOLD = 10_000;
 
 /**
  * Maximum amount of time that the authentication delegate take to return an
@@ -442,7 +462,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     })
     .addTimedTransition(
       "@auth.backoff",
-      (ctx) => ctx.backoffDelay,
+      (ctx) => withJitter(ctx.backoffDelay),
       "@auth.busy"
     )
 
@@ -531,7 +551,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     })
     .addTimedTransition(
       "@connecting.backoff",
-      (ctx) => ctx.backoffDelay,
+      (ctx) => withJitter(ctx.backoffDelay),
       "@connecting.busy"
     )
 
@@ -707,10 +727,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // Only transition to OK state after a successfully opened WebSocket connection
       (okEvent) => ({
         target: "@ok.connected",
-        effect: assign({
-          socket: okEvent.data,
-          backoffDelay: RESET_DELAY,
-        }),
+        effect: assign({ socket: okEvent.data }),
       }),
 
       // If the WebSocket connection cannot be established
@@ -821,6 +838,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   machine
     .onEnter("@ok.*", (ctx) => {
       ctx.patch({ successCount: ctx.successCount + 1 });
+      const connectedAt = Date.now();
 
       const timerID = setTimeout(
         // On the next tick, start delivering all messages that have already
@@ -834,7 +852,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // no longer valid.
       return (ctx) => {
         teardownSocket(ctx.socket);
-        ctx.patch({ socket: null });
+
+        // This runs before the effects of the transition that leaves the OK
+        // state, which will typically bump the backoff delay
+        if (Date.now() - connectedAt >= HEALTHY_CONNECTION_THRESHOLD) {
+          ctx.patch({ socket: null, backoffDelay: RESET_DELAY });
+        } else {
+          ctx.patch({ socket: null });
+        }
+
         clearTimeout(timerID);
         onMessage.pause();
       };
