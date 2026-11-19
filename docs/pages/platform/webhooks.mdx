@@ -164,7 +164,11 @@ clicking the top right dropdown and selecting **“Recover failed messages…”
 
 Each message is attempted based on a schedule that follows the failure of the
 preceding attempt. If an endpoint is removed or disabled, delivery attempts will
-also be disabled. The schedule for retries is as follows:
+also be disabled. Events that happen while an endpoint is disabled are never
+delivered to it, and can’t be replayed later. Messages that were already
+scheduled fail without being sent, and enabling the endpoint again doesn’t retry
+them. To catch up on those, enable the endpoint first, then recover its failed
+messages. The schedule for retries is as follows:
 
 - Immediately
 - 5 seconds

@@ -1,5 +1,12 @@
 ## vNEXT
 
+## v3.25.1
+
+### All packages
+
+- Improve custom inbox notifications' types, `activities` can now be accessed on
+  any inbox notification without having to narrow it first.
+
 ## v3.25.0
 
 ### `@liveblocks/client`, `@liveblocks/react`, and `@liveblocks/node`
@@ -34,7 +41,8 @@
 
 ### `@liveblocks/react`
 
-- Add `reload()` to `useInboxNotifications()` to refresh notifications immediately.
+- Add `reload()` to `useInboxNotifications()` to refresh notifications
+  immediately.
 - Fix inbox notifications remaining visible after room access is revoked or a
   room is deleted.
 

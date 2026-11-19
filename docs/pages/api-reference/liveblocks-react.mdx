@@ -668,8 +668,11 @@ period of inactivity, then you can use `backgroundKeepAliveTimeout`.
 
 When `backgroundKeepAliveTimeout` is specified, the client will automatically
 disconnect applications that have been in an unfocused background tab for _at
-least_ the specified time. When the browser tab is refocused, the client will
-immediately reconnect to the room and synchronize the document.
+least_ the specified time, and other users in the room will receive a left
+event. When the browser tab is refocused, the client will immediately reconnect
+to the room and synchronize the document, and other users will receive an
+entered event. This usually happens so quickly that, to the returning user, it
+looks like they were connected the whole time.
 
 ```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
@@ -690,7 +693,9 @@ function App() {
 ```
 
 `backgroundKeepAliveTimeout` accepts a number in milliseconds—we advise using a
-value of at least a few minutes, to avoid unnecessary disconnections.
+value of at least a few minutes, to avoid unnecessary disconnections. Note that
+a tab will never disconnect while it still has unsynchronized Storage or Yjs
+changes.
 
 #### resolveUsers [#LiveblocksProviderResolveUsers]
 

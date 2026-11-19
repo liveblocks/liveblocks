@@ -209,7 +209,7 @@ type WebhookRequest = {
   headers: IncomingHttpHeaders | Headers;
   /**
    * Raw body of the request, do not parse it
-   * @example '{"type":"storageUpdated","data":{"roomId":"my-room-id","appId":"my-app-id","updatedAt":"2021-03-01T12:00:00.000Z"}}'
+   * @example '{"type":"storageUpdated","data":{"roomId":"my-room-id","projectId":"my-project-id","updatedAt":"2021-03-01T12:00:00.000Z"}}'
    */
   rawBody: string;
 };

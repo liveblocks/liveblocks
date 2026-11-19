@@ -1379,6 +1379,11 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       expectTypeOf(
         result.inboxNotifications?.map((ibn) => ibn.roomId)
       ).toEqualTypeOf<(string | undefined)[] | undefined>();
+      expectTypeOf(
+        result.inboxNotifications?.map(
+          ({ activities }) => activities?.[0]?.createdAt
+        )
+      ).toEqualTypeOf<(Date | undefined)[] | undefined>();
     }
   });
 
@@ -1394,6 +1399,11 @@ describe("createLiveblocksContext / createRoomContext factories", () => {
       expectTypeOf(
         result.inboxNotifications?.map((ibn) => ibn.roomId)
       ).toEqualTypeOf<(string | undefined)[]>();
+      expectTypeOf(
+        result.inboxNotifications.map(
+          ({ activities }) => activities?.[0]?.createdAt
+        )
+      ).toEqualTypeOf<(Date | undefined)[]>();
     }
   });
 
