@@ -193,11 +193,12 @@ export function StatusMenu({
           <DropdownMenuItem
             key={status}
             onClick={() => onChange(status)}
+            className="gap-1.5 text-xs"
           >
             <StatusIcon status={status} />
             <span className="flex-1">{STATUS_LABEL[status]}</span>
             {status === value ? (
-              <CheckIcon className="size-4 text-ink" />
+              <CheckIcon className="size-3.5 text-ink-muted" />
             ) : null}
           </DropdownMenuItem>
         ))}
@@ -247,11 +248,12 @@ export function PriorityMenu({
           <DropdownMenuItem
             key={priority}
             onClick={() => onChange(priority)}
+            className="gap-1.5 text-xs"
           >
             <PriorityIcon priority={priority} />
             <span className="flex-1">{PRIORITY_LABEL[priority]}</span>
             {priority === value ? (
-              <CheckIcon className="size-4 text-ink" />
+              <CheckIcon className="size-3.5 text-ink-muted" />
             ) : null}
           </DropdownMenuItem>
         ))}
@@ -308,10 +310,11 @@ export function AssigneeMenu({
         {/* Unassign and yourself first, then the rest of the team. */}
         <DropdownMenuItem
           onClick={() => onChange("")}
+          className="gap-1.5 text-xs"
         >
           <UnassignedIcon className="size-5 text-ink-faint" strokeWidth={1.5} />
           <span className="flex-1">Unassign</span>
-          {!value ? <CheckIcon className="size-4 text-ink" /> : null}
+          {!value ? <CheckIcon className="size-3.5 text-ink-muted" /> : null}
         </DropdownMenuItem>
         {self ? (
           <AgentItem agent={self} selected={value === self.id} onPick={onChange} isSelf />
@@ -344,13 +347,14 @@ function AgentItem({
   return (
     <DropdownMenuItem
       onClick={() => onPick(agent.id)}
+      className="gap-1.5 text-xs"
     >
       <AgentAvatar userId={agent.id} size="sm" />
       <span className="flex-1 truncate">
         {agent.info.name}
         {isSelf ? <span className="text-ink-faint"> (Me)</span> : null}
       </span>
-      {selected ? <CheckIcon className="size-4 text-ink" /> : null}
+      {selected ? <CheckIcon className="size-3.5 text-ink-muted" /> : null}
     </DropdownMenuItem>
   );
 }

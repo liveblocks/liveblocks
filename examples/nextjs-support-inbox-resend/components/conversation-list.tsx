@@ -154,10 +154,11 @@ export function ConversationList({
                 <DropdownMenuItem
                   key={id}
                   onClick={() => onViewChange(id)}
+                  className="text-[13px]"
                 >
                   <Icon className="size-4" />
                   <span className="flex-1">{label}</span>
-                  <span className="tabular text-xs text-ink-muted">
+                  <span className="tabular text-xs text-ink-faint">
                     {counts[id] || ""}
                   </span>
                 </DropdownMenuItem>
@@ -206,10 +207,11 @@ export function ConversationList({
                 <DropdownMenuItem
                   key={item.id}
                   onClick={() => onFilterChange(item.id)}
+                  className="text-xs"
                 >
                   <span className="flex-1">{item.label}</span>
                   {item.id === filter ? (
-                    <CheckIcon className="size-4 text-ink" />
+                    <CheckIcon className="size-3.5 text-ink-muted" />
                   ) : null}
                 </DropdownMenuItem>
               ))}
@@ -226,10 +228,11 @@ export function ConversationList({
                 <DropdownMenuItem
                   key={item.id}
                   onClick={() => onSortChange(item.id)}
+                  className="text-xs"
                 >
                   <span className="flex-1">{item.label}</span>
                   {item.id === sort ? (
-                    <CheckIcon className="size-4 text-ink" />
+                    <CheckIcon className="size-3.5 text-ink-muted" />
                   ) : null}
                 </DropdownMenuItem>
               ))}
