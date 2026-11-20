@@ -24,6 +24,7 @@ export function CustomerPanel({
   onSetTags,
   onViewCustomer,
   onClose,
+  wide = false,
   className,
 }: {
   conversation: Conversation;
@@ -35,8 +36,11 @@ export function CustomerPanel({
   onSetTags: (tags: string[]) => void;
   onViewCustomer: (customer: Customer) => void;
   onClose: () => void;
+  // Roomier side gutters, for the slide-over on small screens.
+  wide?: boolean;
   className?: string;
 }) {
+  const gutter = wide ? "px-5" : "px-3";
   const { metadata } = conversation;
   const customer: Customer = {
     name: metadata.customerName,
@@ -51,7 +55,7 @@ export function CustomerPanel({
       )}
       aria-label="Details"
     >
-      <section className="px-3 pt-3 pb-5">
+      <section className={cn(gutter, "pt-3 pb-5")}>
         <div className="flex items-center gap-3">
           <CustomerAvatar
             name={metadata.customerName}
@@ -96,9 +100,9 @@ export function CustomerPanel({
         </dl>
       </section>
 
-      <Divider />
+      <div className={cn(wide ? "mx-5" : "mx-3", "h-px bg-line")} />
 
-      <section className="px-3 py-5">
+      <section className={cn(gutter, "py-5")}>
         <h3 className="mb-3 text-xs font-medium text-ink">
           Thread
         </h3>
@@ -204,6 +208,3 @@ function Field({
   );
 }
 
-function Divider() {
-  return <div className="mx-3 h-px bg-line" />;
-}

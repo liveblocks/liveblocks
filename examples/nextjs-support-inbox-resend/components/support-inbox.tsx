@@ -545,6 +545,7 @@ export function SupportInbox({
                     viewCustomer(customer);
                   }}
                   onClose={() => setDetailsSheetOpen(false)}
+                  wide
                   className="absolute inset-y-0 right-0 max-w-full bg-canvas shadow-2xl shadow-ink/20 animate-in slide-in-from-right duration-200"
                 />
               </div>
