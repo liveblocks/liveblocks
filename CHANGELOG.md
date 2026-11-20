@@ -1,5 +1,9 @@
 ## vNEXT
 
+### `@liveblocks/node`
+
+- Harden webhook signature verification in `WebhookHandler.verifyRequest()`.
+
 ## v3.25.1
 
 ### All packages
