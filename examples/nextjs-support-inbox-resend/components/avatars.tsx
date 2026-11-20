@@ -17,10 +17,10 @@ const SIZE: Record<Size, string> = {
 
 // Presence dot sizes, matched to the avatar size.
 const DOT: Record<Size, string> = {
-  xs: "size-1.5 ring-1",
-  sm: "size-2 ring-2",
-  md: "size-2 ring-2",
-  lg: "size-2.5 ring-2",
+  xs: "size-1 ring-1",
+  sm: "size-1.5 ring-1",
+  md: "size-1.5 ring-[1.5px]",
+  lg: "size-2 ring-[1.5px]",
 };
 
 /**
