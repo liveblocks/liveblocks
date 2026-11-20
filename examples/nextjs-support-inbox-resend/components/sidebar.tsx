@@ -195,7 +195,7 @@ function WorkspaceSwitcher({
       >
         <LiveblocksMark />
         <div className="hidden min-w-0 flex-1 lg:block">
-          <div className="truncate text-[13px] leading-tight font-semibold text-ink">
+          <div className="truncate text-[13px] leading-tight font-bold text-ink">
             {workspace.name}
           </div>
           <div className="truncate text-[11px] leading-tight text-ink-muted">
