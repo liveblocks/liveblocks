@@ -39,6 +39,9 @@ function decorate(root: HTMLElement) {
     const name = label.textContent?.trim() ?? "";
     const agent = getUsers().find((user) => user.info.name === name);
     label.dataset.decorated = "";
+    // The name is rendered by CSS (`::after { content: attr(data-name) }`),
+    // so the pill always sizes to the full name.
+    label.dataset.name = name;
     // The color stays on the caret bar; the label itself becomes a light pill.
     label.style.backgroundColor = "";
     label.replaceChildren();
@@ -50,9 +53,5 @@ function decorate(root: HTMLElement) {
       avatar.className = "collaboration-carets__avatar";
       label.append(avatar);
     }
-
-    const text = document.createElement("span");
-    text.textContent = name;
-    label.append(text);
   }
 }
