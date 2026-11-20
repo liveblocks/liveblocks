@@ -20,7 +20,17 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 47 (2026-11-20)
 
+## Examples
+
+- New example: [Social media calendar](https://liveblocks.io/examples/social-media-calendar/nextjs-social-media-calendar).
+
+## Dashboard
+
+- Free plan users that previously paid can now view their full billing history.
+
 ## Contributors
+
+ctnicholas
 
 # Week 46 (2026-11-13)
 
