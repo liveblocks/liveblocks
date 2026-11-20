@@ -20,14 +20,14 @@ export function TagChip({
   className,
 }: {
   tag: string;
-  // When set, hovering the chip reveals an × that removes the tag.
+  // When set, the chip gets an × that removes the tag.
   onRemove?: () => void;
   className?: string;
 }) {
   return (
     <span
       className={cn(
-        "group/tag inline-flex h-6 max-w-full items-center gap-1 rounded-md border border-line bg-surface px-1.5 text-xs text-ink",
+        "inline-flex h-6 max-w-full items-center gap-1 rounded-md border border-line bg-surface px-1.5 text-xs text-ink",
         className
       )}
     >
@@ -40,7 +40,7 @@ export function TagChip({
             event.stopPropagation();
             onRemove();
           }}
-          className="-mr-1 flex size-4 shrink-0 items-center justify-center rounded-sm text-ink-faint opacity-0 transition-opacity hover:bg-ink/8 hover:text-ink focus-visible:opacity-100 group-hover/tag:opacity-100"
+          className="-mr-1 flex size-4 shrink-0 items-center justify-center rounded-sm text-ink-faint transition-colors hover:bg-ink/8 hover:text-ink"
           aria-label={`Remove tag ${tag}`}
         >
           <XIcon className="size-3" />
