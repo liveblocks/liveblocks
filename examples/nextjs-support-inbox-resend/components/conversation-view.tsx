@@ -64,7 +64,7 @@ export function ConversationView({
       aria-label="Conversation"
     >
       <header className="shrink-0 border-b border-line">
-        <div className="flex items-center gap-3 px-4 pt-3">
+        <div className="flex items-center gap-3 pl-4 pr-2.5 pt-3">
           <button
             type="button"
             onClick={onBack}
@@ -104,7 +104,7 @@ export function ConversationView({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pt-2 pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pl-4 pr-2.5 pt-2 pb-3">
           <div className="flex min-w-0 items-center gap-2 text-xs">
             <CustomerAvatar
               name={metadata.customerName}
