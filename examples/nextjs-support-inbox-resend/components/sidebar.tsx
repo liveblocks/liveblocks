@@ -236,10 +236,11 @@ function LiveblocksMark({ small = false }: { small?: boolean }) {
       )}
       aria-hidden
     >
+      {/* Explicit size/color so the menu's generic svg styles don't apply. */}
       <svg
         viewBox="768 320 264 160"
         fill="currentColor"
-        className="w-[55%]"
+        className={cn("text-surface", small ? "size-3" : "size-4")}
       >
         <path
           fillRule="evenodd"
