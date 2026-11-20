@@ -102,7 +102,7 @@
     inset-block-start: -0.15em;
     inset-inline-start: -1px;
     block-size: 1.3em;
-    border-inline-start: 1px solid var(--color-ink-muted);
+    border-inline-start: 2px solid var(--color-ink-muted);
   }
   .collaboration-carets__label {
     position: absolute;
