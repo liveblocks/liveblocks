@@ -223,6 +223,7 @@ export function TagsMenu({
               onSelect={(event) => event.preventDefault()}
               className="text-xs"
             >
+              <TagIcon className="size-3.5 text-ink-faint" />
               <span className="truncate">{tag}</span>
             </DropdownMenuCheckboxItem>
           ))}
