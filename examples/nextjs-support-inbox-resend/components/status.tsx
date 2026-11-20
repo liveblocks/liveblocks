@@ -135,7 +135,7 @@ export function StatusIcon({
   return (
     <svg
       viewBox="0 0 16 16"
-      className={cn("size-5 shrink-0", STATUS_TONE[status], className)}
+      className={cn("size-4 shrink-0", STATUS_TONE[status], className)}
       aria-hidden
     >
       <circle cx="8" cy="8" r="6.25" {...STROKE} strokeLinecap="butt" />
@@ -154,10 +154,10 @@ export type MenuAppearance = "outline" | "icon" | "ghost";
 
 export const triggerClass: Record<MenuAppearance, string> = {
   outline:
-    "inline-flex h-7 max-w-full items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs font-medium text-ink-secondary transition-colors hover:border-line-strong hover:bg-hover hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-hover data-[state=open]:text-ink",
+    "inline-flex h-7 max-w-full items-center gap-1 rounded-md border border-line bg-surface px-2 text-xs font-medium text-ink-secondary transition-colors hover:border-line-strong hover:bg-hover hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-hover data-[state=open]:text-ink",
   icon: "inline-flex size-7 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-ink/8 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-ink/8 data-[state=open]:text-ink",
   ghost:
-    "inline-flex h-7 max-w-full items-center gap-1.5 rounded-md px-1.5 text-left text-xs text-ink transition-colors hover:bg-ink/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-ink/8",
+    "inline-flex h-7 max-w-full items-center gap-1 rounded-md px-1.5 text-left text-xs text-ink transition-colors hover:bg-ink/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-ink/8",
 };
 
 export function StatusMenu({
@@ -171,26 +171,16 @@ export function StatusMenu({
   appearance?: MenuAppearance;
   className?: string;
 }) {
-  const open = value === "needs-response";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={cn(
-          triggerClass[appearance],
-          appearance === "outline" &&
-            open &&
-            "border-open/25 bg-open/8 text-open hover:border-open/40 hover:bg-open/12 hover:text-open",
-          appearance === "ghost" && open && "font-medium text-open",
-          className
-        )}
+        className={cn(triggerClass[appearance], className)}
         aria-label="Status"
       >
         <StatusIcon status={value} />
         <span className="truncate">{STATUS_LABEL[value]}</span>
         {appearance === "outline" ? (
-          <ChevronDownIcon
-            className={cn("size-3", open ? "text-open/60" : "text-ink-faint")}
-          />
+          <ChevronDownIcon className="size-3 text-ink-faint" />
         ) : null}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
@@ -198,7 +188,7 @@ export function StatusMenu({
           <DropdownMenuItem
             key={status}
             onClick={() => onChange(status)}
-            className="text-xs"
+            className="gap-1.5 text-xs"
           >
             <StatusIcon status={status} />
             <span className="flex-1">{STATUS_LABEL[status]}</span>
@@ -253,7 +243,7 @@ export function PriorityMenu({
           <DropdownMenuItem
             key={priority}
             onClick={() => onChange(priority)}
-            className="text-xs"
+            className="gap-1.5 text-xs"
           >
             <PriorityIcon priority={priority} />
             <span className="flex-1">{PRIORITY_LABEL[priority]}</span>
@@ -319,7 +309,7 @@ export function AssigneeMenu({
           <DropdownMenuItem
             key={agent.id}
             onClick={() => onChange(agent.id)}
-            className="text-xs"
+            className="gap-1.5 text-xs"
           >
             <AgentAvatar userId={agent.id} size="sm" />
             <span className="flex-1 truncate">
