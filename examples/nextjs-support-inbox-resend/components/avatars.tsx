@@ -25,8 +25,8 @@ const DOT: Record<Size, string> = {
 
 /**
  * Avatar for a support agent, resolved through `resolveUsers`, with a presence
- * dot at the bottom right: green while they're connected to this workspace
- * (they appear in the room's presence), gray otherwise.
+ * dot at the bottom right while they're connected to this workspace (they
+ * appear in the room's presence).
  */
 export function AgentAvatar({
   userId,
@@ -71,15 +71,16 @@ export function AgentAvatar({
           {name ? initials(name) : ""}
         </span>
       )}
-      <span
-        className={cn(
-          "absolute -right-px -bottom-px rounded-full",
-          DOT[size],
-          ring,
-          online ? "bg-done" : "bg-line-strong"
-        )}
-        aria-hidden
-      />
+      {online ? (
+        <span
+          className={cn(
+            "absolute -right-px -bottom-px rounded-full bg-done",
+            DOT[size],
+            ring
+          )}
+          aria-hidden
+        />
+      ) : null}
     </span>
   );
 }
