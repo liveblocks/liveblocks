@@ -39,17 +39,6 @@ declare global {
       customerName: string;
       customerEmail: string;
       customerCompany: string;
-      category:
-        | "billing"
-        | "feature-request"
-        | "account"
-        | "feedback"
-        | "technical"
-        | "pricing"
-        | "trial"
-        | "security"
-        | "partnership"
-        | "";
       // Where the conversation stands. Customer emails flip it to
       // "needs-response" (unless it's ignored), replies flip open
       // conversations to "waiting"; agents can also set it by hand. "done"

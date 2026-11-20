@@ -67,7 +67,6 @@ export function isOpen(status: Status) {
   return status !== "done" && status !== "ignored";
 }
 export type Priority = ConversationMetadata["priority"];
-export type Category = Exclude<ConversationMetadata["category"], "">;
 
 export const PRIORITIES: Priority[] = ["urgent", "high", "normal", "low"];
 
@@ -83,18 +82,6 @@ export const PRIORITY_RANK: Record<Priority, number> = {
   high: 1,
   normal: 2,
   low: 3,
-};
-
-export const CATEGORY_LABEL: Record<Category, string> = {
-  billing: "Billing",
-  "feature-request": "Feature request",
-  account: "Account access",
-  feedback: "Product feedback",
-  technical: "Technical issue",
-  pricing: "Pricing & plans",
-  trial: "Trial",
-  security: "Security review",
-  partnership: "Partnership",
 };
 
 // Short, stable reference shown next to the subject (e.g. "T-4821"), derived

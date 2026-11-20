@@ -109,7 +109,6 @@ export async function syncEmailToFeed({
       customerName: customer.name,
       customerEmail: customer.email,
       customerCompany: companyFromEmail(customer.email),
-      category: "",
       status: inbound ? "needs-response" : "waiting",
       priority: "normal",
       assigneeId: "",

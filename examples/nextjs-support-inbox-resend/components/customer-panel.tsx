@@ -3,7 +3,6 @@
 import { Building2Icon, MailIcon, XIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import {
-  CATEGORY_LABEL,
   isOpen,
   type Conversation,
   type Customer,
@@ -154,9 +153,6 @@ export function CustomerPanel({
               appearance="ghost"
             />
           </Field>
-          {metadata.category ? (
-            <Field label="Category">{CATEGORY_LABEL[metadata.category]}</Field>
-          ) : null}
           <Field label="Created">{formatFullDate(conversation.createdAt)}</Field>
           <Field label="Last activity">
             {formatFullDate(

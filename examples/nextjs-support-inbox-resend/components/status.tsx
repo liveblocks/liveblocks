@@ -135,7 +135,7 @@ export function StatusIcon({
   return (
     <svg
       viewBox="0 0 16 16"
-      className={cn("size-3.5 shrink-0", STATUS_TONE[status], className)}
+      className={cn("size-5 shrink-0", STATUS_TONE[status], className)}
       aria-hidden
     >
       <circle cx="8" cy="8" r="6.25" {...STROKE} strokeLinecap="butt" />
@@ -185,7 +185,7 @@ export function StatusMenu({
         )}
         aria-label="Status"
       >
-        <StatusIcon status={value} className="size-3" />
+        <StatusIcon status={value} />
         <span className="truncate">{STATUS_LABEL[value]}</span>
         {appearance === "outline" ? (
           <ChevronDownIcon

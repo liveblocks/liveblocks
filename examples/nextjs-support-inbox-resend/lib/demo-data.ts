@@ -1,4 +1,4 @@
-import type { Category, Priority, Status } from "./conversation";
+import type { Priority, Status } from "./conversation";
 
 // Sample conversations seeded into the demo inbox. Timestamps are relative
 // (`minutesAgo`) so the inbox always looks current. Everything here is
@@ -28,7 +28,6 @@ export type DemoConversation = {
   id: string;
   subject: string;
   customer: { name: string; email: string; company: string };
-  category: Category;
   status: Status;
   priority: Priority;
   // Agent id, or "" when unassigned.
@@ -47,7 +46,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "priya@northwindanalytics.com",
       company: "Northwind Analytics",
     },
-    category: "billing",
     status: "needs-response",
     priority: "urgent",
     assigneeId: "anjali.wanda@relay.example",
@@ -91,7 +89,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "tomas@ferrisandco.com",
       company: "Ferris & Co.",
     },
-    category: "technical",
     status: "needs-response",
     priority: "high",
     assigneeId: "mislav.abha@relay.example",
@@ -132,7 +129,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "mei-ling@brightfieldlabs.io",
       company: "Brightfield Labs",
     },
-    category: "account",
     status: "investigating",
     priority: "high",
     assigneeId: "quinn.elton@relay.example",
@@ -173,7 +169,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "amina@cedarpathhealth.com",
       company: "Cedar Path Health",
     },
-    category: "feature-request",
     status: "needs-response",
     priority: "normal",
     assigneeId: "",
@@ -208,7 +203,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "jonas@harborgrid.se",
       company: "HarborGrid",
     },
-    category: "technical",
     status: "waiting",
     priority: "high",
     assigneeId: "mislav.abha@relay.example",
@@ -256,7 +250,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "leila@orbitandloom.com",
       company: "Orbit & Loom",
     },
-    category: "billing",
     status: "waiting",
     priority: "normal",
     assigneeId: "anjali.wanda@relay.example",
@@ -298,7 +291,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "darius@maplelinefreight.com",
       company: "Mapleline Freight",
     },
-    category: "feedback",
     status: "waiting",
     priority: "low",
     assigneeId: "",
@@ -329,7 +321,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "sofia@vellumsecurity.io",
       company: "Vellum Security",
     },
-    category: "feature-request",
     status: "waiting",
     priority: "normal",
     assigneeId: "charlie.layne@relay.example",
@@ -364,7 +355,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "noura@pinebridgelegal.com",
       company: "Pinebridge Legal",
     },
-    category: "technical",
     status: "paused",
     priority: "normal",
     assigneeId: "",
@@ -397,7 +387,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "elena@lumenforge.it",
       company: "Lumenforge",
     },
-    category: "billing",
     status: "done",
     priority: "normal",
     assigneeId: "anjali.wanda@relay.example",
@@ -438,7 +427,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "malik@oakandember.co",
       company: "Oak & Ember",
     },
-    category: "account",
     status: "done",
     priority: "normal",
     assigneeId: "charlie.layne@relay.example",
@@ -480,7 +468,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "hanae@silverfernfoods.jp",
       company: "Silver Fern Foods",
     },
-    category: "feedback",
     status: "done",
     priority: "low",
     assigneeId: "tatum.paolo@relay.example",
@@ -521,7 +508,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "priya@northwindanalytics.com",
       company: "Northwind Analytics",
     },
-    category: "account",
     status: "done",
     priority: "normal",
     assigneeId: "quinn.elton@relay.example",
@@ -569,7 +555,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "tomas@ferrisandco.com",
       company: "Ferris & Co.",
     },
-    category: "technical",
     status: "done",
     priority: "low",
     assigneeId: "mislav.abha@relay.example",
@@ -611,7 +596,6 @@ export const DEMO_CONVERSATIONS: DemoConversation[] = [
       email: "mei-ling@brightfieldlabs.io",
       company: "Brightfield Labs",
     },
-    category: "technical",
     status: "done",
     priority: "normal",
     assigneeId: "quinn.elton@relay.example",

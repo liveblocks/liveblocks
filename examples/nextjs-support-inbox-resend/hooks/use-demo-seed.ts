@@ -173,7 +173,6 @@ function demoMetadata(
     customerName: conversation.customer.name,
     customerEmail: conversation.customer.email,
     customerCompany: conversation.customer.company,
-    category: conversation.category,
     status: conversation.status,
     priority: conversation.priority,
     assigneeId: conversation.assigneeId,
