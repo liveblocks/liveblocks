@@ -366,12 +366,11 @@ function ConversationRow({
               {metadata.assigneeId ? (
                 <AgentAvatar userId={metadata.assigneeId} size="sm" />
               ) : (
-                <span
-                  className="flex size-5 items-center justify-center rounded-full border border-dashed border-line-strong text-ink-faint"
-                  title="Unassigned"
-                >
-                  <CircleDashedIcon className="size-3.5" strokeWidth={1.75} />
-                </span>
+                <CircleDashedIcon
+                  className="size-5 text-ink-faint"
+                  strokeWidth={1.5}
+                  aria-label="Unassigned"
+                />
               )}
             </div>
           </div>
