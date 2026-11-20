@@ -346,14 +346,14 @@ function ConversationRow({
 
           {/* Priority · time · people */}
           <div className="mt-2 flex h-5 items-center justify-between gap-2">
-            <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-ink-secondary">
-              <PriorityIcon priority={metadata.priority} className="size-3" />
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-ink-secondary">
+              <PriorityIcon priority={metadata.priority} className="size-3.5" />
               <span className="truncate">{PRIORITY_LABEL[metadata.priority]}</span>
             </span>
             <div className="flex shrink-0 items-center gap-2">
               <ViewerAvatars feedId={feedId} size="xs" max={3} />
-              <span className="inline-flex items-center gap-1 text-[11px] text-ink-faint">
-                <MailIcon className="size-3" />
+              <span className="inline-flex items-center gap-1 text-xs text-ink-muted">
+                <MailIcon className="size-3.5" />
                 <time
                   className="tabular"
                   dateTime={new Date(lastActivity).toISOString()}
