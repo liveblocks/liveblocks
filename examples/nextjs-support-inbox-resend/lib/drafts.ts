@@ -1,18 +1,23 @@
-// Per-tab composer drafts, keyed by conversation (feed) id. Drafts survive
-// switching between conversations, and a reply that fails to send is handed
-// back here so the composer can restore it.
+// Per-tab composer state, keyed by conversation (feed) id: which mode is
+// active, the (personal) internal-note draft, and the last send error. Reply
+// drafts live in a shared Tiptap document instead, so they aren't kept here.
+// A reply that fails to send is handed back through here so the composer can
+// restore it.
 
 export type ComposerMode = "reply" | "note";
 
 export type Draft = {
   mode: ComposerMode;
+  // Internal-note draft.
   text: string;
   // Why the last send attempt failed, shown above the composer.
   error: string | null;
 };
 
 const drafts = new Map<string, Draft>();
-const restoreListeners = new Set<(feedId: string, draft: Draft) => void>();
+const restoreListeners = new Set<
+  (feedId: string, text: string, error: string) => void
+>();
 
 export function getDraft(feedId: string) {
   return drafts.get(feedId);
@@ -27,29 +32,23 @@ export function clearDraft(feedId: string) {
 }
 
 /**
- * Puts a reply that couldn't be sent back into the conversation's draft,
- * ahead of anything the agent has typed since, and tells the mounted
- * composer (if any) to pick it up.
+ * Hands a reply that couldn't be sent back to the composer for that
+ * conversation, with the reason, so it can be put back into the shared draft.
  */
 export function restoreFailedReply(
   feedId: string,
   text: string,
   error: string
 ) {
-  const typedSince = drafts.get(feedId)?.text.trim() ?? "";
-  const draft: Draft = {
-    mode: "reply",
-    text: typedSince ? `${text}\n\n${typedSince}` : text,
-    error,
-  };
-  drafts.set(feedId, draft);
+  const draft = drafts.get(feedId);
+  drafts.set(feedId, { mode: "reply", text: draft?.text ?? "", error });
   for (const listener of restoreListeners) {
-    listener(feedId, draft);
+    listener(feedId, text, error);
   }
 }
 
 export function onDraftRestored(
-  listener: (feedId: string, draft: Draft) => void
+  listener: (feedId: string, text: string, error: string) => void
 ) {
   restoreListeners.add(listener);
   return () => {

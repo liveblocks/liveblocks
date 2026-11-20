@@ -81,6 +81,46 @@
     background: oklch(0.9 0.03 264);
   }
 
+  /* Shared reply draft (Tiptap). Placeholder on the empty first paragraph,
+     and teammates' carets with a name label; the Liveblocks extension sets
+     each caret's `border-color` to that user's color. */
+  .reply-editor p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    color: var(--color-ink-faint);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+  .collaboration-carets__caret {
+    position: relative;
+    word-break: normal;
+    pointer-events: none;
+  }
+  .collaboration-carets__caret::after {
+    content: "";
+    position: absolute;
+    inset-block-start: -0.15em;
+    inset-inline-start: -1px;
+    block-size: 1.3em;
+    border-inline-start: 2px solid;
+    border-color: inherit;
+  }
+  .collaboration-carets__label {
+    position: absolute;
+    inset-block-start: -1.45em;
+    inset-inline-start: -1px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border-end-start-radius: 0;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+  }
+
   /* Quiet scrollbars that match the warm neutrals. */
   .scroll-quiet {
     scrollbar-width: thin;

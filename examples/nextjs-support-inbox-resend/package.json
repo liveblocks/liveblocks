@@ -9,8 +9,14 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/node": "^3.25.0",
-    "@liveblocks/react": "^3.25.0",
+    "@liveblocks/node": "^3.25.1",
+    "@liveblocks/react": "^3.25.1",
+    "@liveblocks/react-tiptap": "^3.25.1",
+    "@liveblocks/yjs": "^3.25.1",
+    "@tiptap/extensions": "^3.35.0",
+    "@tiptap/pm": "^3.35.0",
+    "@tiptap/react": "^3.35.0",
+    "@tiptap/starter-kit": "^3.35.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",

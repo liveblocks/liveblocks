@@ -1,6 +1,10 @@
 "use client";
 
 import { useUser } from "@liveblocks/react";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { Placeholder } from "@tiptap/extensions";
+import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import {
   CircleAlertIcon,
   CornerDownLeftIcon,
@@ -46,60 +50,154 @@ export function Composer({
   const feedId = conversation.feedId;
   const initial = getDraft(feedId);
   const [mode, setMode] = useState<ComposerMode>(initial?.mode ?? "reply");
-  const [text, setText] = useState(initial?.text ?? "");
+  // Internal notes are personal, so their draft is local to this tab.
+  const [noteText, setNoteText] = useState(initial?.text ?? "");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(initial?.error ?? null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const closed = !isOpen(conversation.metadata.status);
+  const isNote = mode === "note";
 
-  // Persist the draft as it changes.
+  // The reply is a shared Tiptap document, one Yjs field per conversation, so
+  // the whole team drafts the same reply together: everyone sees the text and
+  // each other's carets, and sending it clears it for everyone.
+  const liveblocks = useLiveblocksExtension({
+    field: `reply:${feedId}`,
+    comments: false,
+    mentions: false,
+    ai: false,
+  });
+  const placeholderRef = useRef("");
+  placeholderRef.current = closed
+    ? `Reply to ${conversation.metadata.customerName} (this will reopen the conversation)`
+    : `Reply to ${conversation.metadata.customerName}…`;
+  // Keyboard handling is wired through refs because `editorProps` is fixed
+  // when the editor is created.
+  const submitRef = useRef<() => void>(() => {});
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions: [
+      // Emails go out as plain text, so keep the editor to inline marks.
+      StarterKit.configure({
+        undoRedo: false, // Liveblocks handles history
+        heading: false,
+        blockquote: false,
+        codeBlock: false,
+        horizontalRule: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+      }),
+      Placeholder.configure({ placeholder: () => placeholderRef.current }),
+      liveblocks,
+    ],
+    editorProps: {
+      attributes: {
+        class:
+          "scroll-quiet reply-editor max-h-[320px] min-h-[88px] overflow-y-auto px-3.5 pt-3 pb-2 text-[14px] leading-[1.6] text-ink focus:outline-none",
+        "aria-label": "Reply",
+      },
+      handleKeyDown: (_view, event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+          event.preventDefault();
+          submitRef.current();
+          return true;
+        }
+        if (
+          (event.metaKey || event.ctrlKey) &&
+          event.shiftKey &&
+          event.key.toLowerCase() === "n"
+        ) {
+          event.preventDefault();
+          setMode("note");
+          return true;
+        }
+        return false;
+      },
+    },
+    enableContentCheck: true,
+    onContentError: ({ editor, disableCollaboration }) => {
+      disableCollaboration();
+      editor.setEditable(false, false);
+    },
+  });
+  const replyEmpty = useEditorState({
+    editor,
+    selector: ({ editor }) => editor?.isEmpty ?? true,
+  });
+
   useEffect(() => {
-    if (text || error || getDraft(feedId)) {
-      saveDraft(feedId, { mode, text, error });
+    editor?.setEditable(!isSending);
+  }, [editor, isSending]);
+
+  // Persist the note draft (and any send error) as it changes.
+  useEffect(() => {
+    if (noteText || error || getDraft(feedId)) {
+      saveDraft(feedId, { mode, text: noteText, error });
     }
-  }, [feedId, mode, text, error]);
+  }, [feedId, mode, noteText, error]);
 
   // A reply that failed to send after leaving the composer comes back here,
-  // with the reason, so nothing the agent wrote is lost.
+  // with the reason, so nothing the agent wrote is lost. It's put back at the
+  // top of the shared draft, ahead of anything typed since.
   useEffect(
     () =>
-      onDraftRestored((restoredFeedId, draft) => {
+      onDraftRestored((restoredFeedId, text, reason) => {
         if (restoredFeedId !== feedId) return;
-        setMode(draft.mode);
-        setText(draft.text);
-        setError(draft.error);
-        textareaRef.current?.focus();
+        setMode("reply");
+        setError(reason);
+        if (!editor) return;
+        editor
+          .chain()
+          .insertContentAt(
+            0,
+            text.split(/\n{2,}/).map((paragraph) => ({
+              type: "paragraph",
+              content: paragraph ? [{ type: "text", text: paragraph }] : [],
+            }))
+          )
+          .focus("end")
+          .run();
       }),
-    [feedId]
+    [feedId, editor]
   );
 
-  // Auto-grow the textarea with its content.
+  // Auto-grow the note textarea with its content.
   useLayoutEffect(() => {
     const node = textareaRef.current;
     if (!node) return;
     node.style.height = "0px";
     node.style.height = `${Math.min(Math.max(node.scrollHeight, 88), 320)}px`;
-  }, [text, mode]);
+  }, [noteText, mode]);
 
-  const canSend = text.trim().length > 0 && !isSending;
+  const canSend =
+    !isSending && (isNote ? noteText.trim().length > 0 : !replyEmpty);
 
   const submit = useCallback(async () => {
-    const value = text.trim();
-    if (!value || isSending) return;
+    if (isSending) return;
+    const value = isNote
+      ? noteText.trim()
+      : (editor?.getText({ blockSeparator: "\n\n" }).trim() ?? "");
+    if (!value) return;
     setIsSending(true);
     setError(null);
     try {
-      if (mode === "reply") {
-        await onSendReply(value);
-      } else {
+      if (isNote) {
         await onAddNote(value);
+        setNoteText("");
+        clearDraft(feedId);
+        textareaRef.current?.focus();
+      } else {
+        await onSendReply(value);
+        // Replies resolve as soon as they're in the feed (they show as
+        // "sending" until the email goes out). If sending fails later, the
+        // text is restored via `restoreFailedReply`. Clearing the shared
+        // draft clears it for every agent.
+        editor?.commands.clearContent(true);
+        // Refocus once the cleared document has settled.
+        requestAnimationFrame(() => editor?.commands.focus());
+        clearDraft(feedId);
       }
-      // Replies resolve as soon as they're in the feed (they show as
-      // "sending" until the email goes out). If sending fails later, the
-      // text is restored here via `restoreFailedReply`.
-      setText("");
-      clearDraft(feedId);
-      textareaRef.current?.focus();
     } catch (cause) {
       setError(
         cause instanceof Error && cause.message
@@ -109,9 +207,15 @@ export function Composer({
     } finally {
       setIsSending(false);
     }
-  }, [text, isSending, mode, onSendReply, onAddNote, feedId]);
+  }, [isSending, isNote, noteText, editor, onSendReply, onAddNote, feedId]);
+  submitRef.current = () => void submit();
 
-  const mentions = useMentions({ enabled: mode === "note", text, textareaRef, setText });
+  const mentions = useMentions({
+    enabled: isNote,
+    text: noteText,
+    textareaRef,
+    setText: setNoteText,
+  });
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (mentions.onKeyDown(event)) return;
@@ -127,11 +231,9 @@ export function Composer({
       event.key.toLowerCase() === "n"
     ) {
       event.preventDefault();
-      setMode((current) => (current === "reply" ? "note" : "reply"));
+      setMode("reply");
     }
   };
-
-  const isNote = mode === "note";
 
   return (
     <div className="shrink-0 border-t border-line bg-surface">
@@ -178,29 +280,28 @@ export function Composer({
           </div>
 
           <div className="relative">
-            <textarea
-              ref={textareaRef}
-              value={text}
-              onChange={(event) => {
-                setText(event.target.value);
-                if (error) setError(null);
-              }}
-              onKeyDown={onKeyDown}
-              onBlur={mentions.onBlur}
-              disabled={isSending}
-              rows={3}
-              placeholder={
-                isNote
-                  ? `Add a note for your team… type @ to mention someone`
-                  : closed
-                    ? `Reply to ${conversation.metadata.customerName} (this will reopen the conversation)`
-                    : `Reply to ${conversation.metadata.customerName}…`
-              }
-              aria-label={isNote ? "Internal note" : "Reply"}
-              className={cn(
-                "scroll-quiet block w-full resize-none bg-transparent px-3.5 pt-3 pb-2 text-[14px] leading-[1.6] text-ink placeholder:text-ink-faint focus:outline-none disabled:opacity-60"
-              )}
-            />
+            {isNote ? (
+              <textarea
+                ref={textareaRef}
+                value={noteText}
+                onChange={(event) => {
+                  setNoteText(event.target.value);
+                  if (error) setError(null);
+                }}
+                onKeyDown={onKeyDown}
+                onBlur={mentions.onBlur}
+                disabled={isSending}
+                rows={3}
+                placeholder="Add a note for your team… type @ to mention someone"
+                aria-label="Internal note"
+                className="scroll-quiet block w-full resize-none bg-transparent px-3.5 pt-3 pb-2 text-[14px] leading-[1.6] text-ink placeholder:text-ink-faint focus:outline-none disabled:opacity-60"
+              />
+            ) : (
+              <EditorContent
+                editor={editor}
+                className={cn(isSending && "opacity-60")}
+              />
+            )}
             {mentions.open ? (
               <MentionSuggestions
                 userIds={mentions.suggestions}

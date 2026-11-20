@@ -4,11 +4,13 @@ import {
   useCreateFeedMessage,
   useDeleteFeedMessage,
   useFeeds,
+  useRoom,
   useSelf,
   useUpdateFeedMessage,
   useUpdateFeedMetadata,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getUsers } from "@/app/database";
 import type { ReplyRequest, ReplyResponse } from "@/lib/api";
@@ -57,6 +59,15 @@ export function SupportInbox({
   onWorkspaceChange: (workspaceId: WorkspaceId) => void;
 }) {
   const self = useSelf();
+
+  // The shared reply drafts are Yjs documents. Create the room's Yjs provider
+  // here, in an effect, rather than letting the first composer create it
+  // during render (that triggers a presence update mid-render, which React
+  // flags in development).
+  const room = useRoom();
+  useEffect(() => {
+    getYjsProviderForRoom(room);
+  }, [room]);
   const settings = useInboxSettings();
   // Only the default workspace can be connected to a Resend inbox. Until it
   // is (and in every other workspace), every reply is simulated.
