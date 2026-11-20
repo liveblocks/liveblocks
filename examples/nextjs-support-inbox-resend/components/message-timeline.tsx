@@ -1,6 +1,6 @@
 "use client";
 
-import { useFeedMessages } from "@liveblocks/react/suspense";
+import { useFeedMessages, useSelf } from "@liveblocks/react/suspense";
 import {
   ChevronUpIcon,
   FileIcon,
@@ -49,15 +49,20 @@ export function MessageTimeline({
   const sorted = sortByCreatedAt(messages);
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
-  const lastId = sorted[sorted.length - 1]?.id;
+  const selfId = useSelf((me) => me.id);
+  const last = sorted[sorted.length - 1];
+  const lastId = last?.id;
+  const lastIsMine = last?.data.authorId === selfId;
 
   // Start at the latest message, and follow new ones unless the reader has
-  // scrolled up to read history.
+  // scrolled up to read history. Sending a reply or note always jumps to it.
   useLayoutEffect(() => {
     const node = scrollRef.current;
-    if (node && stickToBottom.current) {
+    if (node && (stickToBottom.current || lastIsMine)) {
       node.scrollTop = node.scrollHeight;
+      stickToBottom.current = true;
     }
+    // Keyed on the latest message only; `lastIsMine` describes that message.
   }, [lastId]);
 
   const onScroll = () => {
