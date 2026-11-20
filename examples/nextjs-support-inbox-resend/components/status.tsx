@@ -188,17 +188,16 @@ export function StatusMenu({
           <ChevronDownIcon className="size-3 text-ink-faint" />
         ) : null}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48">
+      <DropdownMenuContent align="start" className="min-w-44">
         {STATUSES.map((status) => (
           <DropdownMenuItem
             key={status}
             onClick={() => onChange(status)}
-            className="gap-1.5 text-xs"
           >
             <StatusIcon status={status} />
             <span className="flex-1">{STATUS_LABEL[status]}</span>
             {status === value ? (
-              <CheckIcon className="size-3.5 text-ink-muted" />
+              <CheckIcon className="size-4 text-ink" />
             ) : null}
           </DropdownMenuItem>
         ))}
@@ -243,17 +242,16 @@ export function PriorityMenu({
       ) : (
         trigger
       )}
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent align="end" className="min-w-40">
         {PRIORITIES.map((priority) => (
           <DropdownMenuItem
             key={priority}
             onClick={() => onChange(priority)}
-            className="gap-1.5 text-xs"
           >
             <PriorityIcon priority={priority} />
             <span className="flex-1">{PRIORITY_LABEL[priority]}</span>
             {priority === value ? (
-              <CheckIcon className="size-3.5 text-ink-muted" />
+              <CheckIcon className="size-4 text-ink" />
             ) : null}
           </DropdownMenuItem>
         ))}
@@ -306,15 +304,14 @@ export function AssigneeMenu({
           <ChevronDownIcon className="size-3 text-ink-faint" />
         ) : null}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="min-w-52">
         {/* Unassign and yourself first, then the rest of the team. */}
         <DropdownMenuItem
           onClick={() => onChange("")}
-          className="gap-1.5 text-xs"
         >
           <UnassignedIcon className="size-5 text-ink-faint" strokeWidth={1.5} />
           <span className="flex-1">Unassign</span>
-          {!value ? <CheckIcon className="size-3.5 text-ink-muted" /> : null}
+          {!value ? <CheckIcon className="size-4 text-ink" /> : null}
         </DropdownMenuItem>
         {self ? (
           <AgentItem agent={self} selected={value === self.id} onPick={onChange} isSelf />
@@ -347,14 +344,13 @@ function AgentItem({
   return (
     <DropdownMenuItem
       onClick={() => onPick(agent.id)}
-      className="gap-1.5 text-xs"
     >
       <AgentAvatar userId={agent.id} size="sm" />
       <span className="flex-1 truncate">
         {agent.info.name}
         {isSelf ? <span className="text-ink-faint"> (Me)</span> : null}
       </span>
-      {selected ? <CheckIcon className="size-3.5 text-ink-muted" /> : null}
+      {selected ? <CheckIcon className="size-4 text-ink" /> : null}
     </DropdownMenuItem>
   );
 }

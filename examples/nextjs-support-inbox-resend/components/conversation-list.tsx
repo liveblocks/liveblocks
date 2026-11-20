@@ -149,16 +149,15 @@ export function ConversationList({
               {viewLabel(view)}
               <ChevronDownIcon className="size-3.5 text-ink-faint md:hidden" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 md:hidden">
+            <DropdownMenuContent align="start" className="min-w-44 md:hidden">
               {VIEWS.map(({ id, label, icon: Icon }) => (
                 <DropdownMenuItem
                   key={id}
                   onClick={() => onViewChange(id)}
-                  className="text-[13px]"
                 >
                   <Icon className="size-4" />
                   <span className="flex-1">{label}</span>
-                  <span className="tabular text-xs text-ink-faint">
+                  <span className="tabular text-xs text-ink-muted">
                     {counts[id] || ""}
                   </span>
                 </DropdownMenuItem>
@@ -202,16 +201,15 @@ export function ConversationList({
                 <span className="size-1.5 rounded-full bg-ink" />
               ) : null}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-44">
+            <DropdownMenuContent align="start" className="min-w-40">
               {FILTERS.map((item) => (
                 <DropdownMenuItem
                   key={item.id}
                   onClick={() => onFilterChange(item.id)}
-                  className="text-xs"
                 >
                   <span className="flex-1">{item.label}</span>
                   {item.id === filter ? (
-                    <CheckIcon className="size-3.5 text-ink-muted" />
+                    <CheckIcon className="size-4 text-ink" />
                   ) : null}
                 </DropdownMenuItem>
               ))}
@@ -223,16 +221,15 @@ export function ConversationList({
               <ArrowDownUpIcon className="size-3.5 text-ink-muted" />
               {SORTS.find((item) => item.id === sort)?.label}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuContent align="end" className="min-w-40">
               {SORTS.map((item) => (
                 <DropdownMenuItem
                   key={item.id}
                   onClick={() => onSortChange(item.id)}
-                  className="text-xs"
                 >
                   <span className="flex-1">{item.label}</span>
                   {item.id === sort ? (
-                    <CheckIcon className="size-3.5 text-ink-muted" />
+                    <CheckIcon className="size-4 text-ink" />
                   ) : null}
                 </DropdownMenuItem>
               ))}

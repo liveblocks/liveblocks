@@ -210,19 +210,19 @@ function WorkspaceSwitcher({
           return (
             <DropdownMenuItem
               key={item.id}
-              className="text-[13px]"
+              className="h-auto py-1.5"
               onClick={() => onChange(item.id)}
               aria-current={active ? "true" : undefined}
             >
               <LiveblocksMark small />
               <div className="min-w-0 flex-1">
                 <div className="truncate">{item.name}</div>
-                <div className="truncate text-[11px] text-ink-muted">
+                <div className="mt-0.5 truncate text-xs leading-none text-ink-muted">
                   {active ? inboxAddress : item.address}
                 </div>
               </div>
               {active ? (
-                <CheckIcon className="size-3.5 shrink-0 text-ink" />
+                <CheckIcon className="size-4 shrink-0 text-ink" />
               ) : null}
             </DropdownMenuItem>
           );
