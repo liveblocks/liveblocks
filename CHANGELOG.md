@@ -1,5 +1,7 @@
 ## vNEXT
 
+## v3.25.2
+
 ### `@liveblocks/client`
 
 - Improve reconnection behavior on unstable networks. Previously, a connection
