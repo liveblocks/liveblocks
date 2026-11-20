@@ -218,7 +218,8 @@ export function ViewerAvatars({
       {visible.map((userId) => (
         <Tooltip key={userId}>
           <TooltipTrigger asChild>
-            <span className={cn("flex rounded-full ring-2", ring)}>
+            {/* `relative` so each ring paints above the previous avatar. */}
+            <span className={cn("relative flex rounded-full ring-2", ring)}>
               <AgentAvatar userId={userId} size={size} />
             </span>
           </TooltipTrigger>
