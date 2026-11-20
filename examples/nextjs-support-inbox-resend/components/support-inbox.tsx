@@ -17,6 +17,7 @@ import type { ReplyRequest, ReplyResponse } from "@/lib/api";
 import { restoreFailedReply } from "@/lib/drafts";
 import { useDemoSeed } from "@/hooks/use-demo-seed";
 import { useInboxSettings } from "@/hooks/use-inbox-settings";
+import { useMediaQuery, XL_BREAKPOINT } from "@/hooks/use-media-query";
 import {
   extractMentionedUserIds,
   isOpen,
@@ -113,7 +114,11 @@ export function SupportInbox({
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ListFilter>(defaultFilter("inbox"));
   const [sort, setSort] = useState<ListSort>("newest");
+  // Details panel: docked beside the thread from `xl` up (toggleable), and a
+  // slide-over on smaller screens, opened from the thread header.
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
+  const isDocked = useMediaQuery(XL_BREAKPOINT);
 
   const conversations = feeds;
   // Latest feeds for async callbacks that outlive a render (reply delivery).
@@ -485,8 +490,12 @@ export function SupportInbox({
                 conversation={selected}
                 selfId={self.id}
                 demoMode={demoMode}
-                detailsOpen={detailsOpen}
-                onToggleDetails={() => setDetailsOpen((open) => !open)}
+                detailsOpen={isDocked ? detailsOpen : detailsSheetOpen}
+                onToggleDetails={() =>
+                  isDocked
+                    ? setDetailsOpen((open) => !open)
+                    : setDetailsSheetOpen((open) => !open)
+                }
                 onBack={() => setSelectedId(null)}
                 onSetStatus={setStatus}
                 onSetPriority={setPriority}
@@ -513,6 +522,33 @@ export function SupportInbox({
                 onClose={() => setDetailsOpen(false)}
                 className="hidden xl:flex"
               />
+            ) : null}
+
+            {selected && detailsSheetOpen ? (
+              <div className="fixed inset-0 z-40 xl:hidden">
+                <button
+                  type="button"
+                  className="absolute inset-0 bg-ink/20 animate-in fade-in-0"
+                  onClick={() => setDetailsSheetOpen(false)}
+                  aria-label="Close details"
+                />
+                <CustomerPanel
+                  conversation={selected}
+                  conversations={conversations}
+                  selfId={self.id}
+                  knownTags={knownTags}
+                  onSetStatus={setStatus}
+                  onSetPriority={setPriority}
+                  onSetAssignee={setAssignee}
+                  onSetTags={setTags}
+                  onViewCustomer={(customer) => {
+                    setDetailsSheetOpen(false);
+                    viewCustomer(customer);
+                  }}
+                  onClose={() => setDetailsSheetOpen(false)}
+                  className="absolute inset-y-0 right-0 max-w-full bg-canvas shadow-2xl shadow-ink/20 animate-in slide-in-from-right duration-200"
+                />
+              </div>
             ) : null}
           </>
         )}

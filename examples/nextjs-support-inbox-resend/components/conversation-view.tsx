@@ -84,7 +84,7 @@ export function ConversationView({
                   onClick={onToggleDetails}
                   aria-pressed={detailsOpen}
                   className={cn(
-                    "hidden size-7 items-center justify-center rounded-md transition-colors hover:bg-ink/8 hover:text-ink xl:flex",
+                    "flex size-7 items-center justify-center rounded-md transition-colors hover:bg-ink/8 hover:text-ink",
                     detailsOpen ? "text-ink" : "text-ink-muted"
                   )}
                 >
