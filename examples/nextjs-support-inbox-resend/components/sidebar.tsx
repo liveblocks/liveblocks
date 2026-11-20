@@ -245,7 +245,7 @@ function LiveblocksMark({ small = false }: { small?: boolean }) {
       <svg
         viewBox="768 320 264 160"
         fill="currentColor"
-        className={cn("text-surface", small ? "size-3" : "size-4")}
+        className={cn("text-surface", small ? "size-3.5" : "size-5")}
       >
         <path
           fillRule="evenodd"
