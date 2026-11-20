@@ -62,7 +62,7 @@ export function CustomerPanel({
       )}
       aria-label="Details"
     >
-      <div className="flex h-11 items-center justify-between px-5 pt-1">
+      <div className="flex h-11 items-center justify-between px-3 pt-1">
         {/* Teammates reading this thread right now (live, via presence). */}
         <ViewerAvatars
           feedId={conversation.feedId}
@@ -80,7 +80,7 @@ export function CustomerPanel({
         </button>
       </div>
 
-      <section className="px-5 pb-5">
+      <section className="px-3 pb-5">
         <div className="flex items-center gap-3">
           <CustomerAvatar
             name={metadata.customerName}
@@ -124,7 +124,7 @@ export function CustomerPanel({
 
       <Divider />
 
-      <section className="px-5 py-5">
+      <section className="px-3 py-5">
         <h3 className="mb-3 text-[11px] font-medium tracking-wide text-ink-muted uppercase">
           Thread
         </h3>
@@ -254,5 +254,5 @@ function Stat({ value, label }: { value: number; label: string }) {
 }
 
 function Divider() {
-  return <div className="mx-5 h-px bg-line" />;
+  return <div className="mx-3 h-px bg-line" />;
 }
