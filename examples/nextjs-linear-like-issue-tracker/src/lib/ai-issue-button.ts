@@ -19,7 +19,6 @@ import {
 import { buildIssueContextMarkdown } from "@/lib/issue-context-markdown";
 import { getRoomId } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
-import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
 import { ModelMessage, stepCountIs, streamText } from "ai";
 import { nanoid } from "nanoid";
 
@@ -156,7 +155,7 @@ async function streamButtonToFeed(ctx: AiIssueButtonRunContext) {
 
   const result = streamText({
     // Cheap model for small button edits
-    model: anthropic("claude-haiku-4-5"),
+    model: "anthropic/claude-haiku-4.5",
     system,
     messages: [userMessage],
     stopWhen: stepCountIs(8),
@@ -165,7 +164,7 @@ async function streamButtonToFeed(ctx: AiIssueButtonRunContext) {
       anthropic: {
         sendReasoning: true,
         thinking: { type: "enabled", budgetTokens: 8000 },
-      } satisfies AnthropicLanguageModelOptions,
+      },
     },
   });
 

@@ -1271,6 +1271,13 @@ describe("with Liveblocks augmentation", () => {
           .useInboxNotifications()
           .inboxNotifications?.map((ibn) => ibn.roomId)
       ).toEqualTypeOf<(string | undefined)[] | undefined>();
+      expectTypeOf(
+        classic
+          .useInboxNotifications()
+          .inboxNotifications?.map(
+            ({ activities }) => activities?.[0]?.createdAt
+          )
+      ).toEqualTypeOf<(Date | undefined)[] | undefined>();
     }
   });
 
@@ -1295,6 +1302,13 @@ describe("with Liveblocks augmentation", () => {
           .useInboxNotifications()
           .inboxNotifications?.map((ibn) => ibn.roomId)
       ).toEqualTypeOf<(string | undefined)[]>();
+      expectTypeOf(
+        suspense
+          .useInboxNotifications()
+          .inboxNotifications.map(
+            ({ activities }) => activities?.[0]?.createdAt
+          )
+      ).toEqualTypeOf<(Date | undefined)[]>();
     }
   });
 

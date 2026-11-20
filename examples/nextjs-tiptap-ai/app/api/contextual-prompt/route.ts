@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText, Output } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
 import * as z from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
     );
 
     const { output } = await generateText({
-      model: anthropic("claude-3-5-sonnet-20240620"),
+      model: "anthropic/claude-sonnet-4.5",
       system,
       prompt: JSON.stringify({ prompt, context, previous }),
       output: Output.object({

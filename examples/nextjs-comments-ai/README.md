@@ -22,7 +22,8 @@
 
 This example shows how to build comments with an AI agent, powered by
 [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/),
-[Workflow SDK](https://workflow.dev/), and [Anthropic](https://anthropic.com).
+[Workflow SDK](https://workflow.dev/), and
+[Vercel AI Gateway](https://vercel.com/docs/ai-gateway).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-ai.png" width="536" alt="Comments" />
 
@@ -52,14 +53,16 @@ You need to set up webhooks to make this example run.
 - Add your webhook secret key to `.env.local` as the
   `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable
 
-### Setting up Anthropic
+### Setting up Vercel AI Gateway
 
-You need your own Anthropic API key to run the AI agent.
+You need your own Vercel AI Gateway API key to run the AI agent, which uses
+Anthropic models through the gateway.
 
-- Create an account on [Anthropic](https://anthropic.com)
+- Create an account on [Vercel](https://vercel.com)
 - Create a new API key from the
-  [Anthropic Dashboard](https://platform.claude.com/settings/keys)
-- Add your Anthropic API key to `.env.local` as the `ANTHROPIC_API_KEY`
+  [AI Gateway](https://vercel.com/docs/ai-gateway) section of the Vercel
+  dashboard
+- Add your AI Gateway API key to `.env.local` as the `AI_GATEWAY_API_KEY`
   environment variable
 
 ### Manual setup

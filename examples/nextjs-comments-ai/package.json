@@ -9,7 +9,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.64",
     "@liveblocks/client": "^3.23.0",
     "@liveblocks/node": "^3.23.0",
     "@liveblocks/react": "^3.23.0",

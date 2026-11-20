@@ -28,7 +28,6 @@ import {
   type ThreadData,
 } from "@liveblocks/node";
 import { stringifyCommentBody } from "@liveblocks/client";
-import { anthropic, AnthropicLanguageModelOptions } from "@ai-sdk/anthropic";
 import { ModelMessage, stepCountIs, streamText } from "ai";
 
 // Entry point for the comment reply assistant
@@ -185,7 +184,7 @@ ${content}
   }
 
   const result = streamText({
-    model: anthropic("claude-haiku-4-5"),
+    model: "anthropic/claude-haiku-4.5",
     system,
     messages,
     stopWhen: stepCountIs(16),
@@ -194,7 +193,7 @@ ${content}
       anthropic: {
         sendReasoning: true,
         thinking: { type: "enabled", budgetTokens: 10000 },
-      } satisfies AnthropicLanguageModelOptions,
+      },
     },
   });
 
