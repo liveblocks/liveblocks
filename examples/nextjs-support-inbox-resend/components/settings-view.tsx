@@ -204,7 +204,7 @@ function Pill({
       className={cn(
         "inline-flex h-6 items-center gap-1.5 rounded-md border px-2 text-xs font-medium",
         tone === "ok"
-          ? "border-open/25 bg-open/8 text-open"
+          ? "border-done/25 bg-done/8 text-done"
           : "border-line bg-hover text-ink-secondary"
       )}
     >
@@ -236,7 +236,7 @@ function CopyButton({ value }: { value: string }) {
       aria-label="Copy webhook URL"
     >
       {copied ? (
-        <CheckCircle2Icon className="size-3 text-open" />
+        <CheckCircle2Icon className="size-3 text-done" />
       ) : (
         <CopyIcon className="size-3" />
       )}

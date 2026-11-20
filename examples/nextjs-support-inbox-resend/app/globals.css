@@ -28,8 +28,10 @@
   --color-note-line: oklch(0.93 0.04 90);
   --color-note-ink: oklch(0.45 0.08 75);
 
-  /* Status accents (used sparingly). */
-  --color-open: oklch(0.65 0.17 155);
+  /* Status accents (used sparingly). `open` = needs attention. */
+  --color-open: var(--color-orange-500);
+  --color-waiting: var(--color-blue-500);
+  --color-done: var(--color-green-600);
   --color-urgent: oklch(0.6 0.2 25);
 
   /* shadcn-style tokens used by the copied UI primitives. */

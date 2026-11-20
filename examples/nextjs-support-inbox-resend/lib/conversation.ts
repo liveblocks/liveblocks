@@ -56,7 +56,7 @@ export const STATUSES: Status[] = [
 export const STATUS_LABEL: Record<Status, string> = {
   "needs-response": "Needs response",
   investigating: "Investigating",
-  waiting: "Waiting for customer",
+  waiting: "Waiting",
   paused: "Paused",
   ignored: "Ignored",
   done: "Done",

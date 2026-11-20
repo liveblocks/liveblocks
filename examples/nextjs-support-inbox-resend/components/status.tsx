@@ -4,12 +4,7 @@ import { useUser } from "@liveblocks/react";
 import {
   CheckIcon,
   ChevronDownIcon,
-  CircleCheckIcon,
   CircleDashedIcon,
-  CircleDotDashedIcon,
-  CircleDotIcon,
-  CirclePauseIcon,
-  CircleSlashIcon,
   UserRoundIcon,
 } from "lucide-react";
 import { getUsers } from "@/app/database";
@@ -82,6 +77,9 @@ export function PriorityIcon({
   );
 }
 
+// Linear-style status glyphs: a ring in the status color, with a fill that
+// says how far along the conversation is. Orange needs the team, blue is
+// waiting on something, green is finished, gray is set aside.
 export function StatusIcon({
   status,
   className,
@@ -90,19 +88,73 @@ export function StatusIcon({
   className?: string;
 }) {
   const base = cn("size-3.5 shrink-0", className);
+  const ring = { cx: 8, cy: 8, r: 6.25, fill: "none", stroke: "currentColor", strokeWidth: 1.5 };
+
   switch (status) {
     case "needs-response":
-      return <CircleDotIcon className={cn(base, "text-open")} />;
+      // Ring with a dot: new, nobody has picked it up.
+      return (
+        <svg viewBox="0 0 16 16" className={cn(base, "text-open")} aria-hidden>
+          <circle {...ring} />
+          <circle cx="8" cy="8" r="2.5" fill="currentColor" />
+        </svg>
+      );
     case "investigating":
-      return <CircleDotDashedIcon className={cn(base, "text-ink-secondary")} />;
+      // Half-filled ring: in progress.
+      return (
+        <svg viewBox="0 0 16 16" className={cn(base, "text-open")} aria-hidden>
+          <circle {...ring} />
+          <path d="M8 3.75a4.25 4.25 0 0 1 0 8.5z" fill="currentColor" />
+        </svg>
+      );
     case "waiting":
-      return <CircleDashedIcon className={cn(base, "text-ink-muted")} />;
+      // Dashed ring: on hold until the customer replies.
+      return (
+        <svg viewBox="0 0 16 16" className={cn(base, "text-waiting")} aria-hidden>
+          <circle {...ring} strokeDasharray="2.6 2.3" strokeLinecap="round" />
+        </svg>
+      );
     case "paused":
-      return <CirclePauseIcon className={cn(base, "text-ink-muted")} />;
+      // Ring with pause bars.
+      return (
+        <svg viewBox="0 0 16 16" className={cn(base, "text-waiting")} aria-hidden>
+          <circle {...ring} />
+          <path
+            d="M6.5 5.75v4.5M9.5 5.75v4.5"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
     case "ignored":
-      return <CircleSlashIcon className={cn(base, "text-ink-faint")} />;
+      // Filled gray disc with a cross.
+      return (
+        <svg viewBox="0 0 16 16" className={cn(base, "text-ink-faint")} aria-hidden>
+          <circle cx="8" cy="8" r="7" fill="currentColor" />
+          <path
+            d="M5.75 5.75l4.5 4.5M10.25 5.75l-4.5 4.5"
+            stroke="var(--color-surface)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
     case "done":
-      return <CircleCheckIcon className={cn(base, "text-ink-muted")} />;
+      // Filled green disc with a check.
+      return (
+        <svg viewBox="0 0 16 16" className={cn(base, "text-done")} aria-hidden>
+          <circle cx="8" cy="8" r="7" fill="currentColor" />
+          <path
+            d="M5 8.25l2 2 4-4.5"
+            fill="none"
+            stroke="var(--color-surface)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
   }
 }
 

@@ -32,7 +32,7 @@ Incoming emails arrive via a Resend Inboxes webhook; replies are sent through
 the Resend Inboxes reply API and appear instantly for every agent (optimistic
 "sending" state settled by the server). Live avatars show who is reading each
 conversation (Presence). Internal notes with @-mentions, assignment, priority,
-status (Needs response, Investigating, Waiting for customer, Paused, Ignored, Done), search and filters all sync in realtime.
+status (Needs response, Investigating, Waiting, Paused, Ignored, Done), search and filters all sync in realtime.
 
 ## Getting started
 

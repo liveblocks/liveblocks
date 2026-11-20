@@ -407,7 +407,7 @@ function ListEmptyState({
     title = "Inbox zero";
     description = "Nothing needs a response right now.";
   } else if (view === "inbox" && filter === "waiting") {
-    title = "Nothing waiting for customers";
+    title = "Nothing waiting";
     description = "Conversations you've replied to will show up here.";
   } else if (view === "inbox" && filter === "priority") {
     title = "No high-priority conversations";
