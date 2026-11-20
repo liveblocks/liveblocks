@@ -116,12 +116,12 @@
   }
   .collaboration-carets__label {
     position: absolute;
-    inset-block-start: -1.6em;
+    inset-block-start: calc(-1.6em - 1px);
     inset-inline-start: -1px;
     display: none;
     align-items: center;
     width: max-content;
-    height: 18px;
+    height: 20px;
     padding: 0 2px;
     border-radius: 6px;
     border-end-start-radius: 0;
@@ -141,7 +141,7 @@
   }
   .collaboration-carets__label::after {
     content: attr(data-name);
-    margin-inline: 4px 5px;
+    margin-inline: 4px 3px;
   }
   .collaboration-carets__avatar {
     width: 14px;
