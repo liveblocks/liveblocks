@@ -20,7 +20,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
@@ -223,10 +222,6 @@ function WorkspaceSwitcher({
             </DropdownMenuItem>
           );
         })}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem disabled className="text-[13px]">
-          Create workspace…
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
