@@ -102,7 +102,7 @@
     inset-block-start: -0.15em;
     inset-inline-start: -1px;
     block-size: 1.3em;
-    border-inline-start: 2px solid var(--color-ink-muted);
+    border-inline-start: 1px solid var(--color-ink-muted);
   }
   .collaboration-carets__label {
     position: absolute;
@@ -110,10 +110,9 @@
     inset-inline-start: -1px;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
     width: max-content;
-    height: 20px;
-    padding: 0 6px 0 3px;
+    height: 18px;
+    padding: 0 1px;
     border: 1px solid var(--color-line);
     border-radius: 6px;
     border-end-start-radius: 0;
@@ -124,11 +123,18 @@
     line-height: 1;
     white-space: nowrap;
     box-shadow: 0 1px 2px oklch(0 0 0 / 0.06);
-    pointer-events: none;
+    /* Hoverable (unlike the caret itself) so the name can be revealed. */
+    pointer-events: auto;
     user-select: none;
   }
+  /* Avatar only by default; the name appears on hover. */
   .collaboration-carets__label::after {
     content: attr(data-name);
+    display: none;
+    margin-inline: 4px 5px;
+  }
+  .collaboration-carets__label:hover::after {
+    display: inline;
   }
   .collaboration-carets__avatar {
     width: 14px;
