@@ -5,6 +5,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   CircleDashedIcon,
+  type LucideProps,
   UserRoundIcon,
 } from "lucide-react";
 import { getUsers } from "@/app/database";
@@ -30,6 +31,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 // Linear-style priority glyphs: three filled bars (1, 2 or 3 lit), and a
 // filled rounded square with an exclamation mark for urgent. Solid shapes
 // stay legible at 12px where stroked icons turn to mush.
+/**
+ * "Unassigned" glyph. Lucide's dashed circle reads thin next to the other
+ * icons because of its gaps, so it always uses a heavier stroke, whatever
+ * stroke width its siblings get.
+ */
+export function UnassignedIcon(props: Omit<LucideProps, "strokeWidth">) {
+  return <CircleDashedIcon {...props} strokeWidth={2.5} />;
+}
+
 export function PriorityIcon({
   priority,
   className,
@@ -291,7 +301,7 @@ export function AssigneeMenu({
           </>
         ) : (
           <>
-            <CircleDashedIcon className="size-3.5 text-ink-faint" />
+            <UnassignedIcon className="size-3.5 text-ink-faint" />
             <span>Unassigned</span>
           </>
         )}
@@ -329,7 +339,7 @@ export function AssigneeMenu({
           className="text-xs"
           disabled={!value}
         >
-          <CircleDashedIcon className="size-3.5" />
+          <UnassignedIcon className="size-3.5" />
           <span className="flex-1">Unassign</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -5,7 +5,6 @@ import {
   ArrowLeftIcon,
   CheckIcon,
   ChevronDownIcon,
-  CircleDashedIcon,
   InboxIcon,
   ListFilterIcon,
   MailIcon,
@@ -26,7 +25,7 @@ import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AgentAvatar, CustomerAvatar, ViewerCount } from "./avatars";
 import { VIEWS, viewLabel, type View, type ViewCounts } from "./sidebar";
-import { PriorityIcon, StatusIcon } from "./status";
+import { PriorityIcon, StatusIcon, UnassignedIcon } from "./status";
 import { TagList } from "./tags";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import {
@@ -366,9 +365,8 @@ function ConversationRow({
               {metadata.assigneeId ? (
                 <AgentAvatar userId={metadata.assigneeId} size="sm" />
               ) : (
-                <CircleDashedIcon
+                <UnassignedIcon
                   className="size-5 text-ink-faint"
-                  strokeWidth={2}
                   aria-label="Unassigned"
                 />
               )}

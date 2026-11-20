@@ -6,16 +6,17 @@ import {
   CheckCircle2Icon,
   CheckIcon,
   ChevronsUpDownIcon,
-  CircleDashedIcon,
   InboxIcon,
   SettingsIcon,
   UserRoundIcon,
-  type LucideIcon,
+  type LucideProps,
 } from "lucide-react";
+import type { ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import { WORKSPACES, type Workspace, type WorkspaceId } from "@/lib/workspaces";
 import { AgentAvatar } from "./avatars";
 import { HelpButton } from "./help-button";
+import { UnassignedIcon } from "./status";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,10 +34,14 @@ export type View =
 
 export type ViewCounts = Record<Exclude<View, "settings">, number>;
 
-export const VIEWS: { id: Exclude<View, "settings">; label: string; icon: LucideIcon }[] = [
+export const VIEWS: {
+  id: Exclude<View, "settings">;
+  label: string;
+  icon: ComponentType<LucideProps>;
+}[] = [
   { id: "inbox", label: "Inbox", icon: InboxIcon },
   { id: "mine", label: "Mine", icon: UserRoundIcon },
-  { id: "unassigned", label: "Unassigned", icon: CircleDashedIcon },
+  { id: "unassigned", label: "Unassigned", icon: UnassignedIcon },
   { id: "mentions", label: "Mentions", icon: AtSignIcon },
   { id: "done", label: "Done", icon: CheckCircle2Icon },
 ];

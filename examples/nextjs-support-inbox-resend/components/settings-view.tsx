@@ -3,7 +3,6 @@
 import { useSelf } from "@liveblocks/react/suspense";
 import {
   CheckCircle2Icon,
-  CircleDashedIcon,
   CopyIcon,
   ExternalLinkIcon,
 } from "lucide-react";
@@ -11,6 +10,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { getUsers } from "@/app/database";
 import type { InboxSettings } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { UnassignedIcon } from "./status";
 import { WORKSPACES, type Workspace } from "@/lib/workspaces";
 import { AgentAvatar } from "./avatars";
 
@@ -60,12 +60,12 @@ export function SettingsView({
                 </Pill>
               ) : settings.mode === "resend" ? (
                 <Pill>
-                  <CircleDashedIcon className="size-3" />
+                  <UnassignedIcon className="size-3" />
                   Sample workspace
                 </Pill>
               ) : (
                 <Pill>
-                  <CircleDashedIcon className="size-3" />
+                  <UnassignedIcon className="size-3" />
                   Demo mode
                 </Pill>
               )
