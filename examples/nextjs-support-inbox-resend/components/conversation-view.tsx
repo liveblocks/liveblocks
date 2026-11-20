@@ -114,18 +114,28 @@ export function ConversationView({
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <StatusMenu value={metadata.status} onChange={onSetStatus} />
+          <div className="flex items-center gap-0.5">
+            <StatusMenu
+              value={metadata.status}
+              onChange={onSetStatus}
+              appearance="ghost"
+            />
             <AssigneeMenu
               value={metadata.assigneeId}
               selfId={selfId}
               onChange={onSetAssignee}
+              appearance="ghost"
             />
-            <PriorityMenu value={metadata.priority} onChange={onSetPriority} />
+            <PriorityMenu
+              value={metadata.priority}
+              onChange={onSetPriority}
+              appearance="icon"
+            />
             <TagsMenu
               value={metadata.tags ?? []}
               knownTags={knownTags}
               onChange={onSetTags}
+              appearance="icon"
             />
 
             <button
@@ -134,7 +144,7 @@ export function ConversationView({
                 onSetStatus(resolved ? "needs-response" : "resolved")
               }
               className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                "ml-1.5 inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                 resolved
                   ? "border border-line bg-surface text-ink-secondary hover:border-line-strong hover:bg-hover hover:text-ink"
                   : "bg-ink text-surface hover:bg-ink/90"

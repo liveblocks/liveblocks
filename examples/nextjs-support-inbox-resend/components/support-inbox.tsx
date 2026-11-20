@@ -470,6 +470,12 @@ export function SupportInbox({
               <CustomerPanel
                 conversation={selected}
                 conversations={conversations}
+                selfId={self.id}
+                knownTags={knownTags}
+                onSetStatus={setStatus}
+                onSetPriority={setPriority}
+                onSetAssignee={setAssignee}
+                onSetTags={setTags}
                 onClose={() => setDetailsOpen(false)}
                 className="hidden xl:flex"
               />

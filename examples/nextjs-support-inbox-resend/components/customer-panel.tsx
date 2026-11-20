@@ -5,24 +5,37 @@ import type { ReactNode } from "react";
 import {
   CATEGORY_LABEL,
   isOpen,
-  PRIORITY_LABEL,
   type Conversation,
+  type Priority,
+  type Status,
 } from "@/lib/conversation";
 import { formatFullDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { AgentAvatar, AgentName, CustomerAvatar, ViewerAvatars } from "./avatars";
-import { PriorityIcon, StatusText } from "./status";
-import { TagList } from "./tags";
+import { CustomerAvatar, ViewerAvatars } from "./avatars";
+import { AssigneeMenu, PriorityMenu, StatusMenu } from "./status";
+import { TagsMenu } from "./tags";
 
 export function CustomerPanel({
   conversation,
   conversations,
+  selfId,
+  knownTags,
+  onSetStatus,
+  onSetPriority,
+  onSetAssignee,
+  onSetTags,
   onClose,
   className,
 }: {
   conversation: Conversation;
   // All conversations in the inbox, to show the customer's history.
   conversations: Conversation[];
+  selfId: string;
+  knownTags: string[];
+  onSetStatus: (status: Status) => void;
+  onSetPriority: (priority: Priority) => void;
+  onSetAssignee: (userId: string) => void;
+  onSetTags: (tags: string[]) => void;
   onClose: () => void;
   className?: string;
 }) {
@@ -37,7 +50,7 @@ export function CustomerPanel({
   return (
     <aside
       className={cn(
-        "scroll-quiet flex w-[300px] shrink-0 flex-col overflow-y-auto",
+        "scroll-quiet flex w-[340px] shrink-0 flex-col overflow-y-auto",
         className
       )}
       aria-label="Details"
@@ -104,37 +117,43 @@ export function CustomerPanel({
 
       <section className="px-5 py-5">
         <h3 className="mb-3 text-[11px] font-medium tracking-wide text-ink-muted uppercase">
-          Conversation
+          Thread
         </h3>
-        <dl className="flex flex-col gap-2.5">
-          <Field label="Status">
-            <StatusText status={metadata.status} />
+        {/* Two left-aligned columns: label, value. Editable values look like
+            text until hovered, then open the same menus as the header. */}
+        <dl className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-x-3 gap-y-1 text-xs">
+          <Field label="Status" editable>
+            <StatusMenu
+              value={metadata.status}
+              onChange={onSetStatus}
+              appearance="ghost"
+            />
           </Field>
-          <Field label="Priority">
-            <span className="inline-flex items-center gap-1.5">
-              <PriorityIcon priority={metadata.priority} className="size-3" />
-              {PRIORITY_LABEL[metadata.priority]}
-            </span>
+          <Field label="Priority" editable>
+            <PriorityMenu
+              value={metadata.priority}
+              onChange={onSetPriority}
+              appearance="ghost"
+            />
           </Field>
-          <Field label="Assignee">
-            {metadata.assigneeId ? (
-              <span className="inline-flex min-w-0 items-center gap-1.5">
-                <AgentAvatar userId={metadata.assigneeId} size="xs" />
-                <span className="truncate">
-                  <AgentName userId={metadata.assigneeId} />
-                </span>
-              </span>
-            ) : (
-              <span className="text-ink-muted">Unassigned</span>
-            )}
+          <Field label="Assignee" editable>
+            <AssigneeMenu
+              value={metadata.assigneeId}
+              selfId={selfId}
+              onChange={onSetAssignee}
+              appearance="ghost"
+            />
+          </Field>
+          <Field label="Tags" align="start" editable>
+            <TagsMenu
+              value={metadata.tags ?? []}
+              knownTags={knownTags}
+              onChange={onSetTags}
+              appearance="ghost"
+            />
           </Field>
           {metadata.category ? (
             <Field label="Category">{CATEGORY_LABEL[metadata.category]}</Field>
-          ) : null}
-          {metadata.tags?.length ? (
-            <Field label="Tags">
-              <TagList tags={metadata.tags} max={6} />
-            </Field>
           ) : null}
           <Field label="Created">{formatFullDate(conversation.createdAt)}</Field>
           <Field label="Last activity">
@@ -180,12 +199,39 @@ function Row({
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({
+  label,
+  align = "center",
+  editable = false,
+  children,
+}: {
+  label: string;
+  // "start" for values that wrap over several lines (tags).
+  align?: "center" | "start";
+  // Editable values are menu triggers with their own padding; pull them
+  // left so their text lines up with the plain values.
+  editable?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <div className="flex items-center justify-between gap-3 text-xs">
-      <dt className="shrink-0 text-ink-muted">{label}</dt>
-      <dd className="min-w-0 truncate text-right text-ink">{children}</dd>
-    </div>
+    <>
+      <dt
+        className={cn(
+          "flex h-7 items-center text-ink-muted",
+          align === "start" && "self-start"
+        )}
+      >
+        {label}
+      </dt>
+      <dd
+        className={cn(
+          "flex min-h-7 min-w-0 items-center text-ink",
+          editable && "-ml-1.5"
+        )}
+      >
+        {children}
+      </dd>
+    </>
   );
 }
 

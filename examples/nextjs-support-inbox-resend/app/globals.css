@@ -31,7 +31,6 @@
   /* Status accents (used sparingly). */
   --color-open: oklch(0.65 0.17 155);
   --color-urgent: oklch(0.6 0.2 25);
-  --color-high: oklch(0.72 0.17 60);
 
   /* shadcn-style tokens used by the copied UI primitives. */
   --color-background: var(--color-surface);

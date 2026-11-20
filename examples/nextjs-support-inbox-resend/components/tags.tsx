@@ -4,6 +4,7 @@ import { ChevronDownIcon, PlusIcon, TagIcon } from "lucide-react";
 import { useMemo, useState, type KeyboardEvent } from "react";
 import { findTag, normalizeTag, SUGGESTED_TAGS } from "@/lib/tags";
 import { cn } from "@/lib/utils";
+import { triggerClass, type MenuAppearance } from "./status";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -11,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function TagChip({
   tag,
@@ -70,10 +72,12 @@ export function TagsMenu({
   value,
   knownTags,
   onChange,
+  appearance = "outline",
 }: {
   value: string[];
   knownTags: string[];
   onChange: (tags: string[]) => void;
+  appearance?: MenuAppearance;
 }) {
   const [draft, setDraft] = useState("");
 
@@ -116,22 +120,54 @@ export function TagsMenu({
     }
   };
 
+  const summary =
+    value.length === 0
+      ? "No tags"
+      : value.length === 1
+        ? value[0]
+        : `${value.length} tags`;
+
+  const trigger = (
+    <DropdownMenuTrigger
+      className={cn(
+        triggerClass[appearance],
+        appearance === "ghost" && "h-auto min-h-7 py-0.5",
+        appearance === "ghost" && value.length === 0 && "text-ink-muted"
+      )}
+      aria-label={`Tags: ${value.length === 0 ? "none" : value.join(", ")}`}
+    >
+      {appearance === "icon" ? (
+        <TagIcon
+          className={cn("size-4", value.length > 0 ? "text-ink" : "text-ink-muted")}
+        />
+      ) : appearance === "ghost" ? (
+        value.length === 0 ? (
+          <span>Add tags</span>
+        ) : (
+          <TagList tags={value} max={4} />
+        )
+      ) : (
+        <>
+          <TagIcon className="size-3.5 text-ink-faint" />
+          <span>{value.length === 0 ? "Tags" : summary}</span>
+          <ChevronDownIcon className="size-3 text-ink-faint" />
+        </>
+      )}
+    </DropdownMenuTrigger>
+  );
+
   return (
     <DropdownMenu onOpenChange={(open) => !open && setDraft("")}>
-      <DropdownMenuTrigger
-        className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs font-medium text-ink-secondary transition-colors hover:border-line-strong hover:bg-hover hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-hover data-[state=open]:text-ink"
-        aria-label="Tags"
-      >
-        <TagIcon className="size-3.5 text-ink-faint" />
-        <span>
-          {value.length === 0
-            ? "Tags"
-            : value.length === 1
-              ? value[0]
-              : `${value.length} tags`}
-        </span>
-        <ChevronDownIcon className="size-3 text-ink-faint" />
-      </DropdownMenuTrigger>
+      {appearance === "icon" ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={6}>
+            {value.length === 0 ? "Add tags" : value.join(", ")}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        trigger
+      )}
       <DropdownMenuContent align="end" className="w-60 p-0">
         <div className="p-1">
           <input

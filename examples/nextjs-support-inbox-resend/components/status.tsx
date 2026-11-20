@@ -6,10 +6,6 @@ import {
   ChevronDownIcon,
   CircleDashedIcon,
   CircleDotIcon,
-  SignalHighIcon,
-  SignalLowIcon,
-  SignalMediumIcon,
-  TriangleAlertIcon,
   UserRoundIcon,
 } from "lucide-react";
 import { getUsers } from "@/app/database";
@@ -30,7 +26,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
+// Linear-style priority glyphs: three filled bars (1, 2 or 3 lit), and a
+// filled rounded square with an exclamation mark for urgent. Solid shapes
+// stay legible at 12px where stroked icons turn to mush.
 export function PriorityIcon({
   priority,
   className,
@@ -39,42 +39,43 @@ export function PriorityIcon({
   className?: string;
 }) {
   const base = cn("size-3.5 shrink-0", className);
-  switch (priority) {
-    case "urgent":
-      return <TriangleAlertIcon className={cn(base, "text-urgent")} />;
-    case "high":
-      return <SignalHighIcon className={cn(base, "text-high")} />;
-    case "normal":
-      return <SignalMediumIcon className={cn(base, "text-ink-faint")} />;
-    case "low":
-      return <SignalLowIcon className={cn(base, "text-ink-faint")} />;
-  }
-}
 
-// Compact indicator for list rows: only priorities that deserve attention
-// get a mark, so the list stays quiet.
-export function PriorityMark({ priority }: { priority: Priority }) {
   if (priority === "urgent") {
     return (
-      <span
-        className="inline-flex items-center gap-1 rounded-sm bg-urgent/10 px-1.5 py-px text-[10px] font-medium tracking-wide text-urgent uppercase"
-        title="Urgent"
-      >
-        Urgent
-      </span>
+      <svg viewBox="0 0 16 16" className={cn(base, "text-urgent")} aria-hidden>
+        <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" />
+        <path
+          d="M8 4.25v4.5"
+          stroke="var(--color-surface)"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+        />
+        <circle cx="8" cy="11.5" r="1" fill="var(--color-surface)" />
+      </svg>
     );
   }
-  if (priority === "high") {
-    return (
-      <span
-        className="inline-flex items-center gap-1 rounded-sm bg-high/10 px-1.5 py-px text-[10px] font-medium tracking-wide text-high uppercase"
-        title="High priority"
-      >
-        High
-      </span>
-    );
-  }
-  return null;
+
+  const lit = priority === "high" ? 3 : priority === "normal" ? 2 : 1;
+  return (
+    <svg viewBox="0 0 16 16" className={cn(base, "text-ink-secondary")} aria-hidden>
+      {[
+        { x: 1.5, y: 9, h: 5.5 },
+        { x: 6.5, y: 5.5, h: 9 },
+        { x: 11.5, y: 2, h: 12.5 },
+      ].map((bar, index) => (
+        <rect
+          key={index}
+          x={bar.x}
+          y={bar.y}
+          width="3"
+          height={bar.h}
+          rx="0.75"
+          fill="currentColor"
+          opacity={index < lit ? 1 : 0.25}
+        />
+      ))}
+    </svg>
+  );
 }
 
 export function StatusIcon({
@@ -95,60 +96,51 @@ export function StatusIcon({
   }
 }
 
-// Inline status for list rows and the details panel: a colored dot only for
-// conversations the team still owes a reply, so the list stays quiet.
-export function StatusText({
-  status,
-  className,
-}: {
-  status: Status;
-  className?: string;
-}) {
-  return (
-    <span className={cn("inline-flex items-center gap-1.5", className)}>
-      <span
-        className={cn(
-          "size-1.5 shrink-0 rounded-full",
-          status === "needs-response" ? "bg-open" : "bg-ink-faint"
-        )}
-        aria-hidden
-      />
-      <span
-        className={cn(
-          status === "needs-response" && "font-medium text-open"
-        )}
-      >
-        {STATUS_LABEL[status]}
-      </span>
-    </span>
-  );
-}
+/**
+ * How a menu trigger looks:
+ * - "outline": bordered button with icon + label (thread header)
+ * - "icon": icon only, label in a tooltip (thread header)
+ * - "ghost": plain text that gets a background on hover (details panel)
+ */
+export type MenuAppearance = "outline" | "icon" | "ghost";
+
+export const triggerClass: Record<MenuAppearance, string> = {
+  outline:
+    "inline-flex h-7 max-w-full items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs font-medium text-ink-secondary transition-colors hover:border-line-strong hover:bg-hover hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-hover data-[state=open]:text-ink",
+  icon: "inline-flex size-7 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-ink/8 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-ink/8 data-[state=open]:text-ink",
+  ghost:
+    "inline-flex h-7 max-w-full items-center gap-1.5 rounded-md px-1.5 text-left text-xs text-ink transition-colors hover:bg-ink/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-ink/8",
+};
 
 export function StatusMenu({
   value,
   onChange,
+  appearance = "outline",
 }: {
   value: Status;
   onChange: (status: Status) => void;
+  appearance?: MenuAppearance;
 }) {
+  const open = value === "needs-response";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          triggerClass,
-          value === "needs-response" &&
-            "border-open/25 bg-open/8 text-open hover:border-open/40 hover:bg-open/12 hover:text-open"
+          triggerClass[appearance],
+          appearance === "outline" &&
+            open &&
+            "border-open/25 bg-open/8 text-open hover:border-open/40 hover:bg-open/12 hover:text-open",
+          appearance === "ghost" && open && "font-medium text-open"
         )}
         aria-label="Status"
       >
         <StatusIcon status={value} className="size-3" />
-        <span>{STATUS_LABEL[value]}</span>
-        <ChevronDownIcon
-          className={cn(
-            "size-3",
-            value === "needs-response" ? "text-open/60" : "text-ink-faint"
-          )}
-        />
+        <span className="truncate">{STATUS_LABEL[value]}</span>
+        {appearance === "outline" ? (
+          <ChevronDownIcon
+            className={cn("size-3", open ? "text-open/60" : "text-ink-faint")}
+          />
+        ) : null}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
         {STATUSES.map((status) => (
@@ -169,23 +161,42 @@ export function StatusMenu({
   );
 }
 
-const triggerClass =
-  "inline-flex h-7 max-w-full items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs font-medium text-ink-secondary transition-colors hover:border-line-strong hover:bg-hover hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 data-[state=open]:bg-hover data-[state=open]:text-ink";
-
 export function PriorityMenu({
   value,
   onChange,
+  appearance = "outline",
 }: {
   value: Priority;
   onChange: (priority: Priority) => void;
+  appearance?: MenuAppearance;
 }) {
+  const trigger = (
+    <DropdownMenuTrigger
+      className={triggerClass[appearance]}
+      aria-label={`Priority: ${PRIORITY_LABEL[value]}`}
+    >
+      <PriorityIcon priority={value} className={appearance === "icon" ? "size-4" : undefined} />
+      {appearance !== "icon" ? (
+        <span className="truncate">{PRIORITY_LABEL[value]}</span>
+      ) : null}
+      {appearance === "outline" ? (
+        <ChevronDownIcon className="size-3 text-ink-faint" />
+      ) : null}
+    </DropdownMenuTrigger>
+  );
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className={triggerClass} aria-label="Priority">
-        <PriorityIcon priority={value} />
-        <span>{PRIORITY_LABEL[value]}</span>
-        <ChevronDownIcon className="size-3 text-ink-faint" />
-      </DropdownMenuTrigger>
+      {appearance === "icon" ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={6}>
+            Priority: {PRIORITY_LABEL[value]}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        trigger
+      )}
       <DropdownMenuContent align="end" className="w-44">
         {PRIORITIES.map((priority) => (
           <DropdownMenuItem
@@ -209,16 +220,24 @@ export function AssigneeMenu({
   value,
   selfId,
   onChange,
+  appearance = "outline",
 }: {
   value: string;
   selfId: string;
   onChange: (userId: string) => void;
+  appearance?: MenuAppearance;
 }) {
   const agents = getUsers();
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className={triggerClass} aria-label="Assignee">
+      <DropdownMenuTrigger
+        className={cn(
+          triggerClass[appearance],
+          appearance === "ghost" && !value && "text-ink-muted"
+        )}
+        aria-label="Assignee"
+      >
         {value ? (
           <>
             <AgentAvatar userId={value} size="xs" />
@@ -232,7 +251,9 @@ export function AssigneeMenu({
             <span>Unassigned</span>
           </>
         )}
-        <ChevronDownIcon className="size-3 text-ink-faint" />
+        {appearance === "outline" ? (
+          <ChevronDownIcon className="size-3 text-ink-faint" />
+        ) : null}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem onClick={() => onChange(selfId)} className="text-xs">
