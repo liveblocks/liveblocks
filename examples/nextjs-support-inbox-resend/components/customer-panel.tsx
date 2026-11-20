@@ -99,7 +99,7 @@ export function CustomerPanel({
       <Divider />
 
       <section className="px-3 py-5">
-        <h3 className="mb-3 text-xs font-medium text-ink-secondary">
+        <h3 className="mb-3 text-xs font-medium text-ink">
           Thread
         </h3>
         {/* Two left-aligned columns: label, value. Editable values look like
