@@ -23,7 +23,7 @@
     "dependency-cruiser": "^17.3.10",
     "eslint": "^9.39.4",
     "syncpack": "^14.3.0",
-    "happy-dom": "^20.9.0",
+    "happy-dom": "^21.0.4",
     "prettier": "^3.8.3",
     "publint": "^0.3.18",
     "ts-morph": "^28.0.0",
