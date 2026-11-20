@@ -52,16 +52,6 @@ export function formatDay(timestamp: number, now = Date.now()) {
   });
 }
 
-export function formatFullDate(timestamp: number) {
-  return new Date(timestamp).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 export function isSameDay(a: number, b: number) {
   const da = new Date(a);
   const db = new Date(b);

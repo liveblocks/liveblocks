@@ -511,7 +511,6 @@ export function SupportInbox({
             {selected && detailsOpen ? (
               <CustomerPanel
                 conversation={selected}
-                conversations={conversations}
                 selfId={self.id}
                 knownTags={knownTags}
                 onSetStatus={setStatus}
@@ -534,8 +533,7 @@ export function SupportInbox({
                 />
                 <CustomerPanel
                   conversation={selected}
-                  conversations={conversations}
-                  selfId={self.id}
+                    selfId={self.id}
                   knownTags={knownTags}
                   onSetStatus={setStatus}
                   onSetPriority={setPriority}

@@ -3,13 +3,12 @@
 import { Building2Icon, MailIcon, XIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import {
-  isOpen,
   type Conversation,
   type Customer,
   type Priority,
   type Status,
 } from "@/lib/conversation";
-import { formatFullDate } from "@/lib/format";
+import { formatMessageTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CustomerAvatar } from "./avatars";
 import { AssigneeMenu, PriorityMenu, StatusMenu } from "./status";
@@ -17,7 +16,6 @@ import { TagsMenu } from "./tags";
 
 export function CustomerPanel({
   conversation,
-  conversations,
   selfId,
   knownTags,
   onSetStatus,
@@ -29,8 +27,6 @@ export function CustomerPanel({
   className,
 }: {
   conversation: Conversation;
-  // All conversations in the inbox, to show the customer's history.
-  conversations: Conversation[];
   selfId: string;
   knownTags: string[];
   onSetStatus: (status: Status) => void;
@@ -46,12 +42,6 @@ export function CustomerPanel({
     name: metadata.customerName,
     email: metadata.customerEmail,
   };
-  const history = conversations.filter(
-    (item) => item.metadata.customerEmail === metadata.customerEmail
-  );
-  const openCount = history.filter(
-    (item) => isOpen(item.metadata.status)
-  ).length;
 
   return (
     <aside
@@ -61,18 +51,7 @@ export function CustomerPanel({
       )}
       aria-label="Details"
     >
-      <div className="flex h-11 items-center justify-end px-3 pt-1">
-        <button
-          type="button"
-          onClick={onClose}
-          className="-mr-1.5 flex size-6 items-center justify-center rounded text-ink-faint hover:bg-hover hover:text-ink"
-          aria-label="Close details"
-        >
-          <XIcon className="size-3.5" />
-        </button>
-      </div>
-
-      <section className="px-3 pb-5">
+      <section className="px-3 pt-3 pb-5">
         <div className="flex items-center gap-3">
           <CustomerAvatar
             name={metadata.customerName}
@@ -80,7 +59,7 @@ export function CustomerPanel({
             size="lg"
             className="size-10 text-sm"
           />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="truncate text-[13px] font-semibold text-ink">
               {metadata.customerName}
             </div>
@@ -88,6 +67,14 @@ export function CustomerPanel({
               {metadata.customerCompany || "Customer"}
             </div>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="-mr-1.5 flex size-6 shrink-0 items-center justify-center self-start rounded text-ink-faint hover:bg-ink/8 hover:text-ink"
+            aria-label="Close details"
+          >
+            <XIcon className="size-3.5" />
+          </button>
         </div>
 
         <dl className="mt-4 flex flex-col gap-2.5">
@@ -107,11 +94,6 @@ export function CustomerPanel({
             </Row>
           ) : null}
         </dl>
-
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Stat value={history.length} label="Conversations" />
-          <Stat value={openCount} label="Open" />
-        </div>
       </section>
 
       <Divider />
@@ -153,27 +135,16 @@ export function CustomerPanel({
               appearance="ghost"
             />
           </Field>
-          <Field label="Created">{formatFullDate(conversation.createdAt)}</Field>
-          <Field label="Last activity">
-            {formatFullDate(
-              Date.parse(metadata.lastActivityAt) || conversation.updatedAt
-            )}
+          <Field label="Created">
+            {formatMessageTime(conversation.createdAt)}
           </Field>
-          <Field label="Source">
-            {metadata.source === "resend" ? (
-              <span className="inline-flex min-w-0 items-center gap-1.5">
-                Resend thread
-                <code className="truncate rounded bg-hover px-1 font-mono text-[10px] text-ink-muted">
-                  {metadata.resendThreadId}
-                </code>
-              </span>
-            ) : (
-              <span className="text-ink-muted">Sample conversation</span>
+          <Field label="Last activity">
+            {formatMessageTime(
+              Date.parse(metadata.lastActivityAt) || conversation.updatedAt
             )}
           </Field>
         </dl>
       </section>
-
     </aside>
   );
 }
@@ -230,15 +201,6 @@ function Field({
         {children}
       </dd>
     </>
-  );
-}
-
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="rounded-md border border-line bg-surface px-3 py-2">
-      <div className="tabular text-base font-semibold text-ink">{value}</div>
-      <div className="text-[11px] text-ink-muted">{label}</div>
-    </div>
   );
 }
 
