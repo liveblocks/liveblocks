@@ -41,6 +41,9 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
       throttle={16}
+      // Keep the room connection alive for 3 minutes after the tab is
+      // backgrounded so a quick tab switch doesn't drop presence.
+      backgroundKeepAliveTimeout={3 * 60 * 1000}
       authEndpoint={authWithExampleUser("/api/liveblocks-auth")}
       // Only used to point the example at a local Liveblocks dev server;
       // inert in production.
