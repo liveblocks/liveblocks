@@ -10,6 +10,10 @@
   clients losing their connection at the same time don't all reconnect at the
   exact same moment.
 
+### `@liveblocks/node`
+
+- Harden webhook signature verification in `WebhookHandler.verifyRequest()`.
+
 ## v3.25.1
 
 ### All packages

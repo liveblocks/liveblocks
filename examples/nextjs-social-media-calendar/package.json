@@ -1,0 +1,41 @@
+{
+  "name": "@liveblocks-examples/nextjs-social-media-calendar",
+  "description": "This example shows how to build a collaborative social media content calendar with Liveblocks Storage, LiveText, Tiptap, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^3.25.0",
+    "@liveblocks/node": "^3.25.0",
+    "@liveblocks/prosemirror": "^3.25.0",
+    "@liveblocks/react": "^3.25.0",
+    "@liveblocks/react-tiptap": "^3.25.0",
+    "@liveblocks/react-ui": "^3.25.0",
+    "@tiptap/extensions": "^3.33.0",
+    "@tiptap/pm": "^3.33.0",
+    "@tiptap/react": "^3.33.0",
+    "@tiptap/starter-kit": "^3.33.0",
+    "@ui-sdk/core": "^0.1.0-beta.3",
+    "@ui-sdk/react": "^0.1.0-beta.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.475.0",
+    "nanoid": "^5.1.11",
+    "next": "16.3.8",
+    "node-html-parser": "^6.1.13",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

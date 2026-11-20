@@ -53,12 +53,10 @@ export class WebhookHandler {
       })
       .filter(isNotUndefined);
 
-    if (expectedSignatures.includes(signature) === false)
-      throw new Error(
-        `Invalid signature, expected one of ${expectedSignatures.join(
-          ", "
-        )}, got ${signature}`
-      );
+    if (
+      expectedSignatures.some((s) => constantTimeEqual(s, signature)) === false
+    )
+      throw new Error("Invalid signature");
 
     const event: WebhookEvent = JSON.parse(rawBody) as WebhookEvent;
 
@@ -189,6 +187,20 @@ const WEBHOOK_TOLERANCE_IN_SECONDS = 5 * 60; // 5 minutes
 
 const isNotUndefined = <T>(value: T | undefined): value is T =>
   value !== undefined;
+
+/**
+ * Compares two strings in constant time (for equal lengths). Written in plain
+ * JS because `node:crypto`'s `timingSafeEqual` isn't available on Edge
+ * runtimes.
+ */
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
 
 type WebhookRequest = {
   /**

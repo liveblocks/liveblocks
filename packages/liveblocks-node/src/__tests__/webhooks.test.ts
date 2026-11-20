@@ -406,7 +406,7 @@ describe("WebhookHandler", () => {
       );
     });
 
-    test("should throw if the signature is invalid", () => {
+    test("should throw a bare 'Invalid signature' without revealing any signature", () => {
       vi.useFakeTimers({
         now: 1674850126000,
       });
@@ -420,7 +420,7 @@ describe("WebhookHandler", () => {
           },
           rawBody: rawUserEnteredBody,
         })
-      ).toThrowError("Invalid signature");
+      ).toThrowError(/^Invalid signature$/);
     });
 
     test("should throw if the timestamp is invalid", () => {
