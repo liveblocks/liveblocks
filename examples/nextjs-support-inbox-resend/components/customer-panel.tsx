@@ -56,7 +56,7 @@ export function CustomerPanel({
   return (
     <aside
       className={cn(
-        "scroll-quiet flex w-[340px] shrink-0 flex-col overflow-y-auto",
+        "scroll-quiet flex w-[320px] shrink-0 flex-col overflow-y-auto",
         className
       )}
       aria-label="Details"
