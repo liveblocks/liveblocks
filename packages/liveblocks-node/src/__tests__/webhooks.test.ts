@@ -357,6 +357,36 @@ describe("WebhookHandler", () => {
       expect(event).toEqual(userEnteredBody);
     });
 
+    test("should verify an event whose valid signature is not the first one", () => {
+      vi.useFakeTimers({
+        now: 1674850126000,
+      });
+
+      const webhookHandler = new WebhookHandler(secret);
+
+      const signature = [
+        generateSignatureWithSvix(
+          "whsec_2KvOJ6yK9FO0hElL0JYkM3jPwBs",
+          userEnteredHeaders["webhook-id"],
+          userEnteredHeaders["webhook-timestamp"],
+          rawUserEnteredBody
+        ),
+        generateSignatureWithSvix(
+          secret,
+          userEnteredHeaders["webhook-id"],
+          userEnteredHeaders["webhook-timestamp"],
+          rawUserEnteredBody
+        ),
+      ].join(" ");
+
+      const event = webhookHandler.verifyRequest({
+        headers: { ...userEnteredHeaders, "webhook-signature": signature },
+        rawBody: rawUserEnteredBody,
+      });
+
+      expect(event).toEqual(userEnteredBody);
+    });
+
     test("should allow a native Headers object", () => {
       vi.useFakeTimers({
         now: 1674850126000,
@@ -419,6 +449,53 @@ describe("WebhookHandler", () => {
             "webhook-signature": "v1,invalid_signature",
           },
           rawBody: rawUserEnteredBody,
+        })
+      ).toThrowError(/^Invalid signature$/);
+    });
+
+    test("should throw if the signature was made with a different secret", () => {
+      vi.useFakeTimers({
+        now: 1674850126000,
+      });
+
+      const webhookHandler = new WebhookHandler(secret);
+      expect(() =>
+        webhookHandler.verifyRequest({
+          headers: {
+            ...userEnteredHeaders,
+            "webhook-signature": generateSignatureWithSvix(
+              "whsec_2KvOJ6yK9FO0hElL0JYkM3jPwBs",
+              userEnteredHeaders["webhook-id"],
+              userEnteredHeaders["webhook-timestamp"],
+              rawUserEnteredBody
+            ),
+          },
+          rawBody: rawUserEnteredBody,
+        })
+      ).toThrowError(/^Invalid signature$/);
+    });
+
+    test("should throw if the body was changed after signing", () => {
+      vi.useFakeTimers({
+        now: 1674850126000,
+      });
+
+      const webhookHandler = new WebhookHandler(secret);
+      expect(() =>
+        webhookHandler.verifyRequest({
+          headers: {
+            ...userEnteredHeaders,
+            "webhook-signature": generateSignatureWithSvix(
+              secret,
+              userEnteredHeaders["webhook-id"],
+              userEnteredHeaders["webhook-timestamp"],
+              rawUserEnteredBody
+            ),
+          },
+          rawBody: rawUserEnteredBody.replace(
+            "hero-grid-12-01-2022",
+            "another-room"
+          ),
         })
       ).toThrowError(/^Invalid signature$/);
     });
