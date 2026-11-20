@@ -119,12 +119,14 @@ export function ConversationView({
               value={metadata.status}
               onChange={onSetStatus}
               appearance="ghost"
+              className="font-semibold"
             />
             <AssigneeMenu
               value={metadata.assigneeId}
               selfId={selfId}
               onChange={onSetAssignee}
               appearance="ghost"
+              className="font-semibold"
             />
             <PriorityMenu
               value={metadata.priority}

@@ -116,10 +116,12 @@ export function StatusMenu({
   value,
   onChange,
   appearance = "outline",
+  className,
 }: {
   value: Status;
   onChange: (status: Status) => void;
   appearance?: MenuAppearance;
+  className?: string;
 }) {
   const open = value === "needs-response";
   return (
@@ -130,7 +132,8 @@ export function StatusMenu({
           appearance === "outline" &&
             open &&
             "border-open/25 bg-open/8 text-open hover:border-open/40 hover:bg-open/12 hover:text-open",
-          appearance === "ghost" && open && "font-medium text-open"
+          appearance === "ghost" && open && "font-medium text-open",
+          className
         )}
         aria-label="Status"
       >
@@ -221,11 +224,13 @@ export function AssigneeMenu({
   selfId,
   onChange,
   appearance = "outline",
+  className,
 }: {
   value: string;
   selfId: string;
   onChange: (userId: string) => void;
   appearance?: MenuAppearance;
+  className?: string;
 }) {
   const agents = getUsers();
 
@@ -234,7 +239,8 @@ export function AssigneeMenu({
       <DropdownMenuTrigger
         className={cn(
           triggerClass[appearance],
-          appearance === "ghost" && !value && "text-ink-muted"
+          appearance === "ghost" && !value && "text-ink-muted",
+          className
         )}
         aria-label="Assignee"
       >

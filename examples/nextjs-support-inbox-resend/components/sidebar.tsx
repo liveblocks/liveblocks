@@ -96,7 +96,7 @@ export function Sidebar({
               className={cn(
                 "group flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] transition-colors",
                 active
-                  ? "bg-selected font-medium text-ink"
+                  ? "bg-selected font-semibold text-ink"
                   : "text-ink-secondary hover:bg-hover hover:text-ink"
               )}
             >
@@ -131,7 +131,7 @@ export function Sidebar({
           className={cn(
             "group flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-[13px] transition-colors",
             view === "settings"
-              ? "bg-selected font-medium text-ink"
+              ? "bg-selected font-semibold text-ink"
               : "text-ink-secondary hover:bg-hover hover:text-ink"
           )}
         >
