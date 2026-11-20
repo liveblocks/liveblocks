@@ -102,7 +102,7 @@
     inset-block-start: -0.15em;
     inset-inline-start: -1px;
     block-size: 1.3em;
-    border-inline-start: 1px solid var(--color-line);
+    border-inline-start: 1px solid var(--color-ink-muted);
   }
   .collaboration-carets__label {
     position: absolute;
@@ -112,17 +112,15 @@
     align-items: center;
     width: max-content;
     height: 18px;
-    padding: 0 1px;
-    border: 1px solid var(--color-line);
+    padding: 0 2px;
     border-radius: 6px;
     border-end-start-radius: 0;
-    background: var(--color-surface);
-    color: var(--color-ink);
+    background: var(--color-ink-muted);
+    color: var(--color-surface);
     font-size: 11px;
     font-weight: 500;
     line-height: 1;
     white-space: nowrap;
-    box-shadow: 0 1px 2px oklch(0 0 0 / 0.06);
     /* Hoverable (unlike the caret itself) so the name can be revealed. */
     pointer-events: auto;
     user-select: none;
