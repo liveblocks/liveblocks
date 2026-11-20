@@ -77,9 +77,54 @@ export function PriorityIcon({
   );
 }
 
-// Linear-style status glyphs: a ring in the status color, with a fill that
-// says how far along the conversation is. Orange needs the team, blue is
-// waiting on something, green is finished, gray is set aside.
+// Linear-style status glyphs: a thin ring in the status color with a small
+// glyph inside. Orange needs the team, blue is waiting on something, green is
+// finished, gray is set aside.
+const STATUS_TONE: Record<Status, string> = {
+  "needs-response": "text-open",
+  investigating: "text-open",
+  waiting: "text-waiting",
+  paused: "text-waiting",
+  ignored: "text-ink-faint",
+  done: "text-done",
+};
+
+const STROKE = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.5,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
+
+function StatusGlyph({ status }: { status: Status }) {
+  switch (status) {
+    case "needs-response":
+      return (
+        <>
+          <path d="M8 4.5v4" {...STROKE} strokeWidth={1.75} />
+          <circle cx="8" cy="11.25" r="0.9" fill="currentColor" />
+        </>
+      );
+    case "investigating":
+      return (
+        <>
+          <circle cx="5.25" cy="8" r="0.9" fill="currentColor" />
+          <circle cx="8" cy="8" r="0.9" fill="currentColor" />
+          <circle cx="10.75" cy="8" r="0.9" fill="currentColor" />
+        </>
+      );
+    case "waiting":
+      return <path d="M8 5v3.25l2 1.5" {...STROKE} />;
+    case "paused":
+      return <path d="M6.5 5.75v4.5M9.5 5.75v4.5" {...STROKE} strokeWidth={1.75} />;
+    case "ignored":
+      return <path d="M5.75 5.75l4.5 4.5M10.25 5.75l-4.5 4.5" {...STROKE} />;
+    case "done":
+      return <path d="M5 8.25l2 2 4-4.5" {...STROKE} />;
+  }
+}
+
 export function StatusIcon({
   status,
   className,
@@ -87,83 +132,16 @@ export function StatusIcon({
   status: Status;
   className?: string;
 }) {
-  const base = cn("size-3.5 shrink-0", className);
-  const ring = { cx: 8, cy: 8, r: 6.25, fill: "none", stroke: "currentColor", strokeWidth: 1.5 };
-
-  switch (status) {
-    case "needs-response":
-      // Ring with a dot: new, nobody has picked it up.
-      return (
-        <svg viewBox="0 0 16 16" className={cn(base, "text-open")} aria-hidden>
-          <circle {...ring} />
-          <circle cx="8" cy="8" r="2.5" fill="currentColor" />
-        </svg>
-      );
-    case "investigating":
-      // Half-filled ring: in progress.
-      return (
-        <svg viewBox="0 0 16 16" className={cn(base, "text-open")} aria-hidden>
-          <circle {...ring} />
-          <path d="M8 3.75a4.25 4.25 0 0 1 0 8.5z" fill="currentColor" />
-        </svg>
-      );
-    case "waiting":
-      // Clock: on hold until the customer replies.
-      return (
-        <svg viewBox="0 0 16 16" className={cn(base, "text-waiting")} aria-hidden>
-          <circle {...ring} />
-          <path
-            d="M8 5v3.25l2 1.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "paused":
-      // Ring with pause bars.
-      return (
-        <svg viewBox="0 0 16 16" className={cn(base, "text-waiting")} aria-hidden>
-          <circle {...ring} />
-          <path
-            d="M6.5 5.75v4.5M9.5 5.75v4.5"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="round"
-          />
-        </svg>
-      );
-    case "ignored":
-      // Filled gray disc with a cross.
-      return (
-        <svg viewBox="0 0 16 16" className={cn(base, "text-ink-faint")} aria-hidden>
-          <circle cx="8" cy="8" r="7" fill="currentColor" />
-          <path
-            d="M5.75 5.75l4.5 4.5M10.25 5.75l-4.5 4.5"
-            stroke="var(--color-surface)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      );
-    case "done":
-      // Filled green disc with a check.
-      return (
-        <svg viewBox="0 0 16 16" className={cn(base, "text-done")} aria-hidden>
-          <circle cx="8" cy="8" r="7" fill="currentColor" />
-          <path
-            d="M5 8.25l2 2 4-4.5"
-            fill="none"
-            stroke="var(--color-surface)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-  }
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={cn("size-3.5 shrink-0", STATUS_TONE[status], className)}
+      aria-hidden
+    >
+      <circle cx="8" cy="8" r="6.25" {...STROKE} strokeLinecap="butt" />
+      <StatusGlyph status={status} />
+    </svg>
+  );
 }
 
 /**

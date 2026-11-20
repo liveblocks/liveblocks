@@ -4,8 +4,8 @@ import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import {
   ArrowLeftIcon,
   MailOpenIcon,
-  PanelRightCloseIcon,
-  PanelRightOpenIcon,
+  ArrowLeftToLineIcon,
+  ArrowRightToLineIcon,
 } from "lucide-react";
 import {
   type Conversation,
@@ -75,7 +75,7 @@ export function ConversationView({
 
           <div className="flex shrink-0 items-center gap-2">
             {/* Who's reading this thread right now (live, via presence). */}
-            <ViewerAvatars feedId={feedId} size="md" includeSelf />
+            <ViewerAvatars feedId={feedId} size="md" />
 
             <Tooltip>
               <TooltipTrigger asChild>
@@ -83,12 +83,15 @@ export function ConversationView({
                   type="button"
                   onClick={onToggleDetails}
                   aria-pressed={detailsOpen}
-                  className="hidden size-7 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-hover hover:text-ink xl:flex"
+                  className={cn(
+                    "hidden size-7 items-center justify-center rounded-md transition-colors hover:bg-ink/8 hover:text-ink xl:flex",
+                    detailsOpen ? "text-ink" : "text-ink-muted"
+                  )}
                 >
                   {detailsOpen ? (
-                    <PanelRightCloseIcon className="size-4" strokeWidth={1.75} />
+                    <ArrowRightToLineIcon className="size-4" strokeWidth={1.75} />
                   ) : (
-                    <PanelRightOpenIcon className="size-4" strokeWidth={1.75} />
+                    <ArrowLeftToLineIcon className="size-4" strokeWidth={1.75} />
                   )}
                 </button>
               </TooltipTrigger>
