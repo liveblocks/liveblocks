@@ -367,6 +367,7 @@ function ConversationRow({
               ) : (
                 <UnassignedIcon
                   className="size-5 text-ink-faint"
+                  strokeWidth={1.5}
                   aria-label="Unassigned"
                 />
               )}
