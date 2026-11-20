@@ -107,18 +107,32 @@
   }
   .collaboration-carets__label {
     position: absolute;
-    inset-block-start: -1.45em;
+    inset-block-start: -1.6em;
     inset-inline-start: -1px;
-    padding: 1px 6px;
-    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 20px;
+    padding: 0 6px 0 3px;
+    border: 1px solid var(--color-line);
+    border-radius: 6px;
     border-end-start-radius: 0;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.4;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
     white-space: nowrap;
+    box-shadow: 0 1px 2px oklch(0 0 0 / 0.06);
     pointer-events: none;
     user-select: none;
+  }
+  .collaboration-carets__avatar {
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    object-fit: cover;
+    background: var(--color-hover);
   }
 
   /* Quiet scrollbars that match the warm neutrals. */

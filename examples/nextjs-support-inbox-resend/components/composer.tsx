@@ -22,6 +22,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { CaretLabels } from "@/lib/caret-labels";
 import { isOpen, type Conversation } from "@/lib/conversation";
 import {
   clearDraft,
@@ -105,6 +106,7 @@ export function Composer({
       }),
       Placeholder.configure({ placeholder: () => placeholderRef.current }),
       liveblocks,
+      CaretLabels,
     ],
     editorProps: {
       attributes: {
