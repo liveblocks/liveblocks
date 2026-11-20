@@ -73,7 +73,7 @@ export function AgentAvatar({
       )}
       <span
         className={cn(
-          "absolute right-0 bottom-0 rounded-full",
+          "absolute -right-px -bottom-px rounded-full",
           DOT[size],
           ring,
           online ? "bg-done" : "bg-line-strong"
