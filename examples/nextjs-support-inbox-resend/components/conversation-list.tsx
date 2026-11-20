@@ -368,7 +368,7 @@ function ConversationRow({
               ) : (
                 <CircleDashedIcon
                   className="size-5 text-ink-faint"
-                  strokeWidth={1.5}
+                  strokeWidth={2}
                   aria-label="Unassigned"
                 />
               )}
