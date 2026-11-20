@@ -59,7 +59,7 @@ export function ConversationView({
       aria-label="Conversation"
     >
       <header className="shrink-0 border-b border-line">
-        <div className="flex items-center gap-3 pl-4 pr-2.5 pt-3">
+        <div className="flex h-10 items-center gap-3 pl-4 pr-2.5 pt-3">
           <button
             type="button"
             onClick={onBack}
@@ -73,7 +73,7 @@ export function ConversationView({
             {metadata.subject}
           </h1>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex h-7 shrink-0 items-center gap-2">
             {/* Who's reading this thread right now (live, via presence). */}
             <ViewerAvatars feedId={feedId} size="md" />
 
@@ -120,7 +120,7 @@ export function ConversationView({
                   email: metadata.customerEmail,
                 })
               }
-              className="hidden truncate rounded px-1 text-ink-muted hover:bg-ink/8 hover:text-ink sm:inline"
+              className="-ml-1.5 hidden truncate rounded px-1 text-ink-muted hover:bg-ink/8 hover:text-ink sm:inline"
               title="Show all conversations from this customer"
             >
               {metadata.customerEmail}
@@ -132,14 +132,14 @@ export function ConversationView({
               value={metadata.status}
               onChange={onSetStatus}
               appearance="ghost"
-              className="font-semibold"
+              className="font-medium"
             />
             <AssigneeMenu
               value={metadata.assigneeId}
               selfId={selfId}
               onChange={onSetAssignee}
               appearance="ghost"
-              className="font-semibold"
+              className="font-medium"
             />
             <PriorityMenu
               value={metadata.priority}

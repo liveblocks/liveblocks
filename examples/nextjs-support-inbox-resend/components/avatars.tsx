@@ -131,7 +131,7 @@ export function ViewerAvatars({
       {visible.map((userId) => (
         <Tooltip key={userId}>
           <TooltipTrigger asChild>
-            <span className={cn("rounded-full ring-2", ring)}>
+            <span className={cn("flex rounded-full ring-2", ring)}>
               <AgentAvatar userId={userId} size={size} />
             </span>
           </TooltipTrigger>
