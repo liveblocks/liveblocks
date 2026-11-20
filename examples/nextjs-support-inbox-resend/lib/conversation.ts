@@ -44,16 +44,27 @@ export type Customer = { name: string; email: string };
 
 export type Status = ConversationMetadata["status"];
 
-export const STATUSES: Status[] = ["needs-response", "waiting", "resolved"];
+export const STATUSES: Status[] = [
+  "needs-response",
+  "investigating",
+  "waiting",
+  "paused",
+  "ignored",
+  "done",
+];
 
 export const STATUS_LABEL: Record<Status, string> = {
   "needs-response": "Needs response",
-  waiting: "Waiting on customer",
-  resolved: "Resolved",
+  investigating: "Investigating",
+  waiting: "Waiting for customer",
+  paused: "Paused",
+  ignored: "Ignored",
+  done: "Done",
 };
 
+// Open conversations live in the inbox; done and ignored ones are closed.
 export function isOpen(status: Status) {
-  return status !== "resolved";
+  return status !== "done" && status !== "ignored";
 }
 export type Priority = ConversationMetadata["priority"];
 export type Category = Exclude<ConversationMetadata["category"], "">;

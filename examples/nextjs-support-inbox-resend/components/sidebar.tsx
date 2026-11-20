@@ -30,7 +30,7 @@ export type View =
   | "mine"
   | "unassigned"
   | "mentions"
-  | "resolved"
+  | "done"
   | "settings";
 
 export type ViewCounts = Record<Exclude<View, "settings">, number>;
@@ -40,7 +40,7 @@ export const VIEWS: { id: Exclude<View, "settings">; label: string; icon: Lucide
   { id: "mine", label: "Mine", icon: UserRoundIcon },
   { id: "unassigned", label: "Unassigned", icon: CircleDashedIcon },
   { id: "mentions", label: "Mentions", icon: AtSignIcon },
-  { id: "resolved", label: "Resolved", icon: CheckCircle2Icon },
+  { id: "done", label: "Done", icon: CheckCircle2Icon },
 ];
 
 export function viewLabel(view: View) {

@@ -126,7 +126,7 @@ export function SupportInbox({
       mine: 0,
       unassigned: 0,
       mentions: 0,
-      resolved: 0,
+      done: 0,
     };
     // Each count is what the view shows with its default filter.
     for (const { metadata } of conversations) {
@@ -524,8 +524,8 @@ function matchesView(
       return isOpen(metadata.status) && metadata.assigneeId === selfId;
     case "unassigned":
       return isOpen(metadata.status) && !metadata.assigneeId;
-    case "resolved":
-      return metadata.status === "resolved";
+    case "done":
+      return !isOpen(metadata.status);
     case "mentions":
       return metadata.mentionedUserIds?.includes(selfId) ?? false;
     case "settings":

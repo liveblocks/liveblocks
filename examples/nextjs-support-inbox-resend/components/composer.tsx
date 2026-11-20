@@ -17,7 +17,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import type { Conversation } from "@/lib/conversation";
+import { isOpen, type Conversation } from "@/lib/conversation";
 import {
   clearDraft,
   getDraft,
@@ -50,7 +50,7 @@ export function Composer({
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(initial?.error ?? null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const resolved = conversation.metadata.status === "resolved";
+  const closed = !isOpen(conversation.metadata.status);
 
   // Persist the draft as it changes.
   useEffect(() => {
@@ -192,7 +192,7 @@ export function Composer({
               placeholder={
                 isNote
                   ? `Add a note for your team… type @ to mention someone`
-                  : resolved
+                  : closed
                     ? `Reply to ${conversation.metadata.customerName} (this will reopen the conversation)`
                     : `Reply to ${conversation.metadata.customerName}…`
               }

@@ -4,8 +4,12 @@ import { useUser } from "@liveblocks/react";
 import {
   CheckIcon,
   ChevronDownIcon,
+  CircleCheckIcon,
   CircleDashedIcon,
+  CircleDotDashedIcon,
   CircleDotIcon,
+  CirclePauseIcon,
+  CircleSlashIcon,
   UserRoundIcon,
 } from "lucide-react";
 import { getUsers } from "@/app/database";
@@ -89,10 +93,16 @@ export function StatusIcon({
   switch (status) {
     case "needs-response":
       return <CircleDotIcon className={cn(base, "text-open")} />;
+    case "investigating":
+      return <CircleDotDashedIcon className={cn(base, "text-ink-secondary")} />;
     case "waiting":
       return <CircleDashedIcon className={cn(base, "text-ink-muted")} />;
-    case "resolved":
-      return <CheckIcon className={cn(base, "text-ink-muted")} />;
+    case "paused":
+      return <CirclePauseIcon className={cn(base, "text-ink-muted")} />;
+    case "ignored":
+      return <CircleSlashIcon className={cn(base, "text-ink-faint")} />;
+    case "done":
+      return <CircleCheckIcon className={cn(base, "text-ink-muted")} />;
   }
 }
 

@@ -5,6 +5,7 @@ import {
   previewOf,
   type ConversationMetadata,
   type EmailMessageData,
+  isOpen,
 } from "@/lib/conversation";
 import { htmlToText, parseAddress } from "@/lib/email";
 import { getLiveblocks } from "./liveblocks";
@@ -165,7 +166,7 @@ export async function syncEmailToFeed({
   });
 
   // Keep the list-level summary in sync. A new customer email puts the ball
-  // back in the team's court (reopening a resolved conversation); a reply
+  // back in the team's court (reopening a done conversation); a reply
   // hands it to the customer. Metadata is written as a whole object, so merge
   // onto what the feed already has.
   await liveblocks.updateFeed({
@@ -176,9 +177,15 @@ export async function syncEmailToFeed({
       preview: previewOf(text),
       lastActivityAt: new Date(receivedAt).toISOString(),
       ...(inbound
-        ? { lastInboundEmailId: email.id, status: "needs-response" }
-        : metadata.status !== "resolved"
-          ? { status: "waiting" }
+        ? {
+            lastInboundEmailId: email.id,
+            // Ignored conversations stay ignored, whatever comes in.
+            ...(metadata.status !== "ignored"
+              ? { status: "needs-response" as const }
+              : {}),
+          }
+        : isOpen(metadata.status)
+          ? { status: "waiting" as const }
           : {}),
     },
   });

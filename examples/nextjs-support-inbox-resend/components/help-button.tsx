@@ -24,7 +24,7 @@ const FEATURES: Feature[] = [
     icon: <UsersIcon />,
     title: "Work the inbox together",
     description:
-      "Open this example in two tabs: assign, prioritize, resolve, and add notes — everyone sees the change instantly.",
+      "Open this example in two tabs: assign, prioritize, change status, and add notes — everyone sees the change instantly.",
   },
   {
     icon: <SparklesIcon />,

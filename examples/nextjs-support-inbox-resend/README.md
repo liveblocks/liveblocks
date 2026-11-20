@@ -32,7 +32,7 @@ Incoming emails arrive via a Resend Inboxes webhook; replies are sent through
 the Resend Inboxes reply API and appear instantly for every agent (optimistic
 "sending" state settled by the server). Live avatars show who is reading each
 conversation (Presence). Internal notes with @-mentions, assignment, priority,
-resolve/reopen, search and filters all sync in realtime.
+status (Needs response, Investigating, Waiting for customer, Paused, Ignored, Done), search and filters all sync in realtime.
 
 ## Getting started
 
@@ -71,7 +71,7 @@ Alternatively, you can set up your project manually:
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To see realtime sync, open the page in two browser tabs. Replies, internal notes,
-assignments, priority, and resolve/reopen state stay in sync across both tabs,
+assignments, priority, and status stay in sync across both tabs,
 and live avatars show who is viewing each conversation.
 
 </details>

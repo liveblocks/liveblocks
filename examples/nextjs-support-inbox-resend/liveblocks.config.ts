@@ -50,11 +50,17 @@ declare global {
         | "security"
         | "partnership"
         | "";
-      // Where the conversation stands: the customer is waiting on the team
-      // ("needs-response"), the team is waiting on the customer ("waiting"),
-      // or it's done. Customer emails flip it to "needs-response", replies
-      // flip it to "waiting"; agents can also set it by hand.
-      status: "needs-response" | "waiting" | "resolved";
+      // Where the conversation stands. Customer emails flip it to
+      // "needs-response" (unless it's ignored), replies flip open
+      // conversations to "waiting"; agents can also set it by hand. "done"
+      // and "ignored" are closed, everything else is open.
+      status:
+        | "needs-response"
+        | "investigating"
+        | "waiting"
+        | "paused"
+        | "ignored"
+        | "done";
       priority: "low" | "normal" | "high" | "urgent";
       // Id of the assigned agent, or "" when unassigned.
       assigneeId: string;

@@ -15,9 +15,11 @@ import { useEffect, useState } from "react";
 import {
   PRIORITY_LABEL,
   STATUS_LABEL,
+  STATUSES,
   ticketRef,
   type Conversation,
   type Customer,
+  type Status,
 } from "@/lib/conversation";
 import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -33,13 +35,13 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-export type ListFilter = "all" | "needs-response" | "waiting" | "priority";
+export type ListFilter = "all" | Status | "priority";
 export type ListSort = "newest" | "oldest" | "priority";
 
-// Every view opens on what the team owes a reply to; Resolved shows everything
+// Every view opens on what the team owes a reply to; Done shows everything
 // it contains.
 export function defaultFilter(view: View): ListFilter {
-  return view === "resolved" ? "all" : "needs-response";
+  return view === "done" ? "all" : "needs-response";
 }
 
 export function matchesFilter(
@@ -49,18 +51,16 @@ export function matchesFilter(
   switch (filter) {
     case "all":
       return true;
-    case "needs-response":
-    case "waiting":
-      return metadata.status === filter;
     case "priority":
       return metadata.priority === "urgent" || metadata.priority === "high";
+    default:
+      return metadata.status === filter;
   }
 }
 
 const FILTERS: { id: ListFilter; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "needs-response", label: "Needs response" },
-  { id: "waiting", label: "Waiting on customer" },
+  ...STATUSES.map((status) => ({ id: status, label: STATUS_LABEL[status] })),
   { id: "priority", label: "High priority" },
 ];
 
@@ -407,7 +407,7 @@ function ListEmptyState({
     title = "Inbox zero";
     description = "Nothing needs a response right now.";
   } else if (view === "inbox" && filter === "waiting") {
-    title = "Nothing waiting on customers";
+    title = "Nothing waiting for customers";
     description = "Conversations you've replied to will show up here.";
   } else if (view === "inbox" && filter === "priority") {
     title = "No high-priority conversations";
@@ -424,9 +424,9 @@ function ListEmptyState({
   } else if (view === "mentions") {
     title = "No mentions";
     description = "You'll see conversations where a teammate @-mentions you.";
-  } else if (view === "resolved") {
-    title = "No resolved conversations yet";
-    description = "Resolved conversations are kept here for reference.";
+  } else if (view === "done") {
+    title = "Nothing done yet";
+    description = "Done and ignored conversations are kept here for reference.";
   }
 
   return (
