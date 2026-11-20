@@ -224,6 +224,7 @@ export function SupportInbox({
   useEffect(() => {
     updateMyPresence({
       viewingFeedId: view === "settings" ? null : selectedId,
+      typingAt: null,
     });
   }, [selectedId, view, updateMyPresence]);
 

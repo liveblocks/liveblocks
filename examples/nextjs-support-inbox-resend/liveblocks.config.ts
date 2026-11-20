@@ -17,6 +17,9 @@ declare global {
     // reading, so teammates see live avatars on the thread they're viewing.
     Presence: {
       viewingFeedId: string | null;
+      // When this agent last typed in a composer, so list cards can show
+      // "typing" instead of "viewing" for a few seconds.
+      typingAt: number | null;
     };
 
     // One feed per email conversation. Feed metadata can only hold strings

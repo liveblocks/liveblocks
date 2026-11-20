@@ -2,6 +2,7 @@
 
 import { shallow, useOthers, useSelf, useUser } from "@liveblocks/react";
 import { UserRoundIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { avatarTone, initials } from "@/lib/format";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -129,13 +130,17 @@ export function ViewerCount({
   feedId: string;
   className?: string;
 }) {
-  const count = useOthers((others) => {
+  const { count, latestTypingAt } = useOthers((others) => {
     const ids = new Set<string>();
+    let latestTypingAt = 0;
     for (const other of others) {
-      if (other.presence.viewingFeedId === feedId) ids.add(other.id);
+      if (other.presence.viewingFeedId !== feedId) continue;
+      ids.add(other.id);
+      latestTypingAt = Math.max(latestTypingAt, other.presence.typingAt ?? 0);
     }
-    return ids.size;
-  });
+    return { count: ids.size, latestTypingAt };
+  }, shallow);
+  const typing = useIsRecent(latestTypingAt, TYPING_WINDOW);
 
   if (count === 0) {
     return null;
@@ -149,9 +154,26 @@ export function ViewerCount({
       )}
     >
       <UserRoundIcon className="size-3.5" />
-      <span className="tabular">{count} viewing</span>
+      <span className="tabular">
+        {count} {typing ? "typing" : "viewing"}
+      </span>
     </span>
   );
+}
+
+const TYPING_WINDOW = 10_000;
+
+// True while `timestamp` is less than `window` ms old; flips back to false on
+// its own once it expires, without anyone having to re-render us.
+function useIsRecent(timestamp: number, window: number) {
+  const [, rerender] = useState(0);
+  const remaining = timestamp + window - Date.now();
+  useEffect(() => {
+    if (remaining <= 0) return;
+    const timer = setTimeout(() => rerender((n) => n + 1), remaining);
+    return () => clearTimeout(timer);
+  }, [remaining]);
+  return remaining > 0;
 }
 
 /**

@@ -21,7 +21,7 @@ export default function Page() {
     <RoomProvider
       key={roomId}
       id={roomId}
-      initialPresence={{ viewingFeedId: null }}
+      initialPresence={{ viewingFeedId: null, typingAt: null }}
     >
       <ClientSideSuspense fallback={<InboxSkeleton />}>
         <SupportInbox

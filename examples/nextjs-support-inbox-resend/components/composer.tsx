@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@liveblocks/react";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
@@ -58,6 +59,17 @@ export function Composer({
   const closed = !isOpen(conversation.metadata.status);
   const isNote = mode === "note";
 
+  // Tell teammates we're typing (in either composer), at most every 2s;
+  // list cards show "typing" while this is less than 10s old.
+  const updateMyPresence = useUpdateMyPresence();
+  const lastTypingAt = useRef(0);
+  const reportTyping = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTypingAt.current < 2_000) return;
+    lastTypingAt.current = now;
+    updateMyPresence({ typingAt: now });
+  }, [updateMyPresence]);
+
   // The reply is a shared Tiptap document, one Yjs field per conversation, so
   // the whole team drafts the same reply together: everyone sees the text and
   // each other's carets, and sending it clears it for everyone.
@@ -74,6 +86,9 @@ export function Composer({
   // Keyboard handling is wired through refs because `editorProps` is fixed
   // when the editor is created.
   const submitRef = useRef<() => void>(() => {});
+  const reportTypingRef = useRef(reportTyping);
+  reportTypingRef.current = reportTyping;
+  const skipTypingRef = useRef(false);
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -114,6 +129,16 @@ export function Composer({
         }
         return false;
       },
+    },
+    onUpdate: ({ transaction }) => {
+      // Only our own edits, not changes synced from teammates.
+      if (
+        transaction.docChanged &&
+        !transaction.getMeta("y-sync$") &&
+        !skipTypingRef.current
+      ) {
+        reportTypingRef.current();
+      }
     },
     enableContentCheck: true,
     onContentError: ({ editor, disableCollaboration }) => {
@@ -193,7 +218,10 @@ export function Composer({
         // "sending" until the email goes out). If sending fails later, the
         // text is restored via `restoreFailedReply`. Clearing the shared
         // draft clears it for every agent.
+        // Clearing is not typing.
+        skipTypingRef.current = true;
         editor?.commands.clearContent(true);
+        skipTypingRef.current = false;
         // Refocus once the cleared document has settled.
         requestAnimationFrame(() => editor?.commands.focus());
         clearDraft(feedId);
@@ -286,6 +314,7 @@ export function Composer({
                 value={noteText}
                 onChange={(event) => {
                   setNoteText(event.target.value);
+                  reportTyping();
                   if (error) setError(null);
                 }}
                 onKeyDown={onKeyDown}
