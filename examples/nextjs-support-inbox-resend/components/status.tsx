@@ -4,9 +4,8 @@ import { useUser } from "@liveblocks/react";
 import {
   CheckIcon,
   ChevronDownIcon,
-  CircleDashedIcon,
+  CircleUserRoundIcon,
   type LucideProps,
-  UserRoundIcon,
 } from "lucide-react";
 import { getUsers } from "@/app/database";
 import {
@@ -31,13 +30,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 // Linear-style priority glyphs: three filled bars (1, 2 or 3 lit), and a
 // filled rounded square with an exclamation mark for urgent. Solid shapes
 // stay legible at 12px where stroked icons turn to mush.
-/**
- * "Unassigned" glyph. Lucide's dashed circle reads thin next to the other
- * icons because of its gaps, so it always uses a heavier stroke, whatever
- * stroke width its siblings get.
- */
-export function UnassignedIcon(props: Omit<LucideProps, "strokeWidth">) {
-  return <CircleDashedIcon {...props} strokeWidth={2.5} />;
+/** "Unassigned" glyph: a person in a circle. */
+export function UnassignedIcon(props: LucideProps) {
+  return <CircleUserRoundIcon {...props} />;
 }
 
 export function PriorityIcon({
@@ -281,6 +276,8 @@ export function AssigneeMenu({
   className?: string;
 }) {
   const agents = getUsers();
+  const self = agents.find((agent) => agent.id === selfId);
+  const others = agents.filter((agent) => agent.id !== selfId);
 
   return (
     <DropdownMenu>
@@ -310,40 +307,55 @@ export function AssigneeMenu({
         ) : null}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onClick={() => onChange(selfId)} className="text-xs">
-          <UserRoundIcon className="size-3.5" />
-          <span className="flex-1">Assign to me</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {agents.map((agent) => (
-          <DropdownMenuItem
-            key={agent.id}
-            onClick={() => onChange(agent.id)}
-            className="gap-1.5 text-xs"
-          >
-            <AgentAvatar userId={agent.id} size="sm" />
-            <span className="flex-1 truncate">
-              {agent.info.name}
-              {agent.id === selfId ? (
-                <span className="text-ink-faint"> (you)</span>
-              ) : null}
-            </span>
-            {agent.id === value ? (
-              <CheckIcon className="size-3.5 text-ink-muted" />
-            ) : null}
-          </DropdownMenuItem>
-        ))}
-        <DropdownMenuSeparator />
+        {/* Unassign and yourself first, then the rest of the team. */}
         <DropdownMenuItem
           onClick={() => onChange("")}
-          className="text-xs"
-          disabled={!value}
+          className="gap-1.5 text-xs"
         >
-          <UnassignedIcon className="size-3.5" />
+          <UnassignedIcon className="size-5 text-ink-faint" strokeWidth={1.5} />
           <span className="flex-1">Unassign</span>
+          {!value ? <CheckIcon className="size-3.5 text-ink-muted" /> : null}
         </DropdownMenuItem>
+        {self ? (
+          <AgentItem agent={self} selected={value === self.id} onPick={onChange} isSelf />
+        ) : null}
+        <DropdownMenuSeparator />
+        {others.map((agent) => (
+          <AgentItem
+            key={agent.id}
+            agent={agent}
+            selected={value === agent.id}
+            onPick={onChange}
+          />
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function AgentItem({
+  agent,
+  selected,
+  isSelf = false,
+  onPick,
+}: {
+  agent: ReturnType<typeof getUsers>[number];
+  selected: boolean;
+  isSelf?: boolean;
+  onPick: (userId: string) => void;
+}) {
+  return (
+    <DropdownMenuItem
+      onClick={() => onPick(agent.id)}
+      className="gap-1.5 text-xs"
+    >
+      <AgentAvatar userId={agent.id} size="sm" />
+      <span className="flex-1 truncate">
+        {agent.info.name}
+        {isSelf ? <span className="text-ink-faint"> (Me)</span> : null}
+      </span>
+      {selected ? <CheckIcon className="size-3.5 text-ink-muted" /> : null}
+    </DropdownMenuItem>
   );
 }
 
