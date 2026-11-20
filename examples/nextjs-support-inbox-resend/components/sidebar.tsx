@@ -159,7 +159,7 @@ export function Sidebar({
 
       <div className="mt-auto flex items-center justify-center gap-2.5 border-t border-line py-3 lg:justify-start lg:px-3">
         <span title={self.info.name}>
-          <AgentAvatar userId={self.id} size="lg" />
+          <AgentAvatar userId={self.id} size="lg" ring="ring-canvas" />
         </span>
         <div className="hidden min-w-0 flex-1 lg:block">
           <div className="truncate text-[13px] font-medium text-ink">

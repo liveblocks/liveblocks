@@ -1,6 +1,6 @@
 "use client";
 
-import { shallow, useOthers, useUser } from "@liveblocks/react";
+import { shallow, useOthers, useSelf, useUser } from "@liveblocks/react";
 import { UserRoundIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { avatarTone, initials } from "@/lib/format";
@@ -15,46 +15,72 @@ const SIZE: Record<Size, string> = {
   lg: "size-9 text-xs",
 };
 
-// Avatar for a support agent, resolved through `resolveUsers`.
+// Presence dot sizes, matched to the avatar size.
+const DOT: Record<Size, string> = {
+  xs: "size-1.5 ring-1",
+  sm: "size-2 ring-2",
+  md: "size-2 ring-2",
+  lg: "size-2.5 ring-2",
+};
+
+/**
+ * Avatar for a support agent, resolved through `resolveUsers`, with a presence
+ * dot at the bottom right: green while they're connected to this workspace
+ * (they appear in the room's presence), gray otherwise.
+ */
 export function AgentAvatar({
   userId,
   size = "md",
+  ring = "ring-surface",
   className,
 }: {
   userId: string;
   size?: Size;
+  // Color of the gap around the presence dot; match the background behind it.
+  ring?: "ring-surface" | "ring-canvas";
   className?: string;
 }) {
   const { user } = useUser(userId);
   const name = user?.name ?? "";
-
-  if (!user?.avatar) {
-    return (
-      <span
-        className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded-full bg-hover font-medium text-ink-muted",
-          SIZE[size],
-          className
-        )}
-        aria-label={name}
-      >
-        {name ? initials(name) : ""}
-      </span>
-    );
-  }
+  const isSelf = useSelf((self) => self.id === userId) ?? false;
+  const isOther = useOthers((others) =>
+    others.some((other) => other.id === userId)
+  );
+  const online = isSelf || isOther;
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={user.avatar}
-      alt={name}
-      title={name}
-      className={cn(
-        "shrink-0 rounded-full bg-hover object-cover",
-        SIZE[size],
-        className
+    <span
+      className={cn("relative inline-flex shrink-0", className)}
+      title={name ? `${name} · ${online ? "online" : "offline"}` : undefined}
+    >
+      {user?.avatar ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={user.avatar}
+          alt={name}
+          className={cn("rounded-full bg-hover object-cover", SIZE[size])}
+        />
+      ) : (
+        <span
+          className={cn(
+            "inline-flex items-center justify-center rounded-full bg-hover font-medium text-ink-muted",
+            SIZE[size]
+          )}
+          aria-label={name}
+        >
+          {name ? initials(name) : ""}
+        </span>
       )}
-    />
+      <span
+        className={cn(
+          "absolute right-0 bottom-0 rounded-full",
+          DOT[size],
+          ring,
+          online ? "bg-done" : "bg-line-strong"
+        )}
+        aria-hidden
+      />
+    </span>
   );
 }
 
