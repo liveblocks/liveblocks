@@ -20,7 +20,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
@@ -72,11 +71,12 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex w-[220px] shrink-0 flex-col",
+        // Icon rail on narrow screens, full navigation from `lg` up.
+        "flex w-8 shrink-0 flex-col lg:w-[220px]",
         className
       )}
     >
-      <div className="px-3 pt-3 pb-2">
+      <div className="pt-px pb-2 lg:px-2 lg:pt-3">
         <WorkspaceSwitcher
           workspace={workspace}
           inboxAddress={inboxAddress}
@@ -84,7 +84,7 @@ export function Sidebar({
         />
       </div>
 
-      <nav className="flex flex-col gap-px px-2" aria-label="Views">
+      <nav className="flex flex-col gap-px lg:px-2" aria-label="Views">
         {VIEWS.map(({ id, label, icon: Icon }) => {
           const active = view === id;
           const count = counts[id];
@@ -94,11 +94,12 @@ export function Sidebar({
               type="button"
               onClick={() => onChange(id)}
               aria-current={active ? "page" : undefined}
+              title={label}
               className={cn(
-                "group flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] transition-colors",
+                "group flex h-8 items-center justify-center gap-2.5 rounded-md px-0 text-[13px] transition-colors lg:justify-start lg:px-2",
                 active
                   ? "bg-selected font-semibold text-ink"
-                  : "text-ink-secondary hover:bg-hover hover:text-ink"
+                  : "text-ink-secondary hover:bg-ink/8 hover:text-ink"
               )}
             >
               <Icon
@@ -108,11 +109,13 @@ export function Sidebar({
                 )}
                 strokeWidth={1.75}
               />
-              <span className="flex-1 truncate text-left">{label}</span>
+              <span className="hidden flex-1 truncate text-left lg:block">
+                {label}
+              </span>
               {count > 0 ? (
                 <span
                   className={cn(
-                    "tabular text-xs",
+                    "tabular hidden text-xs lg:block",
                     active ? "text-ink-secondary" : "text-ink-faint"
                   )}
                 >
@@ -124,16 +127,17 @@ export function Sidebar({
         })}
       </nav>
 
-      <div className="mt-3 border-t border-line px-2 pt-3">
+      <div className="mt-3 border-t border-line pt-3 lg:px-2">
         <button
           type="button"
           onClick={() => onChange("settings")}
           aria-current={view === "settings" ? "page" : undefined}
+          title="Settings"
           className={cn(
-            "group flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-[13px] transition-colors",
+            "group flex h-8 w-full items-center justify-center gap-2.5 rounded-md px-0 text-[13px] transition-colors lg:justify-start lg:px-2",
             view === "settings"
               ? "bg-selected font-semibold text-ink"
-              : "text-ink-secondary hover:bg-hover hover:text-ink"
+              : "text-ink-secondary hover:bg-ink/8 hover:text-ink"
           )}
         >
           <SettingsIcon
@@ -145,13 +149,15 @@ export function Sidebar({
             )}
             strokeWidth={1.75}
           />
-          Settings
+          <span className="hidden lg:inline">Settings</span>
         </button>
       </div>
 
-      <div className="mt-auto flex items-center gap-2.5 border-t border-line px-3 py-3">
-        <AgentAvatar userId={self.id} size="lg" />
-        <div className="min-w-0 flex-1">
+      <div className="mt-auto flex items-center justify-center gap-2.5 border-t border-line py-3 lg:justify-start lg:px-3">
+        <span title={self.info.name}>
+          <AgentAvatar userId={self.id} size="lg" />
+        </span>
+        <div className="hidden min-w-0 flex-1 lg:block">
           <div className="truncate text-[13px] font-medium text-ink">
             {self.info.name}
           </div>
@@ -159,7 +165,9 @@ export function Sidebar({
             {self.info.title}
           </div>
         </div>
-        <HelpButton />
+        <span className="hidden lg:contents">
+          <HelpButton />
+        </span>
       </div>
     </aside>
   );
@@ -177,11 +185,12 @@ function WorkspaceSwitcher({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="group flex h-10 w-full items-center gap-2.5 rounded-md px-1.5 text-left transition-colors hover:bg-hover data-[state=open]:bg-hover"
+        className="group flex h-7 w-full items-center justify-center gap-2.5 rounded-md text-left transition-colors hover:bg-ink/8 data-[state=open]:bg-ink/8 lg:h-10 lg:justify-start lg:px-2"
         aria-label={`Workspace: ${workspace.name}`}
+        title={workspace.name}
       >
-        <RelayMark />
-        <div className="min-w-0 flex-1">
+        <LiveblocksMark />
+        <div className="hidden min-w-0 flex-1 lg:block">
           <div className="truncate text-[13px] leading-tight font-semibold text-ink">
             {workspace.name}
           </div>
@@ -189,12 +198,9 @@ function WorkspaceSwitcher({
             {inboxAddress}
           </div>
         </div>
-        <ChevronsUpDownIcon className="size-3.5 shrink-0 text-ink-faint group-hover:text-ink-muted" />
+        <ChevronsUpDownIcon className="hidden size-3.5 shrink-0 text-ink-faint group-hover:text-ink-muted lg:block" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">
-        <DropdownMenuLabel className="text-[11px] font-medium tracking-wide text-ink-muted uppercase">
-          Workspaces
-        </DropdownMenuLabel>
         {WORKSPACES.map((item) => {
           const active = item.id === workspace.id;
           return (
@@ -204,7 +210,7 @@ function WorkspaceSwitcher({
               onClick={() => onChange(item.id)}
               aria-current={active ? "true" : undefined}
             >
-              <RelayMark small />
+              <LiveblocksMark small />
               <div className="min-w-0 flex-1">
                 <div className="truncate">{item.name}</div>
                 <div className="truncate text-[11px] text-ink-muted">
@@ -226,7 +232,7 @@ function WorkspaceSwitcher({
   );
 }
 
-function RelayMark({ small = false }: { small?: boolean }) {
+function LiveblocksMark({ small = false }: { small?: boolean }) {
   return (
     <span
       className={cn(
@@ -236,16 +242,15 @@ function RelayMark({ small = false }: { small?: boolean }) {
       aria-hidden
     >
       <svg
-        viewBox="0 0 16 16"
-        className={small ? "size-3" : "size-4"}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        viewBox="768 320 264 160"
+        fill="currentColor"
+        className="w-[55%]"
       >
-        <path d="M3 12.5V3.5h5.5a2.75 2.75 0 0 1 0 5.5H3" />
-        <path d="M8.5 9l4 3.5" />
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M954 320H768L821 376V453L954 320ZM847 480H1032L979 424V347L847 480Z"
+        />
       </svg>
     </span>
   );

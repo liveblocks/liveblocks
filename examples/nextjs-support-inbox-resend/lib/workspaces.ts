@@ -17,13 +17,13 @@ export type Workspace = {
 export const WORKSPACES: Workspace[] = [
   {
     id: "support",
-    name: "Relay Support",
+    name: "Liveblocks Support",
     address: "support@relay.example",
     connectable: true,
   },
   {
     id: "sales",
-    name: "Relay Sales",
+    name: "Liveblocks Sales",
     address: "sales@relay.example",
     connectable: false,
   },
