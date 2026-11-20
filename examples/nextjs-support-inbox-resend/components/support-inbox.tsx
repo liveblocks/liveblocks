@@ -480,9 +480,7 @@ export function SupportInbox({
                 onSetStatus={setStatus}
                 onSetPriority={setPriority}
                 onSetAssignee={setAssignee}
-                onSetTags={setTags}
                 onViewCustomer={viewCustomer}
-                knownTags={knownTags}
                 onSendReply={sendReply}
                 onAddNote={addNote}
               />
