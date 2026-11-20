@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDownIcon, PlusIcon, TagIcon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon, TagIcon, XIcon } from "lucide-react";
 import { useMemo, useState, type KeyboardEvent } from "react";
 import { findTag, normalizeTag, SUGGESTED_TAGS } from "@/lib/tags";
 import { cn } from "@/lib/utils";
@@ -16,20 +16,36 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function TagChip({
   tag,
+  onRemove,
   className,
 }: {
   tag: string;
+  // When set, hovering the chip reveals an × that removes the tag.
+  onRemove?: () => void;
   className?: string;
 }) {
   return (
     <span
       className={cn(
-        "inline-flex h-6 max-w-full items-center gap-1 rounded-md border border-line bg-surface px-1.5 text-[11px] font-medium text-ink-secondary",
+        "group/tag inline-flex h-6 max-w-full items-center gap-1 rounded-md border border-line bg-surface px-1.5 text-xs text-ink",
         className
       )}
     >
       <TagIcon className="size-3 shrink-0 text-ink-faint" />
       <span className="truncate">{tag}</span>
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove();
+          }}
+          className="-mr-1 flex size-4 shrink-0 items-center justify-center rounded-sm text-ink-faint opacity-0 transition-opacity hover:bg-ink/8 hover:text-ink focus-visible:opacity-100 group-hover/tag:opacity-100"
+          aria-label={`Remove tag ${tag}`}
+        >
+          <XIcon className="size-3" />
+        </button>
+      ) : null}
     </span>
   );
 }
@@ -127,34 +143,51 @@ export function TagsMenu({
         ? value[0]
         : `${value.length} tags`;
 
-  const trigger = (
-    <DropdownMenuTrigger
-      className={cn(
-        triggerClass[appearance],
-        appearance === "ghost" && "h-auto min-h-7 py-0.5",
-        appearance === "ghost" && value.length === 0 && "text-ink-muted"
-      )}
-      aria-label={`Tags: ${value.length === 0 ? "none" : value.join(", ")}`}
-    >
-      {appearance === "icon" ? (
-        <TagIcon
-          className={cn("size-4", value.length > 0 ? "text-ink" : "text-ink-muted")}
-        />
-      ) : appearance === "ghost" ? (
-        value.length === 0 ? (
-          <span>Add tags</span>
+  const trigger =
+    appearance === "ghost" ? (
+      // Chips sit next to the trigger (not inside it) so each can carry its
+      // own remove button.
+      <div className="flex flex-wrap items-center gap-1 py-0.5">
+        {value.map((tag) => (
+          <TagChip
+            key={tag}
+            tag={tag}
+            onRemove={() => onChange(value.filter((item) => item !== tag))}
+          />
+        ))}
+        <DropdownMenuTrigger
+          className={cn(
+            triggerClass.ghost,
+            "h-6 text-ink-muted",
+            value.length > 0 && "px-1"
+          )}
+          aria-label={`Tags: ${value.length === 0 ? "none" : value.join(", ")}`}
+        >
+          {value.length === 0 ? (
+            <span>Add tags</span>
+          ) : (
+            <PlusIcon className="size-3.5" />
+          )}
+        </DropdownMenuTrigger>
+      </div>
+    ) : (
+      <DropdownMenuTrigger
+        className={triggerClass[appearance]}
+        aria-label={`Tags: ${value.length === 0 ? "none" : value.join(", ")}`}
+      >
+        {appearance === "icon" ? (
+          <TagIcon
+            className={cn("size-4", value.length > 0 ? "text-ink" : "text-ink-muted")}
+          />
         ) : (
-          <TagList tags={value} max={4} />
-        )
-      ) : (
-        <>
-          <TagIcon className="size-3.5 text-ink-faint" />
-          <span>{value.length === 0 ? "Tags" : summary}</span>
-          <ChevronDownIcon className="size-3 text-ink-faint" />
-        </>
-      )}
-    </DropdownMenuTrigger>
-  );
+          <>
+            <TagIcon className="size-3.5 text-ink-faint" />
+            <span>{value.length === 0 ? "Tags" : summary}</span>
+            <ChevronDownIcon className="size-3 text-ink-faint" />
+          </>
+        )}
+      </DropdownMenuTrigger>
+    );
 
   return (
     <DropdownMenu onOpenChange={(open) => !open && setDraft("")}>
