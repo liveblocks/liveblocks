@@ -73,7 +73,7 @@ export function MessageTimeline({
       onScroll={onScroll}
       className="scroll-quiet min-h-0 flex-1 overflow-y-auto"
     >
-      <div className="mx-auto flex w-full max-w-[760px] flex-col px-6 pt-4 pb-6 md:px-10">
+      <div className="mx-auto flex w-full max-w-[760px] flex-col px-4 pt-4 pb-6">
         {!hasFetchedAll ? (
           <button
             type="button"

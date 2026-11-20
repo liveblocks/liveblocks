@@ -58,7 +58,7 @@ export function InboxSkeleton() {
 export function TimelineSkeleton() {
   return (
     <div className="flex-1 overflow-hidden" aria-busy aria-label="Loading messages">
-      <div className="mx-auto w-full max-w-[760px] space-y-4 px-6 pt-6 md:px-10">
+      <div className="mx-auto w-full max-w-[760px] space-y-4 px-4 pt-6">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="flex gap-3 rounded-lg bg-canvas p-4">
             <Bone className="size-9 rounded-full" />

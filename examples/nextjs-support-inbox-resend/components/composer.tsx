@@ -237,7 +237,7 @@ export function Composer({
 
   return (
     <div className="shrink-0 border-t border-line bg-surface">
-      <div className="mx-auto w-full max-w-[760px] px-6 pt-3 pb-4 md:px-10">
+      <div className="mx-auto w-full max-w-[760px] px-4 pt-3 pb-4">
         <div
           className={cn(
             "relative rounded-lg border transition-colors",
