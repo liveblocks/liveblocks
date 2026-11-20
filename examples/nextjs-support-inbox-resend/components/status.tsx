@@ -108,10 +108,18 @@ export function StatusIcon({
         </svg>
       );
     case "waiting":
-      // Dashed ring: on hold until the customer replies.
+      // Clock: on hold until the customer replies.
       return (
         <svg viewBox="0 0 16 16" className={cn(base, "text-waiting")} aria-hidden>
-          <circle {...ring} strokeDasharray="2.6 2.3" strokeLinecap="round" />
+          <circle {...ring} />
+          <path
+            d="M8 5v3.25l2 1.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       );
     case "paused":
