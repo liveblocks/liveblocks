@@ -201,7 +201,7 @@ export function TagsMenu({
       ) : (
         trigger
       )}
-      <DropdownMenuContent align="end" className="w-60 p-0">
+      <DropdownMenuContent align="end" className="w-44 p-0">
         <div className="p-1">
           <input
             value={draft}
