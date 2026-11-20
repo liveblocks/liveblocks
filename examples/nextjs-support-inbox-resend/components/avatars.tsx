@@ -1,6 +1,6 @@
 "use client";
 
-import { shallow, useOthers, useSelf, useUser } from "@liveblocks/react";
+import { shallow, useOthers, useUser } from "@liveblocks/react";
 import { cn } from "@/lib/utils";
 import { avatarTone, initials } from "@/lib/format";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -98,14 +98,12 @@ export function ViewerAvatars({
   feedId,
   size = "md",
   max = 4,
-  includeSelf = false,
   ring = "ring-surface",
   className,
 }: {
   feedId: string;
   size?: Size;
   max?: number;
-  includeSelf?: boolean;
   // Ring color separating stacked avatars; match the background they sit on.
   ring?: "ring-surface" | "ring-canvas";
   className?: string;
@@ -119,11 +117,7 @@ export function ViewerAvatars({
     }
     return ids;
   }, shallow);
-  const selfId = useSelf((self) => self.id);
-  const ids =
-    includeSelf && selfId && !viewerIds.includes(selfId)
-      ? [...viewerIds, selfId]
-      : viewerIds;
+  const ids = viewerIds;
 
   if (ids.length === 0) {
     return null;
@@ -142,7 +136,7 @@ export function ViewerAvatars({
             </span>
           </TooltipTrigger>
           <TooltipContent side="bottom" sideOffset={6}>
-            <ViewerLabel userId={userId} isSelf={userId === selfId} />
+            <ViewerLabel userId={userId} />
           </TooltipContent>
         </Tooltip>
       ))}
@@ -161,7 +155,7 @@ export function ViewerAvatars({
   );
 }
 
-function ViewerLabel({ userId, isSelf }: { userId: string; isSelf: boolean }) {
+function ViewerLabel({ userId }: { userId: string }) {
   const { user } = useUser(userId);
-  return <>{isSelf ? "You" : (user?.name ?? "Teammate")} · viewing</>;
+  return <>{user?.name ?? "Teammate"} · viewing</>;
 }

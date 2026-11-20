@@ -12,7 +12,7 @@ import {
 } from "@/lib/conversation";
 import { formatFullDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { CustomerAvatar, ViewerAvatars } from "./avatars";
+import { CustomerAvatar } from "./avatars";
 import { AssigneeMenu, PriorityMenu, StatusMenu } from "./status";
 import { TagsMenu } from "./tags";
 
@@ -62,14 +62,7 @@ export function CustomerPanel({
       )}
       aria-label="Details"
     >
-      <div className="flex h-11 items-center justify-between px-3 pt-1">
-        {/* Teammates reading this thread right now (live, via presence). */}
-        <ViewerAvatars
-          feedId={conversation.feedId}
-          size="md"
-          includeSelf
-          ring="ring-canvas"
-        />
+      <div className="flex h-11 items-center justify-end px-3 pt-1">
         <button
           type="button"
           onClick={onClose}
