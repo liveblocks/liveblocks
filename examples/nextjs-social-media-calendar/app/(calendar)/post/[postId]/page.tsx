@@ -15,7 +15,10 @@ import { useEffect, useState, type ComponentProps } from "react";
 import { CharacterRing } from "@/components/composer/character-ring";
 import { LinkCard } from "@/components/composer/link-card";
 import { PlatformPicker } from "@/components/composer/platform-picker";
-import { PostEditor } from "@/components/composer/post-editor";
+import {
+  PostEditor,
+  PostEditorSkeleton,
+} from "@/components/composer/post-editor";
 import { PostFrame } from "@/components/composer/post-frame";
 import { SchedulePicker } from "@/components/composer/schedule-picker";
 import { TagPicker } from "@/components/composer/tag-picker";
@@ -185,8 +188,8 @@ function PostBody(props: ComponentProps<typeof PostEditor>) {
     >
       <ClientSideSuspense
         fallback={
-          <div className="composer-editor">
-            <div className="h-6 w-2/3 animate-pulse rounded bg-neutral-100" />
+          <div className="composer-editor cursor-text">
+            <PostEditorSkeleton />
           </div>
         }
       >

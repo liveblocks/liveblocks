@@ -185,17 +185,7 @@ export function PostEditor({
         {/* Until the LiveText document has loaded, pulsing lines stand in
             for the text instead of the empty editor's placeholder. The
             editor stays mounted (collapsed) so it's ready to show. */}
-        {isReady ? null : (
-          <div
-            className="flex min-h-[120px] flex-col gap-2 py-1"
-            aria-busy
-            aria-label="Loading post"
-          >
-            <div className="h-3.5 w-full animate-pulse rounded bg-neutral-100" />
-            <div className="h-3.5 w-[92%] animate-pulse rounded bg-neutral-100" />
-            <div className="h-3.5 w-[58%] animate-pulse rounded bg-neutral-100" />
-          </div>
-        )}
+        {isReady ? null : <PostEditorSkeleton />}
         <div className={isReady ? undefined : "invisible h-0 overflow-hidden"}>
           <EditorContent editor={editor} />
         </div>
@@ -221,5 +211,23 @@ export function PostEditor({
           )
         : null}
     </>
+  );
+}
+
+/**
+ * Pulsing lines that stand in for the post's text while it loads. Also used
+ * as the suspense fallback for the post's room, so both look identical.
+ */
+export function PostEditorSkeleton() {
+  return (
+    <div
+      className="flex min-h-[120px] flex-col gap-2 py-1"
+      aria-busy
+      aria-label="Loading post"
+    >
+      <div className="h-3.5 w-full animate-pulse rounded bg-neutral-100" />
+      <div className="h-3.5 w-[92%] animate-pulse rounded bg-neutral-100" />
+      <div className="h-3.5 w-[58%] animate-pulse rounded bg-neutral-100" />
+    </div>
   );
 }
