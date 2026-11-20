@@ -544,6 +544,44 @@ describe("finite state machine", () => {
     expect(fsm.context).toEqual({ x: 3, y: 13 });
   });
 
+  test("exit cleanup runs before transition effects, which run before enter", () => {
+    const calls: string[] = [];
+
+    const fsm = new FSM({ x: 0 })
+      .addState("one")
+      .addState("two")
+
+      .onEnter("one", () => {
+        return (ctx) => {
+          calls.push(`exit one (x=${ctx.x})`);
+          ctx.patch({ x: 1 });
+        };
+      })
+
+      .onEnter("two", (ctx) => {
+        calls.push(`enter two (x=${ctx.x})`);
+      })
+
+      .addTransitions("one", {
+        GO: {
+          target: "two",
+          effect: (ctx) => {
+            calls.push(`effect (x=${ctx.x})`);
+            ctx.patch({ x: ctx.x + 1 });
+          },
+        },
+      })
+
+      .start();
+
+    fsm.send({ type: "GO" });
+    expect(calls).toEqual([
+      "exit one (x=0)",
+      "effect (x=1)",
+      "enter two (x=2)",
+    ]);
+  });
+
   test("explicitly *not* transitioning", () => {
     let n = 0;
 
