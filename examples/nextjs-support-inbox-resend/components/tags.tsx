@@ -209,7 +209,7 @@ export function TagsMenu({
             onKeyDown={onKeyDown}
             placeholder="Search or add a tag…"
             aria-label="Search or add a tag"
-            className="h-8 w-full rounded bg-transparent px-2 text-sm text-ink outline-none placeholder:text-ink-faint"
+            className="h-8 w-full rounded bg-transparent px-2 text-[13px] text-ink outline-none placeholder:text-ink-faint"
             autoFocus
           />
         </div>
@@ -229,7 +229,7 @@ export function TagsMenu({
             <button
               type="button"
               onClick={create}
-              className="flex h-7 w-full items-center gap-2 rounded px-2 text-left text-sm text-ink hover:bg-hover"
+              className="flex h-7 w-full items-center gap-2 rounded px-2 text-left text-[13px] text-ink hover:bg-hover"
             >
               <PlusIcon className="size-4 text-ink-muted" />
               <span className="truncate">
@@ -238,7 +238,7 @@ export function TagsMenu({
             </button>
           ) : null}
           {filtered.length === 0 && !canCreate ? (
-            <div className="px-2 py-1.5 text-sm text-ink-muted">No tags</div>
+            <div className="px-2 py-1.5 text-[13px] text-ink-muted">No tags</div>
           ) : null}
         </div>
       </DropdownMenuContent>
