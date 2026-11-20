@@ -2,6 +2,7 @@
 
 import {
   ArrowDownUpIcon,
+  ArrowLeftIcon,
   CheckIcon,
   ChevronDownIcon,
   InboxIcon,
@@ -16,6 +17,7 @@ import {
   STATUS_LABEL,
   ticketRef,
   type Conversation,
+  type Customer,
 } from "@/lib/conversation";
 import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -70,6 +72,7 @@ const SORTS: { id: ListSort; label: string }[] = [
 
 export function ConversationList({
   view,
+  customer,
   counts,
   conversations,
   selectedId,
@@ -83,9 +86,12 @@ export function ConversationList({
   onFilterChange,
   onSortChange,
   onViewChange,
+  onLeaveCustomer,
   className,
 }: {
   view: View;
+  // When set, the list is every thread from this customer.
+  customer: Customer | null;
   counts: ViewCounts;
   conversations: Conversation[];
   selectedId: string | null;
@@ -100,6 +106,7 @@ export function ConversationList({
   onFilterChange: (filter: ListFilter) => void;
   onSortChange: (sort: ListSort) => void;
   onViewChange: (view: View) => void;
+  onLeaveCustomer: () => void;
   className?: string;
 }) {
   // Relative times tick every minute.
@@ -115,8 +122,28 @@ export function ConversationList({
     >
       <header className="flex flex-col gap-2.5 border-b border-line px-4 pt-3.5 pb-3">
         <div className="flex h-7 items-center justify-between gap-2">
-          {/* On small screens the sidebar is hidden, so the title doubles as
-              a view switcher. */}
+          {customer ? (
+            <div className="flex min-w-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={onLeaveCustomer}
+                className="-ml-1.5 flex size-7 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-ink/8 hover:text-ink"
+                aria-label={`Back to ${viewLabel(view)}`}
+              >
+                <ArrowLeftIcon className="size-4" />
+              </button>
+              <div className="min-w-0 leading-tight">
+                <div className="truncate text-[15px] font-semibold text-ink">
+                  {customer.name}
+                </div>
+                <div className="truncate text-[11px] text-ink-muted">
+                  {customer.email}
+                </div>
+              </div>
+            </div>
+          ) : (
+          /* On small screens the sidebar is hidden, so the title doubles as
+             a view switcher. */
           <DropdownMenu>
             <DropdownMenuTrigger className="group -ml-1 flex items-center gap-1 rounded-md px-1 text-[15px] font-semibold text-ink md:pointer-events-none">
               {viewLabel(view)}
@@ -138,7 +165,8 @@ export function ConversationList({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <span className="tabular text-xs text-ink-muted">
+          )}
+          <span className="tabular shrink-0 text-xs text-ink-muted">
             {conversations.length}{" "}
             {conversations.length === 1 ? "conversation" : "conversations"}
           </span>
@@ -217,6 +245,7 @@ export function ConversationList({
         {conversations.length === 0 ? (
           <ListEmptyState
             view={view}
+            customer={customer}
             filter={filter}
             query={query}
             isSeeding={isSeeding}
@@ -346,12 +375,14 @@ function ConversationRow({
 
 function ListEmptyState({
   view,
+  customer,
   filter,
   query,
   isSeeding,
   inboxAddress,
 }: {
   view: View;
+  customer: Customer | null;
   filter: ListFilter;
   query: string;
   isSeeding: boolean;
@@ -366,6 +397,9 @@ function ListEmptyState({
   } else if (query) {
     title = "No results";
     description = `Nothing matches “${query}”.`;
+  } else if (customer) {
+    title = "No conversations";
+    description = `Nothing from ${customer.name} matches this filter.`;
   } else if (view === "inbox" && inboxAddress) {
     title = "Waiting for your first email";
     description = `Emails sent to ${inboxAddress} will appear here in realtime.`;

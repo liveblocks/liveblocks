@@ -22,6 +22,7 @@ import {
   PRIORITY_RANK,
   type Conversation,
   type ConversationMetadata,
+  type Customer,
   type EmailMessageData,
   type Priority,
   type Status,
@@ -94,6 +95,9 @@ export function SupportInbox({
   const updateMyPresence = useUpdateMyPresence();
 
   const [view, setView] = useState<View>("inbox");
+  // When set, the list shows every thread from this customer instead of the
+  // current view (clicking a customer's email gets you here).
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ListFilter>(defaultFilter("inbox"));
@@ -141,7 +145,11 @@ export function SupportInbox({
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const list = conversations.filter(({ metadata }) => {
-      if (!matchesView(metadata, view, self.id)) return false;
+      if (customer) {
+        if (metadata.customerEmail !== customer.email) return false;
+      } else if (!matchesView(metadata, view, self.id)) {
+        return false;
+      }
       if (!matchesFilter(metadata, filter)) return false;
       if (needle) {
         const haystack = [
@@ -173,7 +181,7 @@ export function SupportInbox({
         ? activity(a) - activity(b)
         : activity(b) - activity(a);
     });
-  }, [conversations, view, filter, query, sort, self.id]);
+  }, [conversations, view, customer, filter, query, sort, self.id]);
 
   const selected = useMemo(
     () => conversations.find((item) => item.feedId === selectedId) ?? null,
@@ -209,12 +217,25 @@ export function SupportInbox({
 
   const changeView = useCallback((next: View) => {
     setView(next);
+    setCustomer(null);
     setQuery("");
     setFilter(defaultFilter(next));
     if (next === "settings") {
       setSelectedId(null);
     }
   }, []);
+
+  const viewCustomer = useCallback((next: Customer) => {
+    setCustomer(next);
+    setQuery("");
+    setFilter("all");
+  }, []);
+
+  const leaveCustomer = useCallback(() => {
+    setCustomer(null);
+    setQuery("");
+    setFilter(defaultFilter(view));
+  }, [view]);
 
   const setStatus = useCallback(
     (status: Status) => {
@@ -410,7 +431,7 @@ export function SupportInbox({
     <TooltipProvider delayDuration={300}>
       <div className="flex h-dvh overflow-hidden bg-canvas text-ink md:gap-1.5 md:p-1.5">
         <Sidebar
-          view={view}
+          view={customer ? null : view}
           counts={counts}
           workspace={workspace}
           inboxAddress={inboxAddress}
@@ -429,6 +450,7 @@ export function SupportInbox({
           <>
             <ConversationList
               view={view}
+              customer={customer}
               counts={counts}
               conversations={visible}
               selectedId={selectedId}
@@ -442,6 +464,7 @@ export function SupportInbox({
               onFilterChange={setFilter}
               onSortChange={setSort}
               onViewChange={changeView}
+              onLeaveCustomer={leaveCustomer}
               // Phones show either the list or the thread.
               className={cn(showingDetail ? "hidden md:flex" : "flex")}
             />
@@ -458,6 +481,7 @@ export function SupportInbox({
                 onSetPriority={setPriority}
                 onSetAssignee={setAssignee}
                 onSetTags={setTags}
+                onViewCustomer={viewCustomer}
                 knownTags={knownTags}
                 onSendReply={sendReply}
                 onAddNote={addNote}
@@ -476,6 +500,7 @@ export function SupportInbox({
                 onSetPriority={setPriority}
                 onSetAssignee={setAssignee}
                 onSetTags={setTags}
+                onViewCustomer={viewCustomer}
                 onClose={() => setDetailsOpen(false)}
                 className="hidden xl:flex"
               />

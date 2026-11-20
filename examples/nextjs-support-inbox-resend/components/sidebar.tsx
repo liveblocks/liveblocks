@@ -58,7 +58,8 @@ export function Sidebar({
   onWorkspaceChange,
   className,
 }: {
-  view: View;
+  // null while the list is scoped to a customer (no view is active).
+  view: View | null;
   counts: ViewCounts;
   workspace: Workspace;
   inboxAddress: string;

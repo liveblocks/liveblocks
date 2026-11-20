@@ -39,6 +39,9 @@ export type NoteMessageData = Extract<
   { kind: "note" }
 >;
 
+// A customer, used to scope the list to one person's threads.
+export type Customer = { name: string; email: string };
+
 export type Status = ConversationMetadata["status"];
 
 export const STATUSES: Status[] = ["needs-response", "waiting", "resolved"];

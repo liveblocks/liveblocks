@@ -6,6 +6,7 @@ import {
   CATEGORY_LABEL,
   isOpen,
   type Conversation,
+  type Customer,
   type Priority,
   type Status,
 } from "@/lib/conversation";
@@ -24,6 +25,7 @@ export function CustomerPanel({
   onSetPriority,
   onSetAssignee,
   onSetTags,
+  onViewCustomer,
   onClose,
   className,
 }: {
@@ -36,10 +38,15 @@ export function CustomerPanel({
   onSetPriority: (priority: Priority) => void;
   onSetAssignee: (userId: string) => void;
   onSetTags: (tags: string[]) => void;
+  onViewCustomer: (customer: Customer) => void;
   onClose: () => void;
   className?: string;
 }) {
   const { metadata } = conversation;
+  const customer: Customer = {
+    name: metadata.customerName,
+    email: metadata.customerEmail,
+  };
   const history = conversations.filter(
     (item) => item.metadata.customerEmail === metadata.customerEmail
   );
@@ -93,12 +100,14 @@ export function CustomerPanel({
 
         <dl className="mt-4 flex flex-col gap-2.5">
           <Row icon={<MailIcon className="size-3.5" />} label="Email">
-            <a
-              href={`mailto:${metadata.customerEmail}`}
-              className="truncate text-ink hover:underline"
+            <button
+              type="button"
+              onClick={() => onViewCustomer(customer)}
+              className="-mx-1 max-w-full truncate rounded px-1 text-ink hover:bg-ink/8"
+              title="Show all conversations from this customer"
             >
               {metadata.customerEmail}
-            </a>
+            </button>
           </Row>
           {metadata.customerCompany ? (
             <Row icon={<Building2Icon className="size-3.5" />} label="Company">

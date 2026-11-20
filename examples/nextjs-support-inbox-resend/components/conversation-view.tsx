@@ -9,7 +9,12 @@ import {
   PanelRightOpenIcon,
   RotateCcwIcon,
 } from "lucide-react";
-import type { Conversation, Priority, Status } from "@/lib/conversation";
+import type {
+  Conversation,
+  Customer,
+  Priority,
+  Status,
+} from "@/lib/conversation";
 import { cn } from "@/lib/utils";
 import { CustomerAvatar, ViewerAvatars } from "./avatars";
 import { Composer } from "./composer";
@@ -30,6 +35,7 @@ export function ConversationView({
   onSetPriority,
   onSetAssignee,
   onSetTags,
+  onViewCustomer,
   knownTags,
   onSendReply,
   onAddNote,
@@ -45,6 +51,8 @@ export function ConversationView({
   onSetPriority: (priority: Priority) => void;
   onSetAssignee: (userId: string) => void;
   onSetTags: (tags: string[]) => void;
+  // Scope the list to every thread from this customer.
+  onViewCustomer: (customer: Customer) => void;
   knownTags: string[];
   onSendReply: (text: string) => Promise<void>;
   onAddNote: (text: string) => Promise<void>;
@@ -109,9 +117,19 @@ export function ConversationView({
             <span className="truncate font-medium text-ink">
               {metadata.customerName}
             </span>
-            <span className="hidden truncate text-ink-muted sm:inline">
+            <button
+              type="button"
+              onClick={() =>
+                onViewCustomer({
+                  name: metadata.customerName,
+                  email: metadata.customerEmail,
+                })
+              }
+              className="hidden truncate rounded px-1 text-ink-muted hover:bg-ink/8 hover:text-ink sm:inline"
+              title="Show all conversations from this customer"
+            >
               {metadata.customerEmail}
-            </span>
+            </button>
           </div>
 
           <div className="flex items-center gap-0.5">
