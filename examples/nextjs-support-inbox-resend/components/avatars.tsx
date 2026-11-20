@@ -1,6 +1,7 @@
 "use client";
 
 import { shallow, useOthers, useUser } from "@liveblocks/react";
+import { UserRoundIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { avatarTone, initials } from "@/lib/format";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -85,6 +86,43 @@ export function CustomerAvatar({
       aria-hidden
     >
       {initials(name || email)}
+    </span>
+  );
+}
+
+/**
+ * Compact "N viewing" count for list cards: how many other teammates have the
+ * conversation open right now (live, via presence). Renders nothing when no
+ * one else is reading it.
+ */
+export function ViewerCount({
+  feedId,
+  className,
+}: {
+  feedId: string;
+  className?: string;
+}) {
+  const count = useOthers((others) => {
+    const ids = new Set<string>();
+    for (const other of others) {
+      if (other.presence.viewingFeedId === feedId) ids.add(other.id);
+    }
+    return ids.size;
+  });
+
+  if (count === 0) {
+    return null;
+  }
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-xs text-ink-muted",
+        className
+      )}
+    >
+      <UserRoundIcon className="size-3.5" />
+      <span className="tabular">{count} viewing</span>
     </span>
   );
 }

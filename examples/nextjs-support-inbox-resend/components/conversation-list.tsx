@@ -5,6 +5,7 @@ import {
   ArrowLeftIcon,
   CheckIcon,
   ChevronDownIcon,
+  CircleDashedIcon,
   InboxIcon,
   ListFilterIcon,
   MailIcon,
@@ -23,7 +24,7 @@ import {
 } from "@/lib/conversation";
 import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { AgentAvatar, CustomerAvatar, ViewerAvatars } from "./avatars";
+import { AgentAvatar, CustomerAvatar, ViewerCount } from "./avatars";
 import { VIEWS, viewLabel, type View, type ViewCounts } from "./sidebar";
 import { PriorityIcon, StatusIcon } from "./status";
 import { TagList } from "./tags";
@@ -351,7 +352,7 @@ function ConversationRow({
               <span className="truncate">{PRIORITY_LABEL[metadata.priority]}</span>
             </span>
             <div className="flex shrink-0 items-center gap-2">
-              <ViewerAvatars feedId={feedId} size="xs" max={3} />
+              <ViewerCount feedId={feedId} />
               <span className="inline-flex items-center gap-1 text-xs text-ink-muted">
                 <MailIcon className="size-3.5" />
                 <time
@@ -364,7 +365,14 @@ function ConversationRow({
               </span>
               {metadata.assigneeId ? (
                 <AgentAvatar userId={metadata.assigneeId} size="sm" />
-              ) : null}
+              ) : (
+                <span
+                  className="flex size-5 items-center justify-center rounded-full border border-dashed border-line-strong text-ink-faint"
+                  title="Unassigned"
+                >
+                  <CircleDashedIcon className="size-3.5" strokeWidth={1.75} />
+                </span>
+              )}
             </div>
           </div>
         </div>
