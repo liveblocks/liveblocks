@@ -36,13 +36,13 @@ more.
   <Step>
     <StepTitle>Install MCP server</StepTitle>
     <StepContent>
-      To allow AI to inspect and modify data in your project, install the
+      To allow AI to inspect and modify data in your project, connect to the
       [Liveblocks MCP server](/docs/tools/mcp-server). Run the following command
       in the terminal, inserting your secret key from
       [your dashboard](/dashboard):
 
       ```bash
-      claude mcp add liveblocks -e LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}" -- npx -y github:liveblocks/liveblocks-mcp-server
+      claude mcp add --transport http liveblocks https://mcp.liveblocks.io/mcp --header "Authorization: Bearer {{SECRET_KEY}}"
       ```
 
       <Banner type="warning" title="Only for development">
@@ -116,7 +116,7 @@ can see the generated plugin files.
 ### MCP returns auth errors
 
 Use a secret key from the same [Liveblocks project](/dashboard) as your app.
-Confirm `LIVEBLOCKS_SECRET_KEY` in the MCP config matches that project.
+Confirm the secret key in the MCP config matches that project.
 
 ### MCP returns incorrect data
 
