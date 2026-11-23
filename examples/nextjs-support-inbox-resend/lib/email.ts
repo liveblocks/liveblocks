@@ -80,6 +80,21 @@ export function escapeHtml(text: string) {
 
 // Splits an email body into the new content and the quoted history ("On
 // … wrote:" / lines starting with ">"), so the UI can collapse the quote.
+// "On Mon, Nov 23, 2026 at 2:20 PM <support@acme.com> wrote:" — mail clients
+// hard-wrap this line, so allow it to span up to three lines as long as the
+// quoted text (`>`) follows right after.
+function isAttribution(lines: string[], index: number) {
+  if (!/^On\s/.test(lines[index])) return false;
+  for (let end = index; end < Math.min(index + 3, lines.length); end++) {
+    const candidate = lines.slice(index, end + 1).join(" ");
+    if (/\swrote:\s*$/.test(candidate)) {
+      const next = lines.slice(end + 1).find((line) => line.trim() !== "");
+      return next === undefined || /^>/.test(next);
+    }
+  }
+  return false;
+}
+
 export function splitQuotedText(text: string): {
   body: string;
   quoted: string | null;
@@ -88,7 +103,7 @@ export function splitQuotedText(text: string): {
   let cut = -1;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (/^>/.test(line) || /^On .{6,120} wrote:\s*$/.test(line)) {
+    if (/^>/.test(line) || isAttribution(lines, i)) {
       cut = i;
       break;
     }
