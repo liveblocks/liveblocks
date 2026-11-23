@@ -1,5 +1,5 @@
 /**
- * Generic customer replies for demo mode. The "Generate a response email"
+ * Generic customer replies for demo mode. The "Generate an example response"
  * button in the composer picks one at random and adds it to the conversation
  * as an inbound email, so there is always something new to respond to.
  * They're written to make sense after almost any agent reply.
