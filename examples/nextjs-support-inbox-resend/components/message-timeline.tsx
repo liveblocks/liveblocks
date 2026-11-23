@@ -207,7 +207,7 @@ function EmailMessage({
             </time>
           </div>
 
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-muted">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.25 gap-y-1 text-[11px] text-ink-muted">
             {sending ? (
               <span
                 className="inline-flex items-center gap-1 text-ink-secondary"
