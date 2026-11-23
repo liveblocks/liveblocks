@@ -6,7 +6,7 @@ import {
   CheckCircle2Icon,
   CheckIcon,
   ChevronsUpDownIcon,
-  CircleDotIcon,
+  MessagesSquareIcon,
   SettingsIcon,
   UserRoundIcon,
   type LucideProps,
@@ -39,7 +39,7 @@ export const VIEWS: {
   label: string;
   icon: ComponentType<LucideProps>;
 }[] = [
-  { id: "open", label: "Open", icon: CircleDotIcon },
+  { id: "open", label: "Open", icon: MessagesSquareIcon },
   { id: "mine", label: "Mine", icon: UserRoundIcon },
   { id: "unassigned", label: "Unassigned", icon: UnassignedIcon },
   { id: "mentions", label: "Mentions", icon: AtSignIcon },
