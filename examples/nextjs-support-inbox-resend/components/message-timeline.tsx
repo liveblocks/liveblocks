@@ -250,11 +250,7 @@ function EmailMessage({
             >
               •••
             </button>
-            {showQuoted ? (
-              <div className="mt-2 border-l-2 border-line pl-3 text-[13px] text-ink-muted">
-                {renderParagraphs(quoted)}
-              </div>
-            ) : null}
+            {showQuoted ? <QuotedText text={quoted} /> : null}
           </div>
         ) : null}
       </div>
@@ -326,6 +322,36 @@ function NoteMessage({
 }
 
 // Plain text → paragraphs; optionally highlights "@Full Name" mentions.
+// Quoted text as mail clients show it: the "On … wrote:" attribution as plain
+// muted text, then the `>`-prefixed lines (markers stripped) behind a bar.
+function QuotedText({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const firstQuoted = lines.findIndex((line) => line.startsWith(">"));
+  const attribution =
+    firstQuoted === -1
+      ? text
+      : lines.slice(0, firstQuoted).join("\n").trim();
+  const quoted =
+    firstQuoted === -1
+      ? ""
+      : lines
+          .slice(firstQuoted)
+          .map((line) => line.replace(/^>\s?/, ""))
+          .join("\n")
+          .trim();
+
+  return (
+    <div className="mt-2 text-[13px] text-ink-muted">
+      {attribution ? renderParagraphs(attribution) : null}
+      {quoted ? (
+        <div className={cn("border-l-2 border-line pl-3", attribution && "mt-2")}>
+          {renderParagraphs(quoted)}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function renderParagraphs(text: string, highlightMentions = false) {
   const paragraphs = text.replace(/\r\n?/g, "\n").split(/\n{2,}/);
   return paragraphs.map((paragraph, index) => (
