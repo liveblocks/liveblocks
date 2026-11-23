@@ -96,6 +96,14 @@ export function ticketRef(feedId: string) {
 
 // Feed ids are derived from the Resend thread id so a webhook retry (or a
 // second webhook for the same thread) always resolves to the same feed.
+// Customer replies made up by the "Generate a response email" button in demo
+// mode. Recognisable by id so the timeline can label them.
+export const GENERATED_REPLY_PREFIX = "demo_reply_";
+
+export function isGeneratedReply(messageId: string) {
+  return messageId.startsWith(GENERATED_REPLY_PREFIX);
+}
+
 export function feedIdForThread(resendThreadId: string) {
   return `thread_${resendThreadId}`;
 }

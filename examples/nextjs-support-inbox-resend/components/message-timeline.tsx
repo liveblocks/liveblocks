@@ -12,9 +12,16 @@ import {
   MailIcon,
   SendIcon,
 } from "lucide-react";
-import { Fragment, useLayoutEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   isEmail,
+  isGeneratedReply,
   isNote,
   sortByCreatedAt,
   type Conversation,
@@ -150,6 +157,7 @@ function EmailMessage({
   conversation: Conversation;
 }) {
   const { data } = message;
+  const generated = isGeneratedReply(message.id);
   const outbound = data.direction === "outbound";
   const sending = outbound && data.status === "sending";
   const { body, quoted } = splitQuotedText(data.text);
@@ -222,16 +230,10 @@ function EmailMessage({
             )}
             {data.cc.length > 0 ? <span>· Cc {data.cc.join(", ")}</span> : null}
             {data.simulated && outbound && !sending ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex cursor-default items-center rounded-sm border border-dashed border-line-strong px-0.5 py-0 text-[10px] font-medium text-ink-muted">
-                    Simulated
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" sideOffset={6}>
-                  Demo data — this email was not actually delivered.
-                </TooltipContent>
-              </Tooltip>
+              <DemoBadge>Demo data — this email was not actually delivered.</DemoBadge>
+            ) : null}
+            {generated ? (
+              <DemoBadge>Generated customer reply — no email was received.</DemoBadge>
             ) : null}
           </div>
         </div>
@@ -285,6 +287,7 @@ function NoteMessage({
   message: { id: string; createdAt: number; data: NoteMessageData };
 }) {
   const { data } = message;
+  const generated = isGeneratedReply(message.id);
 
   return (
     <article
@@ -322,6 +325,21 @@ function NoteMessage({
 }
 
 // Plain text → paragraphs; optionally highlights "@Full Name" mentions.
+function DemoBadge({ children }: { children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex cursor-default items-center rounded-sm border border-dashed border-line-strong px-[3px] py-0 text-[10px] font-medium text-ink-muted">
+          Simulated
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" sideOffset={6}>
+        {children}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 // Quoted text as mail clients show it: the "On … wrote:" attribution as plain
 // muted text, then the `>`-prefixed lines (markers stripped) behind a bar.
 function QuotedText({ text }: { text: string }) {

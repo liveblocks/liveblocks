@@ -22,6 +22,7 @@ import { useInboxSettings } from "@/hooks/use-inbox-settings";
 import { useMediaQuery, XL_BREAKPOINT } from "@/hooks/use-media-query";
 import {
   extractMentionedUserIds,
+  GENERATED_REPLY_PREFIX,
   isOpen,
   previewOf,
   PRIORITY_RANK,
@@ -475,7 +476,7 @@ export function SupportInbox({
       simulated: true,
     };
     await createFeedMessage(selected.feedId, data, {
-      id: `demo_reply_${crypto.randomUUID()}`,
+      id: `${GENERATED_REPLY_PREFIX}${crypto.randomUUID()}`,
     });
     // A new customer email puts the ball back in the team's court.
     await patch(selected, {
