@@ -107,13 +107,13 @@ export function SupportInbox({
   const deleteFeedMessage = useDeleteFeedMessage();
   const updateMyPresence = useUpdateMyPresence();
 
-  const [view, setView] = useState<View>("inbox");
+  const [view, setView] = useState<View>("open");
   // When set, the list shows every thread from this customer instead of the
   // current view (clicking a customer's email gets you here).
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<ListFilter>(defaultFilter("inbox"));
+  const [filter, setFilter] = useState<ListFilter>(defaultFilter("open"));
   const [sort, setSort] = useState<ListSort>("newest");
   // Details panel: docked beside the thread from `xl` up (toggleable), and a
   // slide-over on smaller screens, opened from the thread header.
@@ -139,7 +139,7 @@ export function SupportInbox({
 
   const counts = useMemo<ViewCounts>(() => {
     const result: ViewCounts = {
-      inbox: 0,
+      open: 0,
       mine: 0,
       unassigned: 0,
       mentions: 0,
@@ -562,7 +562,7 @@ function matchesView(
   selfId: string
 ) {
   switch (view) {
-    case "inbox":
+    case "open":
       return isOpen(metadata.status);
     case "mine":
       return isOpen(metadata.status) && metadata.assigneeId === selfId;

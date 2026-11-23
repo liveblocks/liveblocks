@@ -6,7 +6,7 @@ import {
   CheckCircle2Icon,
   CheckIcon,
   ChevronsUpDownIcon,
-  InboxIcon,
+  CircleDotIcon,
   SettingsIcon,
   UserRoundIcon,
   type LucideProps,
@@ -25,7 +25,7 @@ import {
 } from "./ui/dropdown-menu";
 
 export type View =
-  | "inbox"
+  | "open"
   | "mine"
   | "unassigned"
   | "mentions"
@@ -39,7 +39,7 @@ export const VIEWS: {
   label: string;
   icon: ComponentType<LucideProps>;
 }[] = [
-  { id: "inbox", label: "Inbox", icon: InboxIcon },
+  { id: "open", label: "Open", icon: CircleDotIcon },
   { id: "mine", label: "Mine", icon: UserRoundIcon },
   { id: "unassigned", label: "Unassigned", icon: UnassignedIcon },
   { id: "mentions", label: "Mentions", icon: AtSignIcon },

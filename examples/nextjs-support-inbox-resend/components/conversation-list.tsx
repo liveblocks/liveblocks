@@ -41,7 +41,7 @@ export type ListSort = "newest" | "oldest" | "priority";
 // Every view opens on what the team owes a reply to; Done shows everything
 // it contains.
 export function defaultFilter(view: View): ListFilter {
-  return view === "done" ? "all" : "needs-response";
+  return view === "open" || view === "done" ? "all" : "needs-response";
 }
 
 export function matchesFilter(
@@ -406,20 +406,20 @@ function ListEmptyState({
   } else if (customer) {
     title = "No conversations";
     description = `Nothing from ${customer.name} matches this filter.`;
-  } else if (view === "inbox" && inboxAddress) {
+  } else if (view === "open" && inboxAddress) {
     title = "Waiting for your first email";
     description = `Emails sent to ${inboxAddress} will appear here in realtime.`;
-  } else if (view === "inbox" && filter === "needs-response") {
+  } else if (view === "open" && filter === "needs-response") {
     title = "Inbox zero";
     description = "Nothing needs a response right now.";
-  } else if (view === "inbox" && filter === "waiting") {
+  } else if (view === "open" && filter === "waiting") {
     title = "Nothing waiting";
     description = "Conversations you've replied to will show up here.";
-  } else if (view === "inbox" && filter === "priority") {
+  } else if (view === "open" && filter === "priority") {
     title = "No high-priority conversations";
     description = "Urgent and high-priority conversations will show up here.";
-  } else if (view === "inbox") {
-    title = "Inbox zero";
+  } else if (view === "open") {
+    title = "Nothing open";
     description = "New customer emails will appear here in realtime.";
   } else if (view === "mine") {
     title = "Nothing assigned to you";
