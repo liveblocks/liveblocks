@@ -32,31 +32,56 @@ export function InboxSkeleton() {
           <Bone key={index} className="size-7 lg:h-8 lg:w-full" />
         ))}
       </div>
+      {/* Conversation list: header rows are 28 / 32 / 24px like the real one
+          (title, search, filter+sort), so the header is 131px tall. */}
       <div className="flex w-full shrink-0 flex-col bg-surface md:card md:w-[340px] xl:w-[380px]">
         <div className="flex flex-col gap-2.5 border-b border-line px-4 pt-3.5 pb-3">
-          <Bone className="h-5 w-24" />
-          <Bone className="h-8" />
-          <Bone className="h-5 w-40" />
+          <div className="flex h-7 items-center">
+            <Bone className="h-3.5 w-16" />
+          </div>
+          <Bone className="h-8 rounded-md" />
+          <div className="flex h-6 items-center justify-between">
+            <Bone className="h-3 w-24" />
+            <Bone className="h-3 w-24" />
+          </div>
         </div>
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="space-y-2 border-b border-line px-4 py-3">
-            <div className="flex items-center gap-2">
+          <div key={index} className="border-b border-line px-4 py-3">
+            <div className="flex h-5 items-center gap-2">
               <Bone className="size-5 rounded-full" />
               <Bone className="h-3 w-1/3" />
             </div>
-            <Bone className="h-3 w-4/5" />
-            <Bone className="h-3 w-full" />
-            <div className="flex justify-between pt-1">
-              <Bone className="h-3 w-12" />
-              <Bone className="h-3 w-16" />
+            <div className="mt-1.5 flex h-5 items-center">
+              <Bone className="h-3 w-4/5" />
+            </div>
+            <div className="mt-0.5 flex h-4 items-center">
+              <Bone className="h-2.5 w-full" />
+            </div>
+            <div className="mt-2 flex h-5 items-center justify-between">
+              <Bone className="h-3 w-14" />
+              <Bone className="h-3 w-10" />
             </div>
           </div>
         ))}
       </div>
+      {/* Thread: 40px title row + 48px meta row, 89px with the border. */}
       <div className="hidden min-w-0 flex-1 flex-col bg-surface md:card md:flex">
-        <div className="border-b border-line px-6 py-4">
-          <Bone className="h-4 w-1/3" />
-          <Bone className="mt-3 h-4 w-1/4" />
+        <div className="border-b border-line">
+          <div className="flex h-10 items-center pl-4 pr-2.5 pt-3">
+            <Bone className="h-3.5 w-1/3" />
+          </div>
+          <div className="flex items-center justify-between gap-4 pl-4 pr-2.5 pt-2 pb-3">
+            <div className="flex h-7 items-center gap-2">
+              <Bone className="size-5 rounded-full" />
+              <Bone className="h-3 w-24" />
+              <Bone className="h-3 w-40" />
+            </div>
+            <div className="flex h-7 items-center gap-3">
+              <Bone className="h-3 w-16" />
+              <Bone className="h-3 w-20" />
+              <Bone className="size-4" />
+            </div>
+          </div>
         </div>
         <TimelineSkeleton />
       </div>
