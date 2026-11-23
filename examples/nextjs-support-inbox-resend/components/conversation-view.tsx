@@ -34,6 +34,7 @@ export function ConversationView({
   onViewCustomer,
   onSendReply,
   onAddNote,
+  onSimulateCustomerReply,
   className,
 }: {
   conversation: Conversation;
@@ -49,6 +50,8 @@ export function ConversationView({
   onViewCustomer: (customer: Customer) => void;
   onSendReply: (text: string) => Promise<void>;
   onAddNote: (text: string) => Promise<void>;
+  // Demo mode: add a made-up customer reply to the conversation.
+  onSimulateCustomerReply: () => Promise<void>;
   className?: string;
 }) {
   const { metadata, feedId } = conversation;
@@ -163,6 +166,7 @@ export function ConversationView({
         demoMode={demoMode || metadata.source === "demo"}
         onSendReply={onSendReply}
         onAddNote={onAddNote}
+        onSimulateCustomerReply={onSimulateCustomerReply}
       />
     </section>
   );

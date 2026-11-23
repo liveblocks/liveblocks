@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getUsers } from "@/app/database";
 import type { ReplyRequest, ReplyResponse } from "@/lib/api";
 import { restoreFailedReply } from "@/lib/drafts";
+import { randomDemoReply } from "@/lib/demo-replies";
 import { fuzzyMatches } from "@/lib/search";
 import { useDemoSeed } from "@/hooks/use-demo-seed";
 import { useInboxSettings } from "@/hooks/use-inbox-settings";
@@ -450,6 +451,43 @@ export function SupportInbox({
     [selected, self.id, createFeedMessage, patch]
   );
 
+  // Demo mode only: pretend the customer wrote back, so there is always
+  // something new to respond to. Added straight to the feed as an inbound
+  // email; no mail is involved.
+  const simulateCustomerReply = useCallback(async () => {
+    if (!selected) return;
+    const text = randomDemoReply();
+    const data: EmailMessageData = {
+      kind: "email",
+      direction: "inbound",
+      status: "sent",
+      resendEmailId: "",
+      from: {
+        name: selected.metadata.customerName,
+        email: selected.metadata.customerEmail,
+      },
+      to: [inboxAddress],
+      cc: [],
+      subject: selected.metadata.subject,
+      text,
+      attachments: [],
+      authorId: "",
+      simulated: true,
+    };
+    await createFeedMessage(selected.feedId, data, {
+      id: `demo_reply_${crypto.randomUUID()}`,
+    });
+    // A new customer email puts the ball back in the team's court.
+    await patch(selected, {
+      preview: previewOf(text),
+      lastActivityAt: new Date().toISOString(),
+      status:
+        selected.metadata.status === "ignored"
+          ? "ignored"
+          : "needs-response",
+    });
+  }, [selected, inboxAddress, createFeedMessage, patch]);
+
   const showingDetail = view !== "settings" && selected !== null;
 
   return (
@@ -512,6 +550,7 @@ export function SupportInbox({
                 onViewCustomer={viewCustomer}
                 onSendReply={sendReply}
                 onAddNote={addNote}
+                onSimulateCustomerReply={simulateCustomerReply}
               />
             ) : (
               <NoConversation className="hidden md:flex" />

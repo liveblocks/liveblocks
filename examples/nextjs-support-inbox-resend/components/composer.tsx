@@ -41,6 +41,7 @@ export function Composer({
   demoMode,
   onSendReply,
   onAddNote,
+  onSimulateCustomerReply,
 }: {
   conversation: Conversation;
   // True when replies are simulated (no Resend credentials, or a demo
@@ -48,6 +49,7 @@ export function Composer({
   demoMode: boolean;
   onSendReply: (text: string) => Promise<void>;
   onAddNote: (text: string) => Promise<void>;
+  onSimulateCustomerReply: () => Promise<void>;
 }) {
   const feedId = conversation.feedId;
   const initial = getDraft(feedId);
@@ -355,7 +357,14 @@ export function Composer({
                 <>
                   <CircleAlertIcon className="size-3 shrink-0" />
                   <span className="truncate">
-                    Demo mode — replies are simulated and not delivered.
+                    Demo mode.{" "}
+                    <button
+                      type="button"
+                      onClick={() => void onSimulateCustomerReply()}
+                      className="rounded-sm underline decoration-line underline-offset-2 transition-colors hover:text-ink hover:decoration-ink-faint"
+                    >
+                      Generate a response email.
+                    </button>
                   </span>
                 </>
               ) : (
