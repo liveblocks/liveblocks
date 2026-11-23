@@ -5,7 +5,7 @@
  * plain substring (so partial words like "dupl" still work) or as a word that
  * is within a small edit distance ("diplicate" finds "duplicate"). The
  * tolerance scales with the length of the query word so short words stay
- * strict: 1 typo from 4 letters, 2 from 8.
+ * strict: 1 typo from 4 letters, 2 from 7, 3 from 11.
  */
 export function fuzzyMatches(text: string, query: string): boolean {
   const haystack = text.toLowerCase();
@@ -23,7 +23,8 @@ export function fuzzyMatches(text: string, query: string): boolean {
 }
 
 function typoTolerance(term: string) {
-  if (term.length >= 8) return 2;
+  if (term.length >= 11) return 3;
+  if (term.length >= 7) return 2;
   if (term.length >= 4) return 1;
   return 0;
 }
