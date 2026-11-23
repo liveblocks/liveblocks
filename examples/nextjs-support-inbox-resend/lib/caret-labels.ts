@@ -32,6 +32,7 @@ export const CaretLabels = Extension.create({
 });
 
 function decorate(root: HTMLElement) {
+  placeLabels(root);
   const labels = root.querySelectorAll<HTMLElement>(
     ".collaboration-carets__label:not([data-decorated])"
   );
@@ -52,6 +53,29 @@ function decorate(root: HTMLElement) {
       avatar.alt = "";
       avatar.className = "collaboration-carets__avatar";
       label.append(avatar);
+    }
+  }
+}
+
+// The editor clips its overflow, so a label above a caret on the first line
+// would be cut off. Flip those labels to hang below the caret instead.
+const LABEL_HEIGHT = 24;
+
+function placeLabels(root: HTMLElement) {
+  const top = root.getBoundingClientRect().top;
+  const carets = root.querySelectorAll<HTMLElement>(
+    ".collaboration-carets__caret"
+  );
+  for (const caret of carets) {
+    const label = caret.querySelector<HTMLElement>(
+      ".collaboration-carets__label"
+    );
+    if (!label) continue;
+    const below = caret.getBoundingClientRect().top - top < LABEL_HEIGHT;
+    if (below) {
+      label.dataset.below = "";
+    } else {
+      delete label.dataset.below;
     }
   }
 }

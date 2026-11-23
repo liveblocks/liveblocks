@@ -139,6 +139,11 @@
   .collaboration-carets__caret:hover .collaboration-carets__label {
     display: inline-flex;
   }
+  .collaboration-carets__label[data-below] {
+    inset-block-start: calc(1.15em + 1px);
+    border-radius: 6px;
+    border-start-start-radius: 0;
+  }
   .collaboration-carets__label::after {
     content: attr(data-name);
     margin-inline: 4px 3px;
