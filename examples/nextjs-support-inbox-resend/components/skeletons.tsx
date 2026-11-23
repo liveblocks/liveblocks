@@ -93,10 +93,10 @@ export function InboxSkeleton() {
             <Bone className="size-10 rounded-full" />
             <div className="flex-1">
               <div className="flex h-5 items-center">
-                <Bone className="h-3 w-28" />
+                <Bone className="h-3.5 w-28" />
               </div>
               <div className="flex h-4 items-center">
-                <Bone className="h-2.5 w-20" />
+                <Bone className="h-3 w-20" />
               </div>
             </div>
           </div>
@@ -104,7 +104,7 @@ export function InboxSkeleton() {
             {[44, 32].map((width) => (
               <div key={width} className="flex h-4 items-center gap-2">
                 <Bone className="size-3.5 rounded-sm" />
-                <Bone className="h-2.5" style={{ width: `${width}%` }} />
+                <Bone className="h-3" style={{ width: `${width}%` }} />
               </div>
             ))}
           </div>
@@ -112,7 +112,7 @@ export function InboxSkeleton() {
         <div className="mx-3 h-px bg-line" />
         <div className="px-3 py-5">
           <div className="mb-3 flex h-4 items-center">
-            <Bone className="h-2.5 w-11" />
+            <Bone className="h-3 w-11" />
           </div>
           <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-x-3 gap-y-1">
             {[
@@ -125,10 +125,10 @@ export function InboxSkeleton() {
             ].map(([label, value], index) => (
               <div key={index} className="contents">
                 <div className="flex h-7 items-center">
-                  <Bone className="h-2.5" style={{ width: label }} />
+                  <Bone className="h-3" style={{ width: label }} />
                 </div>
                 <div className="flex h-7 items-center">
-                  <Bone className="h-2.5" style={{ width: value }} />
+                  <Bone className="h-3" style={{ width: value }} />
                 </div>
               </div>
             ))}
