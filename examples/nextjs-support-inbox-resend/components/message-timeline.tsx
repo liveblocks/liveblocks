@@ -224,8 +224,8 @@ function EmailMessage({
             {data.simulated && outbound && !sending ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex cursor-default items-center rounded-sm border border-dashed border-line-strong px-1.5 py-px text-[10px] font-medium tracking-wide text-ink-muted uppercase">
-                    Simulated
+                  <span className="inline-flex cursor-default items-center rounded-sm border border-dashed border-line-strong px-0.5 py-0 text-[10px] font-medium text-ink-muted">
+                    simulated
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" sideOffset={6}>
