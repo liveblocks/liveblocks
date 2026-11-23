@@ -121,7 +121,16 @@ export function SupportInbox({
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
   const isDocked = useMediaQuery(XL_BREAKPOINT);
 
-  const conversations = feeds;
+  // A connected inbox only shows real email. Sample conversations seeded
+  // earlier (while this project ran in demo mode) are hidden rather than
+  // deleted, so switching back to demo mode brings them back.
+  const conversations = useMemo(
+    () =>
+      connected
+        ? feeds.filter((feed) => feed.metadata.source !== "demo")
+        : feeds,
+    [feeds, connected]
+  );
   // Latest feeds for async callbacks that outlive a render (reply delivery).
   const feedsRef = useRef(feeds);
   feedsRef.current = feeds;
