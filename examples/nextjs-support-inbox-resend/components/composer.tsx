@@ -362,7 +362,7 @@ export function Composer({
                 <>
                   <MailIcon className="size-3 shrink-0" />
                   <span className="truncate">
-                    Emails {conversation.metadata.customerEmail} via Resend.
+                    Emails {conversation.metadata.customerEmail}.
                   </span>
                 </>
               )}
