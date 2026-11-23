@@ -17,10 +17,11 @@ export function InboxSkeleton() {
       aria-busy
       aria-label="Loading inbox"
     >
-      <div className="hidden w-[220px] shrink-0 flex-col gap-2 p-3 md:flex">
-        <Bone className="mb-3 h-10" />
+      {/* Sidebar: icon rail below `lg`, full width above (see Sidebar). */}
+      <div className="hidden w-8 shrink-0 flex-col items-center gap-2 pt-px pb-2 md:flex lg:w-[220px] lg:items-stretch lg:px-2 lg:pt-3">
+        <Bone className="mb-3 size-7 lg:h-10 lg:w-full" />
         {Array.from({ length: 5 }).map((_, index) => (
-          <Bone key={index} className="h-8" />
+          <Bone key={index} className="size-7 lg:h-8 lg:w-full" />
         ))}
       </div>
       <div className="flex w-full shrink-0 flex-col bg-surface md:card md:w-[340px] xl:w-[380px]">
@@ -50,6 +51,34 @@ export function InboxSkeleton() {
           <Bone className="mt-3 h-4 w-1/4" />
         </div>
         <TimelineSkeleton />
+      </div>
+      {/* Details panel, docked from `xl` (open by default). */}
+      <div className="hidden w-[320px] shrink-0 flex-col bg-surface md:card xl:flex">
+        <div className="px-3 pt-3 pb-5">
+          <div className="flex items-center gap-3">
+            <Bone className="size-9 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Bone className="h-3 w-1/2" />
+              <Bone className="h-3 w-3/4" />
+            </div>
+          </div>
+          <div className="mt-4 space-y-2.5">
+            <Bone className="h-3 w-2/3" />
+            <Bone className="h-3 w-1/2" />
+          </div>
+        </div>
+        <div className="mx-3 h-px bg-line" />
+        <div className="px-3 py-5">
+          <Bone className="mb-4 h-3 w-12" />
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <Bone className="h-3 w-[84px]" />
+                <Bone className="h-3 w-24" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
