@@ -18,21 +18,18 @@
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
+  <img src="https://img.shields.io/badge/resend-message?style=flat&logo=resend&color=333&logoColor=fff" alt="Resend" />
 </p>
 
 This example shows how to build a shared customer-support inbox with
-[Liveblocks Feeds](https://liveblocks.io/docs/products/sync/feeds) and
-[Resend Inboxes](https://resend.com/docs/dashboard/inboxes/introduction), using
-[Next.js](https://nextjs.org/). Each shared inbox (workspace) is a Liveblocks
-room, each email conversation is a feed, and each email or internal note is a
-feed message. Switch between the Support and Sales workspaces from the sidebar;
-only the Support inbox can be connected to Resend, the Sales workspace always
-runs on sample conversations.
-Incoming emails arrive via a Resend Inboxes webhook; replies are sent through
-the Resend Inboxes reply API and appear instantly for every agent (optimistic
-"sending" state settled by the server). Live avatars show who is reading each
-conversation (Presence). Internal notes with @-mentions, assignment, priority,
-status (Needs response, Investigating, Waiting, Paused, Ignored, Done), search and filters all sync in realtime.
+[Liveblocks Feeds](https://liveblocks.io/docs/products/sync/feeds),
+[Resend Inboxes](https://resend.com/docs/dashboard/inboxes/introduction), and
+[Next.js](https://nextjs.org/). Customer emails arrive in realtime, and agents
+reply, leave internal notes with @-mentions, assign, prioritize, and tag
+conversations together, seeing who else is viewing or typing.
+
+Without a Resend inbox the app runs in demo mode with sample conversations and
+simulated replies.
 
 ## Getting started
 
@@ -60,14 +57,6 @@ Alternatively, you can set up your project manually:
   [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **secret** key as the
   `LIVEBLOCKS_SECRET_KEY` environment variable
-- _(Optional)_ Add `RESEND_API_KEY`, `RESEND_INBOX_ID` (or the inbox email
-  address), and `RESEND_WEBHOOK_SECRET` to connect a real Resend inbox. Without
-  them, the app runs in demo mode: it seeds realistic sample conversations and
-  replies are simulated (clearly labelled) and never emailed. With them, point a
-  Resend webhook at `https://<your-domain>/api/webhooks/resend` subscribed to
-  `inbox.email.received` and `inbox.email.sent`. For local development use a
-  tunnel (e.g. `ngrok`) so Resend can reach the webhook route. See
-  [`.env.example`](./.env.example) for variable names and comments.
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To see realtime sync, open the page in two browser tabs. Replies, internal notes,
@@ -75,6 +64,36 @@ assignments, priority, and status stay in sync across both tabs,
 and live avatars show who is viewing each conversation.
 
 </details>
+
+### Setting up Resend
+
+Optional. Without these steps the app runs in demo mode: sample conversations
+are seeded and replies are simulated (clearly labelled) rather than emailed.
+Connecting Resend turns the Support workspace into a real inbox; the Sales
+workspace always runs on sample data.
+
+- Create an account on [Resend](https://resend.com)
+- **API key** — create one in the [Resend dashboard](https://resend.com/api-keys)
+  with sending and inbox access, and add it to `.env.local` as
+  `RESEND_API_KEY`. The app uses it to send replies through the Inboxes reply
+  API and to verify webhooks.
+- **Inbox** — create an inbox under [Inboxes](https://resend.com/inboxes). It
+  can use Resend's hosted address or an address on your own verified domain
+  (needed for replies to reach external mail providers). Add its id (`inb_…`)
+  to `.env.local` as `RESEND_INBOX_ID`, or its address as
+  `RESEND_INBOX_EMAIL`. Emails sent to this address become conversations.
+- **Webhook** — under [Webhooks](https://resend.com/webhooks), add an endpoint
+  pointing at `https://<your-host>/api/webhooks/resend` and subscribe it to
+  `inbox.email.received` and `inbox.email.sent`. Copy its signing secret to
+  `.env.local` as `RESEND_WEBHOOK_SECRET`. The first event creates or updates
+  the conversation; the second confirms a reply was sent.
+- Restart `npm run dev`. The Settings view in the sidebar shows whether the
+  inbox is connected and which webhook URL to use.
+
+Resend has to reach the webhook over the internet, so for local development
+expose port 3000 with a tunnel such as [ngrok](https://ngrok.com)
+(`ngrok http 3000`) and use that URL for the endpoint. Only emails received
+after the webhook is set up appear; there is no backfill.
 
 ### Deploy on Vercel
 
@@ -103,8 +122,7 @@ you to deploy to Vercel.
 After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-support-inbox-resend)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
-[secret](https://codesandbox.io/docs/secrets). Add `RESEND_API_KEY`,
-`RESEND_INBOX_ID`, and `RESEND_WEBHOOK_SECRET` if you want to send and receive
-real email instead of demo mode.
+[secret](https://codesandbox.io/docs/secrets). To send and receive real email,
+follow [Setting up Resend](#setting-up-resend) and add those variables too.
 
 </details>
