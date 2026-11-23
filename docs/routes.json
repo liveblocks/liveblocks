@@ -406,6 +406,66 @@
         "title": "Upgrading",
         "path": "/api-reference/upgrading",
         "hidden": true
+      },
+      {
+        "title": "REST API (legacy path)",
+        "path": "/api-reference/rest-api",
+        "file": "/platform/rest-api.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Get started React (legacy path)",
+        "path": "/guides/get-started/react",
+        "file": "/get-started/react.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Presence (legacy path)",
+        "path": "/collaboration-features/multiplayer/presence",
+        "file": "/products/sync/presence.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Yjs (legacy path)",
+        "path": "/collaboration-features/multiplayer/yjs",
+        "file": "/products/sync/text-editing/yjs.mdx",
+        "hidden": true
+      },
+      {
+        "title": "AI Collaboration (legacy path)",
+        "path": "/ai-collaboration",
+        "file": "/use-cases/agentic-users.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Next.js Starter Kit (legacy path)",
+        "path": "/platform/nextjs-starter-kit",
+        "file": "/tools/nextjs-starter-kit.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Rooms (legacy path)",
+        "path": "/concepts/rooms",
+        "file": "/concepts.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Express + JavaScript install (legacy path)",
+        "path": "/installation/express-javascript",
+        "file": "/get-started/javascript.mdx",
+        "hidden": true
+      },
+      {
+        "title": "React + Firebase install (legacy path)",
+        "path": "/installation/react-firebase",
+        "file": "/get-started/react.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Schema validation syntax (legacy path)",
+        "path": "/guides/schema-validation/syntax",
+        "file": "/platform/schema-validation/syntax.mdx",
+        "hidden": true
       }
     ]
   },
