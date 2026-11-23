@@ -225,7 +225,7 @@ function EmailMessage({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="inline-flex cursor-default items-center rounded-sm border border-dashed border-line-strong px-0.5 py-0 text-[10px] font-medium text-ink-muted">
-                    simulated
+                    Simulated
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" sideOffset={6}>
