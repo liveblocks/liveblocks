@@ -1,9 +1,17 @@
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
-function Bone({ className }: { className?: string }) {
+function Bone({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: CSSProperties;
+}) {
   return (
     <div
       className={cn("animate-pulse rounded bg-ink/6", className)}
+      style={style}
       aria-hidden
     />
   );
@@ -52,29 +60,51 @@ export function InboxSkeleton() {
         </div>
         <TimelineSkeleton />
       </div>
-      {/* Details panel, docked from `xl` (open by default). */}
-      <div className="hidden w-[320px] shrink-0 flex-col bg-surface md:card xl:flex">
+      {/* Details panel, docked from `xl` (open by default). It sits on the
+          canvas, not in a card; the measurements mirror CustomerPanel. */}
+      <div className="hidden w-[320px] shrink-0 flex-col xl:flex">
         <div className="px-3 pt-3 pb-5">
           <div className="flex items-center gap-3">
-            <Bone className="size-9 rounded-full" />
-            <div className="flex-1 space-y-2">
-              <Bone className="h-3 w-1/2" />
-              <Bone className="h-3 w-3/4" />
+            <Bone className="size-10 rounded-full" />
+            <div className="flex-1">
+              <div className="flex h-5 items-center">
+                <Bone className="h-3 w-28" />
+              </div>
+              <div className="flex h-4 items-center">
+                <Bone className="h-2.5 w-20" />
+              </div>
             </div>
           </div>
-          <div className="mt-4 space-y-2.5">
-            <Bone className="h-3 w-2/3" />
-            <Bone className="h-3 w-1/2" />
+          <div className="mt-4 flex flex-col gap-2.5">
+            {[44, 32].map((width) => (
+              <div key={width} className="flex h-4 items-center gap-2">
+                <Bone className="size-3.5 rounded-sm" />
+                <Bone className="h-2.5" style={{ width: `${width}%` }} />
+              </div>
+            ))}
           </div>
         </div>
         <div className="mx-3 h-px bg-line" />
         <div className="px-3 py-5">
-          <Bone className="mb-4 h-3 w-12" />
-          <div className="space-y-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <Bone className="h-3 w-[84px]" />
-                <Bone className="h-3 w-24" />
+          <div className="mb-3 flex h-4 items-center">
+            <Bone className="h-2.5 w-11" />
+          </div>
+          <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-x-3 gap-y-1">
+            {[
+              [40, 56],
+              [44, 40],
+              [52, 72],
+              [28, 64],
+              [44, 80],
+              [68, 80],
+            ].map(([label, value], index) => (
+              <div key={index} className="contents">
+                <div className="flex h-7 items-center">
+                  <Bone className="h-2.5" style={{ width: label }} />
+                </div>
+                <div className="flex h-7 items-center">
+                  <Bone className="h-2.5" style={{ width: value }} />
+                </div>
               </div>
             ))}
           </div>
