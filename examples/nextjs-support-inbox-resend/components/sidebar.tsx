@@ -1,6 +1,6 @@
 "use client";
 
-import { useSelf } from "@liveblocks/react/suspense";
+import { ClientSideSuspense, useSelf } from "@liveblocks/react/suspense";
 import {
   AtSignIcon,
   CheckCircle2Icon,
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { WORKSPACES, type Workspace, type WorkspaceId } from "@/lib/workspaces";
 import { AgentAvatar } from "./avatars";
 import { HelpButton } from "./help-button";
+import { SidebarSkeleton } from "./skeletons";
 import { UnassignedIcon } from "./status";
 import {
   DropdownMenu,
@@ -52,15 +53,7 @@ export function viewLabel(view: View) {
     : (VIEWS.find((item) => item.id === view)?.label ?? "Inbox");
 }
 
-export function Sidebar({
-  view,
-  counts,
-  workspace,
-  inboxAddress,
-  onChange,
-  onWorkspaceChange,
-  className,
-}: {
+type SidebarProps = {
   // null while the list is scoped to a customer (no view is active).
   view: View | null;
   counts: ViewCounts;
@@ -69,7 +62,27 @@ export function Sidebar({
   onChange: (view: View) => void;
   onWorkspaceChange: (workspaceId: WorkspaceId) => void;
   className?: string;
-}) {
+};
+
+export function Sidebar(props: SidebarProps) {
+  return (
+    <ClientSideSuspense
+      fallback={<SidebarSkeleton className={props.className} />}
+    >
+      <SidebarInner {...props} />
+    </ClientSideSuspense>
+  );
+}
+
+function SidebarInner({
+  view,
+  counts,
+  workspace,
+  inboxAddress,
+  onChange,
+  onWorkspaceChange,
+  className,
+}: SidebarProps) {
   const self = useSelf();
 
   return (

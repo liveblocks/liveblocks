@@ -17,6 +17,52 @@ function Bone({
   );
 }
 
+// Icon rail below `lg`, full navigation above (see Sidebar).
+export function SidebarSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "flex w-8 shrink-0 flex-col items-center gap-2 pt-px pb-2 lg:w-[220px] lg:items-stretch lg:px-2 lg:pt-3",
+        className
+      )}
+      aria-hidden
+    >
+      <Bone className="mb-3 size-7 lg:h-10 lg:w-full" />
+      {Array.from({ length: 5 }).map((_, index) => (
+        <Bone key={index} className="size-7 lg:h-8 lg:w-full" />
+      ))}
+    </div>
+  );
+}
+
+// Mirrors Composer: tab row, 88px editor, footer with the send button.
+export function ComposerSkeleton() {
+  return (
+    <div
+      className="shrink-0 border-t border-line bg-surface"
+      aria-busy
+      aria-label="Loading composer"
+    >
+      <div className="mx-auto w-full max-w-[760px] px-4 pt-3 pb-4">
+        <div className="rounded-lg border border-line bg-surface">
+          <div className="flex items-center px-2 pt-2">
+            <Bone className="h-7 w-44 rounded-md" />
+          </div>
+          <div className="min-h-[88px] px-3.5 pt-3 pb-2">
+            <div className="flex h-[22px] items-center">
+              <Bone className="h-3 w-48" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-3 px-3 pb-2.5">
+            <Bone className="h-3 w-40" />
+            <Bone className="h-7 w-16 rounded-md" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Full-page placeholder while the room and its feeds load.
 export function InboxSkeleton() {
   return (
@@ -25,13 +71,7 @@ export function InboxSkeleton() {
       aria-busy
       aria-label="Loading inbox"
     >
-      {/* Sidebar: icon rail below `lg`, full width above (see Sidebar). */}
-      <div className="hidden w-8 shrink-0 flex-col items-center gap-2 pt-px pb-2 md:flex lg:w-[220px] lg:items-stretch lg:px-2 lg:pt-3">
-        <Bone className="mb-3 size-7 lg:h-10 lg:w-full" />
-        {Array.from({ length: 5 }).map((_, index) => (
-          <Bone key={index} className="size-7 lg:h-8 lg:w-full" />
-        ))}
-      </div>
+      <SidebarSkeleton className="hidden md:flex" />
       {/* Conversation list: header rows are 28 / 32 / 24px like the real one
           (title, search, filter+sort), so the header is 131px tall. */}
       <div className="flex w-full shrink-0 flex-col bg-surface md:card md:w-[340px] xl:w-[380px]">

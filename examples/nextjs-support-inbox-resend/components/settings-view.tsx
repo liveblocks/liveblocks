@@ -1,6 +1,6 @@
 "use client";
 
-import { useSelf } from "@liveblocks/react/suspense";
+import { ClientSideSuspense, useSelf } from "@liveblocks/react/suspense";
 import { CheckCircle2Icon, CopyIcon, ExternalLinkIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { getUsers } from "@/app/database";
@@ -15,18 +15,28 @@ import { AgentAvatar } from "./avatars";
  * whether a real Resend inbox is connected, where the webhook should point,
  * and who's on the team.
  */
-export function SettingsView({
-  settings,
-  workspace,
-  connected,
-  className,
-}: {
+type SettingsViewProps = {
   settings: InboxSettings | null;
   workspace: Workspace;
   // Whether this workspace's inbox is connected to Resend.
   connected: boolean;
   className?: string;
-}) {
+};
+
+export function SettingsView(props: SettingsViewProps) {
+  return (
+    <ClientSideSuspense fallback={null}>
+      <SettingsViewInner {...props} />
+    </ClientSideSuspense>
+  );
+}
+
+function SettingsViewInner({
+  settings,
+  workspace,
+  connected,
+  className,
+}: SettingsViewProps) {
   const self = useSelf();
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);

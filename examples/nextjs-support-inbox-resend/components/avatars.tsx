@@ -1,6 +1,11 @@
 "use client";
 
-import { shallow, useOthers, useSelf, useUser } from "@liveblocks/react";
+import { shallow, useUser } from "@liveblocks/react";
+import {
+  ClientSideSuspense,
+  useOthers,
+  useSelf,
+} from "@liveblocks/react/suspense";
 import { UserRoundIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -43,16 +48,11 @@ export function AgentAvatar({
 }) {
   const { user } = useUser(userId);
   const name = user?.name ?? "";
-  const isSelf = useSelf((self) => self.id === userId) ?? false;
-  const isOther = useOthers((others) =>
-    others.some((other) => other.id === userId)
-  );
-  const online = isSelf || isOther;
 
   return (
     <span
       className={cn("relative inline-flex shrink-0", className)}
-      title={name ? `${name} · ${online ? "online" : "offline"}` : undefined}
+      title={name || undefined}
     >
       {user?.avatar ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -72,17 +72,36 @@ export function AgentAvatar({
           {name ? initials(name) : ""}
         </span>
       )}
-      {online ? (
-        <span
-          className={cn(
-            "absolute -right-px -bottom-px rounded-full bg-done",
-            DOT[size],
-            ring
-          )}
-          aria-hidden
-        />
-      ) : null}
+      <ClientSideSuspense fallback={null}>
+        <PresenceDot userId={userId} size={size} ring={ring} />
+      </ClientSideSuspense>
     </span>
+  );
+}
+
+function PresenceDot({
+  userId,
+  size,
+  ring,
+}: {
+  userId: string;
+  size: Size;
+  ring: "ring-surface" | "ring-canvas";
+}) {
+  const isSelf = useSelf((self) => self.id === userId) ?? false;
+  const isOther = useOthers((others) =>
+    others.some((other) => other.id === userId)
+  );
+  if (!isSelf && !isOther) return null;
+  return (
+    <span
+      className={cn(
+        "absolute -right-px -bottom-px rounded-full bg-done",
+        DOT[size],
+        ring
+      )}
+      aria-hidden
+    />
   );
 }
 
@@ -123,7 +142,15 @@ export function CustomerAvatar({
  * conversation open right now (live, via presence). Renders nothing when no
  * one else is reading it.
  */
-export function ViewerCount({
+export function ViewerCount(props: { feedId: string; className?: string }) {
+  return (
+    <ClientSideSuspense fallback={null}>
+      <ViewerCountInner {...props} />
+    </ClientSideSuspense>
+  );
+}
+
+function ViewerCountInner({
   feedId,
   className,
 }: {
@@ -181,20 +208,30 @@ function useIsRecent(timestamp: number, window: number) {
  * presence. Each connected agent sets `viewingFeedId` to the conversation they
  * have open, so this updates instantly as people move around the inbox.
  */
-export function ViewerAvatars({
-  feedId,
-  size = "md",
-  max = 4,
-  ring = "ring-surface",
-  className,
-}: {
+type ViewerAvatarsProps = {
   feedId: string;
   size?: Size;
   max?: number;
   // Ring color separating stacked avatars; match the background they sit on.
   ring?: "ring-surface" | "ring-canvas";
   className?: string;
-}) {
+};
+
+export function ViewerAvatars(props: ViewerAvatarsProps) {
+  return (
+    <ClientSideSuspense fallback={null}>
+      <ViewerAvatarsInner {...props} />
+    </ClientSideSuspense>
+  );
+}
+
+function ViewerAvatarsInner({
+  feedId,
+  size = "md",
+  max = 4,
+  ring = "ring-surface",
+  className,
+}: ViewerAvatarsProps) {
   const viewerIds = useOthers((others) => {
     const ids: string[] = [];
     for (const other of others) {

@@ -1,7 +1,10 @@
 "use client";
 
 import { useUser } from "@liveblocks/react";
-import { useUpdateMyPresence } from "@liveblocks/react/suspense";
+import {
+  ClientSideSuspense,
+  useUpdateMyPresence,
+} from "@liveblocks/react/suspense";
 import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
@@ -23,6 +26,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { CaretLabels } from "@/lib/caret-labels";
+import { ComposerSkeleton } from "./skeletons";
 import { isOpen, type Conversation } from "@/lib/conversation";
 import {
   clearDraft,
@@ -36,13 +40,7 @@ import { AgentAvatar } from "./avatars";
 
 export type { ComposerMode } from "@/lib/drafts";
 
-export function Composer({
-  conversation,
-  demoMode,
-  onSendReply,
-  onAddNote,
-  onSimulateCustomerReply,
-}: {
+type ComposerProps = {
   conversation: Conversation;
   // True when replies are simulated (no Resend credentials, or a demo
   // conversation that isn't backed by a real email thread).
@@ -50,7 +48,23 @@ export function Composer({
   onSendReply: (text: string) => Promise<void>;
   onAddNote: (text: string) => Promise<void>;
   onSimulateCustomerReply: () => Promise<void>;
-}) {
+};
+
+export function Composer(props: ComposerProps) {
+  return (
+    <ClientSideSuspense fallback={<ComposerSkeleton />}>
+      <ComposerInner {...props} />
+    </ClientSideSuspense>
+  );
+}
+
+function ComposerInner({
+  conversation,
+  demoMode,
+  onSendReply,
+  onAddNote,
+  onSimulateCustomerReply,
+}: ComposerProps) {
   const feedId = conversation.feedId;
   const initial = getDraft(feedId);
   const [mode, setMode] = useState<ComposerMode>(initial?.mode ?? "reply");
