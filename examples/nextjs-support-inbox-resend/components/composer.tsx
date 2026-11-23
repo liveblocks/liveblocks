@@ -348,7 +348,7 @@ export function Composer({
                 <>
                   <LockIcon className="size-3 shrink-0 text-note-ink" />
                   <span className="truncate">
-                    Only visible to your team. Never sent to the customer.
+                    Only visible to your team.
                   </span>
                 </>
               ) : demoMode ? (
