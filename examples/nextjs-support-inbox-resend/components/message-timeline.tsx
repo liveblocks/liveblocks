@@ -230,10 +230,10 @@ function EmailMessage({
             )}
             {data.cc.length > 0 ? <span>· Cc {data.cc.join(", ")}</span> : null}
             {data.simulated && outbound && !sending ? (
-              <DemoBadge>Demo data — this email was not actually delivered.</DemoBadge>
+              <DemoBadge>Example is in demo mode, this email was not actually sent.</DemoBadge>
             ) : null}
             {generated ? (
-              <DemoBadge>Generated customer reply — no email was received.</DemoBadge>
+              <DemoBadge>Example is in demo mode, this email was not actually received.</DemoBadge>
             ) : null}
           </div>
         </div>
