@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getUsers } from "@/app/database";
 import type { ReplyRequest, ReplyResponse } from "@/lib/api";
 import { restoreFailedReply } from "@/lib/drafts";
+import { fuzzyMatches } from "@/lib/search";
 import { useDemoSeed } from "@/hooks/use-demo-seed";
 import { useInboxSettings } from "@/hooks/use-inbox-settings";
 import { useMediaQuery, XL_BREAKPOINT } from "@/hooks/use-media-query";
@@ -159,7 +160,7 @@ export function SupportInbox({
   }, [conversations, self.id]);
 
   const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+    const needle = query.trim();
     const list = conversations.filter(({ metadata }) => {
       if (customer) {
         if (metadata.customerEmail !== customer.email) return false;
@@ -175,10 +176,8 @@ export function SupportInbox({
           metadata.customerCompany,
           metadata.preview,
           ...(metadata.tags ?? []),
-        ]
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(needle)) return false;
+        ].join(" ");
+        if (!fuzzyMatches(haystack, needle)) return false;
       }
       return true;
     });
