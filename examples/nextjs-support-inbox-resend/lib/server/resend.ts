@@ -133,8 +133,42 @@ export async function syncEmailToFeed({
     roomId,
     feedId,
   });
-  if (existing.some((message) => message.id === messageId)) {
+  if (
+    existing.some(
+      (message) =>
+        message.id === messageId ||
+        (message.data.kind === "email" &&
+          message.data.resendEmailId === email.id)
+    )
+  ) {
     return { feedId, messageId, created: false };
+  }
+
+  // An outbound email may be a reply this app just sent, whose `sending`
+  // message is still waiting for the reply route to record Resend's email id.
+  // Settle that message instead of adding the email a second time.
+  if (!inbound) {
+    const pending = existing.find(
+      (message) =>
+        message.data.kind === "email" &&
+        message.data.direction === "outbound" &&
+        message.data.status === "sending" &&
+        sameText(message.data.text, text)
+    );
+    if (pending && pending.data.kind === "email") {
+      await settleReply({
+        roomId,
+        feedId,
+        messageId: pending.id,
+        data: {
+          ...pending.data,
+          status: "sent",
+          resendEmailId: email.id,
+          from: parseAddress(email.from),
+        },
+      });
+      return { feedId, messageId: pending.id, created: false };
+    }
   }
 
   const data: EmailMessageData = {
@@ -295,6 +329,12 @@ async function getFeedOrNull(
     }
     throw error;
   }
+}
+
+// Whitespace-insensitive comparison of email bodies.
+function sameText(a: string, b: string) {
+  const normalize = (value: string) => value.replace(/\s+/g, " ").trim();
+  return normalize(a) === normalize(b);
 }
 
 export function isNotFound(error: unknown) {

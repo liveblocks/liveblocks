@@ -72,15 +72,19 @@ export async function POST(request: NextRequest) {
 
   // Replies sent from this app are already in the feed as a "sending" (or,
   // by now, "sent") message: this event is Resend's confirmation that the
-  // email left. If the reply route hasn't recorded the email id yet, leave it
-  // to the route rather than mirroring the email a second time.
-  if (event.type === "inbox.email.sent" && event.data.source === "api") {
+  // email left. Anything else sent from the inbox (the Resend dashboard, the
+  // inbox agent) is mirrored below like a received email. A reply whose
+  // route hasn't recorded the email id yet is matched by its text there, so
+  // it's never added twice.
+  if (event.type === "inbox.email.sent") {
     const confirmed = await confirmSentEmail({
       roomId: BASE_ROOM_ID,
       threadId,
       emailId,
     });
-    return NextResponse.json({ ok: true, confirmed });
+    if (confirmed) {
+      return NextResponse.json({ ok: true, confirmed });
+    }
   }
 
   const inbox = inboxSelector(inboxId);
