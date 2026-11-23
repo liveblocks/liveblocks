@@ -244,7 +244,7 @@ function EmailMessage({
             <button
               type="button"
               onClick={() => setShowQuoted((value) => !value)}
-              className="inline-flex h-5 items-center rounded-sm bg-hover px-2 text-[11px] tracking-[0.2em] text-ink-muted hover:bg-selected hover:text-ink"
+              className="inline-flex h-4 items-center rounded-sm bg-hover px-1.5 text-[9px] leading-none tracking-[0.15em] text-ink-muted hover:bg-selected hover:text-ink"
               aria-expanded={showQuoted}
               aria-label={showQuoted ? "Hide quoted text" : "Show quoted text"}
             >
