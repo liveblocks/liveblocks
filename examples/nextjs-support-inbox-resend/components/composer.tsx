@@ -281,6 +281,11 @@ function ComposerInner({
     }
   };
 
+  // `immediatelyRender: false` means the editor only exists after mount.
+  if (!editor) {
+    return <ComposerSkeleton />;
+  }
+
   return (
     <div className="shrink-0 border-t border-line bg-surface">
       <div className="mx-auto w-full max-w-[760px] px-4 pt-3 pb-4">
