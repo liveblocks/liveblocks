@@ -363,7 +363,7 @@ export function Composer({
                       onClick={() => void onSimulateCustomerReply()}
                       className="rounded-sm underline decoration-line underline-offset-2 transition-colors hover:text-ink hover:decoration-ink-faint"
                     >
-                      Generate a response email.
+                      Generate an example response.
                     </button>
                   </span>
                 </>
