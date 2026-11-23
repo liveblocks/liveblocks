@@ -240,7 +240,7 @@ function EmailMessage({
       <div className="prose-email mt-3 whitespace-pre-wrap md:pl-12">
         {renderParagraphs(body)}
         {quoted ? (
-          <div className="mt-1">
+          <div className="mt-2">
             <button
               type="button"
               onClick={() => setShowQuoted((value) => !value)}
