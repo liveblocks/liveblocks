@@ -44,7 +44,7 @@ npx create-liveblocks-app@latest --example nextjs-support-inbox --api-key
 This will download the example and ask permission to open your browser, enabling
 you to automatically get your API key from your
 [liveblocks.io](https://liveblocks.io) account. To send and receive real email,
-follow [Setting up Resend](#setting-up-resend).
+follow _Setting up Resend_.
 
 ### Manual setup
 
@@ -121,6 +121,6 @@ After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-support-inbox)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets). To send and receive real email,
-follow [Setting up Resend](#setting-up-resend) and add those variables too.
+follow _Setting up Resend_ and add those variables too.
 
 </details>
