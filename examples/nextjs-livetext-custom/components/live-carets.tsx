@@ -21,7 +21,7 @@ export function LiveCarets({
   editorRef,
   text,
 }: {
-  editorRef: RefObject<HTMLDivElement>;
+  editorRef: RefObject<HTMLDivElement | null>;
   text: LiveTextData;
 }) {
   const others = useOthersMapped(

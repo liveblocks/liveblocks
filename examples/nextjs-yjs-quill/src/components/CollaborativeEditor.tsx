@@ -1,7 +1,7 @@
 "use client";
 
 import Quill from "quill";
-import ReactQuill from "react-quill";
+import ReactQuill from "react-quill-new";
 import QuillCursors from "quill-cursors";
 import { QuillBinding } from "y-quill";
 import * as Y from "yjs";

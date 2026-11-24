@@ -12,12 +12,12 @@
   "dependencies": {
     "@liveblocks/client": "^3.23.0",
     "@liveblocks/react": "^3.23.0",
-    "@react-three/drei": "^9.16.1",
-    "@react-three/fiber": "^8.0.27",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
     "next": "^16.4.6",
-    "react": "^18.3.1",
+    "react": "^19.3.1",
     "react-colorful": "^5.5.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.3.1",
     "three": ">=0.159.0"
   },
   "devDependencies": {

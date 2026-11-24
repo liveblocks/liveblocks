@@ -155,7 +155,7 @@ function ScrubbableValueType({
   ...props
 }: ScrubbableValueTypeProps) {
   const history = useHistory();
-  const initialValue = useRef<number>();
+  const initialValue = useRef<number>(undefined);
 
   const bindScrubEvents = useGesture(
     {
@@ -299,7 +299,7 @@ export function DisplayCell({
   ...props
 }: DisplayCellProps) {
   const highlightOpacity = useMotionValue(0);
-  const highlightAnimationControls = useRef<AnimationPlaybackControls>();
+  const highlightAnimationControls = useRef<AnimationPlaybackControls>(undefined);
   const isInitialRender = useInitialRender();
   const isError = useMemo(() => value === EXPRESSION_ERROR, [value]);
   const isNumericalValue = useMemo(() => isNumerical(value), [value]);
