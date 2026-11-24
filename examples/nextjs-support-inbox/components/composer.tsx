@@ -368,9 +368,7 @@ function ComposerInner({
               {isNote ? (
                 <>
                   <LockIcon className="size-3 shrink-0 text-note-ink" />
-                  <span className="truncate">
-                    Only visible to your team.
-                  </span>
+                  <span className="truncate">Only visible to your team.</span>
                 </>
               ) : demoMode ? (
                 <>
@@ -628,7 +626,9 @@ function MentionSuggestions({
   return (
     <div
       role="listbox"
-      className="absolute bottom-full left-3 z-20 mb-1 w-64 overflow-hidden rounded-md border border-line bg-surface p-1 shadow-lg shadow-ink/5 animate-in fade-in-0 zoom-in-95"
+      data-state="open"
+      data-side="top"
+      className="menu-animate absolute bottom-full left-3 z-20 mb-1 w-64 overflow-hidden rounded-md border border-line bg-surface p-1 shadow-lg shadow-ink/5 [--menu-origin:bottom_left]"
     >
       {userIds.map((userId, index) => (
         <MentionSuggestion

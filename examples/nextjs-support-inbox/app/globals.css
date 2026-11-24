@@ -197,3 +197,45 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* Menus and popovers: a short settle from the trigger's side, scaling from
+   the anchored corner. Opening eases out over 160ms; closing is instant. */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--menu-x, 0), var(--menu-y, 0)) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.menu-animate {
+  --menu-x: 0px;
+  --menu-y: -4px;
+  transform-origin: var(
+    --radix-dropdown-menu-content-transform-origin,
+    var(--menu-origin, top left)
+  );
+}
+.menu-animate[data-side="top"] {
+  --menu-y: 4px;
+}
+.menu-animate[data-side="left"] {
+  --menu-x: 4px;
+  --menu-y: 0px;
+}
+.menu-animate[data-side="right"] {
+  --menu-x: -4px;
+  --menu-y: 0px;
+}
+.menu-animate[data-state="open"] {
+  animation: menu-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-animate[data-state="open"] {
+    animation: none;
+  }
+}
