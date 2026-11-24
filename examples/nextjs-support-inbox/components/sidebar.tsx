@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { cn } from "@/lib/utils";
-import { WORKSPACES, type Workspace, type WorkspaceId } from "@/lib/workspaces";
+import type { Workspace, WorkspaceId } from "@/lib/workspaces";
 import { AgentAvatar } from "./avatars";
 import { HelpButton } from "./help-button";
 import { SidebarSkeleton } from "./skeletons";
@@ -58,6 +58,8 @@ type SidebarProps = {
   view: View | null;
   counts: ViewCounts;
   workspace: Workspace;
+  // Workspaces available in the switcher.
+  workspaces: Workspace[];
   inboxAddress: string;
   onChange: (view: View) => void;
   onWorkspaceChange: (workspaceId: WorkspaceId) => void;
@@ -78,6 +80,7 @@ function SidebarInner({
   view,
   counts,
   workspace,
+  workspaces,
   inboxAddress,
   onChange,
   onWorkspaceChange,
@@ -96,6 +99,7 @@ function SidebarInner({
       <div className="pt-px pb-2 lg:px-2 lg:pt-3">
         <WorkspaceSwitcher
           workspace={workspace}
+          workspaces={workspaces}
           inboxAddress={inboxAddress}
           onChange={onWorkspaceChange}
         />
@@ -122,7 +126,9 @@ function SidebarInner({
               <Icon
                 className={cn(
                   "size-4 shrink-0",
-                  active ? "text-ink" : "text-ink-muted group-hover:text-ink-secondary"
+                  active
+                    ? "text-ink"
+                    : "text-ink-muted group-hover:text-ink-secondary"
                 )}
                 strokeWidth={1.75}
               />
@@ -192,13 +198,40 @@ function SidebarInner({
 
 function WorkspaceSwitcher({
   workspace,
+  workspaces,
   inboxAddress,
   onChange,
 }: {
   workspace: Workspace;
+  workspaces: Workspace[];
   inboxAddress: string;
   onChange: (workspaceId: WorkspaceId) => void;
 }) {
+  const label = (
+    <>
+      <LiveblocksMark />
+      <div className="hidden min-w-0 flex-1 lg:block">
+        <div className="truncate text-[13px] leading-tight font-medium text-ink">
+          {workspace.name}
+        </div>
+        <div className="truncate text-[11px] leading-tight text-ink-muted">
+          {inboxAddress}
+        </div>
+      </div>
+    </>
+  );
+
+  if (workspaces.length < 2) {
+    return (
+      <div
+        className="flex h-7 w-full items-center justify-center gap-2.5 rounded-md text-left lg:h-10 lg:justify-start lg:px-2"
+        title={workspace.name}
+      >
+        {label}
+      </div>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -206,19 +239,11 @@ function WorkspaceSwitcher({
         aria-label={`Workspace: ${workspace.name}`}
         title={workspace.name}
       >
-        <LiveblocksMark />
-        <div className="hidden min-w-0 flex-1 lg:block">
-          <div className="truncate text-[13px] leading-tight font-medium text-ink">
-            {workspace.name}
-          </div>
-          <div className="truncate text-[11px] leading-tight text-ink-muted">
-            {inboxAddress}
-          </div>
-        </div>
+        {label}
         <ChevronsUpDownIcon className="hidden size-3.5 shrink-0 text-ink-faint group-hover:text-ink-muted lg:block" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">
-        {WORKSPACES.map((item) => {
+        {workspaces.map((item) => {
           const active = item.id === workspace.id;
           return (
             <DropdownMenuItem

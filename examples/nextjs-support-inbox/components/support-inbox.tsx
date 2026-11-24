@@ -45,7 +45,7 @@ import { ConversationView, NoConversation } from "./conversation-view";
 import { CustomerPanel } from "./customer-panel";
 import { SettingsView } from "./settings-view";
 import { Sidebar, VIEWS, type View, type ViewCounts } from "./sidebar";
-import type { Workspace, WorkspaceId } from "@/lib/workspaces";
+import { WORKSPACES, type Workspace, type WorkspaceId } from "@/lib/workspaces";
 import { TooltipProvider } from "./ui/tooltip";
 
 /**
@@ -77,6 +77,20 @@ export function SupportInbox({
   // is (and in every other workspace), every reply is simulated.
   const connected = settings?.mode === "resend" && workspace.connectable;
   const demoMode = !connected;
+  // Once a deployment is connected to Resend, the sample workspaces are
+  // hidden so the inbox only ever shows real email.
+  const workspaces = useMemo(
+    () =>
+      settings?.mode === "resend"
+        ? WORKSPACES.filter((item) => item.connectable)
+        : WORKSPACES,
+    [settings?.mode]
+  );
+  useEffect(() => {
+    if (!workspaces.some((item) => item.id === workspace.id)) {
+      onWorkspaceChange(workspaces[0].id);
+    }
+  }, [workspaces, workspace.id, onWorkspaceChange]);
   const inboxAddress = connected
     ? (settings?.inboxAddress ?? workspace.address)
     : workspace.address;
@@ -200,7 +214,8 @@ export function SupportInbox({
     return list.sort((a, b) => {
       if (sort === "priority") {
         const rank =
-          PRIORITY_RANK[a.metadata.priority] - PRIORITY_RANK[b.metadata.priority];
+          PRIORITY_RANK[a.metadata.priority] -
+          PRIORITY_RANK[b.metadata.priority];
         if (rank !== 0) return rank;
       }
       return sort === "oldest"
@@ -339,7 +354,9 @@ export function SupportInbox({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        result = (await response.json().catch(() => null)) as ReplyResponse | null;
+        result = (await response
+          .json()
+          .catch(() => null)) as ReplyResponse | null;
       } catch {
         result = null;
       }
@@ -483,9 +500,7 @@ export function SupportInbox({
       preview: previewOf(text),
       lastActivityAt: new Date().toISOString(),
       status:
-        selected.metadata.status === "ignored"
-          ? "ignored"
-          : "needs-response",
+        selected.metadata.status === "ignored" ? "ignored" : "needs-response",
     });
   }, [selected, inboxAddress, createFeedMessage, patch]);
 
@@ -498,6 +513,7 @@ export function SupportInbox({
           view={customer ? null : view}
           counts={counts}
           workspace={workspace}
+          workspaces={workspaces}
           inboxAddress={inboxAddress}
           onChange={changeView}
           onWorkspaceChange={onWorkspaceChange}
@@ -582,7 +598,7 @@ export function SupportInbox({
                 />
                 <CustomerPanel
                   conversation={selected}
-                    selfId={self.id}
+                  selfId={self.id}
                   knownTags={knownTags}
                   onSetStatus={setStatus}
                   onSetPriority={setPriority}
