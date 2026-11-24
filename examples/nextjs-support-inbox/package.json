@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks-examples/nextjs-support-inbox-resend",
+  "name": "@liveblocks-examples/nextjs-support-inbox",
   "description": "This example shows how to build a collaborative customer support inbox with Liveblocks Feeds, Resend Inboxes, and Next.js.",
   "license": "Apache-2.0",
   "private": true,

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 const EXAMPLE_NAME = "Collaborative support inbox";
 const EXAMPLE_URL =
-  "https://liveblocks.io/examples/support-inbox-resend/nextjs-support-inbox-resend";
+  "https://liveblocks.io/examples/support-inbox/nextjs-support-inbox";
 
 type Feature = {
   icon: ReactNode;

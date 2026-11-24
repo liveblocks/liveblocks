@@ -16,7 +16,7 @@ type FeedMessage<FMD> = {
   data: FMD;
 };
 
-export const EXAMPLE_NAME = "nextjs-support-inbox-resend";
+export const EXAMPLE_NAME = "nextjs-support-inbox";
 
 // One Liveblocks room per shared inbox. This is the room of the configured
 // Resend inbox; other workspaces and gallery deployments derive their room ids
