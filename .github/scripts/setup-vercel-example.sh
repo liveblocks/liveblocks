@@ -367,6 +367,7 @@ create_vercel_project() {
         installCommand: "npm install",
         rootDirectory: $root_directory,
         framework: $framework,
+        previewDeploymentsDisabled: true,
         gitRepository: {
           type: "github",
           repo: $repository
@@ -552,6 +553,7 @@ configure_vercel_project() {
         installCommand: "npm install",
         rootDirectory: $root_directory,
         framework: $framework,
+        previewDeploymentsDisabled: true,
         gitComments: {
           onCommit: false,
           onPullRequest: false
