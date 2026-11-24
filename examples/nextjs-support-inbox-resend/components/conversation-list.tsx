@@ -41,7 +41,7 @@ export type ListSort = "newest" | "oldest" | "priority";
 // Every view opens on what the team owes a reply to; Done shows everything
 // it contains.
 export function defaultFilter(view: View): ListFilter {
-  return view === "open" || view === "done" ? "all" : "needs-response";
+  return view === "done" ? "all" : "needs-response";
 }
 
 export function matchesFilter(
