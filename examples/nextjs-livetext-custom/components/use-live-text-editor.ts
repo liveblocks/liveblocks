@@ -29,7 +29,7 @@ import { attributesAt, isFormatActive } from "./live-text-formatting";
 
 // Binds a contenteditable to the LiveText in Storage: edits become LiveText operations, the DOM is always rendered from Storage, and the selection is tracked and shared through presence
 export function useLiveTextEditor(): {
-  editorRef: RefObject<HTMLDivElement>;
+  editorRef: RefObject<HTMLDivElement | null>;
   text: LiveTextData;
   selection: SelectionRange | null;
   historyBatchActive: boolean;

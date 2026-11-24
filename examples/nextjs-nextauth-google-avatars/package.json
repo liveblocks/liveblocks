@@ -14,15 +14,15 @@
     "@liveblocks/node": "^3.23.0",
     "@liveblocks/react": "^3.23.0",
     "classnames": "^2.3.3",
-    "next": "^16.2.12",
+    "next": "^16.4.6",
     "next-auth": "^4.23.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@svgr/webpack": "^7.0.0",
     "@types/node": "^14.14.45",
-    "@types/react": "^18.3.27",
+    "@types/react": "^19.3.0",
     "autoprefixer": "^10.2.6",
     "postcss": "^8.2.15",
     "prettier": "^3.3.3",

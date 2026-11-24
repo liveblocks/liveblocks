@@ -1,6 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "./auth/getServerSession";
+import { getServerSession } from "../../lib/getServerSession";
 import { User } from "../../types";
 
 /**
