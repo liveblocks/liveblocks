@@ -1953,7 +1953,8 @@ describe("room", () => {
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a short backoff delay
-        await vi.advanceTimersByTimeAsync(250);
+        // (250ms, plus up to 20% jitter)
+        await vi.advanceTimersByTimeAsync(300);
         expect(wss.connections.size).toBe(2);
       } finally {
         vi.useRealTimers();
@@ -1989,7 +1990,8 @@ describe("room", () => {
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a short backoff delay
-        await vi.advanceTimersByTimeAsync(250);
+        // (250ms, plus up to 20% jitter)
+        await vi.advanceTimersByTimeAsync(300);
         expect(wss.connections.size).toBe(2);
       } finally {
         vi.useRealTimers();
@@ -2091,7 +2093,7 @@ describe("room", () => {
         // A new connection attempt will be made after a longer backoff delay
         await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
         expect(wss.connections.size).toBe(1);
-        await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
+        await vi.advanceTimersByTimeAsync(1900); // Wait an additional 1900ms (for a total of 2000ms, plus up to 20% jitter)
         expect(wss.connections.size).toBe(2);
       } finally {
         vi.useRealTimers();
@@ -2129,7 +2131,7 @@ describe("room", () => {
         // A new connection attempt will be made after a LONG backoff delay
         await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
         expect(wss.connections.size).toBe(1);
-        await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
+        await vi.advanceTimersByTimeAsync(1900); // Wait an additional 1900ms (for a total of 2000ms, plus up to 20% jitter)
         expect(wss.connections.size).toBe(2);
       } finally {
         vi.useRealTimers();
@@ -2161,7 +2163,8 @@ describe("room", () => {
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a normal backoff delay
-        await vi.advanceTimersByTimeAsync(250);
+        // (250ms, plus up to 20% jitter)
+        await vi.advanceTimersByTimeAsync(300);
         expect(wss.connections.size).toBe(2);
       } finally {
         vi.useRealTimers();
@@ -2197,7 +2200,8 @@ describe("room", () => {
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a normal backoff delay
-        await vi.advanceTimersByTimeAsync(250);
+        // (250ms, plus up to 20% jitter)
+        await vi.advanceTimersByTimeAsync(300);
         expect(wss.connections.size).toBe(2);
       } finally {
         vi.useRealTimers();
@@ -2286,7 +2290,7 @@ describe("room", () => {
         // A new connection attempt will be made after a longer backoff delay
         await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
         expect(wss.connections.size).toBe(1);
-        await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
+        await vi.advanceTimersByTimeAsync(1900); // Wait an additional 1900ms (for a total of 2000ms, plus up to 20% jitter)
         expect(wss.connections.size).toBe(2);
       } finally {
         vi.useRealTimers();
@@ -2324,7 +2328,7 @@ describe("room", () => {
         // A new connection attempt will be made after a LONG backoff delay
         await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
         expect(wss.connections.size).toBe(1);
-        await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
+        await vi.advanceTimersByTimeAsync(1900); // Wait an additional 1900ms (for a total of 2000ms, plus up to 20% jitter)
         expect(wss.connections.size).toBe(2);
       } finally {
         vi.useRealTimers();
