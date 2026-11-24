@@ -45,6 +45,8 @@ This will download the example and ask permission to open your browser, enabling
 you to automatically get your API key from your
 [liveblocks.io](https://liveblocks.io) account.
 
+To send and receive real email, follow [Setting up Resend](#setting-up-resend).
+
 ### Manual setup
 
 <details><summary>Read more</summary>
