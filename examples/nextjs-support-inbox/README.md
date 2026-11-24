@@ -61,29 +61,27 @@ Alternatively, you can set up your project manually:
   `LIVEBLOCKS_SECRET_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
-To see realtime sync, open the page in two browser tabs. Replies, internal notes,
-assignments, priority, and status stay in sync across both tabs,
-and live avatars show who is viewing each conversation.
+To see realtime sync, open the page in two browser tabs. Replies, internal
+notes, assignments, priority, and status stay in sync across both tabs, and live
+avatars show who is viewing each conversation.
 
 </details>
 
 ### Setting up Resend
 
-Optional. Without these steps the app runs in demo mode: sample conversations
-are seeded and replies are simulated (clearly labelled) rather than emailed.
-Connecting Resend turns the Support workspace into a real inbox; the Sales
-workspace always runs on sample data.
+The app run in demo mode until you set up Resend. Connecting it turns the
+Support workspace into a real email inbox.
 
 - Create an account on [Resend](https://resend.com)
-- **API key** — create one in the [Resend dashboard](https://resend.com/api-keys)
-  with sending and inbox access, and add it to `.env.local` as
-  `RESEND_API_KEY`. The app uses it to send replies through the Inboxes reply
-  API and to verify webhooks.
+- **API key** — create one in the
+  [Resend dashboard](https://resend.com/api-keys) with sending and inbox access,
+  and add it to `.env.local` as `RESEND_API_KEY`. The app uses it to send
+  replies through the Inboxes reply API and to verify webhooks.
 - **Inbox** — create an inbox under [Inboxes](https://resend.com/inboxes). It
   can use Resend's hosted address or an address on your own verified domain
-  (needed for replies to reach external mail providers). Add its id (`inb_…`)
-  to `.env.local` as `RESEND_INBOX_ID`, or its address as
-  `RESEND_INBOX_EMAIL`. Emails sent to this address become conversations.
+  (needed for replies to reach external mail providers). Add its id (`inb_…`) to
+  `.env.local` as `RESEND_INBOX_ID`, or its address as `RESEND_INBOX_EMAIL`.
+  Emails sent to this address become conversations.
 - **Webhook** — under [Webhooks](https://resend.com/webhooks), add an endpoint
   pointing at `https://<your-host>/api/webhooks/resend` and subscribe it to
   `inbox.email.received` and `inbox.email.sent`. Copy its signing secret to
