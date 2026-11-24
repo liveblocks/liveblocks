@@ -80,7 +80,8 @@ Liveblocks Support workspace into a real email inbox.
 - Create an [inbox](https://resend.com/inboxes) and add its ID (`inb_…`) or
   email address to `.env.local` as `RESEND_INBOX_ID`
 - For local development, expose port 3000 with a tunnel such as
-  [ngrok](https://ngrok.com) (`ngrok http 3000`)
+  [ngrok](https://ngrok.com) (`ngrok http 3000`). Learn more about
+  [using webhooks on localhost](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost).
 - Add a [webhook](https://resend.com/webhooks) pointing at
   `https://<your-host>/api/webhooks/resend`, subscribed to
   `inbox.email.received` and `inbox.email.sent`
@@ -91,8 +92,7 @@ Emails sent to the inbox become conversations, and agent replies are sent
 through Resend’s Inboxes reply API. For replies to reach external mail
 providers, the inbox needs an address on your own verified domain. The Settings
 view in the sidebar shows whether the inbox is connected and which webhook URL
-to use. Learn more about
-[using webhooks on localhost](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost).
+to use.
 
 ### Deploy on Vercel
 
