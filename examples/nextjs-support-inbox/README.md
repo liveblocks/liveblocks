@@ -31,6 +31,8 @@ conversations together, seeing who else is viewing or typing.
 Without a Resend inbox the app runs in demo mode with sample conversations and
 simulated replies.
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/support-inbox.png" width="536" alt="Collaborative support inbox" />
+
 ## Getting started
 
 Run the following command to try this example locally:
