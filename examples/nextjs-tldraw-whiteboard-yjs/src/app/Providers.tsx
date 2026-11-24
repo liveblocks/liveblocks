@@ -5,7 +5,11 @@ import { PropsWithChildren, Suspense } from "react";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
-    <LiveblocksProvider authEndpoint="/api/liveblocks-auth" throttle={16}>
+    <LiveblocksProvider
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+      authEndpoint="/api/liveblocks-auth"
+      throttle={16}
+    >
       <Suspense>{children}</Suspense>
     </LiveblocksProvider>
   );
