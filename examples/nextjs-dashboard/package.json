@@ -6,9 +6,9 @@
   "dependencies": {
     "@liveblocks/client": "^3.23.0",
     "@liveblocks/react": "^3.23.0",
-    "next": "^16.2.12",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "recharts": "^2.5.0"
   },
   "scripts": {
@@ -19,8 +19,8 @@
   },
   "devDependencies": {
     "@types/node": "^16.10.9",
-    "@types/react": "^18.3.27",
-    "@types/react-dom": "^18.0.11",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/recharts": "^1.8.29",
     "prettier": "^3.3.3",
     "typescript": "^5.4.5"

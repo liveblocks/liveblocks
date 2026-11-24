@@ -4,7 +4,7 @@ import Button from "../components/Button";
 import { RoomProvider, useOthers, useSelf } from "@liveblocks/react";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import { getServerSession } from "./api/auth/getServerSession";
+import { getServerSession } from "../lib/getServerSession";
 import { signOut } from "next-auth/react";
 import styles from "./index.module.css";
 

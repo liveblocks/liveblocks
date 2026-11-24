@@ -3,7 +3,7 @@ import styles from "../styles/SignIn.module.css";
 import { GetServerSideProps } from "next";
 import { getProviders } from "next-auth/react";
 import { useSession, signIn } from "next-auth/react";
-import { getServerSession } from "./api/auth/getServerSession";
+import { getServerSession } from "../lib/getServerSession";
 import Button from "../components/Button";
 import GoogleIcon from "../public/icons/google.svg";
 

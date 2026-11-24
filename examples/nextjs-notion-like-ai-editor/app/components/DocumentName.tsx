@@ -23,7 +23,7 @@ export function DocumentName() {
   const title = useStorage((root) => root.title);
   const [editor] = useLexicalComposerContext();
 
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout>(undefined);
   const { mutate } = usePageLinks();
 
   // Update title and update page links 0.4s after final change

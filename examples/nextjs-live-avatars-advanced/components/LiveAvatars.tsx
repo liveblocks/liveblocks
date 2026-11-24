@@ -19,7 +19,7 @@ const animationProps = {
   animate: { width: "auto", height: "auto" },
   exit: { width: 0 },
   transition: {
-    type: "spring",
+    type: "spring" as const,
     damping: 15,
     mass: 1,
     stiffness: 200,

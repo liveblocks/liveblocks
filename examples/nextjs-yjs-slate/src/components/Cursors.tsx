@@ -8,7 +8,7 @@ import styles from "./Cursors.module.css";
 
 // Create live cursors inside the text editor
 export function Cursors({ children }: { children: ReactNode }) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null!);
   const [cursors] = useRemoteCursorOverlayPositions<Cursor>({
     containerRef,
   });

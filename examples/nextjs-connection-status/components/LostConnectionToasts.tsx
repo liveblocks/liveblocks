@@ -5,7 +5,7 @@ import { useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
 export function LostConnectionToasts() {
-  const toastId = useRef<string>();
+  const toastId = useRef<string>(undefined);
 
   useLostConnectionListener((event) => {
     if (event === "lost") {
