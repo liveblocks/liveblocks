@@ -87,13 +87,12 @@ Support workspace into a real email inbox.
   `inbox.email.received` and `inbox.email.sent`. Copy its signing secret to
   `.env.local` as `RESEND_WEBHOOK_SECRET`. The first event creates or updates
   the conversation; the second confirms a reply was sent.
+- For local development, expose port 3000 with a tunnel such as
+  [ngrok](https://ngrok.com) (`ngrok http 3000`) and use that URL for the
+  endpoint. Learn more about
+  [using webhooks on localhost](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost).
 - Restart `npm run dev`. The Settings view in the sidebar shows whether the
   inbox is connected and which webhook URL to use.
-
-Resend has to reach the webhook over the internet, so for local development
-expose port 3000 with a tunnel such as [ngrok](https://ngrok.com)
-(`ngrok http 3000`) and use that URL for the endpoint. Only emails received
-after the webhook is set up appear; there is no backfill.
 
 ### Deploy on Vercel
 
