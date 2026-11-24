@@ -11,20 +11,20 @@ import { render } from "@react-email/render";
 import UnreadTextMention from "../../../emails/UnreadTextMention";
 import { getUsers } from "../database";
 
-// Add your Resend API key from https://resend.com/api-keys
-const resend = new Resend(process.env.RESEND_API_KEY as string);
-
-// Add your Liveblocks secret key from https://liveblocks.io/dashboard/apiKeys
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
-});
-
-// Add your webhook secret key from a project's webhooks dashboard
-const webhookHandler = new WebhookHandler(
-  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
-);
-
 export async function POST(request: Request) {
+  // Add your Resend API key from https://resend.com/api-keys
+  const resend = new Resend(process.env.RESEND_API_KEY as string);
+
+  // Add your Liveblocks secret key from https://liveblocks.io/dashboard/apiKeys
+  const liveblocks = new Liveblocks({
+    secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
+  });
+
+  // Add your webhook secret key from a project's webhooks dashboard
+  const webhookHandler = new WebhookHandler(
+    process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
+  );
+
   const body = await request.json();
   const headers = request.headers;
 

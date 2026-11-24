@@ -4,11 +4,11 @@ import { getRandomUser } from "../../../database";
 // Authenticating your Liveblocks application
 // https://liveblocks.io/docs/api-reference/authentication
 
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
-});
-
 export async function POST() {
+  const liveblocks = new Liveblocks({
+    secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
+  });
+
   // Get the current user's unique id and info from your database
   const user = await getRandomUser();
 
