@@ -23,7 +23,7 @@ export type ResendConfig = {
 
 export function getResendConfig(): ResendConfig | null {
   const apiKey = process.env.RESEND_API_KEY;
-  const inbox = process.env.RESEND_INBOX_ID || process.env.RESEND_INBOX_EMAIL;
+  const inbox = process.env.RESEND_INBOX_ID;
   if (!apiKey || !inbox) {
     return null;
   }
@@ -300,8 +300,7 @@ export async function confirmSentEmail({
   });
   const pending = messages.find(
     (message) =>
-      message.data.kind === "email" &&
-      message.data.resendEmailId === emailId
+      message.data.kind === "email" && message.data.resendEmailId === emailId
   );
   if (!pending || pending.data.kind !== "email") return false;
 

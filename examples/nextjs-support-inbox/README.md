@@ -79,9 +79,9 @@ Support workspace into a real email inbox.
   webhooks.
 - Create an inbox under [Inboxes](https://resend.com/inboxes). It can use
   Resend's hosted address or an address on your own verified domain (needed for
-  replies to reach external mail providers). Add its id (`inb_…`) to
-  `.env.local` as `RESEND_INBOX_ID`, or its address as `RESEND_INBOX_EMAIL`.
-  Emails sent to this address become conversations.
+  replies to reach external mail providers). Add its id (`inb_…`) or email
+  addressto `.env.local` as `RESEND_INBOX_ID`. Emails sent to this address
+  become conversations.
 - Under [Webhooks](https://resend.com/webhooks), add an endpoint pointing at
   `https://<your-host>/api/webhooks/resend` and subscribe it to
   `inbox.email.received` and `inbox.email.sent`. Copy its signing secret to
