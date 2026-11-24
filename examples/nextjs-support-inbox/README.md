@@ -69,18 +69,18 @@ avatars show who is viewing each conversation.
 
 ### Setting up Resend
 
-The app run in demo mode until you set up Resend. Connecting it turns the
-Support workspace into a real email inbox.
+The app runs in demo mode until you set up Resend. Connecting it turns the
+Liveblocks Support workspace into a real email inbox.
 
 - Create an account on [Resend](https://resend.com)
-- Create an API key in the [Resend dashboard](https://resend.com/api-keys) with
-  sending and inbox access, and add it to `.env.local` as `RESEND_API_KEY`. The
-  app uses it to send replies through the Inboxes reply API and to verify
-  webhooks.
+- Create an API key with full access in the
+  [Resend dashboard](https://resend.com/api-keys), and add it to `.env.local` as
+  `RESEND_API_KEY`. The app uses it to fetch received emails and to send replies
+  through the Inboxes reply API.
 - Create an inbox under [Inboxes](https://resend.com/inboxes). It can use
   Resend's hosted address or an address on your own verified domain (needed for
-  replies to reach external mail providers). Add its id (`inb_…`) or email
-  addressto `.env.local` as `RESEND_INBOX_ID`. Emails sent to this address
+  replies to reach external mail providers). Add its ID (`inb_…`) or email
+  address to `.env.local` as `RESEND_INBOX_ID`. Emails sent to this address
   become conversations.
 - Under [Webhooks](https://resend.com/webhooks), add an endpoint pointing at
   `https://<your-host>/api/webhooks/resend` and subscribe it to
