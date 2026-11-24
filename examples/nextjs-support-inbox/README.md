@@ -73,17 +73,17 @@ The app run in demo mode until you set up Resend. Connecting it turns the
 Support workspace into a real email inbox.
 
 - Create an account on [Resend](https://resend.com)
-- **API key** — create one in the
-  [Resend dashboard](https://resend.com/api-keys) with sending and inbox access,
-  and add it to `.env.local` as `RESEND_API_KEY`. The app uses it to send
-  replies through the Inboxes reply API and to verify webhooks.
-- **Inbox** — create an inbox under [Inboxes](https://resend.com/inboxes). It
-  can use Resend's hosted address or an address on your own verified domain
-  (needed for replies to reach external mail providers). Add its id (`inb_…`) to
+- Create an API key in the [Resend dashboard](https://resend.com/api-keys) with
+  sending and inbox access, and add it to `.env.local` as `RESEND_API_KEY`. The
+  app uses it to send replies through the Inboxes reply API and to verify
+  webhooks.
+- Create an inbox under [Inboxes](https://resend.com/inboxes). It can use
+  Resend's hosted address or an address on your own verified domain (needed for
+  replies to reach external mail providers). Add its id (`inb_…`) to
   `.env.local` as `RESEND_INBOX_ID`, or its address as `RESEND_INBOX_EMAIL`.
   Emails sent to this address become conversations.
-- **Webhook** — under [Webhooks](https://resend.com/webhooks), add an endpoint
-  pointing at `https://<your-host>/api/webhooks/resend` and subscribe it to
+- Under [Webhooks](https://resend.com/webhooks), add an endpoint pointing at
+  `https://<your-host>/api/webhooks/resend` and subscribe it to
   `inbox.email.received` and `inbox.email.sent`. Copy its signing secret to
   `.env.local` as `RESEND_WEBHOOK_SECRET`. The first event creates or updates
   the conversation; the second confirms a reply was sent.
