@@ -1,0 +1,193 @@
+"use client";
+
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
+import {
+  ArrowLeftIcon,
+  MailOpenIcon,
+  ArrowLeftToLineIcon,
+  ArrowRightToLineIcon,
+} from "lucide-react";
+import {
+  type Conversation,
+  type Customer,
+  type Priority,
+  type Status,
+} from "@/lib/conversation";
+import { cn } from "@/lib/utils";
+import { CustomerAvatar, ViewerAvatars } from "./avatars";
+import { Composer } from "./composer";
+import { MessageTimeline } from "./message-timeline";
+import { TimelineSkeleton } from "./skeletons";
+import { AssigneeMenu, PriorityMenu, StatusMenu } from "./status";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+
+export function ConversationView({
+  conversation,
+  selfId,
+  demoMode,
+  detailsOpen,
+  onToggleDetails,
+  onBack,
+  onSetStatus,
+  onSetPriority,
+  onSetAssignee,
+  onViewCustomer,
+  onSendReply,
+  onAddNote,
+  onSimulateCustomerReply,
+  className,
+}: {
+  conversation: Conversation;
+  selfId: string;
+  demoMode: boolean;
+  detailsOpen: boolean;
+  onToggleDetails: () => void;
+  onBack: () => void;
+  onSetStatus: (status: Status) => void;
+  onSetPriority: (priority: Priority) => void;
+  onSetAssignee: (userId: string) => void;
+  // Scope the list to every thread from this customer.
+  onViewCustomer: (customer: Customer) => void;
+  onSendReply: (text: string) => Promise<void>;
+  onAddNote: (text: string) => Promise<void>;
+  // Demo mode: add a made-up customer reply to the conversation.
+  onSimulateCustomerReply: () => Promise<void>;
+  className?: string;
+}) {
+  const { metadata, feedId } = conversation;
+
+  return (
+    <section
+      className={cn("flex min-w-0 flex-1 flex-col bg-surface md:card", className)}
+      aria-label="Conversation"
+    >
+      <header className="shrink-0 border-b border-line">
+        <div className="flex h-10 items-center gap-3 pl-4 pr-2.5 pt-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="-ml-1 flex size-7 items-center justify-center rounded-md text-ink-muted hover:bg-hover hover:text-ink md:hidden"
+            aria-label="Back to conversations"
+          >
+            <ArrowLeftIcon className="size-4" />
+          </button>
+
+          <h1 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">
+            {metadata.subject}
+          </h1>
+
+          <div className="flex h-7 shrink-0 items-center gap-2">
+            {/* Who's reading this thread right now (live, via presence). */}
+            <ViewerAvatars feedId={feedId} size="md" />
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={onToggleDetails}
+                  aria-pressed={detailsOpen}
+                  className={cn(
+                    "flex size-7 items-center justify-center rounded-md transition-colors hover:bg-ink/8 hover:text-ink",
+                    detailsOpen ? "text-ink" : "text-ink-muted"
+                  )}
+                >
+                  {detailsOpen ? (
+                    <ArrowRightToLineIcon className="size-4" strokeWidth={1.75} />
+                  ) : (
+                    <ArrowLeftToLineIcon className="size-4" strokeWidth={1.75} />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={6}>
+                {detailsOpen ? "Hide details" : "Show details"}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pl-4 pr-2.5 pt-2 pb-3">
+          <div className="flex min-w-0 items-center gap-2 text-xs">
+            <CustomerAvatar
+              name={metadata.customerName}
+              email={metadata.customerEmail}
+              size="sm"
+            />
+            <span className="truncate font-medium text-ink">
+              {metadata.customerName}
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                onViewCustomer({
+                  name: metadata.customerName,
+                  email: metadata.customerEmail,
+                })
+              }
+              className="-ml-1.5 hidden truncate rounded px-1 text-ink-muted hover:bg-ink/8 hover:text-ink sm:inline"
+              title="Show all conversations from this customer"
+            >
+              {metadata.customerEmail}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <StatusMenu
+              value={metadata.status}
+              onChange={onSetStatus}
+              appearance="ghost"
+              className="font-medium"
+            />
+            <AssigneeMenu
+              value={metadata.assigneeId}
+              selfId={selfId}
+              onChange={onSetAssignee}
+              appearance="ghost"
+              className="font-medium"
+            />
+            <PriorityMenu
+              value={metadata.priority}
+              onChange={onSetPriority}
+              appearance="icon"
+            />
+
+          </div>
+        </div>
+      </header>
+
+      {/* Suspense is scoped to the timeline so switching conversations only
+          swaps the message area. */}
+      <ClientSideSuspense fallback={<TimelineSkeleton />}>
+        <MessageTimeline key={feedId} conversation={conversation} />
+      </ClientSideSuspense>
+
+      <Composer
+        key={feedId}
+        conversation={conversation}
+        demoMode={demoMode || metadata.source === "demo"}
+        onSendReply={onSendReply}
+        onAddNote={onAddNote}
+        onSimulateCustomerReply={onSimulateCustomerReply}
+      />
+    </section>
+  );
+}
+
+export function NoConversation({ className }: { className?: string }) {
+  return (
+    <section
+      className={cn(
+        "card flex min-w-0 flex-1 flex-col items-center justify-center px-8 text-center",
+        className
+      )}
+    >
+      <span className="mb-3 flex size-10 items-center justify-center rounded-full bg-hover text-ink-muted">
+        <MailOpenIcon className="size-4" strokeWidth={1.75} />
+      </span>
+      <h2 className="text-[13px] font-medium text-ink">Select a conversation</h2>
+      <p className="mt-1 max-w-[260px] text-xs leading-relaxed text-ink-muted">
+        Choose a conversation from the list to read it, reply to the customer,
+        or leave a note for your team.
+      </p>
+    </section>
+  );
+}
