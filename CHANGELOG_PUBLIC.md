@@ -18,6 +18,17 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 48 (2026-11-27)
+
+## Examples
+
+- New example: [Support inbox](https://liveblocks.io/examples/support-inbox/nextjs-support-inbox).
+- Upgraded all examples to use latest versions off Next.js and various other packages.
+
+## Contributors
+
+ctnicholas
+
 # Week 47 (2026-11-20)
 
 ## Examples
