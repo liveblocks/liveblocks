@@ -811,6 +811,10 @@
             "path": "/platform/account-management/mfa"
           },
           {
+            "title": "Connected apps",
+            "path": "/platform/account-management/connected-apps"
+          },
+          {
             "title": "Delete an account",
             "path": "/platform/account-management/delete-an-account"
           }
