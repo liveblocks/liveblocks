@@ -23,7 +23,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Examples
 
 - New example: [Support inbox](https://liveblocks.io/examples/support-inbox/nextjs-support-inbox).
-- Upgraded all examples to use latest versions off Next.js and various other packages.
+- Upgraded all examples to use latest versions of Next.js and various other packages.
 
 ## Contributors
 
