@@ -49,7 +49,7 @@ data, such as rooms, Storage, Yjs, comments, and more.
       }
       ```
 
-      When Cursor first connects to the server, sign in with your Liveblocks account. Choose the project AI can access, and whether it can modify data.
+      Connect to the server in Cursor and sign in with your Liveblocks account. In Cursor CLI, run `agent mcp login liveblocks` to sign in. Choose the project Cursor can access.
 
       <Banner type="warning" title="Be careful with production projects">
         With read and write access, AI can modify and delete data. Connect to a development project, or choose read-only access for production projects.
@@ -105,11 +105,9 @@ helpful for fetching data when debugging, and also useful for creating
 placeholder content in your development app, for example you can ask AI to
 create new rooms and add placeholder comments and data.
 
-When you connect the MCP server, you sign in with your Liveblocks account and
-choose one project, with read-only or read and write access. Only data from that
-project can be inspected. We recommend connecting to a development project, or
-choosing read-only access for production projects, as AI with write access can
-delete your data.
+Each connection is scoped to the project you choose at sign-in. **Read only**
+is selected by default. If Cursor requests write access, you can choose
+**Read and write** to let it change data in that project.
 
 <Button href="/docs/tools/mcp-server">MCP server documentation</Button>
 
@@ -127,9 +125,10 @@ connect again and choose the right project.
 
 ### MCP can’t modify data
 
-The connection has read-only access. Disconnect it in
-[Connected apps](/docs/tools/mcp-server#connected-apps), then connect again and
-choose **Read and write**.
+Check the access level in [Connected apps](/docs/tools/mcp-server#connected-apps).
+If Cursor requested only read access, signing in again with the same
+permissions will offer only **Read only**. See [how to request write
+access](/docs/tools/mcp-server#request-write-access).
 
 ## Related docs
 

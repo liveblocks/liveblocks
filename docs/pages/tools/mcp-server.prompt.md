@@ -8,8 +8,11 @@ server in AI tools.
 - Ask which client they use (Claude, Claude Code, Cursor, VS Code, Codex, or
   other) and provide the matching setup path.
 - Recommend the hosted server at `https://mcp.liveblocks.io/mcp` with Liveblocks
-  sign-in. Users choose one project and read-only or read and write access when
-  they sign in.
+  sign-in. Users choose one project. Read only is selected by default. The
+  consent page offers Read and write only if the client requests write access.
+- If a Codex CLI user needs to change project data, show
+  `codex mcp login liveblocks --scopes read,write` and tell them to select
+  Read and write at consent.
 - Recommend a development project, or read-only access for production projects.
 - Point users to Personal settings → Connected apps to see or disconnect apps,
   and team owners to Team settings → Connected apps.
