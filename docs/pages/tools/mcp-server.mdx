@@ -4,12 +4,12 @@ meta:
   parentTitle: "Tools"
   description:
     "Learn to use the official MCP server for Liveblocks, helpful for inspecting
-    and modifying your project with AI in Cursor, VS Code, Claude Desktop, and
+    and modifying your project with AI in Claude, Cursor, VS Code, Codex, and
     more."
 ---
 
 The Liveblocks MCP server allows you to inspect and modify your project with AI
-in compatible apps such as Cursor, Claude, Codex, and more.
+in compatible apps such as Claude, Cursor, VS Code, Codex, and more.
 
 <PromptCta />
 
@@ -21,10 +21,11 @@ in compatible apps such as Cursor, Claude, Codex, and more.
 
 ## Features
 
-Our MCP server features 39 different tools, enabling most features from our
-[REST API](/docs/api-reference/rest-api-endpoints). You can use it to:
+The MCP server exposes tools for most of the
+[Liveblocks REST API](/docs/api-reference/rest-api-endpoints). Depending on the
+access you grant, your app can:
 
-- Create and modify rooms, threads, comments, notifications, more.
+- Create and modify rooms, threads, comments, and notifications.
 - Read realtime Storage and Yjs values.
 - Broadcast custom events to connected clients.
 - Mark threads and notifications as read/unread.
@@ -35,38 +36,31 @@ then fetch it after.
 
 ## Setup
 
-To install, you need to use your secret key from the correct project in
-[your dashboard](/dashboard). Below are instructions for [Cursor](#Cursor),
-[Claude Code](#Claude-Code), [Claude Desktop](#Claude-Desktop), and
-[Codex](#Codex).
+We host the MCP server at the following URL. Add it to your AI app, then sign in
+with your Liveblocks account and choose the project it can access. There’s
+nothing to install and no secret key to copy.
 
-<Banner type="warning" title="Only for development">
-
-Don’t insert a secret key from your production application, as AI will have
-direct access to modify it.
-
-</Banner>
-
-### Cursor
-
-To set up [Cursor](https://cursor.sh/):
-
-1. Go to File → Cursor Settings → MCP → Add new server.
-2. Add the following:
-
-```json
-{
-  "mcpServers": {
-    "liveblocks": {
-      "command": "npx",
-      "args": ["-y", "github:liveblocks/liveblocks-mcp-server"],
-      "env": {
-        "LIVEBLOCKS_SECRET_KEY": "{{SECRET_KEY}}"
-      }
-    }
-  }
-}
 ```
+https://mcp.liveblocks.io/mcp
+```
+
+Below are instructions for [Claude](#Claude), [Claude Code](#Claude-Code),
+[Cursor](#Cursor), [VS Code](#VS-Code), and [Codex](#Codex). Any other app that
+supports remote MCP servers with OAuth sign-in can connect with the same URL.
+
+### Claude
+
+To set up [Claude](https://claude.ai), on the web or in Claude Desktop:
+
+1. Go to Customize → Connectors, select **+ Add**, then **Add custom
+   connector**.
+2. Name it “Liveblocks”, enter `https://mcp.liveblocks.io/mcp`, and add it.
+3. Select **Connect** on the new connector, then
+   [sign in](#Sign-in-and-choose-a-project).
+
+On Team and Enterprise plans, an organization owner first adds the connector in
+Organization settings → Connectors. Each member then connects it with their own
+Liveblocks account.
 
 ### Claude Code
 
@@ -74,16 +68,153 @@ To set up [Claude Code](https://claude.ai/code), run the following command in
 the terminal:
 
 ```bash
-claude mcp add liveblocks -e LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}" -- npx -y github:liveblocks/liveblocks-mcp-server
+claude mcp add --transport http liveblocks https://mcp.liveblocks.io/mcp
 ```
 
-### Claude Desktop
+Then run `/mcp` in Claude Code, select `liveblocks`, and
+[sign in](#Sign-in-and-choose-a-project).
 
-To set up [Claude Desktop](https://claude.ai/download):
+### Cursor
 
-1. Go to Settings → Developer → Edit Config.
-2. Open the JSON file, `claude_desktop_config.json`.
-3. Add the following to the JSON:
+To set up [Cursor](https://cursor.com), add the following to `.cursor/mcp.json`
+in your project, or to `~/.cursor/mcp.json` to use it in every project:
+
+```json
+{
+  "mcpServers": {
+    "liveblocks": {
+      "url": "https://mcp.liveblocks.io/mcp"
+    }
+  }
+}
+```
+
+Connect to the server in Cursor and [sign in](#Sign-in-and-choose-a-project).
+In Cursor CLI, run `agent mcp login liveblocks` to start sign-in.
+
+### VS Code
+
+To set up [VS Code](https://code.visualstudio.com/) with GitHub Copilot, run the
+following command in the terminal:
+
+```bash
+code --add-mcp '{"name":"liveblocks","type":"http","url":"https://mcp.liveblocks.io/mcp"}'
+```
+
+Start the server in VS Code and [sign in](#Sign-in-and-choose-a-project)
+with your Liveblocks account.
+
+### Codex
+
+To set up [Codex](https://codex.com/), add the following to
+`~/.codex/config.toml`:
+
+```toml
+[mcp_servers.liveblocks]
+url = "https://mcp.liveblocks.io/mcp"
+```
+
+Then run the following command to [sign in](#Sign-in-and-choose-a-project). In
+the Codex app or IDE extension, select **Authenticate** on the server instead.
+
+```bash
+codex mcp login liveblocks
+```
+
+### Sign in and choose a project
+
+When your AI app connects for the first time, it opens a Liveblocks page in your
+browser. Sign in if needed, then:
+
+1. Choose the project the app can access. If you don’t have one yet, select
+   **Create project…** to create one.
+2. **Read only** is selected by default. If your app requested write access,
+   you can choose **Read and write**.
+3. Select **Allow access**. You’ll return to your AI app, which is now
+   connected.
+
+Check the name at the top of the consent page. If the app publishes its details
+on a domain, you’ll see that domain under its name, for example **From
+chatgpt.com**. Otherwise, you’ll see **This app provided its own name.** If the
+page says you’ll return to a program on your computer, only continue if you
+started the connection from an app you trust.
+
+## Projects and access [#projects-and-access]
+
+Each connection can access one project, with the access you chose. To use
+another project, disconnect the app and connect it again, choosing the other
+project.
+
+- **Read only** lets the app list rooms with `get-rooms` and read their Storage
+  with `get-storage-document`. Tools that change data are unavailable.
+- **Read and write** allows every tool, including those that create, modify, and
+  delete rooms, threads, comments, and notifications.
+
+<Banner type="warning" title="Be careful with production projects">
+
+With **Read and write** access, AI can modify and delete your project’s data. We
+recommend connecting to a development project, or choosing **Read only** for
+production projects. Production projects are labelled when you choose one.
+
+</Banner>
+
+A connection expires after 30 days without use. You can disconnect it sooner.
+It stops working if you leave the project’s team, or if the project is deleted.
+
+## Manage connected apps [#connected-apps]
+
+You can see every app you’ve connected, and disconnect any of them, in
+[**Personal settings → Connected apps**](https://liveblocks.io/dashboard/settings/connected-apps).
+Disconnecting an app ends its access within about two minutes.
+
+Team owners can also see and disconnect every app their team’s members have
+connected to the team’s projects, in **Team settings → Connected apps**. Apps
+connected by someone who has left the team stop working within ten minutes.
+
+## Use a secret key [#secret-key]
+
+If your app can’t sign in with OAuth, or you’re running scripts and agents
+without a browser, you can authenticate with a project’s secret key instead.
+Secret keys give full access to the project, as **Read and write** does, and
+don’t appear in Connected apps.
+
+<Banner type="warning" title="Only for development">
+
+Don’t use a secret key from your production application, as AI will have direct
+access to modify it.
+
+</Banner>
+
+### Hosted server [#secret-key-hosted]
+
+Send your development project’s secret key from [your dashboard](/dashboard)
+as a bearer token. Keep the key in user-local configuration. For example, add
+this to `~/.cursor/mcp.json` for Cursor:
+
+```json
+{
+  "mcpServers": {
+    "liveblocks": {
+      "url": "https://mcp.liveblocks.io/mcp",
+      "headers": {
+        "Authorization": "Bearer {{SECRET_KEY}}"
+      }
+    }
+  }
+}
+```
+
+Or in Claude Code:
+
+```bash
+claude mcp add --transport http liveblocks https://mcp.liveblocks.io/mcp \
+  --header "Authorization: Bearer {{SECRET_KEY}}"
+```
+
+### Local server [#secret-key-local]
+
+You can also run the server on your machine. For Cursor, add this to your
+user-local `~/.cursor/mcp.json`:
 
 ```json
 {
@@ -99,17 +230,7 @@ To set up [Claude Desktop](https://claude.ai/download):
 }
 ```
 
-### Codex
-
-To set up [Codex](https://codex.com/):
-
-1. Ensure the Codex CLI is installed:
-
-```bash
-npm i -g @openai/codex
-```
-
-2. Run the following command in the terminal, inserting your secret key:
+Or in Codex:
 
 ```bash
 codex mcp add liveblocks \
@@ -117,7 +238,43 @@ codex mcp add liveblocks \
   -- npx -y github:liveblocks/liveblocks-mcp-server
 ```
 
+## Limits
+
+- Each OAuth grant allows up to 300 requests per minute.
+- Each connection can access one project.
+
+## Troubleshooting
+
+### “This authorization request is invalid”
+
+Liveblocks couldn’t verify the app, or the address it wants to return to. Remove
+the server from your AI app, add it again, and reconnect. Check that the URL is
+exactly `https://mcp.liveblocks.io/mcp`.
+
+### The app is connected to the wrong project
+
+Disconnect it in [Connected apps](#connected-apps), then connect again and
+choose the right project.
+
+### You’re signed in with the wrong account
+
+Select **Sign out** at the bottom of the sign-in page, then sign in with the
+other account. You’ll return to the same page.
+
+### The app can’t create or modify data [#request-write-access]
+
+Check the connection in [Connected apps](#connected-apps). If it shows **Read
+only**, disconnect it and start a new sign-in from a client that requests the
+`write` scope. For Codex CLI, run:
+
+```bash
+codex mcp login liveblocks --scopes read,write
+```
+
+Choose the project and select **Read and write** before allowing access. If the
+client requests only `read`, the consent page offers only **Read only**.
+
 ## Source code
 
-The source code is available in our
+The source code for the local server is available in our
 [GitHub repository](https://github.com/liveblocks/liveblocks-mcp-server).
