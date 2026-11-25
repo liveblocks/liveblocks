@@ -403,6 +403,7 @@ export function html(
 }
 
 const markdownEscapables = {
+  "\\": "\\\\",
   _: "\\_",
   "*": "\\*",
   "#": "\\#",
@@ -558,10 +559,33 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
     },
     text: ({ element }) => {
       // <code><s><em><strong>text</strong></s></em></code>
-      let children = element.text;
+      let children: string | MarkdownSafeString = element.text;
 
       if (!children) {
         return children;
+      }
+
+      if (element.code) {
+        // Code spans do not interpret backslash escapes. Use a delimiter longer
+        // than any run of backticks in the text, and pad when CommonMark would
+        // otherwise merge delimiters or strip surrounding spaces.
+        const backticks = children.match(/`+/g) ?? [];
+        const delimiter = "`".repeat(
+          Math.max(0, ...backticks.map((run) => run.length)) + 1
+        );
+        const padding =
+          children.startsWith("`") ||
+          children.endsWith("`") ||
+          (children.startsWith(" ") &&
+            children.endsWith(" ") &&
+            /[^ ]/.test(children))
+            ? " "
+            : "";
+
+        children = new MarkdownSafeString(
+          [`${delimiter}${padding}${children}${padding}${delimiter}`],
+          []
+        );
       }
 
       if (element.bold) {
@@ -579,12 +603,7 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
         children = markdown`~~${children}~~`;
       }
 
-      if (element.code) {
-        // prettier-ignore
-        children = markdown`\`${children}\``;
-      }
-
-      return children;
+      return children.toString();
     },
     link: ({ element, href }) => {
       // prettier-ignore
