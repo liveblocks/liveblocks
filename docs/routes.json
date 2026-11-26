@@ -406,6 +406,30 @@
         "title": "Upgrading",
         "path": "/api-reference/upgrading",
         "hidden": true
+      },
+      {
+        "title": "REST API (legacy path)",
+        "path": "/api-reference/rest-api",
+        "file": "/platform/rest-api.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Get started React (legacy path)",
+        "path": "/guides/get-started/react",
+        "file": "/get-started/react.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Presence (legacy path)",
+        "path": "/collaboration-features/multiplayer/presence",
+        "file": "/products/sync/presence.mdx",
+        "hidden": true
+      },
+      {
+        "title": "Yjs (legacy path)",
+        "path": "/collaboration-features/multiplayer/yjs",
+        "file": "/products/sync/text-editing/yjs.mdx",
+        "hidden": true
       }
     ]
   },
