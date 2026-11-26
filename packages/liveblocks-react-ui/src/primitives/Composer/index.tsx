@@ -46,7 +46,9 @@ import type {
 } from "slate";
 import {
   createEditor,
+  Element,
   Editor as SlateEditor,
+  Node as SlateNode,
   insertText as insertSlateText,
   Range as SlateRange,
   Transforms as SlateTransforms,
@@ -72,6 +74,7 @@ import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
   ComposerBodyCustomLink,
+  ComposerBodyListItem,
   ComposerBodyMark,
   ComposerBodyMarks,
   ComposerBodyMention,
@@ -117,6 +120,11 @@ import {
   insertMentionCharacter,
   withMentions,
 } from "./slate/plugins/mentions";
+import {
+  handleListKeyDown,
+  handleListMarkdownShortcut,
+  withLists,
+} from "./slate/plugins/lists";
 import { withPaste } from "./slate/plugins/paste";
 import type {
   ComposerAttachFilesProps,
@@ -179,15 +187,17 @@ function createComposerEditor({
   pasteFilesAsAttachments?: boolean;
 }) {
   return withNormalize(
-    withMentions(
-      withCustomLinks(
-        withAutoLinks(
-          withAutoFormatting(
-            withEmptyClearFormatting(
-              withPaste(withHistory(withReact(createEditor())), {
-                createAttachments,
-                pasteFilesAsAttachments,
-              })
+    withLists(
+      withMentions(
+        withCustomLinks(
+          withAutoLinks(
+            withAutoFormatting(
+              withEmptyClearFormatting(
+                withPaste(withHistory(withReact(createEditor())), {
+                  createAttachments,
+                  pasteFilesAsAttachments,
+                })
+              )
             )
           )
         )
@@ -519,6 +529,63 @@ const ComposerFloatingToolbar = forwardRef<
   );
 });
 
+function ComposerEditorListItem({
+  attributes,
+  children,
+  element,
+}: RenderElementSpecificProps<ComposerBodyListItem>) {
+  const editor = useSlateStatic();
+  const path = ReactEditor.findPath(editor, element);
+  const parent = SlateNode.parent(editor, path);
+  const isTaskListItem =
+    Element.isElement(parent) && parent.type === "task-list";
+
+  const handleCheckboxChange = useCallback(() => {
+    SlateTransforms.setNodes(
+      editor,
+      { checked: !(element.checked === true) },
+      { at: path }
+    );
+  }, [editor, element.checked, path]);
+
+  if (!isTaskListItem) {
+    return (
+      <li {...attributes} style={{ position: "relative" }}>
+        {children}
+      </li>
+    );
+  }
+
+  return (
+    <li
+      {...attributes}
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "0.375rem",
+        listStyle: "none",
+      }}
+      data-checked={
+        typeof element.checked === "boolean"
+          ? String(element.checked)
+          : undefined
+      }
+    >
+      <span contentEditable={false} style={{ flexShrink: 0, marginTop: 2 }}>
+        <input
+          type="checkbox"
+          checked={element.checked === true}
+          aria-label="Task completed"
+          onMouseDown={(e) => e.preventDefault()}
+          onChange={handleCheckboxChange}
+        />
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+    </li>
+  );
+}
+
 function ComposerEditorElement({
   Mention,
   Link,
@@ -550,6 +617,40 @@ function ComposerEditorElement({
         <p {...attributes} style={{ position: "relative" }}>
           {children}
         </p>
+      );
+    case "bulleted-list":
+      return (
+        <ul {...attributes} style={{ position: "relative" }}>
+          {children}
+        </ul>
+      );
+    case "numbered-list":
+      return (
+        <ol {...attributes} style={{ position: "relative" }}>
+          {children}
+        </ol>
+      );
+    case "task-list":
+      return (
+        <ul
+          {...attributes}
+          style={{
+            position: "relative",
+            listStyle: "none",
+            paddingLeft: 0,
+            margin: 0,
+          }}
+          role="list"
+          data-task-list=""
+        >
+          {children}
+        </ul>
+      );
+    case "list-item":
+      return (
+        <ComposerEditorListItem
+          {...(props as RenderElementSpecificProps<ComposerBodyListItem>)}
+        />
       );
     default:
       return null;
@@ -812,6 +913,26 @@ const ComposerSuggestionsListItem = forwardRef<
   }
 );
 
+function composerDocumentContainsList(
+  nodes: readonly SlateDescendant[]
+): boolean {
+  for (const node of nodes) {
+    if (!Element.isElement(node)) {
+      continue;
+    }
+
+    if (
+      node.type === "bulleted-list" ||
+      node.type === "numbered-list" ||
+      node.type === "task-list"
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 const defaultEditorComponents: ComposerEditorComponents = {
   Link: ({ href, children }) => {
     return <ComposerLink href={href}>{children}</ComposerLink>;
@@ -856,6 +977,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       autoFocus,
       components,
       dir,
+      placeholder,
       ...props
     },
     forwardedRef
@@ -879,6 +1001,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
     }, [initialBody]);
+
+    const [editorContainsList, setEditorContainsList] = useState(() =>
+      composerDocumentContainsList(initialEditorValue)
+    );
     const { Link, Mention, MentionSuggestions, FloatingToolbar } = useMemo(
       () => ({ ...defaultEditorComponents, ...components }),
       [components]
@@ -925,6 +1051,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
     const handleChange = useCallback(
       (value: SlateDescendant[]) => {
+        setEditorContainsList(composerDocumentContainsList(value));
         validate(value as SlateElement[]);
 
         // Our multi-component setup requires us to instantiate the editor in `Composer.Form`
@@ -996,6 +1123,13 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             setSelectedMentionSuggestionIndex(0);
           }
         } else {
+          if (
+            handleListMarkdownShortcut(editor, event) ||
+            handleListKeyDown(editor, event)
+          ) {
+            return;
+          }
+
           if (hasFloatingToolbarRange) {
             // Close the floating toolbar on Escape
             if (isKey(event, "Escape")) {
@@ -1019,7 +1153,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             }
           }
 
-          // Create a new line on Shift + Enter
+          // Create a new line on Shift + Enter (including split / new list item when in a list)
           if (isKey(event, "Enter", { shift: true })) {
             event.preventDefault();
             editor.insertBreak();
@@ -1191,6 +1325,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           data-disabled={isDisabled || undefined}
           {...additionalProps}
           {...props}
+          placeholder={editorContainsList ? undefined : placeholder}
           readOnly={isDisabled}
           disabled={isDisabled}
           onKeyDown={handleKeyDown}
