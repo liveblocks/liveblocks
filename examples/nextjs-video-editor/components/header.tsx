@@ -86,10 +86,7 @@ function ProjectName() {
       value={value}
       size={Math.max(4, value.length)}
       onChange={(event) => setDraft(event.target.value)}
-      onFocus={(event) => {
-        setDraft(project.name);
-        event.target.select();
-      }}
+      onFocus={(event) => event.target.select()}
       onBlur={() => {
         const name = draft?.trim();
         if (name && name !== project.name) {
@@ -100,7 +97,7 @@ function ProjectName() {
       onKeyDown={(event) => {
         if (event.key === "Enter") event.currentTarget.blur();
         if (event.key === "Escape") {
-          setDraft(project.name);
+          setDraft(null);
           requestAnimationFrame(() => event.currentTarget?.blur());
         }
       }}
