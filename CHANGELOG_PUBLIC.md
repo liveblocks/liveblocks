@@ -20,6 +20,22 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 48 (2026-11-27)
 
+## v3.25.2
+
+### `@liveblocks/client`
+
+- Improve reconnection behavior on unstable networks. Previously, a connection
+  that dropped shortly after opening would be retried almost immediately, over
+  and over. Now, the reconnection delay only resets once a connection has stayed
+  open for a while, so repeatedly dropping connections back off as expected.
+- Add a random delay (up to 20% longer) to reconnection attempts, so that many
+  clients losing their connection at the same time don't all reconnect at the
+  exact same moment.
+
+### `@liveblocks/node`
+
+- Harden webhook signature verification in `WebhookHandler.verifyRequest()`.
+
 ## Examples
 
 - New example: [Support inbox](https://liveblocks.io/examples/support-inbox/nextjs-support-inbox).
@@ -27,7 +43,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas
+ctnicholas, nvie
 
 # Week 47 (2026-11-20)
 
