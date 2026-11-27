@@ -85,6 +85,11 @@ const NO_TILES: ReadonlySet<number> = new Set();
 function isLineTool(tool: Tool): tool is LineTool {
   return tool === "road" || tool === "rail" || tool === "bulldoze";
 }
+// Whether a press on the map has turned into dragging the map around
+function isPanning(drag: Drag | null) {
+  return drag !== null && drag.mode !== "line" && drag.moved;
+}
+
 
 // The map itself. Liveblocks Storage and Presence are copied into a plain
 // `scene` object, which a canvas renderer reads on every animation frame.
@@ -427,13 +432,24 @@ export function MapCanvas(props: Props) {
   };
 
   const onPointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
+    const dx = event.clientX - (current?.x ?? 0);
+    const dy = event.clientY - (current?.y ?? 0);
+    if (current?.pointerId === event.pointerId && Math.hypot(dx, dy) > 4) {
+      current.moved = true;
+    }
+
+    // While the map is being dragged around, this player's cursor stays
+    // where it was for everyone else: the map moves under the pointer, so
+    // following it would only make the cursor jitter on their screens
+    if (!isPanning(current)) {
+      setHover(tile);
+      updateMyPresence({
+        cursor: tile === null ? null : { x: point.x, y: point.y },
+      });
+    }
+
     const point = pointAt(event);
     const tile = tileOf(point);
-    setHover(tile);
-    updateMyPresence({
-      cursor: tile === null ? null : { x: point.x, y: point.y },
-    });
-
     const current = drag.current;
     if (!current) {
       event.currentTarget.style.cursor =
@@ -441,11 +457,6 @@ export function MapCanvas(props: Props) {
     }
     if (!current || current.pointerId !== event.pointerId) {
       return;
-    }
-    const dx = event.clientX - current.x;
-    const dy = event.clientY - current.y;
-    if (Math.hypot(dx, dy) > 4) {
-      current.moved = true;
     }
 
     if (current.mode === "line") {
@@ -466,6 +477,16 @@ export function MapCanvas(props: Props) {
       return;
     }
     drag.current = null;
+    // The map was let go: the cursor follows the pointer again
+    if (isPanning(current)) {
+      const point = pointAt(event);
+      const tile = tileOf(point);
+      setHover(tile);
+      updateMyPresence({
+        cursor: tile === null ? null : { x: point.x, y: point.y },
+      });
+    }
+
     const { tool, onLine, onDragPlan, onTileClick, onTownClick } =
       latest.current;
 
