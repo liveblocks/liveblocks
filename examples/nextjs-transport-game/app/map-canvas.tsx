@@ -71,6 +71,9 @@ type Drag = {
   startTile: number;
   lastTile: number;
   tiles: number[];
+  // Whether the corner of the line being dragged is on its other side,
+  // which it is for as long as Alt (Option) is held
+  flipped: boolean;
 };
 
 // How far out the map can be zoomed: far enough to see a good part of it,
@@ -314,7 +317,21 @@ export function MapCanvas(props: Props) {
         event.clientY - rect.top
       );
     };
+    // Alt flips the corner of a line that is being dragged, right away
+    const onAlt = (event: KeyboardEvent) => {
+      const current = drag.current;
+      if (event.key !== "Alt" || current?.mode !== "line") {
+        return;
+      }
+      // Otherwise the key opens the browser's menu on some systems
+      event.preventDefault();
+      if (current.flipped !== event.altKey && current.lastTile >= 0) {
+        current.flipped = event.altKey;
+        updateLine(current, current.lastTile);
+      }
+    };
     const onKeyDown = (event: KeyboardEvent) => {
+      onAlt(event);
       if (event.metaKey || event.ctrlKey || event.altKey) {
         return;
       }
@@ -329,6 +346,7 @@ export function MapCanvas(props: Props) {
       }
     };
     const onKeyUp = (event: KeyboardEvent) => {
+      onAlt(event);
       pressedKeys.current.delete(event.key);
     };
     const onBlur = () => pressedKeys.current.clear();
@@ -384,12 +402,20 @@ export function MapCanvas(props: Props) {
     }
   };
 
+  // Only reads what is kept up to date in refs, so it can also be called
+  // from the keyboard listeners above
   const updateLine = (current: Drag, tile: number) => {
-    const { tool, network, stations, balance, onDragPlan } = latest.current;
+    const { world, tool, network, stations, balance, onDragPlan } =
+      latest.current;
     if (!isLineTool(tool)) {
       return;
     }
-    const tiles = lineBetween(world.size, current.startTile, tile);
+    const tiles = lineBetween(
+      world.size,
+      current.startTile,
+      tile,
+      current.flipped
+    );
     current.tiles = tiles;
     current.lastTile = tile;
 
@@ -446,6 +472,7 @@ export function MapCanvas(props: Props) {
       startTile: tile ?? 0,
       lastTile: -1,
       tiles: [],
+      flipped: event.altKey,
     };
     if (mode === "line" && tile !== null) {
       updateLine(drag.current, tile);
@@ -481,7 +508,12 @@ export function MapCanvas(props: Props) {
     }
 
     if (current.mode === "line") {
-      if (tile !== null && tile !== current.lastTile) {
+      const flipped = event.altKey;
+      if (
+        tile !== null &&
+        (tile !== current.lastTile || flipped !== current.flipped)
+      ) {
+        current.flipped = flipped;
         updateLine(current, tile);
       }
     } else if (current.moved) {

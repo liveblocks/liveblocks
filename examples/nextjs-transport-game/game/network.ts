@@ -143,8 +143,14 @@ export function findPath(
 }
 
 // The tiles of an L-shaped line between two tiles, used when dragging to
-// build. The longer side of the L comes first.
-export function lineBetween(size: number, from: number, to: number) {
+// build. The longer side of the L comes first, or the shorter one when the
+// line is flipped, which puts its corner on the other side.
+export function lineBetween(
+  size: number,
+  from: number,
+  to: number,
+  flipped = false
+) {
   let x = from % size;
   let y = Math.floor(from / size);
   const toX = to % size;
@@ -164,7 +170,7 @@ export function lineBetween(size: number, from: number, to: number) {
     }
   };
 
-  if (Math.abs(toX - x) >= Math.abs(toY - y)) {
+  if (Math.abs(toX - x) >= Math.abs(toY - y) !== flipped) {
     alongX();
     alongY();
   } else {

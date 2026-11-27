@@ -914,8 +914,8 @@ function describe({
       );
     }
     return tool === "canal"
-      ? `${label} · Drag across land to dig a waterway for ships · ${formatMoney(cost)} per tile`
-      : `${label} · Drag across the map to build · ${formatMoney(cost)} per tile`;
+      ? `${label} · Drag across land to dig a waterway for ships · Hold Alt to flip the corner · ${formatMoney(cost)} per tile`
+      : `${label} · Drag across the map to build · Hold Alt to flip the corner · ${formatMoney(cost)} per tile`;
   }
 
   if (tool === "bulldoze") {
