@@ -19,7 +19,7 @@ const FEATURES: Feature[] = [
     icon: <RouteIcon />,
     title: "Build a network",
     description:
-      "Pick the road or rail tool and drag across the map to lay track, then place stations next to towns and industries. Docks go on the water by the shore, and ships need no track at all.",
+      "Pick the road or rail tool and drag across the map to lay track, then place stations next to towns and industries. Docks go on the water by the shore, and ships need no track at all. Anything you build can be undone with Ctrl+Z.",
   },
   {
     icon: <TruckIcon />,
