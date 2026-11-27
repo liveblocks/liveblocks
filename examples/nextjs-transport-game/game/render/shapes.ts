@@ -43,7 +43,10 @@ export function shade(color: string, factor: number) {
           : channel + (255 - channel) * Math.min(1, factor - 1)
       )
   );
-  const result = `rgb(${channels[0]},${channels[1]},${channels[2]})`;
+  // A #rrggbb color again, so the result can be shaded further
+  const result = `#${channels
+    .map((channel) => channel.toString(16).padStart(2, "0"))
+    .join("")}`;
   shadeCache.set(key, result);
   return result;
 }

@@ -218,6 +218,70 @@ function drawOffice(ctx: Ctx, ox: number, oy: number, color: number) {
   box(ctx, ox, oy, 0.4, 0.4, 0.62, 0.62, height, height + 4, "#9aa3ad");
 }
 
+// Rows of windows all the way up both visible sides of a block
+function floors(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  from: number,
+  to: number,
+  z0: number,
+  z1: number,
+  color: string
+) {
+  for (let z = z0 + 3; z + 3 <= z1; z += 5.5) {
+    windowBand(ctx, ox, oy, "left", from + 0.05, to - 0.05, to, z, z + 3, color);
+    windowBand(ctx, ox, oy, "right", from + 0.05, to - 0.05, to, z, z + 3, color);
+  }
+}
+
+const TOWERS = ["#d3d9df", "#e2d6c2", "#bccbd9", "#d9d2c6"];
+
+function drawTower(ctx: Ctx, ox: number, oy: number, color: number) {
+  const wall = TOWERS[color % TOWERS.length];
+  const height = 56 + (color % 3) * 7;
+  groundShadow(ctx, ox, oy + HALF_H + 3, 24);
+  box(ctx, ox, oy, 0.12, 0.12, 0.88, 0.88, 0, 7, shade(wall, 0.8));
+  windowBand(ctx, ox, oy, "left", 0.2, 0.8, 0.88, 1.5, 5.5, GLASS);
+  windowBand(ctx, ox, oy, "right", 0.2, 0.8, 0.88, 1.5, 5.5, GLASS);
+  box(ctx, ox, oy, 0.18, 0.18, 0.82, 0.82, 7, height, wall, shade(wall, 1.15));
+  floors(ctx, ox, oy, 0.18, 0.82, 7, height, GLASS);
+  box(ctx, ox, oy, 0.34, 0.34, 0.6, 0.6, height, height + 5, "#8f98a3");
+  box(ctx, ox, oy, 0.62, 0.4, 0.72, 0.5, height, height + 3, "#a9b1ba");
+}
+
+// [glass, frame] of each skyscraper
+const SKYSCRAPERS = [
+  ["#6f9cc4", "#dfe6ec"],
+  ["#5fa6a2", "#e4e2d8"],
+  ["#55647a", "#c6ccd4"],
+  ["#8fb4d6", "#f0ead9"],
+];
+
+function drawSkyscraper(ctx: Ctx, ox: number, oy: number, color: number) {
+  const [glass, frame] = SKYSCRAPERS[color % SKYSCRAPERS.length];
+  const shaft = 84 + (color % 2) * 10;
+  const crown = shaft + 20 + (color % 3) * 4;
+  groundShadow(ctx, ox, oy + HALF_H + 3, 25);
+
+  // A wide base, a glass shaft, and a narrower crown with a mast on top
+  box(ctx, ox, oy, 0.1, 0.1, 0.9, 0.9, 0, 10, frame);
+  windowBand(ctx, ox, oy, "left", 0.18, 0.82, 0.9, 2, 8, shade(glass, 0.8));
+  windowBand(ctx, ox, oy, "right", 0.18, 0.82, 0.9, 2, 8, shade(glass, 0.8));
+  box(ctx, ox, oy, 0.18, 0.18, 0.82, 0.82, 10, shaft, glass, frame);
+  floors(ctx, ox, oy, 0.18, 0.82, 10, shaft, shade(glass, 1.45));
+  for (const edge of [0.18, 0.5, 0.78]) {
+    windowBand(ctx, ox, oy, "left", edge, edge + 0.04, 0.82, 10, shaft, frame);
+    windowBand(ctx, ox, oy, "right", edge, edge + 0.04, 0.82, 10, shaft, frame);
+  }
+  box(ctx, ox, oy, 0.3, 0.3, 0.7, 0.7, shaft, crown, glass, frame);
+  floors(ctx, ox, oy, 0.3, 0.7, shaft, crown, shade(glass, 1.45));
+  box(ctx, ox, oy, 0.42, 0.42, 0.58, 0.58, crown, crown + 4, "#8f98a3");
+  box(ctx, ox, oy, 0.485, 0.485, 0.515, 0.515, crown + 4, crown + 18, "#c8ced6");
+  ctx.fillStyle = "#e5484d";
+  ctx.fillRect(ox - 1, oy + HALF_H - crown - 20, 2, 2);
+}
+
 function ground(ctx: Ctx, ox: number, oy: number, color: string) {
   quad(
     ctx,
@@ -431,11 +495,18 @@ export function createSprites(createCanvas: CanvasFactory): Sprites {
     trees.push(variants);
   }
 
-  const houseArtists = [drawCottage, drawTownhouse, drawOffice];
-  const houses = houseArtists.map((artist, variant) =>
+  // In the same order as `BUILDINGS`, with how tall each one can get
+  const houseArtists = [
+    { draw: drawCottage, height: 26 },
+    { draw: drawTownhouse, height: 26 },
+    { draw: drawOffice, height: 48 },
+    { draw: drawTower, height: 80 },
+    { draw: drawSkyscraper, height: 150 },
+  ];
+  const houses = houseArtists.map(({ draw, height }) =>
     [0, 1, 2, 3].map((color) =>
-      makeSprite(createCanvas, 1, variant === 2 ? 48 : 26, (ctx, ox, oy) =>
-        artist(ctx, ox, oy, color)
+      makeSprite(createCanvas, 1, height, (ctx, ox, oy) =>
+        draw(ctx, ox, oy, color)
       )
     )
   );
