@@ -122,6 +122,168 @@
   }
 }
 
+/*
+ * The game's interface floats over the map in windows that look like desktop
+ * software from the late 90s: gray, beveled, with a blue title bar.
+ */
+@layer components {
+  .win {
+    --win-face: #c0c0c0;
+    --win-light: #ffffff;
+    --win-soft: #dfdfdf;
+    --win-shade: #808080;
+    --win-dark: #0a0a0a;
+
+    padding: 3px;
+    background: var(--win-face);
+    color: #000000;
+    font-family: Tahoma, "MS Sans Serif", Verdana, Geneva, sans-serif;
+    font-size: 12px;
+    line-height: 1.35;
+    box-shadow:
+      inset -1px -1px var(--win-dark),
+      inset 1px 1px var(--win-soft),
+      inset -2px -2px var(--win-shade),
+      inset 2px 2px var(--win-light),
+      3px 3px 0 rgb(0 0 0 / 0.3);
+  }
+
+  .win-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 20px;
+    padding: 0 2px 0 5px;
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: #ffffff;
+    font-weight: 700;
+    cursor: move;
+    user-select: none;
+    touch-action: none;
+  }
+
+  .win-title-button {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 14px;
+    background: var(--win-face);
+    color: #000000;
+    box-shadow:
+      inset -1px -1px var(--win-dark),
+      inset 1px 1px var(--win-light),
+      inset -2px -2px var(--win-shade),
+      inset 2px 2px var(--win-soft);
+  }
+
+  .win-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 23px;
+    padding: 3px 9px;
+    background: var(--win-face);
+    color: #000000;
+    white-space: nowrap;
+    box-shadow:
+      inset -1px -1px var(--win-dark),
+      inset 1px 1px var(--win-light),
+      inset -2px -2px var(--win-shade),
+      inset 2px 2px var(--win-soft);
+  }
+
+  .win-button:focus-visible {
+    outline: 1px dotted #000000;
+    outline-offset: -4px;
+  }
+
+  .win-button:disabled {
+    color: var(--win-shade);
+    text-shadow: 1px 1px var(--win-light);
+  }
+
+  .win-title-button:active,
+  .win-button:active:not(:disabled),
+  .win-button[aria-pressed="true"] {
+    box-shadow:
+      inset 1px 1px var(--win-dark),
+      inset -1px -1px var(--win-light),
+      inset 2px 2px var(--win-shade),
+      inset -2px -2px var(--win-soft);
+  }
+
+  .win-button:active:not(:disabled) > *,
+  .win-button[aria-pressed="true"] > * {
+    translate: 1px 1px;
+  }
+
+  /* A toolbar button that stays pushed in gets the classic checkered face */
+  .win-button[aria-pressed="true"] {
+    background: repeating-conic-gradient(
+        var(--win-light) 0% 25%,
+        var(--win-face) 0% 50%
+      )
+      0 0 / 2px 2px;
+  }
+
+  /* A field sunk into the window: lists, readouts, the status line */
+  .win-inset {
+    background: #ffffff;
+    box-shadow:
+      inset 1px 1px var(--win-shade),
+      inset -1px -1px var(--win-light),
+      inset 2px 2px var(--win-dark),
+      inset -2px -2px var(--win-soft);
+    padding: 2px;
+  }
+
+  .win-status {
+    padding: 3px 6px;
+    box-shadow:
+      inset 1px 1px var(--win-shade),
+      inset -1px -1px var(--win-light);
+  }
+
+  .win-divider {
+    width: 2px;
+    align-self: stretch;
+    margin: 2px 3px;
+    box-shadow:
+      inset 1px 0 var(--win-shade),
+      inset -1px 0 var(--win-light);
+  }
+
+  /* Amounts of money that float up from the cursor when spent or received */
+  @keyframes money-float {
+    from {
+      opacity: 1;
+      translate: -50% -100%;
+    }
+    to {
+      opacity: 0;
+      translate: -50% calc(-100% - 56px);
+    }
+  }
+
+  .money-float {
+    position: fixed;
+    z-index: 60;
+    pointer-events: none;
+    font-family: Tahoma, Verdana, Geneva, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    text-shadow:
+      1px 0 #000000,
+      -1px 0 #000000,
+      0 1px #000000,
+      0 -1px #000000,
+      1px 2px 0 rgb(0 0 0 / 0.5);
+    animation: money-float 1.3s ease-out forwards;
+  }
+}
+
 /* Align Liveblocks UI with the app's primary color. */
 .lb-root {
   --lb-accent: rgb(253 81 8);

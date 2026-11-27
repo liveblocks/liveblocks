@@ -3,9 +3,13 @@
 import { useRoom, useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { Minus, Plus } from "lucide-react";
 import { PointerEvent, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { snapshotView, trackPlan, trackProblem } from "@/game/actions";
-import { TILE_H } from "@/game/constants";
+import {
+  demolitionCost,
+  snapshotView,
+  trackPlan,
+  trackProblem,
+} from "@/game/actions";
+import { COMPANIES, TILE_H } from "@/game/constants";
 import { lineBetween, type Network } from "@/game/network";
 import {
   type Camera,
@@ -37,7 +41,8 @@ type Props = {
   stations: ReadonlyMap<string, StationData>;
   vehicles: ReadonlyMap<string, Vehicle>;
   companies: ReadonlyMap<string, CompanyData>;
-  myId: string;
+  myCompany: string | null;
+  startedAt: number;
   balance: number;
   tool: Tool;
   routeFrom: number | null;
@@ -47,6 +52,7 @@ type Props = {
   onDragPlan: (plan: DragPlan) => void;
   onLine: (tool: LineTool, tiles: number[]) => void;
   onTileClick: (tile: number) => void;
+  onTownClick: (town: number) => void;
 };
 
 type Drag = {
@@ -87,6 +93,7 @@ export function MapCanvas(props: Props) {
   const room = useRoom();
   const updateMyPresence = useUpdateMyPresence();
 
+  const rendererRef = useRef<Renderer | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewport = useRef<Viewport>({ width: 1, height: 1, dpr: 1 });
@@ -99,7 +106,8 @@ export function MapCanvas(props: Props) {
     stations: props.stations,
     vehicles: props.vehicles,
     companies: props.companies,
-    myId: props.myId,
+    myCompany: props.myCompany,
+    startedAt: props.startedAt,
     tool: props.tool,
     hover: null,
     preview: null,
@@ -116,7 +124,8 @@ export function MapCanvas(props: Props) {
       stations: props.stations,
       vehicles: props.vehicles,
       companies: props.companies,
-      myId: props.myId,
+      myCompany: props.myCompany,
+      startedAt: props.startedAt,
       tool: props.tool,
       routeFrom: props.routeFrom,
       selectedStation: props.selectedStation,
@@ -142,7 +151,8 @@ export function MapCanvas(props: Props) {
     clampCamera();
   };
 
-  // Rendering loop
+  // Rendering loop. The renderer is rebuilt for every new map (seed), and
+  // kept when the same map only changes, e.g. when a house is demolished.
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -150,6 +160,7 @@ export function MapCanvas(props: Props) {
       return;
     }
 
+    const { world } = latest.current;
     const renderer = new Renderer(
       world,
       (width, height) => {
@@ -160,6 +171,7 @@ export function MapCanvas(props: Props) {
       },
       getComputedStyle(canvas).fontFamily || "sans-serif"
     );
+    rendererRef.current = renderer;
 
     // Start on the town closest to the middle of the map
     const middle = world.size / 2;
@@ -201,7 +213,14 @@ export function MapCanvas(props: Props) {
       frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      rendererRef.current = null;
+    };
+  }, [world.seed]);
+
+  useEffect(() => {
+    rendererRef.current?.setWorld(world);
   }, [world]);
 
   // Keep the canvas as sharp as the screen it's on
@@ -239,7 +258,11 @@ export function MapCanvas(props: Props) {
                 x: other.presence.cursor.x,
                 y: other.presence.cursor.y,
                 name: other.info.name.split(" ")[0],
-                color: other.info.color,
+                // Players who are still choosing a company are gray
+                color:
+                  COMPANIES.find(
+                    (company) => company.id === other.presence.company
+                  )?.color ?? "#737373",
               },
             ]
           : []
@@ -296,6 +319,21 @@ export function MapCanvas(props: Props) {
     };
   }, []);
 
+  // Town names can be clicked, but only with the select tool: with any other
+  // tool, a click builds on the tile under the name
+  const townAt = (event: PointerEvent<HTMLCanvasElement>) => {
+    if (latest.current.tool !== "select") {
+      return null;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    return (
+      rendererRef.current?.townAt(
+        event.clientX - rect.left,
+        event.clientY - rect.top
+      ) ?? null
+    );
+  };
+
   const pointAt = (event: PointerEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     return Renderer.screenToTile(
@@ -330,8 +368,13 @@ export function MapCanvas(props: Props) {
     current.lastTile = tile;
 
     if (tool === "bulldoze") {
+      const cost = demolitionCost(world, tiles);
       scene.current.preview = { tiles, bad: NO_TILES, tone: "remove" };
-      onDragPlan({ tiles: tiles.length, cost: 0, problem: null });
+      onDragPlan({
+        tiles: tiles.length,
+        cost,
+        problem: cost > balance ? "Not enough money" : null,
+      });
       return;
     }
 
@@ -392,6 +435,10 @@ export function MapCanvas(props: Props) {
     });
 
     const current = drag.current;
+    if (!current) {
+      event.currentTarget.style.cursor =
+        townAt(event) !== null ? "pointer" : "";
+    }
     if (!current || current.pointerId !== event.pointerId) {
       return;
     }
@@ -419,7 +466,8 @@ export function MapCanvas(props: Props) {
       return;
     }
     drag.current = null;
-    const { tool, onLine, onDragPlan, onTileClick } = latest.current;
+    const { tool, onLine, onDragPlan, onTileClick, onTownClick } =
+      latest.current;
 
     if (current.mode === "line") {
       scene.current.preview = null;
@@ -428,8 +476,11 @@ export function MapCanvas(props: Props) {
         onLine(tool, current.tiles);
       }
     } else if (current.mode === "click" && !current.moved) {
+      const town = townAt(event);
       const tile = tileOf(pointAt(event));
-      if (tile !== null) {
+      if (town !== null) {
+        onTownClick(town);
+      } else if (tile !== null) {
         onTileClick(tile);
       }
     }
@@ -465,25 +516,23 @@ export function MapCanvas(props: Props) {
         onPointerLeave={onPointerLeave}
         onContextMenu={(event) => event.preventDefault()}
       />
-      <div className="absolute right-3 bottom-3 flex flex-col gap-px overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="rounded-none"
+      <div className="win absolute right-2 bottom-12 flex flex-col gap-px">
+        <button
+          type="button"
+          className="win-button size-7 p-0"
           aria-label="Zoom in"
           onClick={zoomButton(1.3)}
         >
-          <Plus />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="rounded-none"
+          <Plus className="size-4" />
+        </button>
+        <button
+          type="button"
+          className="win-button size-7 p-0"
           aria-label="Zoom out"
           onClick={zoomButton(1 / 1.3)}
         >
-          <Minus />
-        </Button>
+          <Minus className="size-4" />
+        </button>
       </div>
     </div>
   );

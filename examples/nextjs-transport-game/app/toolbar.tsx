@@ -9,13 +9,13 @@ import {
   Warehouse,
 } from "lucide-react";
 import { ComponentType } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { TRACK } from "@/game/constants";
+import { Window } from "@/components/window";
+import { HOUSE_DEMOLISH_COST, TRACK } from "@/game/constants";
 import { formatMoney } from "@/game/economy";
 import type { Tool } from "@/game/types";
 
@@ -50,7 +50,7 @@ export const TOOLS: {
   {
     id: "select",
     label: "Select",
-    detail: "Move around and inspect stations",
+    detail: "Move around, inspect stations and towns",
     shortcut: "1",
     icon: MousePointer2,
   },
@@ -92,7 +92,7 @@ export const TOOLS: {
   {
     id: "bulldoze",
     label: "Clear",
-    detail: "Remove your own tracks and stations",
+    detail: `Remove your tracks and stations · Demolish houses for ${formatMoney(HOUSE_DEMOLISH_COST)} each`,
     shortcut: "7",
     icon: Trash2,
   },
@@ -106,27 +106,28 @@ export function Toolbar({
   onSelect: (tool: Tool) => void;
 }) {
   return (
-    <div className="absolute top-3 left-3 flex flex-col gap-1 rounded-lg bg-white p-1 shadow ring-1 ring-neutral-950/5">
-      {TOOLS.map(({ id, label, detail, shortcut, icon: Icon }) => (
-        <Tooltip key={id}>
-          <TooltipTrigger asChild>
-            <Button
-              variant={tool === id ? "default" : "ghost"}
-              size="icon-sm"
-              aria-label={label}
-              aria-pressed={tool === id}
-              onClick={() => onSelect(id)}
-            >
-              <Icon />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={8}>
-            <span className="font-medium">{label}</span>
-            <span className="ml-1.5 opacity-60">{shortcut}</span>
-            <div className="opacity-70">{detail}</div>
-          </TooltipContent>
-        </Tooltip>
-      ))}
-    </div>
+    <Window title="Build">
+      <div className="flex gap-px pt-[3px]">
+        {TOOLS.map(({ id, label, detail, shortcut, icon: Icon }) => (
+          <Tooltip key={id}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="win-button size-8 p-0"
+                aria-label={label}
+                aria-pressed={tool === id}
+                onClick={() => onSelect(id)}
+              >
+                <Icon className="size-[18px]" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={6}>
+              <span className="font-bold">{label}</span> ({shortcut})
+              <div>{detail}</div>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </Window>
   );
 }
