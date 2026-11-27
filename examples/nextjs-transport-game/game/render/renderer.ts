@@ -113,27 +113,29 @@ type Label = {
 const WATER_COLOR = "#4b90d2";
 const POPUP_MS = 1800;
 
+// Where a track leaves a tile toward each neighbor, in tile coordinates
+// relative to the middle of the tile
 const EDGE_OFFSETS: Record<number, [number, number]> = {
-  [NORTH]: [HALF_W / 2, -HALF_H / 2],
-  [EAST]: [HALF_W / 2, HALF_H / 2],
-  [SOUTH]: [-HALF_W / 2, HALF_H / 2],
-  [WEST]: [-HALF_W / 2, -HALF_H / 2],
+  [NORTH]: [0, -0.5],
+  [EAST]: [0.5, 0],
+  [SOUTH]: [0, 0.5],
+  [WEST]: [-0.5, 0],
 };
 const DIRECTIONS = [NORTH, EAST, SOUTH, WEST];
 
-// Adds the centerline of a track tile to a path: a straight line, a curve
-// for corners, or one arm per neighbor for junctions. Returns whether the
-// tile is a plain piece of track (not a junction).
+// Adds the centerline of a track tile to a path, in tile coordinates: a
+// straight line, a curve for corners, or one arm per neighbor for junctions.
+// Returns whether the tile is a plain piece of track (not a junction).
 function addTrackTile(path: Path2D, x: number, y: number, mask: number) {
-  const cx = worldX(x + 0.5, y + 0.5);
-  const cy = worldY(x + 0.5, y + 0.5);
+  const cx = x + 0.5;
+  const cy = y + 0.5;
   const arms = DIRECTIONS.filter((direction) => mask & direction).map(
     (direction) => EDGE_OFFSETS[direction]
   );
 
   if (arms.length === 0) {
-    path.moveTo(cx - HALF_W / 4, cy - HALF_H / 4);
-    path.lineTo(cx + HALF_W / 4, cy + HALF_H / 4);
+    path.moveTo(cx - 0.25, cy);
+    path.lineTo(cx + 0.25, cy);
     return true;
   }
 
@@ -440,40 +442,54 @@ export class Renderer {
       this.rebuildTracks(network);
     }
 
+    // Tracks are stroked in tile coordinates, under the same transform that
+    // lays tiles out on screen. Widths, corners, sleepers and lane markings
+    // then get foreshortened like the ground they sit on, instead of looking
+    // like lines of constant thickness drawn over the map.
     const stroke = (
       path: Path2D,
       width: number,
       color: string,
-      dash?: number[]
+      dash?: number[],
+      // How far the layer is pushed down the screen, in pixels
+      drop = 0
     ) => {
+      ctx.save();
+      ctx.translate(0, drop);
+      ctx.transform(HALF_W, HALF_H, -HALF_W, HALF_H, 0, 0);
       ctx.lineWidth = width;
       ctx.strokeStyle = color;
+      ctx.lineJoin = "round";
       ctx.lineCap = dash ? "butt" : "round";
       ctx.setLineDash(dash ?? []);
+      // Start on half a gap, so dashes are spaced evenly from tile to tile
+      ctx.lineDashOffset = dash ? -dash[1] / 2 : 0;
       ctx.stroke(path);
+      ctx.restore();
     };
 
-    ctx.lineJoin = "round";
-
     // The sides of bridge decks, peeking out below the tracks
-    ctx.save();
-    ctx.translate(0, 5);
-    stroke(this.roadBridgePath, 16, "#3b4047");
-    stroke(this.railBridgePath, 13, "#4a443b");
-    ctx.restore();
+    stroke(this.roadBridgePath, 0.58, "#3b4047", undefined, 6);
+    stroke(this.railBridgePath, 0.52, "#4a443b", undefined, 6);
 
-    stroke(this.roadPath, 16.5, "#565b63");
-    stroke(this.roadPath, 14, "#787d86");
-    stroke(this.roadLinePath, 1, "rgba(255, 255, 255, 0.6)", [3, 4]);
+    // Roads: a verge that drops away on the side facing the camera, a
+    // pavement, the asphalt, and a dashed centerline
+    stroke(this.roadPath, 0.6, "rgba(40, 52, 30, 0.45)", undefined, 1.5);
+    stroke(this.roadPath, 0.58, "#b7b3a8");
+    stroke(this.roadPath, 0.46, "#6d7179");
+    stroke(this.roadPath, 0.42, "#7b8088");
+    stroke(this.roadLinePath, 0.028, "rgba(255, 255, 255, 0.75)", [0.14, 0.11]);
 
-    stroke(this.railPath, 13, "#a39a88");
-    stroke(this.railPath, 9.5, "#6d5a45", [1.6, 3.2]);
-    stroke(this.railPath, 6.6, "#3f4348");
-    stroke(this.railPath, 4.2, "#a39a88");
-    stroke(this.railPath, 4.2, "#6d5a45", [1.6, 3.2]);
-
-    ctx.setLineDash([]);
-    ctx.lineCap = "butt";
+    // Railways: a ballast bed, sleepers across it, and two rails. The rails
+    // are one dark stroke with the bed and sleepers painted again inside.
+    stroke(this.railPath, 0.54, "rgba(40, 36, 26, 0.5)", undefined, 2);
+    stroke(this.railPath, 0.52, "#8f8674");
+    stroke(this.railPath, 0.46, "#aba28f");
+    stroke(this.railPath, 0.36, "#5d4a38", [0.05, 0.075]);
+    stroke(this.railPath, 0.27, "#2c2f34");
+    stroke(this.railPath, 0.19, "#aba28f");
+    stroke(this.railPath, 0.19, "#5d4a38", [0.05, 0.075]);
+    stroke(this.railPath, 0.25, "rgba(255, 255, 255, 0.18)", [0.02, 0.105]);
   }
 
   private drawStationPads(ctx: Ctx, scene: Scene) {
