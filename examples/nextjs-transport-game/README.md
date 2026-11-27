@@ -24,9 +24,9 @@ This example shows how to build a multiplayer transport game with
 [Liveblocks Storage](https://liveblocks.io/docs/products/sync/storage),
 [Presence](https://liveblocks.io/docs/api-reference/liveblocks-react#Presence), and
 [Next.js](https://nextjs.org/). It's a small tycoon game inspired by classics
-like OpenTTD: every player runs their own transport company on a shared
+like OpenTTD: every player picks a transport company to run on a shared
 isometric map, building roads, railways and stations, then buying buses, trucks
-and trains to carry passengers and cargo between towns and industries.
+and trains to carry passengers and cargo between growing towns and industries.
 Everything players build, every vehicle and every cursor syncs in realtime.
 
 ## Getting started
@@ -58,7 +58,8 @@ Alternatively, you can set up your project manually:
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 To play with others, open the page in two browser tabs. Each tab is signed in as
-a random demo user, every user runs their own company, and everything a player
+a random demo user and picks one of six companies to run. A company is taken
+for as long as the player running it is connected, and everything a player
 builds shows up live for the others.
 
 </details>

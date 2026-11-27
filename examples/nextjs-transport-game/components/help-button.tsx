@@ -31,13 +31,13 @@ const FEATURES: Feature[] = [
     icon: <UsersIcon />,
     title: "Play together",
     description:
-      "Open this example in two tabs. Each player runs their own company, and every build, vehicle and cursor shows up live.",
+      "Open this example in two tabs and pick a different company in each. Every build, vehicle and cursor shows up live.",
   },
   {
     icon: <GlobeIcon />,
     title: "Shared world",
     description:
-      "Tracks are shared, so you can connect to another player's network. The companies panel ranks everyone by balance.",
+      "Tracks are shared, so you can connect to another company's network. Towns grow over time, faster once they have a station: click a town's name to see its population.",
   },
 ];
 

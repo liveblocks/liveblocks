@@ -7,7 +7,7 @@ import { getRandomUser, getUsers } from "./database";
 const USER_STORAGE_KEY = "liveblocks-transport-game-user";
 
 // Each browser tab plays as one of the demo users, picked at random and
-// remembered across reloads so you keep running the same company.
+// remembered across reloads.
 function getDemoUserId() {
   const users = getUsers();
 

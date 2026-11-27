@@ -1,5 +1,4 @@
-// A mock database with example users. Each user's color is also the color of
-// their transport company in the game.
+// A mock database with example users
 const USER_INFO: Liveblocks["UserMeta"][] = [
   {
     id: "charlie.layne@example.com",
