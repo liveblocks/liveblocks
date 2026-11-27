@@ -1,7 +1,18 @@
 "use client";
 
-import { CSSProperties, ReactNode, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { CircleHelpIcon, XIcon } from "lucide-react";
+import type { ReactNode } from "react";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 const EXAMPLE_NAME = "Collaborative interior design";
 const EXAMPLE_URL =
@@ -40,228 +51,75 @@ const FEATURES: Feature[] = [
   },
 ];
 
-const styles: Record<string, CSSProperties> = {
-  button: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 28,
-    height: 28,
-    background: "transparent",
-    border: "none",
-    borderRadius: 6,
-    color: "#6a7282",
-    cursor: "pointer",
-  },
-  backdrop: {
-    position: "fixed",
-    inset: 0,
-    zIndex: 2147483000,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-    background: "rgba(16, 24, 40, 0.2)",
-  },
-  panel: {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 8,
-    boxShadow:
-      "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-    width: "100%",
-    maxWidth: 448,
-    maxHeight: "80vh",
-    overflowY: "auto",
-  },
-  header: {
-    display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 16,
-    padding: 20,
-    borderBottom: "1px solid #e5e7eb",
-  },
-  title: { fontSize: 14, fontWeight: 600, color: "#101828", margin: 0 },
-  titleLink: { color: "inherit", textDecoration: "none" },
-  desc: { fontSize: 14, color: "#6a7282", marginTop: 4, marginBottom: 0 },
-  close: {
-    flexShrink: 0,
-    marginTop: -4,
-    marginRight: -4,
-    padding: 6,
-    borderRadius: 4,
-    border: "none",
-    background: "transparent",
-    color: "#6a7282",
-    cursor: "pointer",
-    lineHeight: 0,
-  },
-  list: {
-    listStyle: "none",
-    margin: 0,
-    padding: 20,
-    display: "flex",
-    flexDirection: "column",
-    gap: 16,
-  },
-  item: { display: "flex", alignItems: "flex-start", gap: 16 },
-  iconWrap: {
-    flexShrink: 0,
-    marginTop: 2,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 28,
-    height: 28,
-    borderRadius: 4,
-    background: "#f3f4f6",
-    color: "#4a5565",
-  },
-  featureTitle: { fontSize: 14, fontWeight: 500, color: "#101828", margin: 0 },
-  featureDesc: {
-    fontSize: 14,
-    color: "#6a7282",
-    marginTop: 2,
-    marginBottom: 0,
-  },
-};
-
-const HOVER_CSS = `
-.lb-help-button:hover { background:#f9fafb !important; color:#101828 !important; }
-.lb-help-title-link:hover { text-decoration: underline !important; }
-.lb-help-close:hover { background:#f3f4f6 !important; color:#101828 !important; }
-.lb-help-link { color:#4a5565 !important; text-decoration: underline !important; }
-.lb-help-link:hover { color:#101828 !important; }
-.lb-help, .lb-help * { box-sizing: border-box; }
-`;
-
 export function HelpButton() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isOpen]);
-
   return (
-    <>
-      <style>{HOVER_CSS}</style>
-      <button
-        type="button"
-        className="lb-help-button"
-        style={styles.button}
-        onClick={() => setIsOpen(true)}
-        aria-label="How to use this example"
-      >
-        <HelpIcon />
-      </button>
+    <Dialog>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <DialogTrigger
+              render={
+                <Button
+                  aria-label="How to use this example"
+                  className="text-ink-muted"
+                />
+              }
+            />
+          }
+        >
+          <CircleHelpIcon />
+        </TooltipTrigger>
+        <TooltipContent side="top">How to use this example</TooltipContent>
+      </Tooltip>
 
-      {isOpen && typeof document !== "undefined"
-        ? createPortal(
-            <div
-              style={styles.backdrop}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="lb-help-title"
-              onClick={() => setIsOpen(false)}
-            >
-              <div
-                className="lb-help"
-                style={styles.panel}
-                onClick={(event) => event.stopPropagation()}
+      <DialogBackdrop />
+      <DialogContent>
+        <div className="flex items-start justify-between gap-4 border-b border-line p-5">
+          <div>
+            <DialogTitle>
+              <a
+                href={EXAMPLE_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
               >
-                <div style={styles.header}>
-                  <div>
-                    <h2 id="lb-help-title" style={styles.title}>
-                      <a
-                        className="lb-help-title-link"
-                        style={styles.titleLink}
-                        href={EXAMPLE_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {EXAMPLE_NAME}
-                      </a>
-                    </h2>
-                    <p style={styles.desc}>How to use this example</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="lb-help-close"
-                    style={styles.close}
-                    aria-label="Close"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <CloseIcon />
-                  </button>
-                </div>
+                {EXAMPLE_NAME}
+              </a>
+            </DialogTitle>
+            <DialogDescription>How to use this example</DialogDescription>
+          </div>
+          <DialogClose
+            render={
+              <Button
+                size="icon"
+                aria-label="Close"
+                className="-mt-1 -mr-1 text-ink-muted"
+              />
+            }
+          >
+            <XIcon />
+          </DialogClose>
+        </div>
 
-                <ul style={styles.list}>
-                  {FEATURES.map((feature) => (
-                    <li key={feature.title} style={styles.item}>
-                      <span style={styles.iconWrap}>{feature.icon}</span>
-                      <div>
-                        <h3 style={styles.featureTitle}>{feature.title}</h3>
-                        <p style={styles.featureDesc}>{feature.description}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+        <ul className="flex flex-col gap-4 overflow-y-auto p-5">
+          {FEATURES.map((feature) => (
+            <li key={feature.title} className="flex items-start gap-4">
+              <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded bg-hover text-ink-secondary [&_svg]:size-4">
+                {feature.icon}
+              </span>
+              <div>
+                <h3 className="text-sm font-medium text-ink">
+                  {feature.title}
+                </h3>
+                <p className="mt-0.5 text-sm text-ink-muted">
+                  {feature.description}
+                </p>
               </div>
-            </div>,
-            document.body
-          )
-        : null}
-    </>
-  );
-}
-
-function HelpIcon() {
-  return (
-    <svg
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx={12} cy={12} r={10} />
-      <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
-      <path d="M12 17h.01" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M18 6L6 18M6 6l12 12" />
-    </svg>
+            </li>
+          ))}
+        </ul>
+      </DialogContent>
+    </Dialog>
   );
 }
 

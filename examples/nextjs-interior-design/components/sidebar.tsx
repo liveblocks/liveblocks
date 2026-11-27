@@ -10,12 +10,15 @@ import { cn } from "@/lib/utils";
 import { HelpButton } from "./help-button";
 import { Library } from "./library";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuItemIndicator,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuSeparator,
+  MenuTrigger,
+} from "./ui/menu";
 
 type SidebarProps = {
   plan: Plan;
@@ -105,9 +108,9 @@ function PlanSwitcher({
   unit: Unit;
 }) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className="group flex h-10 w-full items-center gap-2.5 rounded-md px-2 text-left transition-colors outline-none hover:bg-ink/8 focus-visible:bg-ink/8 data-[state=open]:bg-ink/8"
+    <Menu>
+      <MenuTrigger
+        className="group flex h-10 w-full items-center gap-2.5 rounded-md px-2 text-left transition-colors outline-none hover:bg-ink/8 focus-visible:bg-ink/8 data-open:bg-ink/8"
         aria-label={`Plan: ${plan.name}`}
       >
         <LiveblocksMark />
@@ -120,16 +123,21 @@ function PlanSwitcher({
           </div>
         </div>
         <ChevronsUpDownIcon className="size-3.5 shrink-0 text-ink-faint group-hover:text-ink-muted" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-60">
-        {plans.map((item) => {
-          const active = item.id === plan.id;
-          return (
-            <DropdownMenuItem
+      </MenuTrigger>
+      <MenuContent align="start" className="w-60">
+        <MenuRadioGroup
+          name="plan"
+          aria-label="Plans"
+          value={plan.id}
+          onValueChange={(planId) => onChange(planId)}
+        >
+          {plans.map((item) => (
+            <MenuRadioItem
               key={item.id}
-              className="h-auto py-1.5 text-[13px]"
-              onClick={() => onChange(item.id)}
-              aria-current={active ? "true" : undefined}
+              value={item.id}
+              label={item.name}
+              closeOnSelect
+              className="h-auto py-1.5"
             >
               <div className="min-w-0 flex-1 pl-0.5">
                 <div className="truncate">{item.name}</div>
@@ -137,19 +145,19 @@ function PlanSwitcher({
                   {formatPlanSummary(item.roomCount, item.area, unit)}
                 </div>
               </div>
-              {active ? (
-                <CheckIcon className="size-3.5 shrink-0 text-ink" />
-              ) : null}
-            </DropdownMenuItem>
-          );
-        })}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-[13px]" onClick={onCreate}>
-          <PlusIcon className="size-3.5" />
+              <MenuItemIndicator>
+                <CheckIcon className="text-ink" />
+              </MenuItemIndicator>
+            </MenuRadioItem>
+          ))}
+        </MenuRadioGroup>
+        <MenuSeparator />
+        <MenuItem onSelect={() => onCreate()}>
+          <PlusIcon />
           New plan
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </MenuItem>
+      </MenuContent>
+    </Menu>
   );
 }
 

@@ -6,6 +6,8 @@ import {
   useOthersMapped,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
+import { bindDrag, dragThreshold, type Viewport } from "@ui-sdk/core";
+import { usePart, usePrimitive } from "@ui-sdk/react/primitive";
 import { MaximizeIcon, MinusIcon, PlusIcon } from "lucide-react";
 import {
   useEffect,
@@ -65,10 +67,16 @@ import {
   type Guides,
 } from "@/lib/snapping";
 import { formatLength, scaleBarLength, type Unit } from "@/lib/units";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Button } from "../ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipShortcut,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import { Cursors } from "./cursors";
 import { Dimension } from "./dimension";
+import { floorPlan } from "./floor-plan";
 import { FurnitureHandles, FurnitureShape } from "./furniture-shape";
 import { OpeningShape } from "./opening-shape";
 import {
@@ -78,23 +86,15 @@ import {
   RoomLabel,
   RoomWalls,
 } from "./room-shape";
-
-// Pixels per centimeter.
-const MIN_ZOOM = 0.15;
-const MAX_ZOOM = 4;
+import { isTyping, usePlanShortcuts } from "./use-plan-shortcuts";
 
 const MIN_FURNITURE_SIZE = 20;
 const MIN_ROOM_SIZE = 60;
 const DEFAULT_ROOM = { width: 400, depth: 320 };
 const DEFAULT_OPENING_WIDTH = { door: 80, window: 120 };
 
-type View = { x: number; y: number; zoom: number };
-
-// What a pointer drag is doing, from pointer down to pointer up.
+// What a pointer drag is changing, from pointer down to pointer up.
 type DragAction =
-  // Panning the view. A press that never moves is a click instead, and
-  // selects `click` (a room, or nothing).
-  | { kind: "pan"; view: View; click: Selection | null }
   | { kind: "furniture"; id: string; start: Point; origin: Point }
   | { kind: "rotate"; id: string }
   | { kind: "resize"; item: Furniture; x: -1 | 1; y: -1 | 1 }
@@ -117,11 +117,17 @@ type DragAction =
   | { kind: "draw"; start: Point; end: Point };
 
 type Drag = DragAction & {
-  clientX: number;
-  clientY: number;
   // False until the pointer has moved a few pixels, so a click never nudges.
-  active: boolean;
+  started: boolean;
+  // What the drag last wrote to Storage: the same values aren't written
+  // twice, and a drag that wrote nothing has nothing to take back.
+  written: string | null;
+  changed: boolean;
 };
+
+// A press that pans the view. If the view hasn't moved by the time the
+// click arrives, it was a click, and selects `selection`.
+type Press = { view: Viewport; selection: Selection | null };
 
 // Where a new door or window would land on a wall.
 type Placement = { wall: Wall; offset: number; width: number };
@@ -163,18 +169,14 @@ function placeOnWall(hit: WallHit, width: number, grid: number) {
   );
 }
 
-function isTyping(target: EventTarget | null) {
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable ||
-      ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-  );
-}
-
 /**
  * The floor plan: an SVG drawn in plan coordinates (centimeters) under a
  * single pan and zoom transform. Everything on it is read from Liveblocks
  * Storage and changed through `actions`, so every drag is synced live.
+ *
+ * The gestures come from ui-sdk. The `floorPlan` primitive pans and zooms
+ * the view (wheel, trackpad, touch), `bindDrag` follows the pointer for
+ * everything that's dragged on the plan, and `useShortcut` binds the keys.
  *
  * Each drag pauses the undo history on pointer down and resumes it on
  * pointer up, which turns the many small updates of a drag into one step.
@@ -196,14 +198,18 @@ export function Canvas({
   const history = useHistory();
   const updateMyPresence = useUpdateMyPresence();
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<Drag | null>(null);
+  // Stops following the pointer, for a drag cut short.
+  const stopDragRef = useRef<(() => void) | null>(null);
+  const pressRef = useRef<Press | null>(null);
+  // The pointers panning or pinching the view.
+  const panPointers = useRef(new Set<number>());
   const spaceRef = useRef(false);
   const lastCornerPress = useRef<{ id: string; time: number } | null>(null);
   const addedCount = useRef(0);
 
-  const [view, setView] = useState<View>({ x: 0, y: 0, zoom: 0.8 });
+  const [view, setView] = useState<Viewport>({ x: 0, y: 0, zoom: 0.8 });
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [ready, setReady] = useState(false);
   const [panning, setPanning] = useState(false);
@@ -211,12 +217,6 @@ export function Canvas({
   const [guides, setGuides] = useState<Guides>(NO_GUIDES);
   const [draft, setDraft] = useState<{ a: Point; b: Point } | null>(null);
   const [placement, setPlacement] = useState<Placement | null>(null);
-
-  const viewRef = useRef(view);
-  const sizeRef = useRef(size);
-  useLayoutEffect(() => {
-    viewRef.current = view;
-  });
 
   const roomList = useMemo(
     () => [...rooms.values()].sort((a, b) => a.id.localeCompare(b.id)),
@@ -250,117 +250,66 @@ export function Canvas({
   const selectedFurniture =
     selection?.kind === "furniture" ? furniture.get(selection.id) : undefined;
 
-  function toPlan(clientX: number, clientY: number): Point {
-    const rect = svgRef.current?.getBoundingClientRect();
-    const { x, y, zoom } = viewRef.current;
-    return {
-      x: (clientX - (rect?.left ?? 0) - x) / zoom,
-      y: (clientY - (rect?.top ?? 0) - y) / zoom,
-    };
-  }
-
   /* ------------------------------------------------------------------ */
-  /* View: size, zoom, fit                                               */
+  /* View: pan, zoom, fit                                                */
   /* ------------------------------------------------------------------ */
 
-  const fit = useEvent(() => {
-    const { width, height } = sizeRef.current;
-    if (!width || !height) {
-      return;
-    }
+  // The box around everything on the plan, which "Zoom to fit" frames.
+  const content = useMemo(() => {
     const bounds = planBounds(rooms.values(), furniture.values());
-    if (!bounds) {
-      setView({ x: width / 2, y: height / 2, zoom: 0.8 });
-      return;
-    }
-    const padding = Math.min(88, width * 0.1);
-    // Leave some room below for the toolbar.
-    const reserved = 44;
-    const zoom = clamp(
-      Math.min(
-        (width - padding * 2) / Math.max(1, bounds.maxX - bounds.minX),
-        (height - padding * 2 - reserved) /
-          Math.max(1, bounds.maxY - bounds.minY)
-      ),
-      MIN_ZOOM,
-      1.5
-    );
-    setView({
-      zoom,
-      x: width / 2 - ((bounds.minX + bounds.maxX) / 2) * zoom,
-      y: (height - reserved) / 2 - ((bounds.minY + bounds.maxY) / 2) * zoom,
-    });
-  });
+    return bounds
+      ? {
+          left: bounds.minX,
+          top: bounds.minY,
+          right: bounds.maxX,
+          bottom: bounds.maxY,
+        }
+      : null;
+  }, [rooms, furniture]);
 
-  // Zooms by `factor`, keeping the plan point under (x, y) where it is. The
-  // point defaults to the middle of the canvas.
-  const zoomBy = useEvent((factor: number, x?: number, y?: number) => {
-    const originX = x ?? sizeRef.current.width / 2;
-    const originY = y ?? sizeRef.current.height / 2;
-    setView((current) => {
-      const zoom = clamp(current.zoom * factor, MIN_ZOOM, MAX_ZOOM);
-      const ratio = zoom / current.zoom;
-      return {
-        zoom,
-        x: originX - (originX - current.x) * ratio,
-        y: originY - (originY - current.y) * ratio,
-      };
-    });
+  // The primitive holds the viewport and moves it. It's mirrored in `view`
+  // because nearly everything drawn here depends on the zoom: handles,
+  // labels and dimensions keep their size on screen whatever the scale.
+  const plan = usePrimitive(floorPlan, {
+    content,
+    onViewportChange: (next, details) => {
+      setView(next);
+      if (details.reason === "drag" || details.reason === "pinch") {
+        setPanning(true);
+      }
+    },
   });
+  const { viewport } = plan.api;
+
+  const toPlan = (clientX: number, clientY: number): Point =>
+    viewport.toCanvas(clientX, clientY);
+
+  const fit = useEvent(() => plan.api.fit());
 
   // Track the canvas size, and frame the plan the first time it's known.
   useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
+    const surface = surfaceRef.current;
+    if (!surface) {
       return;
     }
+    let measured = false;
     const measure = () => {
       const next = {
-        width: container.clientWidth,
-        height: container.clientHeight,
+        width: surface.clientWidth,
+        height: surface.clientHeight,
       };
-      const first = sizeRef.current.width === 0 && next.width > 0;
-      sizeRef.current = next;
       setSize(next);
-      if (first) {
+      if (!measured && next.width > 0) {
+        measured = true;
         fit();
         setReady(true);
       }
     };
     measure();
     const observer = new ResizeObserver(measure);
-    observer.observe(container);
+    observer.observe(surface);
     return () => observer.disconnect();
   }, [fit]);
-
-  // Scroll to pan, pinch or Ctrl/⌘ + scroll to zoom. Registered by hand
-  // because React's wheel listeners are passive and can't prevent the page
-  // from zooming.
-  useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg) {
-      return;
-    }
-    const onWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      if (event.ctrlKey || event.metaKey) {
-        const rect = svg.getBoundingClientRect();
-        zoomBy(
-          Math.exp(-event.deltaY * 0.01),
-          event.clientX - rect.left,
-          event.clientY - rect.top
-        );
-      } else {
-        setView((current) => ({
-          ...current,
-          x: current.x - event.deltaX,
-          y: current.y - event.deltaY,
-        }));
-      }
-    };
-    svg.addEventListener("wheel", onWheel, { passive: false });
-    return () => svg.removeEventListener("wheel", onWheel);
-  }, [zoomBy]);
 
   /* ------------------------------------------------------------------ */
   /* Adding furniture from the library                                   */
@@ -383,7 +332,7 @@ export function Canvas({
     const position = snapFurnitureToWalls(
       item,
       walls,
-      10 / viewRef.current.zoom
+      10 / viewport.get().zoom
     );
     const id = actions.addFurniture({
       ...item,
@@ -398,7 +347,7 @@ export function Canvas({
     ref,
     () => ({
       dropFurniture(type, clientX, clientY) {
-        const rect = svgRef.current?.getBoundingClientRect();
+        const rect = surfaceRef.current?.getBoundingClientRect();
         if (
           !rect ||
           clientX < rect.left ||
@@ -408,11 +357,11 @@ export function Canvas({
         ) {
           return false;
         }
-        placeFurniture(type, toPlan(clientX, clientY));
+        placeFurniture(type, viewport.toCanvas(clientX, clientY));
         return true;
       },
       addFurniture(type) {
-        const rect = svgRef.current?.getBoundingClientRect();
+        const rect = surfaceRef.current?.getBoundingClientRect();
         if (!rect) {
           return;
         }
@@ -421,43 +370,90 @@ export function Canvas({
         const cascade = (addedCount.current++ % 5) * 24;
         placeFurniture(
           type,
-          toPlan(
+          viewport.toCanvas(
             rect.left + rect.width / 2 + cascade,
             rect.top + rect.height / 2 + cascade
           )
         );
       },
-      getZoom: () => viewRef.current.zoom,
+      getZoom: () => viewport.get().zoom,
     }),
-    // `toPlan` only reads refs.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [placeFurniture]
+    [placeFurniture, viewport]
   );
 
   /* ------------------------------------------------------------------ */
-  /* Pointer: starting a drag                                            */
+  /* Pointer: starting a pan or a drag                                   */
   /* ------------------------------------------------------------------ */
 
+  // Hands a press to the viewport: one pointer pans, two pinch to zoom.
+  // `click` is what the press selects if it turns out to be a click, or
+  // `undefined` to leave the selection alone.
+  function beginPan(
+    event: PointerEvent<Element>,
+    click: Selection | null | undefined
+  ) {
+    event.stopPropagation();
+    panPointers.current.add(event.pointerId);
+    pressRef.current =
+      click === undefined || panPointers.current.size > 1
+        ? null
+        : { view: viewport.get(), selection: click };
+    viewport.pointerdown(event.nativeEvent);
+  }
+
+  // Follows the pointer with ui-sdk's `bindDrag` until it's released. It
+  // keeps going outside the canvas, leaves a press that doesn't move alone,
+  // and ends the drag as canceled when Escape is pressed.
   function beginDrag(event: PointerEvent<Element>, action: DragAction) {
     event.stopPropagation();
-    svgRef.current?.setPointerCapture(event.pointerId);
-    dragRef.current = {
+    const surface = surfaceRef.current;
+    if (!surface || dragRef.current) {
+      return null;
+    }
+    const drag: Drag = {
       ...action,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      active: false,
+      started: false,
+      written: null,
+      changed: false,
     };
-    if (action.kind === "pan") {
-      setPanning(true);
-    } else {
-      // Everything until pointer up is one undo step.
-      history.pause();
+    dragRef.current = drag;
+    // Everything until pointer up is one undo step.
+    history.pause();
+    stopDragRef.current = bindDrag(surface, event.nativeEvent, {
+      threshold: dragThreshold,
+      cancelOnEscape: true,
+      onStart: () => {
+        drag.started = true;
+      },
+      onMove: (sample) =>
+        moveDrag(drag, toPlan(sample.x, sample.y), sample.event.altKey),
+      onEnd: (_event, canceled) => endDrag(drag, canceled),
+    });
+    return drag;
+  }
+
+  // Writes to Storage, unless the drag just wrote the very same values:
+  // the pointer moves many times within one step of the grid.
+  function write(drag: Drag, values: string, apply: () => void) {
+    if (drag.written !== values) {
+      drag.written = values;
+      drag.changed = true;
+      apply();
     }
   }
 
+  // A drag that's still going when the plan goes away.
+  const abandonDrag = useEvent(() => {
+    if (dragRef.current) {
+      stopDragRef.current?.();
+      dragRef.current = null;
+      history.resume();
+    }
+  });
+  useEffect(() => abandonDrag, [abandonDrag]);
+
   function findPlacement(point: Point, kind: "door" | "window") {
-    const zoom = viewRef.current.zoom;
-    const hit = nearestWall(point, roomList, 36 / zoom);
+    const hit = nearestWall(point, roomList, 36 / view.zoom);
     if (!hit) {
       return null;
     }
@@ -468,22 +464,27 @@ export function Canvas({
     return { wall: hit.wall, width, offset: placeOnWall(hit, width, GRID) };
   }
 
-  // Hold Space, or use the middle mouse button, to pan from anywhere, even
-  // over furniture. Handled in the capture phase, before anything else.
-  function handlePointerDownCapture(event: PointerEvent<SVGSVGElement>) {
-    if (event.button === 1 || (event.button === 0 && spaceRef.current)) {
+  // Runs before anything on the plan sees the press.
+  function handlePointerDownCapture(event: PointerEvent<HTMLDivElement>) {
+    pressRef.current = null;
+    if (dragRef.current) {
+      // One thing is dragged at a time: a second finger doesn't grab another.
+      event.stopPropagation();
+    } else if (panPointers.current.size > 0) {
+      // A second finger on the plan while one is panning: pinch to zoom,
+      // whatever it lands on.
+      beginPan(event, undefined);
+    } else if (event.button === 1 || (event.button === 0 && spaceRef.current)) {
+      // Hold Space, or use the middle mouse button, to pan from anywhere,
+      // even over furniture.
       event.preventDefault();
-      beginDrag(event, {
-        kind: "pan",
-        view: viewRef.current,
-        click: selection,
-      });
+      beginPan(event, undefined);
     }
   }
 
   // A press that nothing on the plan handled: the empty canvas, or anywhere
   // at all while a drawing tool is active.
-  function handlePointerDown(event: PointerEvent<SVGSVGElement>) {
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.button !== 0) {
       return;
     }
@@ -516,7 +517,7 @@ export function Canvas({
       return;
     }
 
-    beginDrag(event, { kind: "pan", view: viewRef.current, click: null });
+    beginPan(event, null);
   }
 
   const handleFurniturePointerDown = useEvent(
@@ -563,7 +564,7 @@ export function Canvas({
     }
     const target: Selection = { kind: "room", id: room.id };
     if (!isSameSelection(selection, target)) {
-      beginDrag(event, { kind: "pan", view: viewRef.current, click: target });
+      beginPan(event, target);
       return;
     }
     beginDrag(event, {
@@ -627,14 +628,21 @@ export function Canvas({
     if (event.button !== 0) {
       return;
     }
-    beginDrag(event, { kind: "corner", roomId: room.id, cornerId: "" });
+    const drag = beginDrag(event, {
+      kind: "corner",
+      roomId: room.id,
+      cornerId: "",
+    });
+    if (!drag) {
+      return;
+    }
     const cornerId = actions.insertCorner(room.id, wall.id, {
       x: round((wall.a.x + wall.b.x) / 2),
       y: round((wall.a.y + wall.b.y) / 2),
     });
-    const drag = dragRef.current;
-    if (cornerId && drag?.kind === "corner") {
+    if (cornerId && drag.kind === "corner") {
       drag.cornerId = cornerId;
+      drag.changed = true;
     }
   }
 
@@ -653,47 +661,24 @@ export function Canvas({
   /* Pointer: dragging                                                   */
   /* ------------------------------------------------------------------ */
 
-  function handlePointerMove(event: PointerEvent<SVGSVGElement>) {
-    const point = toPlan(event.clientX, event.clientY);
+  function showCursor(point: Point | null) {
     updateMyPresence({
-      cursor: { x: Math.round(point.x), y: Math.round(point.y) },
+      cursor: point ? { x: Math.round(point.x), y: Math.round(point.y) } : null,
     });
+  }
 
-    const drag = dragRef.current;
-    if (!drag) {
-      if (tool === "door" || tool === "window") {
-        setPlacement(findPlacement(point, tool));
-      }
+  // `fine` is Alt held down: place things freely, down to the centimeter.
+  const moveDrag = useEvent((drag: Drag, point: Point, fine: boolean) => {
+    if (dragRef.current !== drag) {
       return;
     }
+    showCursor(point);
 
-    if (!drag.active) {
-      const moved = Math.hypot(
-        event.clientX - drag.clientX,
-        event.clientY - drag.clientY
-      );
-      if (moved < 3) {
-        return;
-      }
-      drag.active = true;
-    }
-
-    const zoom = viewRef.current.zoom;
-    // Hold Alt to place things freely, down to the centimeter.
-    const fine = event.altKey;
+    const { zoom } = viewport.get();
     const grid = fine ? 1 : GRID;
     const reach = fine ? 0 : 8 / zoom;
 
     switch (drag.kind) {
-      case "pan": {
-        setView({
-          ...drag.view,
-          x: drag.view.x + event.clientX - drag.clientX,
-          y: drag.view.y + event.clientY - drag.clientY,
-        });
-        break;
-      }
-
       case "furniture": {
         const item = furniture.get(drag.id);
         if (!item) {
@@ -710,10 +695,14 @@ export function Canvas({
             10 / zoom
           );
         }
-        actions.updateFurniture(drag.id, {
-          x: round(position.x),
-          y: round(position.y),
-        });
+        const x = round(position.x);
+        const y = round(position.y);
+        if (drag.written === null && x === item.x && y === item.y) {
+          break;
+        }
+        write(drag, `${x},${y}`, () =>
+          actions.updateFurniture(drag.id, { x, y })
+        );
         break;
       }
 
@@ -726,9 +715,13 @@ export function Canvas({
         // 0°: hence the quarter turn.
         const angle =
           (Math.atan2(point.y - item.y, point.x - item.x) * 180) / Math.PI + 90;
-        actions.updateFurniture(drag.id, {
-          rotation: normalizeAngle(snapTo(angle, fine ? 1 : 15)),
-        });
+        const rotation = normalizeAngle(snapTo(angle, fine ? 1 : 15));
+        if (drag.written === null && rotation === item.rotation) {
+          break;
+        }
+        write(drag, `${rotation}`, () =>
+          actions.updateFurniture(drag.id, { rotation })
+        );
         break;
       }
 
@@ -754,6 +747,13 @@ export function Canvas({
           MIN_FURNITURE_SIZE,
           snapTo(drag.y * local.y, grid)
         );
+        if (
+          drag.written === null &&
+          width === item.width &&
+          depth === item.depth
+        ) {
+          break;
+        }
         const center = add(
           anchor,
           rotate(
@@ -761,12 +761,14 @@ export function Canvas({
             item.rotation
           )
         );
-        actions.updateFurniture(item.id, {
-          width,
-          depth,
-          x: round(center.x),
-          y: round(center.y),
-        });
+        write(drag, `${width},${depth}`, () =>
+          actions.updateFurniture(item.id, {
+            width,
+            depth,
+            x: round(center.x),
+            y: round(center.y),
+          })
+        );
         break;
       }
 
@@ -782,20 +784,25 @@ export function Canvas({
           reach,
           grid
         );
-        actions.moveRoom(
-          drag.id,
-          drag.points.map((corner) => ({
-            ...corner,
-            x: round(corner.x + delta.x),
-            y: round(corner.y + delta.y),
-          })),
-          drag.furniture.map((item) => ({
-            id: item.id,
-            x: round(item.x + delta.x),
-            y: round(item.y + delta.y),
-          }))
-        );
         setGuides(guides);
+        if (drag.written === null && delta.x === 0 && delta.y === 0) {
+          break;
+        }
+        write(drag, `${delta.x},${delta.y}`, () =>
+          actions.moveRoom(
+            drag.id,
+            drag.points.map((corner) => ({
+              ...corner,
+              x: round(corner.x + delta.x),
+              y: round(corner.y + delta.y),
+            })),
+            drag.furniture.map((item) => ({
+              id: item.id,
+              x: round(item.x + delta.x),
+              y: round(item.y + delta.y),
+            }))
+          )
+        );
         break;
       }
 
@@ -810,15 +817,27 @@ export function Canvas({
             roomId === drag.roomId && cornerId === drag.cornerId
         );
         const snapped = snapPoint(point, targets, reach, grid);
-        actions.setRoomPoints(
-          room.id,
-          room.points.map((corner) =>
-            corner.id === drag.cornerId
-              ? { ...corner, ...snapped.point }
-              : corner
+        setGuides(snapped.guides);
+        const current = room.points.find(
+          (corner) => corner.id === drag.cornerId
+        );
+        if (
+          drag.written === null &&
+          current?.x === snapped.point.x &&
+          current.y === snapped.point.y
+        ) {
+          break;
+        }
+        write(drag, `${snapped.point.x},${snapped.point.y}`, () =>
+          actions.setRoomPoints(
+            room.id,
+            room.points.map((corner) =>
+              corner.id === drag.cornerId
+                ? { ...corner, ...snapped.point }
+                : corner
+            )
           )
         );
-        setGuides(snapped.guides);
         break;
       }
 
@@ -871,20 +890,25 @@ export function Canvas({
         } else {
           shift = scale(normal, snapTo(travel, grid));
         }
-
-        actions.setRoomPoints(
-          drag.roomId,
-          drag.points.map((corner, cornerIndex) =>
-            cornerIndex === index || cornerIndex === nextIndex
-              ? {
-                  ...corner,
-                  x: round(corner.x + shift.x),
-                  y: round(corner.y + shift.y),
-                }
-              : corner
+        shift = { x: round(shift.x), y: round(shift.y) };
+        setGuides(nextGuides);
+        if (drag.written === null && shift.x === 0 && shift.y === 0) {
+          break;
+        }
+        write(drag, `${shift.x},${shift.y}`, () =>
+          actions.setRoomPoints(
+            drag.roomId,
+            drag.points.map((corner, cornerIndex) =>
+              cornerIndex === index || cornerIndex === nextIndex
+                ? {
+                    ...corner,
+                    x: round(corner.x + shift.x),
+                    y: round(corner.y + shift.y),
+                  }
+                : corner
+            )
           )
         );
-        setGuides(nextGuides);
         break;
       }
 
@@ -896,11 +920,22 @@ export function Canvas({
         if (!opening || !hit) {
           break;
         }
-        actions.updateOpening(drag.id, {
+        const next = {
           roomId: hit.wall.roomId,
           wallId: hit.wall.id,
           offset: placeOnWall(hit, opening.width, grid),
-        });
+        };
+        if (
+          drag.written === null &&
+          next.roomId === opening.roomId &&
+          next.wallId === opening.wallId &&
+          next.offset === opening.offset
+        ) {
+          break;
+        }
+        write(drag, `${next.roomId},${next.wallId},${next.offset}`, () =>
+          actions.updateOpening(drag.id, next)
+        );
         break;
       }
 
@@ -913,31 +948,22 @@ export function Canvas({
         break;
       }
     }
-  }
+  });
 
-  function finishDrag(event: PointerEvent<SVGSVGElement>) {
-    const drag = dragRef.current;
-    if (!drag) {
+  const endDrag = useEvent((drag: Drag, canceled: boolean) => {
+    if (dragRef.current !== drag) {
       return;
     }
     dragRef.current = null;
-    if (svgRef.current?.hasPointerCapture(event.pointerId)) {
-      svgRef.current.releasePointerCapture(event.pointerId);
-    }
+    stopDragRef.current = null;
     setGuides(NO_GUIDES);
-
-    if (drag.kind === "pan") {
-      setPanning(false);
-      if (!drag.active && event.type === "pointerup") {
-        onSelect(drag.click);
-      }
-      return;
-    }
 
     if (drag.kind === "draw") {
       setDraft(null);
       let outline: Point[] | null = null;
-      if (drag.active) {
+      if (canceled) {
+        // Escape: no room after all.
+      } else if (drag.started) {
         const left = Math.min(drag.start.x, drag.end.x);
         const right = Math.max(drag.start.x, drag.end.x);
         const top = Math.min(drag.start.y, drag.end.y);
@@ -950,7 +976,7 @@ export function Canvas({
             { x: left, y: bottom },
           ];
         }
-      } else if (event.type === "pointerup") {
+      } else {
         // A plain click drops a room of a standard size, centered on it.
         const left = snapTo(drag.start.x - DEFAULT_ROOM.width / 2, GRID);
         const top = snapTo(drag.start.y - DEFAULT_ROOM.depth / 2, GRID);
@@ -969,195 +995,120 @@ export function Canvas({
     }
 
     history.resume();
+    if (canceled && drag.changed) {
+      // Escape puts everything back where it was: the drag is one step of
+      // the history by now, which is taken back for everyone.
+      history.undo();
+    }
+  });
+
+  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (dragRef.current) {
+      // The drag reports where the pointer is, once per frame.
+      return;
+    }
+    const point = toPlan(event.clientX, event.clientY);
+    showCursor(point);
+    if (
+      (tool === "door" || tool === "window") &&
+      panPointers.current.size === 0
+    ) {
+      setPlacement(findPlacement(point, tool));
+    }
+  }
+
+  function handlePointerEnd(event: PointerEvent<HTMLDivElement>) {
+    if (panPointers.current.delete(event.pointerId)) {
+      setPanning(false);
+    }
   }
 
   function handlePointerLeave() {
-    updateMyPresence({ cursor: null });
+    showCursor(null);
     setPlacement(null);
+  }
+
+  // The click that follows a press on the empty canvas or on a room. The
+  // viewport pans as soon as the pointer moves, so a view that's still
+  // where it was means nothing was dragged.
+  function handleClick() {
+    const press = pressRef.current;
+    pressRef.current = null;
+    if (!press) {
+      return;
+    }
+    const now = viewport.get();
+    if (
+      now.x === press.view.x &&
+      now.y === press.view.y &&
+      now.zoom === press.view.zoom
+    ) {
+      onSelect(press.selection);
+    }
   }
 
   /* ------------------------------------------------------------------ */
   /* Keyboard                                                            */
   /* ------------------------------------------------------------------ */
 
-  const handleKeyDown = useEvent((event: KeyboardEvent) => {
-    if (isTyping(event.target)) {
-      return;
-    }
-    const key = event.key.toLowerCase();
-
-    if (event.metaKey || event.ctrlKey) {
-      if (key === "z") {
-        event.preventDefault();
-        if (event.shiftKey) {
-          history.redo();
-        } else {
-          history.undo();
-        }
-      } else if (key === "y") {
-        event.preventDefault();
-        history.redo();
-      } else if (key === "d" && selection?.kind === "furniture") {
-        event.preventDefault();
-        const id = actions.duplicateFurniture(selection.id);
-        if (id) {
-          onSelect({ kind: "furniture", id });
-        }
-      } else if (key === "0") {
-        event.preventDefault();
-        fit();
-      }
-      return;
-    }
-
-    if (key === " ") {
-      // Leave Space alone when it would press a focused button.
-      const onControl =
-        event.target instanceof HTMLElement &&
-        event.target.closest("button, a, [role='menuitem']");
-      if (!onControl) {
-        event.preventDefault();
-        spaceRef.current = true;
-        setSpaceHeld(true);
-      }
-      return;
-    }
-
-    switch (key) {
-      case "v":
-        onToolChange("select");
-        return;
-      case "r":
-        onToolChange("room");
-        return;
-      case "d":
-        onToolChange("door");
-        return;
-      case "w":
-        onToolChange("window");
-        return;
-      case "escape":
-        if (tool !== "select") {
-          onToolChange("select");
-        } else {
-          onSelect(null);
-        }
-        return;
-      case "+":
-      case "=":
-        zoomBy(1.25);
-        return;
-      case "-":
-        zoomBy(0.8);
-        return;
-    }
-
-    if (!selection) {
-      return;
-    }
-
-    if (key === "delete" || key === "backspace") {
-      event.preventDefault();
-      actions.remove(selection);
-      onSelect(null);
-      return;
-    }
-
-    const arrows: Record<string, Point> = {
-      arrowleft: { x: -1, y: 0 },
-      arrowright: { x: 1, y: 0 },
-      arrowup: { x: 0, y: -1 },
-      arrowdown: { x: 0, y: 1 },
-    };
-    const arrow = arrows[key];
-    const step = event.shiftKey ? 10 : 1;
-
-    if (selection.kind === "furniture") {
-      const item = furniture.get(selection.id);
-      if (!item) {
-        return;
-      }
-      if (key === "q" || key === "e") {
-        actions.updateFurniture(item.id, {
-          rotation: normalizeAngle(item.rotation + (key === "e" ? 90 : -90)),
-        });
-      } else if (arrow) {
-        event.preventDefault();
-        actions.updateFurniture(item.id, {
-          x: item.x + arrow.x * step,
-          y: item.y + arrow.y * step,
-        });
-      }
-    } else if (selection.kind === "opening") {
-      const opening = openings.get(selection.id);
-      if (!opening) {
-        return;
-      }
-      if (key === "f") {
-        actions.updateOpening(
-          opening.id,
-          event.shiftKey
-            ? { swing: opening.swing === "in" ? "out" : "in" }
-            : { hinge: opening.hinge === "start" ? "end" : "start" }
-        );
-      } else if (arrow) {
-        event.preventDefault();
-        const wall = findWall(rooms, opening.roomId, opening.wallId);
-        if (wall) {
-          // Arrows slide the opening along its wall, whichever way it runs.
-          const along = dot(arrow, wall.dir) >= 0 ? 1 : -1;
-          actions.updateOpening(opening.id, {
-            offset: fitOpening(
-              { ...opening, offset: opening.offset + along * step },
-              wall
-            ).offset,
-          });
-        }
-      }
-    } else if (arrow) {
-      const room = rooms.get(selection.id);
-      if (!room) {
-        return;
-      }
-      event.preventDefault();
-      actions.moveRoom(
-        room.id,
-        room.points.map((corner) => ({
-          ...corner,
-          x: corner.x + arrow.x * step,
-          y: corner.y + arrow.y * step,
-        })),
-        furnitureList
-          .filter((item) => pointInPolygon(item, room.points))
-          .map((item) => ({
-            id: item.id,
-            x: item.x + arrow.x * step,
-            y: item.y + arrow.y * step,
-          }))
-      );
-    }
+  usePlanShortcuts({
+    rooms,
+    openings,
+    furniture,
+    actions,
+    tool,
+    onToolChange,
+    selection,
+    onSelect,
+    onFit: fit,
+    idle: () => dragRef.current === null,
   });
 
+  // Two things that aren't shortcuts: Space is held down rather than
+  // pressed, and the zoom keys (+, − and 0) belong to the viewport, which
+  // knows them on every keyboard layout and tells screen readers the zoom.
   useEffect(() => {
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === " ") {
-        spaceRef.current = false;
-        setSpaceHeld(false);
-      }
-    };
-    const handleBlur = () => {
+    const release = () => {
       spaceRef.current = false;
       setSpaceHeld(false);
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        isTyping(event.target) ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      if (event.key === " ") {
+        // Leave Space alone when it would press a focused button.
+        const onControl =
+          event.target instanceof HTMLElement &&
+          event.target.closest("button, a, [role='menuitem']");
+        if (!onControl) {
+          event.preventDefault();
+          spaceRef.current = true;
+          setSpaceHeld(true);
+        }
+        return;
+      }
+      viewport.keydown(event);
+    };
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === " ") {
+        release();
+      }
+    };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("blur", handleBlur);
+    window.addEventListener("blur", release);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("blur", release);
     };
-  }, [handleKeyDown]);
+  }, [viewport]);
 
   // The door or window preview only makes sense while its tool is active.
   useEffect(() => {
@@ -1216,191 +1167,212 @@ export function Canvas({
 
   const scaleBar = scaleBarLength(zoom, unit);
 
-  return (
-    <div
-      ref={containerRef}
-      className="relative h-full w-full overflow-hidden bg-canvas"
-      style={gridStyle}
-    >
-      <svg
-        ref={svgRef}
-        className="absolute inset-0 h-full w-full touch-none select-none"
-        style={{ cursor, visibility: ready ? "visible" : "hidden" }}
-        onPointerDownCapture={handlePointerDownCapture}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={finishDrag}
-        onPointerCancel={finishDrag}
-        onPointerLeave={handlePointerLeave}
-        onContextMenu={(event) => event.preventDefault()}
-      >
-        <FloorPatterns />
+  // The primitive's root: the surface that's panned, zoomed and drawn on.
+  // Everything floating over the plan sits outside of it, so scrolling the
+  // properties panel doesn't pan the plan underneath.
+  const surface = usePart(
+    plan,
+    "root",
+    {},
+    {
+      ref: surfaceRef,
+      "aria-label": "Floor plan",
+      className:
+        "absolute inset-0 touch-none overflow-hidden bg-canvas select-none",
+      style: { ...gridStyle, cursor },
+      onPointerDownCapture: handlePointerDownCapture,
+      onPointerDown: handlePointerDown,
+      onPointerMove: handlePointerMove,
+      onPointerUp: handlePointerEnd,
+      onPointerCancel: handlePointerEnd,
+      onPointerLeave: handlePointerLeave,
+      onClick: handleClick,
+      onContextMenu: (event) => event.preventDefault(),
+      children: (
+        <svg
+          className="block h-full w-full"
+          style={{ visibility: ready ? "visible" : "hidden" }}
+        >
+          <FloorPatterns />
 
-        <g transform={`translate(${view.x} ${view.y}) scale(${zoom})`}>
-          {/* The plan itself, bottom to top. While a drawing tool is active
+          <g transform={`translate(${view.x} ${view.y}) scale(${zoom})`}>
+            {/* The plan itself, bottom to top. While a drawing tool is active
               nothing on it can be grabbed: every press goes to the tool. */}
-          <g
-            pointerEvents={tool === "select" && !spaceHeld ? undefined : "none"}
-          >
-            {roomList.map((room) => (
-              <g
-                key={room.id}
-                style={{
-                  cursor: selectedRoom?.id === room.id ? "move" : undefined,
-                }}
-              >
-                <RoomFloor room={room} onPointerDown={handleRoomPointerDown} />
-              </g>
-            ))}
-
-            {furnitureList.map((item) => (
-              <FurnitureShape
-                key={item.id}
-                item={item}
-                onPointerDown={handleFurniturePointerDown}
-              />
-            ))}
-
-            {roomList.map((room) => (
-              <RoomWalls
-                key={room.id}
-                room={room}
-                zoom={zoom}
-                onWallPointerDown={handleWallPointerDown}
-              />
-            ))}
-
-            {selectedRoom ? (
-              <RoomHandles
-                room={selectedRoom}
-                zoom={zoom}
-                onCornerPointerDown={handleCornerPointerDown}
-                onMidpointPointerDown={handleMidpointPointerDown}
-              />
-            ) : null}
-
-            {/* Openings go over every wall, so a door in a wall shared by
-                two rooms cuts through both. */}
-            {[...openings.values()].map((opening) => {
-              const wall = findWall(rooms, opening.roomId, opening.wallId);
-              if (!wall) {
-                return null;
+            <g
+              pointerEvents={
+                tool === "select" && !spaceHeld ? undefined : "none"
               }
-              const selected =
-                selection?.kind === "opening" && selection.id === opening.id;
-              return (
-                <OpeningShape
-                  key={opening.id}
-                  opening={opening}
-                  wall={wall}
-                  zoom={zoom}
-                  outline={
-                    selected
-                      ? "var(--color-brand)"
-                      : peerOutlines.get(`opening:${opening.id}`)
-                  }
-                  onPointerDown={(event) =>
-                    handleOpeningPointerDown(event, opening)
-                  }
+            >
+              {roomList.map((room) => (
+                <g
+                  key={room.id}
+                  style={{
+                    cursor: selectedRoom?.id === room.id ? "move" : undefined,
+                  }}
+                >
+                  <RoomFloor
+                    room={room}
+                    onPointerDown={handleRoomPointerDown}
+                  />
+                </g>
+              ))}
+
+              {furnitureList.map((item) => (
+                <FurnitureShape
+                  key={item.id}
+                  item={item}
+                  onPointerDown={handleFurniturePointerDown}
                 />
-              );
-            })}
-          </g>
+              ))}
 
-          {/* Annotations: never in the way of the pointer. */}
-          <g pointerEvents="none">
-            {roomList.map((room) => (
-              <RoomLabel key={room.id} room={room} zoom={zoom} unit={unit} />
-            ))}
-
-            {roomList.map((room) =>
-              showDimensions || selectedRoom?.id === room.id ? (
-                <RoomDimensions
+              {roomList.map((room) => (
+                <RoomWalls
                   key={room.id}
                   room={room}
                   zoom={zoom}
-                  unit={unit}
-                  accent={selectedRoom?.id === room.id}
+                  onWallPointerDown={handleWallPointerDown}
                 />
-              ) : null
-            )}
+              ))}
 
-            {selection?.kind === "opening" ? (
-              <OpeningDimension
-                opening={openings.get(selection.id)}
-                rooms={rooms}
+              {selectedRoom ? (
+                <RoomHandles
+                  room={selectedRoom}
+                  zoom={zoom}
+                  onCornerPointerDown={handleCornerPointerDown}
+                  onMidpointPointerDown={handleMidpointPointerDown}
+                />
+              ) : null}
+
+              {/* Openings go over every wall, so a door in a wall shared by
+                two rooms cuts through both. */}
+              {[...openings.values()].map((opening) => {
+                const wall = findWall(rooms, opening.roomId, opening.wallId);
+                if (!wall) {
+                  return null;
+                }
+                const selected =
+                  selection?.kind === "opening" && selection.id === opening.id;
+                return (
+                  <OpeningShape
+                    key={opening.id}
+                    opening={opening}
+                    wall={wall}
+                    zoom={zoom}
+                    outline={
+                      selected
+                        ? "var(--color-brand)"
+                        : peerOutlines.get(`opening:${opening.id}`)
+                    }
+                    onPointerDown={(event) =>
+                      handleOpeningPointerDown(event, opening)
+                    }
+                  />
+                );
+              })}
+            </g>
+
+            {/* Annotations: never in the way of the pointer. */}
+            <g pointerEvents="none">
+              {roomList.map((room) => (
+                <RoomLabel key={room.id} room={room} zoom={zoom} unit={unit} />
+              ))}
+
+              {roomList.map((room) =>
+                showDimensions || selectedRoom?.id === room.id ? (
+                  <RoomDimensions
+                    key={room.id}
+                    room={room}
+                    zoom={zoom}
+                    unit={unit}
+                    accent={selectedRoom?.id === room.id}
+                  />
+                ) : null
+              )}
+
+              {selection?.kind === "opening" ? (
+                <OpeningDimension
+                  opening={openings.get(selection.id)}
+                  rooms={rooms}
+                  zoom={zoom}
+                  unit={unit}
+                />
+              ) : null}
+
+              {peers.map(([connectionId, peer]) =>
+                peer.selection ? (
+                  <PeerSelection
+                    key={connectionId}
+                    selection={peer.selection}
+                    name={peer.name}
+                    color={peer.color}
+                    rooms={rooms}
+                    openings={openings}
+                    furniture={furniture}
+                    zoom={zoom}
+                  />
+                ) : null
+              )}
+
+              {placement && (tool === "door" || tool === "window") ? (
+                <OpeningShape
+                  opening={{
+                    kind: tool,
+                    style: "single",
+                    offset: placement.offset,
+                    width: placement.width,
+                    hinge: "start",
+                    swing: "in",
+                  }}
+                  wall={placement.wall}
+                  zoom={zoom}
+                  outline="var(--color-brand)"
+                  ghost
+                />
+              ) : null}
+
+              {draft ? (
+                <DraftRoom a={draft.a} b={draft.b} zoom={zoom} unit={unit} />
+              ) : null}
+
+              {guides.x !== null ? (
+                <line
+                  className="plan-guide"
+                  x1={guides.x}
+                  y1={visible.top}
+                  x2={guides.x}
+                  y2={visible.bottom}
+                />
+              ) : null}
+              {guides.y !== null ? (
+                <line
+                  className="plan-guide"
+                  x1={visible.left}
+                  y1={guides.y}
+                  x2={visible.right}
+                  y2={guides.y}
+                />
+              ) : null}
+            </g>
+
+            {selectedFurniture && tool === "select" ? (
+              <FurnitureHandles
+                item={selectedFurniture}
                 zoom={zoom}
                 unit={unit}
-              />
-            ) : null}
-
-            {peers.map(([connectionId, peer]) =>
-              peer.selection ? (
-                <PeerSelection
-                  key={connectionId}
-                  selection={peer.selection}
-                  name={peer.name}
-                  color={peer.color}
-                  rooms={rooms}
-                  openings={openings}
-                  furniture={furniture}
-                  zoom={zoom}
-                />
-              ) : null
-            )}
-
-            {placement && (tool === "door" || tool === "window") ? (
-              <OpeningShape
-                opening={{
-                  kind: tool,
-                  style: "single",
-                  offset: placement.offset,
-                  width: placement.width,
-                  hinge: "start",
-                  swing: "in",
-                }}
-                wall={placement.wall}
-                zoom={zoom}
-                outline="var(--color-brand)"
-                ghost
-              />
-            ) : null}
-
-            {draft ? (
-              <DraftRoom a={draft.a} b={draft.b} zoom={zoom} unit={unit} />
-            ) : null}
-
-            {guides.x !== null ? (
-              <line
-                className="plan-guide"
-                x1={guides.x}
-                y1={visible.top}
-                x2={guides.x}
-                y2={visible.bottom}
-              />
-            ) : null}
-            {guides.y !== null ? (
-              <line
-                className="plan-guide"
-                x1={visible.left}
-                y1={guides.y}
-                x2={visible.right}
-                y2={guides.y}
+                onResizePointerDown={handleResizePointerDown}
+                onRotatePointerDown={handleRotatePointerDown}
               />
             ) : null}
           </g>
+        </svg>
+      ),
+    },
+    "div"
+  );
 
-          {selectedFurniture && tool === "select" ? (
-            <FurnitureHandles
-              item={selectedFurniture}
-              zoom={zoom}
-              unit={unit}
-              onResizePointerDown={handleResizePointerDown}
-              onRotatePointerDown={handleRotatePointerDown}
-            />
-          ) : null}
-        </g>
-      </svg>
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-canvas">
+      {surface}
 
       <Cursors view={view} />
 
@@ -1411,13 +1383,14 @@ export function Canvas({
             <p className="mt-1 text-[13px] leading-snug text-ink-muted">
               Pick the Room tool and drag on the canvas to draw your first room.
             </p>
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => onToolChange("room")}
-              className="mt-3 inline-flex h-7 items-center rounded-md bg-ink px-2.5 text-xs font-medium text-surface transition-colors hover:bg-ink/85"
+              className="mt-3"
             >
               Draw a room
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
@@ -1434,17 +1407,17 @@ export function Canvas({
       </div>
 
       <div className="card absolute right-3 bottom-3 flex items-center p-0.5">
-        <ZoomButton label="Zoom out" onClick={() => zoomBy(0.8)}>
+        <ZoomButton label="Zoom out" onClick={plan.api.zoomOut}>
           <MinusIcon />
         </ZoomButton>
         <span className="w-10 text-center text-[11px] text-ink-secondary tabular-nums">
           {Math.round(zoom * 100)}%
         </span>
-        <ZoomButton label="Zoom in" onClick={() => zoomBy(1.25)}>
+        <ZoomButton label="Zoom in" onClick={plan.api.zoomIn}>
           <PlusIcon />
         </ZoomButton>
         <span className="mx-0.5 h-4 w-px bg-line" />
-        <ZoomButton label="Zoom to fit" onClick={fit}>
+        <ZoomButton label="Zoom to fit" shortcut="mod+0" onClick={fit}>
           <MaximizeIcon />
         </ZoomButton>
       </div>
@@ -1456,30 +1429,25 @@ export function Canvas({
 
 function ZoomButton({
   label,
+  shortcut,
   onClick,
   children,
 }: {
   label: string;
+  shortcut?: string;
   onClick: () => void;
   children: ReactNode;
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          onClick={onClick}
-          className={cn(
-            "flex size-6 items-center justify-center rounded text-ink-secondary transition-colors hover:bg-hover hover:text-ink",
-            "[&_svg]:size-3.5"
-          )}
-        >
-          {children}
-        </button>
+    <Tooltip shortcut={shortcut}>
+      <TooltipTrigger
+        render={<Button size="icon-sm" aria-label={label} onClick={onClick} />}
+      >
+        {children}
       </TooltipTrigger>
-      <TooltipContent side="top" sideOffset={6}>
+      <TooltipContent side="top">
         {label}
+        <TooltipShortcut />
       </TooltipContent>
     </Tooltip>
   );

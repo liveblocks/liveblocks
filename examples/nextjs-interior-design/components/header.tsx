@@ -16,8 +16,16 @@ import {
   type ReactNode,
 } from "react";
 import { formatPlanSummary, type Unit } from "@/lib/units";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { SegmentedControl, SegmentedControlItem } from "./ui/segmented-control";
+import { Toggle } from "./ui/toggle";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipShortcut,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 type HeaderProps = {
   name: string;
@@ -60,7 +68,7 @@ export function Header({
       <div className="flex items-center gap-0.5">
         <IconButton
           label="Undo"
-          shortcut="⌘Z"
+          shortcut="mod+z"
           disabled={!canUndo}
           onClick={undo}
         >
@@ -68,7 +76,7 @@ export function Header({
         </IconButton>
         <IconButton
           label="Redo"
-          shortcut="⇧⌘Z"
+          shortcut="mod+shift+z"
           disabled={!canRedo}
           onClick={redo}
         >
@@ -78,44 +86,40 @@ export function Header({
 
       <span className="h-4 w-px bg-line" />
 
-      <IconButton
-        label={showDimensions ? "Hide dimensions" : "Show all dimensions"}
-        pressed={showDimensions}
-        onClick={() => onShowDimensionsChange(!showDimensions)}
-      >
-        <RulerIcon />
-      </IconButton>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Toggle
+              aria-label="Dimensions"
+              pressed={showDimensions}
+              onPressedChange={(pressed) => onShowDimensionsChange(pressed)}
+              className="size-7 rounded-md text-ink-secondary hover:bg-hover hover:text-ink data-pressed:bg-brand-soft data-pressed:text-brand [&_svg]:size-4"
+            />
+          }
+        >
+          <RulerIcon />
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {showDimensions ? "Hide dimensions" : "Show all dimensions"}
+        </TooltipContent>
+      </Tooltip>
 
       {/* Units are a personal preference: the plan itself is in centimeters. */}
-      <div
-        role="radiogroup"
+      <SegmentedControl
         aria-label="Units"
-        className="hidden h-7 items-center rounded-md bg-hover p-0.5 md:flex"
+        value={unit}
+        onValueChange={(value) =>
+          onUnitChange(value === "imperial" ? "imperial" : "metric")
+        }
+        className="hidden md:flex"
       >
-        {(
-          [
-            ["metric", "m"],
-            ["imperial", "ft"],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={unit === value}
-            aria-label={value === "metric" ? "Meters" : "Feet and inches"}
-            onClick={() => onUnitChange(value)}
-            className={cn(
-              "h-6 min-w-7 rounded px-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
-              unit === value
-                ? "bg-surface text-ink shadow-xs"
-                : "text-ink-muted hover:text-ink"
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        <SegmentedControlItem value="metric" aria-label="Meters">
+          m
+        </SegmentedControlItem>
+        <SegmentedControlItem value="imperial" aria-label="Feet and inches">
+          ft
+        </SegmentedControlItem>
+      </SegmentedControl>
 
       <span className="h-4 w-px bg-line" />
 
@@ -178,7 +182,7 @@ function PlanName({
         >
           {text}
         </span>
-        <input
+        <Input
           type="text"
           aria-label="Plan name"
           title="Rename plan"
@@ -187,7 +191,7 @@ function PlanName({
           maxLength={60}
           className="col-start-1 row-start-1 h-5 w-full min-w-0 rounded px-1 text-ellipsis transition-colors outline-none hover:bg-hover focus:bg-surface focus:ring-1 focus:ring-brand"
           value={text}
-          onChange={(event) => setDraft(event.target.value)}
+          onValueChange={(value) => setDraft(value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
         />
@@ -199,42 +203,36 @@ function PlanName({
 function IconButton({
   label,
   shortcut,
-  pressed,
   disabled,
   onClick,
   children,
 }: {
   label: string;
+  // The keys that do the same, like "mod+z". They're bound in the canvas.
   shortcut?: string;
-  pressed?: boolean;
   disabled?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          aria-pressed={pressed}
-          disabled={disabled}
-          onClick={onClick}
-          className={cn(
-            "flex size-7 items-center justify-center rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:pointer-events-none disabled:opacity-35 [&_svg]:size-4",
-            pressed
-              ? "bg-brand-soft text-brand"
-              : "text-ink-secondary hover:bg-hover hover:text-ink"
-          )}
-        >
-          {children}
-        </button>
+    <Tooltip shortcut={shortcut}>
+      <TooltipTrigger
+        render={
+          // Still focusable when there's nothing to undo, so the tooltip
+          // can say what the button is for.
+          <Button
+            aria-label={label}
+            disabled={disabled}
+            focusableWhenDisabled
+            onClick={onClick}
+          />
+        }
+      >
+        {children}
       </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={6}>
+      <TooltipContent side="bottom">
         {label}
-        {shortcut ? (
-          <kbd className="ml-2 font-sans text-background/60">{shortcut}</kbd>
-        ) : null}
+        <TooltipShortcut />
       </TooltipContent>
     </Tooltip>
   );

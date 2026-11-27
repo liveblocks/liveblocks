@@ -1,5 +1,8 @@
+/* ui-sdk's own styles go in this layer. Declared first, so that every
+   Tailwind utility written on a component wins over them. */
+@layer ui-sdk;
+
 @import "tailwindcss";
-@import "tw-animate-css";
 @import "@liveblocks/react-ui/styles.css";
 
 /* Tailwind v4 only applies `hover:` on devices that support hover. Make it
@@ -37,22 +40,7 @@
   --color-grid-major: oklch(0.21 0.034 264 / 7%);
   --color-grid-minor: oklch(0.21 0.034 264 / 3.5%);
 
-  /* shadcn-style tokens used by the copied UI primitives. */
-  --color-background: var(--color-surface);
-  --color-foreground: var(--color-ink);
-  --color-popover: var(--color-surface);
-  --color-popover-foreground: var(--color-ink);
-  --color-primary: var(--color-ink);
-  --color-primary-foreground: var(--color-gray-50);
-  --color-secondary: var(--color-hover);
-  --color-secondary-foreground: var(--color-ink);
-  --color-muted: var(--color-hover);
-  --color-muted-foreground: var(--color-ink-muted);
-  --color-accent: var(--color-hover);
-  --color-accent-foreground: var(--color-ink);
-  --color-destructive: oklch(0.6 0.2 25);
   --color-border: var(--color-line);
-  --color-input: var(--color-line-strong);
   --color-ring: var(--color-gray-400);
 
   --radius-sm: 4px;
@@ -320,44 +308,18 @@
   stroke-linejoin: round;
 }
 
-/* Menus and popovers: a short settle from the trigger's side, scaling from
-   the anchored corner. Opening eases out over 160ms; closing is instant. */
-@keyframes menu-in {
+/* The properties panel slides in from the edge it sits against. */
+@keyframes panel-in {
   from {
     opacity: 0;
-    transform: translate(var(--menu-x, 0), var(--menu-y, 0)) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
+    transform: translateX(4px);
   }
 }
 
-.menu-animate {
-  --menu-x: 0px;
-  --menu-y: -4px;
-  transform-origin: var(
-    --radix-dropdown-menu-content-transform-origin,
-    var(--menu-origin, top left)
-  );
-}
-.menu-animate[data-side="top"] {
-  --menu-y: 4px;
-}
-.menu-animate[data-side="left"] {
-  --menu-x: 4px;
-  --menu-y: 0px;
-}
-.menu-animate[data-side="right"] {
-  --menu-x: -4px;
-  --menu-y: 0px;
-}
-.menu-animate[data-state="open"] {
-  animation: menu-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
-}
+@utility panel-in {
+  animation: panel-in 150ms cubic-bezier(0.16, 1, 0.3, 1);
 
-@media (prefers-reduced-motion: reduce) {
-  .menu-animate[data-state="open"] {
+  @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
 }

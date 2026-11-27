@@ -3,8 +3,14 @@
 import { DoorOpenIcon, MousePointer2Icon, SquareIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Tool } from "@/lib/plan";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Toggle, ToggleGroup } from "./ui/toggle";
+import { Toolbar as ToolbarRoot } from "./ui/toolbar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipShortcut,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 // A window as it's drawn on a plan: a frame with the glazing down the middle.
 function WindowIcon() {
@@ -24,7 +30,8 @@ function WindowIcon() {
   );
 }
 
-const TOOLS: {
+// Each tool's key is bound in the canvas, with the rest of the shortcuts.
+export const TOOLS: {
   id: Tool;
   label: string;
   shortcut: string;
@@ -34,34 +41,38 @@ const TOOLS: {
   {
     id: "select",
     label: "Select",
-    shortcut: "V",
+    shortcut: "v",
     hint: "Select, move, and reshape",
     icon: <MousePointer2Icon />,
   },
   {
     id: "room",
     label: "Room",
-    shortcut: "R",
+    shortcut: "r",
     hint: "Drag to draw a room",
     icon: <SquareIcon />,
   },
   {
     id: "door",
     label: "Door",
-    shortcut: "D",
+    shortcut: "d",
     hint: "Click a wall to add a door",
     icon: <DoorOpenIcon />,
   },
   {
     id: "window",
     label: "Window",
-    shortcut: "W",
+    shortcut: "w",
     hint: "Click a wall to add a window",
     icon: <WindowIcon />,
   },
 ];
 
-/** The drawing tools, floating at the bottom of the canvas. */
+/**
+ * The drawing tools, floating at the bottom of the canvas: a toolbar holding
+ * a group of toggles where exactly one is on. It's a single tab stop, and
+ * the arrow keys move between the tools.
+ */
 export function Toolbar({
   tool,
   onToolChange,
@@ -70,41 +81,43 @@ export function Toolbar({
   onToolChange: (tool: Tool) => void;
 }) {
   return (
-    <div
-      role="toolbar"
+    <ToolbarRoot
       aria-label="Tools"
-      className="card-floating absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-0.5 p-1"
+      className="card-floating absolute bottom-3 left-1/2 -translate-x-1/2 p-1"
     >
-      {TOOLS.map((item) => {
-        const active = item.id === tool;
-        return (
-          <Tooltip key={item.id}>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-pressed={active}
-                aria-label={item.label}
-                onClick={() => onToolChange(item.id)}
-                className={cn(
-                  "flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/60 [&_svg]:size-4",
-                  active
-                    ? "bg-brand text-white"
-                    : "text-ink-secondary hover:bg-hover hover:text-ink"
-                )}
-              >
-                {item.icon}
-                <span className="hidden md:inline">{item.label}</span>
-              </button>
+      <ToggleGroup
+        aria-label="Tool"
+        value={[tool]}
+        deselectable={false}
+        onValueChange={([next]) => {
+          const picked = TOOLS.find((item) => item.id === next);
+          if (picked) {
+            onToolChange(picked.id);
+          }
+        }}
+        className="flex items-center gap-0.5"
+      >
+        {TOOLS.map((item) => (
+          <Tooltip key={item.id} shortcut={item.shortcut}>
+            <TooltipTrigger
+              render={
+                <Toggle
+                  value={item.id}
+                  aria-label={item.label}
+                  className="h-8 gap-1.5 rounded-md px-2 text-[13px] font-medium text-ink-secondary hover:bg-hover hover:text-ink data-pressed:bg-brand data-pressed:text-white [&_svg]:size-4"
+                />
+              }
+            >
+              {item.icon}
+              <span className="hidden md:inline">{item.label}</span>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8}>
               {item.hint}
-              <kbd className="ml-2 font-sans text-background/60">
-                {item.shortcut}
-              </kbd>
+              <TooltipShortcut />
             </TooltipContent>
           </Tooltip>
-        );
-      })}
-    </div>
+        ))}
+      </ToggleGroup>
+    </ToolbarRoot>
   );
 }

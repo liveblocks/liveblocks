@@ -27,6 +27,10 @@ This example shows how to build a collaborative interior design app with
 windows, and drag furniture onto an architectural floor plan, with live cursors,
 selections, and multiplayer undo/redo.
 
+The interface is built with [UI SDK](https://ui-sdk.dev): its components for the
+controls, and its canvas, drag, and keyboard shortcut behaviors for the floor
+plan.
+
 ## Getting started
 
 Run the following command to try this example locally:

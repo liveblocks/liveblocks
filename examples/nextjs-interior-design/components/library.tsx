@@ -1,14 +1,24 @@
 "use client";
 
+import { bindDrag, bindDragPreview, dragThreshold } from "@ui-sdk/core";
+import { Button } from "@ui-sdk/react/button";
 import { SearchIcon } from "lucide-react";
-import { memo, useMemo, useState, type PointerEvent } from "react";
-import { createPortal } from "react-dom";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent,
+} from "react";
+import { flushSync } from "react-dom";
 import {
   CATEGORIES,
   type CatalogItem,
   type FurnitureType,
 } from "@/lib/catalog";
 import { FurnitureSymbol } from "./canvas/symbols";
+import { Input, InputGroup } from "./ui/input";
 
 // Size of a tile's drawing, in pixels.
 const THUMBNAIL = { width: 64, height: 40 };
@@ -22,6 +32,9 @@ type LibraryProps = {
   getZoom: () => number;
 };
 
+// The piece being dragged out, as it will look on the plan.
+type Ghost = { item: CatalogItem; x: number; y: number; zoom: number };
+
 /**
  * The furniture library: every piece as its plan symbol, grouped by room.
  * Drag a piece onto the plan, or click it to add it in the middle.
@@ -32,11 +45,11 @@ export const Library = memo(function Library({
   getZoom,
 }: LibraryProps) {
   const [query, setQuery] = useState("");
-  const [drag, setDrag] = useState<{
-    item: CatalogItem;
-    x: number;
-    y: number;
-  } | null>(null);
+  const [ghost, setGhost] = useState<Ghost | null>(null);
+  const ghostRef = useRef<HTMLDivElement>(null);
+  // Ends the drag in progress, if the library goes away in the middle of it.
+  const stopRef = useRef<(() => void) | null>(null);
+  useEffect(() => () => stopRef.current?.(), []);
 
   const categories = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -53,8 +66,9 @@ export const Library = memo(function Library({
     })).filter((category) => category.items.length > 0);
   }, [query]);
 
-  // The drag is tracked on the window, so it carries on over the canvas (and
-  // anything else) until the pointer is released.
+  // ui-sdk's `bindDrag` follows the pointer from the tile, over the canvas
+  // (and anything else), until it's released. A press that doesn't move is
+  // left alone, and comes through as a click.
   function handlePointerDown(
     event: PointerEvent<HTMLButtonElement>,
     item: CatalogItem
@@ -62,56 +76,58 @@ export const Library = memo(function Library({
     if (event.button !== 0) {
       return;
     }
-    const startX = event.clientX;
-    const startY = event.clientY;
-    let dragging = false;
+    let preview: ReturnType<typeof bindDragPreview> | null = null;
+    const end = () => {
+      preview?.remove();
+      preview = null;
+      stopRef.current = null;
+    };
 
-    const handleMove = (moveEvent: globalThis.PointerEvent) => {
-      if (
-        !dragging &&
-        Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) < 4
-      ) {
-        return;
-      }
-      dragging = true;
-      setDrag({ item, x: moveEvent.clientX, y: moveEvent.clientY });
-    };
-    const stop = () => {
-      window.removeEventListener("pointermove", handleMove);
-      window.removeEventListener("pointerup", handleUp);
-      window.removeEventListener("pointercancel", stop);
-      setDrag(null);
-    };
-    const handleUp = (upEvent: globalThis.PointerEvent) => {
+    stopRef.current?.();
+    const stop = bindDrag(event.currentTarget, event.nativeEvent, {
+      threshold: dragThreshold,
+      cancelOnEscape: true,
+      onStart: (start) => {
+        // What follows the pointer is the piece at the size it will have on
+        // the plan. It's rendered under the pointer just long enough for
+        // `bindDragPreview` to take a copy of it, which then moves without
+        // rendering anything.
+        const at = { x: start.clientX, y: start.clientY };
+        flushSync(() => setGhost({ item, ...at, zoom: getZoom() }));
+        if (ghostRef.current) {
+          preview = bindDragPreview(ghostRef.current, at);
+        }
+        flushSync(() => setGhost(null));
+      },
+      onMove: ({ x, y }) => preview?.move(x, y),
+      onEnd: (up, canceled) => {
+        const dragged = preview !== null;
+        end();
+        if (dragged && !canceled) {
+          onDrop(item.type, up.clientX, up.clientY);
+        }
+      },
+    });
+    stopRef.current = () => {
       stop();
-      if (dragging) {
-        onDrop(item.type, upEvent.clientX, upEvent.clientY);
-      } else {
-        onAdd(item.type);
-      }
+      end();
     };
-
-    window.addEventListener("pointermove", handleMove);
-    window.addEventListener("pointerup", handleUp);
-    window.addEventListener("pointercancel", stop);
   }
-
-  const zoom = drag ? getZoom() : 1;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="px-2">
-        <label className="flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-ink-faint focus-within:border-line-strong">
+        <InputGroup className="flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-ink-faint focus-within:border-line-strong">
           <SearchIcon className="size-3.5 shrink-0" />
-          <input
+          <Input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onValueChange={(value) => setQuery(value)}
             placeholder="Search furniture"
             aria-label="Search furniture"
             className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
           />
-        </label>
+        </InputGroup>
       </div>
 
       <div className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-2 pb-3">
@@ -122,24 +138,20 @@ export const Library = memo(function Library({
             </h3>
             <div className="grid grid-cols-2 gap-1 lg:grid-cols-3">
               {category.items.map((item) => (
-                <button
+                <Button
                   key={item.type}
-                  type="button"
                   title={`${item.name} · ${item.width} × ${item.depth} cm`}
                   onPointerDown={(event) => handlePointerDown(event, item)}
-                  // Pointer presses are handled above; this is for keyboards.
-                  onClick={(event) => {
-                    if (event.detail === 0) {
-                      onAdd(item.type);
-                    }
-                  }}
+                  // A drag swallows the click it ends with, so this is a
+                  // plain click, or Enter or Space on the tile.
+                  onClick={() => onAdd(item.type)}
                   className="group flex cursor-grab flex-col items-center gap-1 rounded-md border border-transparent px-1 pt-2 pb-1.5 transition-colors select-none hover:border-line hover:bg-surface focus-visible:border-line-strong focus-visible:bg-surface focus-visible:outline-none active:cursor-grabbing"
                 >
                   <Thumbnail item={item} />
                   <span className="w-full truncate text-center text-[11px] leading-tight text-ink-secondary group-hover:text-ink">
                     {item.name}
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           </section>
@@ -151,32 +163,29 @@ export const Library = memo(function Library({
         ) : null}
       </div>
 
-      {drag
-        ? createPortal(
-            <div
-              className="pointer-events-none fixed z-50 opacity-85 drop-shadow-md"
-              style={{
-                left: drag.x,
-                top: drag.y,
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              <svg
-                width={drag.item.width * zoom}
-                height={drag.item.depth * zoom}
-                viewBox={`${-drag.item.width / 2} ${-drag.item.depth / 2} ${drag.item.width} ${drag.item.depth}`}
-                className="overflow-visible"
-              >
-                <FurnitureSymbol
-                  type={drag.item.type}
-                  width={drag.item.width}
-                  depth={drag.item.depth}
-                />
-              </svg>
-            </div>,
-            document.body
-          )
-        : null}
+      {ghost ? (
+        <div
+          ref={ghostRef}
+          className="pointer-events-none fixed z-50 opacity-85 drop-shadow-md"
+          style={{
+            left: ghost.x - (ghost.item.width * ghost.zoom) / 2,
+            top: ghost.y - (ghost.item.depth * ghost.zoom) / 2,
+          }}
+        >
+          <svg
+            width={ghost.item.width * ghost.zoom}
+            height={ghost.item.depth * ghost.zoom}
+            viewBox={`${-ghost.item.width / 2} ${-ghost.item.depth / 2} ${ghost.item.width} ${ghost.item.depth}`}
+            className="block overflow-visible"
+          >
+            <FurnitureSymbol
+              type={ghost.item.type}
+              width={ghost.item.width}
+              depth={ghost.item.depth}
+            />
+          </svg>
+        </div>
+      ) : null}
     </div>
   );
 });

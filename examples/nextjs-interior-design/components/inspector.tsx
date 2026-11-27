@@ -10,7 +10,7 @@ import {
   SendToBackIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useState, type KeyboardEvent, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { PlanActions } from "@/hooks/use-plan-actions";
 import { getCatalogItem } from "@/lib/catalog";
 import {
@@ -37,9 +37,16 @@ import {
   toDisplaySize,
   type Unit,
 } from "@/lib/units";
-import { cn } from "@/lib/utils";
-import { SuggestInput } from "./suggest-input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Button } from "./ui/button";
+import { NumberInput } from "./ui/number-input";
+import { SuggestInput } from "./ui/suggest-input";
+import { Toggle, ToggleGroup } from "./ui/toggle";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipShortcut,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 type InspectorProps = {
   selection: Selection;
@@ -115,7 +122,7 @@ export function Inspector({
   return (
     <aside
       aria-label="Properties"
-      className="card-floating absolute top-3 right-3 flex max-h-[calc(100%-5rem)] w-56 flex-col overflow-y-auto animate-in fade-in-0 slide-in-from-right-1 duration-150"
+      className="card-floating panel-in absolute top-3 right-3 flex max-h-[calc(100%-5rem)] w-56 flex-col overflow-y-auto"
     >
       {content}
     </aside>
@@ -141,38 +148,40 @@ function RoomInspector({
     <>
       <Title label="Room" onRemove={onRemove} />
       <Section>
-        <Field label="Name">
+        <Group label="Name">
           <SuggestInput
+            label="Name"
             value={room.name}
             options={ROOM_NAMES}
             placeholder="Room"
-            className={INPUT_CLASS}
             onCommit={(name) => actions.updateRoom(room.id, { name })}
           />
-        </Field>
-        <Field label="Floor">
-          <div className="grid grid-cols-4 gap-1">
+        </Group>
+        <Group label="Floor">
+          <ToggleGroup
+            aria-label="Floor"
+            value={[room.floor]}
+            deselectable={false}
+            onValueChange={([next]) => {
+              const finish = FLOOR_FINISHES.find((item) => item.id === next);
+              if (finish) {
+                actions.updateRoom(room.id, { floor: finish.id });
+              }
+            }}
+            className="grid grid-cols-4 gap-1"
+          >
             {FLOOR_FINISHES.map((finish) => (
-              <button
+              <Toggle
                 key={finish.id}
-                type="button"
-                aria-pressed={room.floor === finish.id}
-                onClick={() =>
-                  actions.updateRoom(room.id, { floor: finish.id })
-                }
-                className={cn(
-                  "flex flex-col items-center gap-1 rounded-md border p-1 text-[10px] leading-none transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
-                  room.floor === finish.id
-                    ? "border-brand bg-brand-soft text-brand"
-                    : "border-line text-ink-muted hover:border-line-strong hover:text-ink"
-                )}
+                value={finish.id}
+                className="flex-col gap-1 rounded-md border border-line p-1 text-[10px] leading-none text-ink-muted hover:border-line-strong hover:text-ink data-pressed:border-brand data-pressed:bg-brand-soft data-pressed:text-brand"
               >
                 <FloorSwatch finish={finish.id} />
                 {finish.label}
-              </button>
+              </Toggle>
             ))}
-          </div>
-        </Field>
+          </ToggleGroup>
+        </Group>
       </Section>
       <Section>
         <Stat label="Area" value={formatArea(polygonArea(room.points), unit)} />
@@ -244,32 +253,35 @@ function OpeningInspector({
       <Title label={isDoor ? "Door" : "Window"} onRemove={onRemove} />
       <Section>
         {isDoor ? (
-          <Field label="Type">
-            <div className="grid grid-cols-2 gap-1">
+          <Group label="Type">
+            <ToggleGroup
+              aria-label="Type"
+              value={[opening.style]}
+              deselectable={false}
+              onValueChange={([next]) => {
+                const style = DOOR_STYLES.find((item) => item.id === next);
+                if (style) {
+                  actions.updateOpening(opening.id, { style: style.id });
+                }
+              }}
+              className="grid grid-cols-2 gap-1"
+            >
               {DOOR_STYLES.map((style) => (
-                <button
+                <Toggle
                   key={style.id}
-                  type="button"
-                  aria-pressed={opening.style === style.id}
-                  onClick={() =>
-                    actions.updateOpening(opening.id, { style: style.id })
-                  }
-                  className={cn(
-                    "h-7 rounded-md border text-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
-                    opening.style === style.id
-                      ? "border-brand bg-brand-soft font-medium text-brand"
-                      : "border-line text-ink-secondary hover:border-line-strong hover:text-ink"
-                  )}
+                  value={style.id}
+                  className="h-7 rounded-md border border-line text-xs text-ink-secondary hover:border-line-strong hover:text-ink data-pressed:border-brand data-pressed:bg-brand-soft data-pressed:font-medium data-pressed:text-brand"
                 >
                   {style.label}
-                </button>
+                </Toggle>
               ))}
-            </div>
-          </Field>
+            </ToggleGroup>
+          </Group>
         ) : null}
         <div className="grid grid-cols-2 gap-2">
           <Field label="Width">
             <SizeInput
+              label="Width"
               value={opening.width}
               unit={unit}
               min={40}
@@ -279,6 +291,7 @@ function OpeningInspector({
           </Field>
           <Field label="From corner">
             <SizeInput
+              label="From corner"
               value={opening.offset - opening.width / 2}
               unit={unit}
               min={4}
@@ -298,7 +311,7 @@ function OpeningInspector({
             {opening.style === "single" ? (
               <Action
                 label="Flip hinge side"
-                shortcut="F"
+                shortcut="f"
                 onClick={() =>
                   actions.updateOpening(opening.id, {
                     hinge: opening.hinge === "start" ? "end" : "start",
@@ -310,7 +323,7 @@ function OpeningInspector({
             ) : null}
             <Action
               label="Flip swing direction"
-              shortcut="⇧F"
+              shortcut="shift+f"
               onClick={() =>
                 actions.updateOpening(opening.id, {
                   swing: opening.swing === "in" ? "out" : "in",
@@ -359,6 +372,7 @@ function FurnitureInspector({
         <div className="grid grid-cols-3 gap-2">
           <Field label="Width">
             <SizeInput
+              label="Width"
               value={item.width}
               unit={unit}
               min={20}
@@ -368,6 +382,7 @@ function FurnitureInspector({
           </Field>
           <Field label="Depth">
             <SizeInput
+              label="Depth"
               value={item.depth}
               unit={unit}
               min={20}
@@ -377,9 +392,10 @@ function FurnitureInspector({
           </Field>
           <Field label="Angle">
             <NumberInput
+              label="Angle"
               value={Math.round(item.rotation)}
               suffix="°"
-              step={15}
+              largeStep={15}
               onCommit={(rotation) =>
                 actions.updateFurniture(item.id, {
                   rotation: normalizeAngle(rotation),
@@ -391,15 +407,15 @@ function FurnitureInspector({
       </Section>
       <Section>
         <div className="flex items-center gap-1">
-          <Action label="Rotate left" shortcut="Q" onClick={() => turn(-90)}>
+          <Action label="Rotate left" shortcut="q" onClick={() => turn(-90)}>
             <RotateCcwIcon />
           </Action>
-          <Action label="Rotate right" shortcut="E" onClick={() => turn(90)}>
+          <Action label="Rotate right" shortcut="e" onClick={() => turn(90)}>
             <RotateCwIcon />
           </Action>
           <Action
             label="Duplicate"
-            shortcut="⌘D"
+            shortcut="mod+d"
             onClick={() => {
               const id = actions.duplicateFurniture(item.id);
               if (id) {
@@ -435,7 +451,7 @@ function Title({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <div className="flex items-center justify-between gap-2 py-1.5 pr-1.5 pl-3">
       <h2 className="truncate text-[13px] font-semibold text-ink">{label}</h2>
-      <Action label="Delete" shortcut="⌫" onClick={onRemove}>
+      <Action label="Delete" shortcut="backspace" onClick={onRemove}>
         <Trash2Icon />
       </Action>
     </div>
@@ -450,14 +466,35 @@ function Section({ children }: { children: ReactNode }) {
   );
 }
 
+// A number field under its label. Pressing the label focuses the field.
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1">
-      <span className="truncate text-[11px] font-medium text-ink-muted">
-        {label}
-      </span>
+      <FieldLabel>{label}</FieldLabel>
       {children}
     </label>
+  );
+}
+
+// Anything else under a label: a set of choices, or a field with a popup,
+// which a <label> around it would take presses from.
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <FieldLabel>{label}</FieldLabel>
+      {children}
+    </div>
+  );
+}
+
+function FieldLabel({ children }: { children: ReactNode }) {
+  return (
+    <span
+      aria-hidden
+      className="truncate text-[11px] font-medium text-ink-muted"
+    >
+      {children}
+    </span>
   );
 }
 
@@ -485,130 +522,77 @@ function Action({
   children,
 }: {
   label: string;
+  // The keys that do the same, like "mod+d". They're bound in the canvas.
   shortcut?: string;
   onClick: () => void;
   children: ReactNode;
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          onClick={onClick}
-          className="flex size-7 shrink-0 items-center justify-center rounded-md text-ink-secondary transition-colors outline-none hover:bg-hover hover:text-ink focus-visible:ring-2 focus-visible:ring-ring/60 [&_svg]:size-3.5"
-        >
-          {children}
-        </button>
+    <Tooltip shortcut={shortcut}>
+      <TooltipTrigger
+        render={
+          <Button
+            aria-label={label}
+            onClick={onClick}
+            className="[&_svg:not([class*='size-'])]:size-3.5"
+          />
+        }
+      >
+        {children}
       </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={6}>
+      <TooltipContent side="bottom">
         {label}
-        {shortcut ? (
-          <kbd className="ml-2 font-sans text-background/60">{shortcut}</kbd>
-        ) : null}
+        <TooltipShortcut />
       </TooltipContent>
     </Tooltip>
   );
 }
 
-const INPUT_CLASS =
-  "h-7 w-full min-w-0 rounded-md border border-line bg-surface px-2 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint hover:border-line-strong focus:border-brand focus:ring-2 focus:ring-brand/15";
-
-function NumberInput({
-  value,
-  onCommit,
-  suffix,
-  step = 1,
-  min = -Infinity,
-  max = Infinity,
-}: {
-  value: number;
-  onCommit: (value: number) => void;
-  suffix?: string;
-  step?: number;
-  min?: number;
-  max?: number;
-}) {
-  const [draft, setDraft] = useState<string | null>(null);
-
-  const commit = (text: string | null) => {
-    setDraft(null);
-    if (text === null) {
-      return;
-    }
-    const parsed = Number.parseFloat(text.replace(",", "."));
-    if (Number.isFinite(parsed)) {
-      const next = Math.min(Math.max(parsed, min), max);
-      if (next !== value) {
-        onCommit(next);
-      }
-    }
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      event.currentTarget.blur();
-    } else if (event.key === "Escape") {
-      setDraft(null);
-    } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-      // Step the value with the arrow keys; Shift for bigger steps.
-      event.preventDefault();
-      const current = Number.parseFloat(draft ?? String(value));
-      const direction = event.key === "ArrowUp" ? 1 : -1;
-      const amount = step * (event.shiftKey ? 10 : 1);
-      commit(
-        String(
-          (Number.isFinite(current) ? current : value) + direction * amount
-        )
-      );
-    }
-  };
-
-  return (
-    <span className="relative flex">
-      <input
-        type="text"
-        inputMode="decimal"
-        className={cn(INPUT_CLASS, "font-mono text-xs", suffix && "pr-6")}
-        value={draft ?? String(value)}
-        onChange={(event) => setDraft(event.target.value)}
-        onFocus={(event) => event.currentTarget.select()}
-        onBlur={() => commit(draft)}
-        onKeyDown={handleKeyDown}
-      />
-      {suffix ? (
-        <span className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-[10px] text-ink-faint">
-          {suffix}
-        </span>
-      ) : null}
-    </span>
-  );
-}
+// Arrow keys move a length by a centimeter or half an inch; with Shift, by
+// ten centimeters or half a foot.
+const SIZE_STEPS = {
+  metric: { step: 1, largeStep: 10, decimals: 0 },
+  imperial: { step: 0.5, largeStep: 6, decimals: 1 },
+} as const;
 
 // A length field shown in the person's units, and stored in centimeters.
 function SizeInput({
+  label,
   value,
   unit,
   min,
   max,
   onCommit,
 }: {
+  label: string;
   value: number;
   unit: Unit;
   min: number;
   max: number;
   onCommit: (centimeters: number) => void;
 }) {
+  const { step, largeStep, decimals } = SIZE_STEPS[unit];
+  // The limits are rounded inwards to whole steps: the field counts its
+  // steps from `min`.
+  const lowest = Math.ceil(fromCentimeters(min, unit) / step) * step;
+  const highest = Math.floor(fromCentimeters(max, unit) / step) * step;
   return (
     <NumberInput
+      label={label}
       value={toDisplaySize(value, unit)}
       suffix={sizeSuffix(unit)}
-      step={unit === "metric" ? 5 : 1}
-      min={toDisplaySize(min, unit)}
-      max={toDisplaySize(max, unit)}
+      step={step}
+      largeStep={largeStep}
+      decimals={decimals}
+      min={lowest}
+      max={Math.max(lowest, highest)}
       onCommit={(next) =>
         onCommit(Math.round(fromDisplaySize(next, unit) * 10) / 10)
       }
     />
   );
+}
+
+function fromCentimeters(centimeters: number, unit: Unit) {
+  return centimeters / fromDisplaySize(1, unit);
 }

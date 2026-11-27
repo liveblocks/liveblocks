@@ -12,7 +12,6 @@ import { Header } from "./header";
 import { Inspector } from "./inspector";
 import { Sidebar } from "./sidebar";
 import { Toolbar } from "./toolbar";
-import { TooltipProvider } from "./ui/tooltip";
 
 /**
  * The whole editor for one plan. The plan itself (rooms, doors and windows,
@@ -128,60 +127,58 @@ export function Planner({
   const getZoom = useCallback(() => canvasRef.current?.getZoom() ?? 1, []);
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <div className="flex h-dvh overflow-hidden bg-canvas text-ink sm:gap-1.5 sm:p-1.5">
-        <Sidebar
-          className="hidden sm:flex"
-          plan={plan}
-          plans={plans}
-          onPlanChange={onPlanChange}
-          onCreatePlan={onCreatePlan}
+    <div className="flex h-dvh overflow-hidden bg-canvas text-ink sm:gap-1.5 sm:p-1.5">
+      <Sidebar
+        className="hidden sm:flex"
+        plan={plan}
+        plans={plans}
+        onPlanChange={onPlanChange}
+        onCreatePlan={onCreatePlan}
+        unit={unit}
+        onAddFurniture={handleAddFurniture}
+        onDropFurniture={handleDropFurniture}
+        getZoom={getZoom}
+      />
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-surface sm:card">
+        <Header
+          name={plan.name}
+          onRename={handleRenamePlan}
+          roomCount={roomCount}
+          area={area}
           unit={unit}
-          onAddFurniture={handleAddFurniture}
-          onDropFurniture={handleDropFurniture}
-          getZoom={getZoom}
+          onUnitChange={setUnit}
+          showDimensions={showDimensions}
+          onShowDimensionsChange={setShowDimensions}
         />
-        <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-surface sm:card">
-          <Header
-            name={plan.name}
-            onRename={handleRenamePlan}
-            roomCount={roomCount}
-            area={area}
+        <div className="relative min-h-0 flex-1">
+          <Canvas
+            ref={canvasRef}
+            rooms={rooms}
+            openings={openings}
+            furniture={furniture}
+            actions={actions}
+            tool={tool}
+            onToolChange={handleToolChange}
+            selection={selection}
+            onSelect={setPicked}
             unit={unit}
-            onUnitChange={setUnit}
             showDimensions={showDimensions}
-            onShowDimensionsChange={setShowDimensions}
-          />
-          <div className="relative min-h-0 flex-1">
-            <Canvas
-              ref={canvasRef}
-              rooms={rooms}
-              openings={openings}
-              furniture={furniture}
-              actions={actions}
-              tool={tool}
-              onToolChange={handleToolChange}
-              selection={selection}
-              onSelect={setPicked}
-              unit={unit}
-              showDimensions={showDimensions}
-            >
-              <Toolbar tool={tool} onToolChange={handleToolChange} />
-              {selection ? (
-                <Inspector
-                  selection={selection}
-                  rooms={rooms}
-                  openings={openings}
-                  furniture={furniture}
-                  actions={actions}
-                  unit={unit}
-                  onSelect={setPicked}
-                />
-              ) : null}
-            </Canvas>
-          </div>
-        </main>
-      </div>
-    </TooltipProvider>
+          >
+            <Toolbar tool={tool} onToolChange={handleToolChange} />
+            {selection ? (
+              <Inspector
+                selection={selection}
+                rooms={rooms}
+                openings={openings}
+                furniture={furniture}
+                actions={actions}
+                unit={unit}
+                onSelect={setPicked}
+              />
+            ) : null}
+          </Canvas>
+        </div>
+      </main>
+    </div>
   );
 }
