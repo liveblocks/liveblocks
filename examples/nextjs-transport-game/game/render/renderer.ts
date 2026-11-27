@@ -125,6 +125,9 @@ const POPUP_RISE = 60;
 // building (in the order of `BUILDINGS`)
 const TOWN_LABEL_HEIGHTS = [58, 58, 62, 92, 150];
 const MONEY_FONT = "Tahoma, Verdana, Geneva, sans-serif";
+// How far above the middle of its tile a station's name sign is drawn: low
+// enough to touch the tile, so it's clear which station it belongs to
+const STATION_SIGN_HEIGHT = 20;
 
 // Where a track leaves a tile toward each neighbor, in tile coordinates
 // relative to the middle of the tile
@@ -811,18 +814,25 @@ export class Renderer {
         const x = (tile % size) + 0.5;
         const y = Math.floor(tile / size) + 0.5;
         const sx = screenX(worldX(x, y));
-        const sy = screenY(worldY(x, y) - 36);
-        ctx.font = `600 11px ${this.fontFamily}`;
-        const width = ctx.measureText(station.name).width + 22;
-        pill(ctx, sx - width / 2, sy - 9, width, 18, 9);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(sx - width / 2 + 9, sy, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = scene.companies.get(station.owner)?.color ?? "#888888";
-        ctx.fill();
-        ctx.fillStyle = "#262626";
-        ctx.fillText(station.name, sx + 5, sy + 0.5);
+        const sy = screenY(worldY(x, y) - STATION_SIGN_HEIGHT);
+        const color = scene.companies.get(station.owner)?.color ?? "#888888";
+        ctx.font = `700 11px ${this.fontFamily}`;
+        const width = Math.ceil(ctx.measureText(station.name).width) + 10;
+        const left = Math.round(sx - width / 2);
+        const top = Math.round(sy - 8);
+        // A sign in the company's color, with a raised edge
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(left - 1, top - 1, width + 2, 18);
+        ctx.fillStyle = color;
+        ctx.fillRect(left, top, width, 16);
+        ctx.fillStyle = shade(color, 1.4);
+        ctx.fillRect(left, top, width, 1);
+        ctx.fillRect(left, top, 1, 16);
+        ctx.fillStyle = shade(color, 0.7);
+        ctx.fillRect(left, top + 15, width, 1);
+        ctx.fillRect(left + width - 1, top, 1, 16);
+        ctx.fillStyle = inkOn(color);
+        ctx.fillText(station.name, left + width / 2, top + 8.5);
       }
     }
 
