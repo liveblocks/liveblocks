@@ -83,7 +83,7 @@ function CommentMarker({
   pixelsPerSecond: number;
 }) {
   const playback = usePlayback();
-  const { setSidePanelTab, setActiveThreadId } = useEditorUi();
+  const { openSidePanel, setActiveThreadId } = useEditorUi();
   const first = thread.comments.find((comment) => !comment.deletedAt);
   const { user } = useUser(first?.userId ?? "");
   const replies = thread.comments.length - 1;
@@ -98,7 +98,7 @@ function CommentMarker({
           onClick={() => {
             playback.pause();
             playback.seek(thread.metadata.time);
-            setSidePanelTab("comments");
+            openSidePanel("comments");
             setActiveThreadId(thread.id);
           }}
           className="absolute top-0.5 z-20 -translate-x-1/2 cursor-pointer transition-transform hover:scale-110"

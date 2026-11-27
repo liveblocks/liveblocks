@@ -157,9 +157,11 @@ function useLayerDrag(
       if (!stage) return;
       const rect = stage.getBoundingClientRect();
       const origin = { x: event.clientX, y: event.clientY };
+      const pointerId = event.pointerId;
       let moved = false;
 
       const onMove = (move: PointerEvent) => {
+        if (move.pointerId !== pointerId) return;
         const dx = (move.clientX - origin.x) / rect.width;
         const dy = (move.clientY - origin.y) / rect.height;
         if (!moved) {
@@ -180,14 +182,17 @@ function useLayerDrag(
           y: Math.round(y * 1000) / 1000,
         });
       };
-      const onUp = () => {
+      const onEnd = (end: PointerEvent) => {
+        if (end.pointerId !== pointerId) return;
         window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointerup", onEnd);
+        window.removeEventListener("pointercancel", onEnd);
         setGuides({ x: false, y: false });
         if (moved) history.resume();
       };
       window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointerup", onEnd);
+      window.addEventListener("pointercancel", onEnd);
     },
     [selection, setSelection, stageRef, setGuides, updateClip, history]
   );
@@ -280,7 +285,10 @@ const VideoLayer = memo(function VideoLayer({
 
   return (
     <div
-      className={cn("absolute inset-0", onPointerDown && "cursor-move")}
+      className={cn(
+        "absolute inset-0",
+        onPointerDown && "cursor-move touch-none"
+      )}
       style={{
         opacity: active ? clip.opacity * fadeEnvelope(clip, time) : 0,
         visibility: active ? "visible" : "hidden",
@@ -347,7 +355,7 @@ const TextLayer = memo(function TextLayer({
       fontClassName={fontClassName(clip.font)}
       color={clip.color}
       transform={`translate(${clip.x * 100}cqw, ${clip.y * 100}cqh) ${anchor.translate} translateY(${rise}cqmin) scale(${scale})`}
-      className={cn(onPointerDown && "cursor-move")}
+      className={cn(onPointerDown && "cursor-move touch-none")}
       style={{ opacity: clip.opacity * fadeEnvelope(clip, time) }}
       onPointerDown={
         onPointerDown ? (event) => onPointerDown(event, clip) : undefined

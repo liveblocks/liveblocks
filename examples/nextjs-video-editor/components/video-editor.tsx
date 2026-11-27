@@ -8,13 +8,18 @@ import {
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { useEffect, useRef, useState } from "react";
-import { EditorUiProvider } from "@/components/editor-context";
+import { EditorUiProvider, useEditorUi } from "@/components/editor-context";
 import { Header } from "@/components/header";
 import { MediaLibrary } from "@/components/library/media-library";
 import { SidePanel } from "@/components/side-panel";
 import { Timeline } from "@/components/timeline/timeline";
 import { Viewer } from "@/components/viewer/viewer";
-import { useClips, useEditorActions, useSelection } from "@/hooks/use-editor";
+import {
+  useClips,
+  useEditableSelection,
+  useEditorActions,
+  useSelection,
+} from "@/hooks/use-editor";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePlayback } from "@/hooks/use-playback";
 import { FPS } from "@/lib/project";
@@ -41,67 +46,70 @@ export function VideoEditor() {
   useKeyboardShortcuts();
 
   // Below `lg` the side panels float over the preview and start closed.
-  const isWide = useMediaQuery(WIDE);
-  const [libraryOpen, setLibraryOpen] = useState(
-    () => window.matchMedia(WIDE).matches
-  );
-  const [sidePanelOpen, setSidePanelOpen] = useState(
-    () => window.matchMedia(WIDE).matches
-  );
+  const [defaultOpen] = useState(() => window.matchMedia(WIDE).matches);
 
+  return (
+    <EditorUiProvider defaultSidePanelOpen={defaultOpen}>
+      <EditorLayout defaultLibraryOpen={defaultOpen} />
+    </EditorUiProvider>
+  );
+}
+
+function EditorLayout({ defaultLibraryOpen }: { defaultLibraryOpen: boolean }) {
+  const isWide = useMediaQuery(WIDE);
+  const [libraryOpen, setLibraryOpen] = useState(defaultLibraryOpen);
+  const { sidePanelOpen, setSidePanelOpen } = useEditorUi();
   const [timelineHeight, setTimelineHeight] = useState(300);
 
   return (
-    <EditorUiProvider>
-      <div className="flex h-dvh flex-col overflow-hidden px-2 pb-2">
-        <Header
-          libraryOpen={libraryOpen}
-          onLibraryOpenChange={setLibraryOpen}
-          sidePanelOpen={sidePanelOpen}
-          onSidePanelOpenChange={setSidePanelOpen}
-        />
+    <div className="flex h-dvh flex-col overflow-hidden px-2 pb-2">
+      <Header
+        libraryOpen={libraryOpen}
+        onLibraryOpenChange={setLibraryOpen}
+        sidePanelOpen={sidePanelOpen}
+        onSidePanelOpenChange={setSidePanelOpen}
+      />
 
-        <div className="relative flex min-h-0 flex-1 gap-2">
-          {libraryOpen ? (
-            <aside
-              className={cn(
-                "panel flex w-64 shrink-0 flex-col overflow-hidden xl:w-72",
-                !isWide && "absolute inset-y-0 left-0 z-30 shadow-xl"
-              )}
-            >
-              <MediaLibrary />
-            </aside>
-          ) : null}
+      <div className="relative flex min-h-0 flex-1 gap-2">
+        {libraryOpen ? (
+          <aside
+            className={cn(
+              "panel flex w-64 shrink-0 flex-col overflow-hidden xl:w-72",
+              !isWide && "absolute inset-y-0 left-0 z-30 shadow-xl"
+            )}
+          >
+            <MediaLibrary />
+          </aside>
+        ) : null}
 
-          <section className="panel flex min-w-0 flex-1 flex-col overflow-hidden">
-            <Viewer />
-          </section>
-
-          {sidePanelOpen ? (
-            <aside
-              className={cn(
-                "panel flex w-72 shrink-0 flex-col overflow-hidden xl:w-80",
-                !isWide && "absolute inset-y-0 right-0 z-30 shadow-xl"
-              )}
-            >
-              <SidePanel />
-            </aside>
-          ) : null}
-        </div>
-
-        <ResizeHandle
-          height={timelineHeight}
-          onHeightChange={setTimelineHeight}
-        />
-
-        <section
-          className="panel flex shrink-0 flex-col overflow-hidden"
-          style={{ height: timelineHeight }}
-        >
-          <Timeline />
+        <section className="panel flex min-w-0 flex-1 flex-col overflow-hidden">
+          <Viewer />
         </section>
+
+        {sidePanelOpen ? (
+          <aside
+            className={cn(
+              "panel flex w-72 shrink-0 flex-col overflow-hidden xl:w-80",
+              !isWide && "absolute inset-y-0 right-0 z-30 shadow-xl"
+            )}
+          >
+            <SidePanel />
+          </aside>
+        ) : null}
       </div>
-    </EditorUiProvider>
+
+      <ResizeHandle
+        height={timelineHeight}
+        onHeightChange={setTimelineHeight}
+      />
+
+      <section
+        className="panel flex shrink-0 flex-col overflow-hidden"
+        style={{ height: timelineHeight }}
+      >
+        <Timeline />
+      </section>
+    </div>
   );
 }
 
@@ -133,6 +141,9 @@ function ResizeHandle({
         );
       }}
       onPointerUp={() => {
+        drag.current = null;
+      }}
+      onPointerCancel={() => {
         drag.current = null;
       }}
     >
@@ -176,6 +187,7 @@ function isEditableTarget(target: EventTarget | null) {
 function useKeyboardShortcuts() {
   const playback = usePlayback();
   const [selection, setSelection] = useSelection();
+  const editable = useEditableSelection();
   const { deleteClips, splitClips, duplicateClips } = useEditorActions();
   const undo = useUndo();
   const redo = useRedo();
@@ -204,8 +216,8 @@ function useKeyboardShortcuts() {
       }
       if (mod && key === "d") {
         event.preventDefault();
-        if (selection.length > 0) {
-          setSelection(duplicateClips(selection));
+        if (editable.length > 0) {
+          setSelection(duplicateClips(editable));
         }
         return;
       }
@@ -241,10 +253,10 @@ function useKeyboardShortcuts() {
           break;
         case "Backspace":
         case "Delete":
-          if (selection.length > 0) {
+          if (editable.length > 0) {
             event.preventDefault();
-            deleteClips(selection);
-            setSelection([]);
+            deleteClips(editable);
+            setSelection(selection.filter((id) => !editable.includes(id)));
           }
           break;
         case "Escape":
@@ -258,6 +270,7 @@ function useKeyboardShortcuts() {
   }, [
     playback,
     selection,
+    editable,
     setSelection,
     deleteClips,
     splitClips,

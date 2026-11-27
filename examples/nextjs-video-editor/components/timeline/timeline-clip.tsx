@@ -48,6 +48,8 @@ export const TimelineClip = memo(function TimelineClip({
   const left = clip.start * pixelsPerSecond;
   const width = Math.max(4, clip.duration * pixelsPerSecond);
   const height = rowHeight - CLIP_INSET * 2;
+  // Narrow clips keep their middle half free to grab for moving.
+  const handleWidth = Math.min(8, width / 4);
   const ring = selected ? "var(--color-brand)" : remote?.[0]?.color;
   const name =
     clip.type === "text"
@@ -63,7 +65,9 @@ export const TimelineClip = memo(function TimelineClip({
       aria-pressed={selected}
       className={cn(
         "group/clip absolute overflow-hidden rounded-md select-none",
-        locked ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing",
+        locked
+          ? "cursor-not-allowed"
+          : "cursor-grab touch-none active:cursor-grabbing",
         dimmed && "opacity-40",
         clip.type === "text" && "bg-title-clip",
         clip.type === "audio" && "bg-sound-clip",
@@ -149,12 +153,14 @@ export const TimelineClip = memo(function TimelineClip({
         <>
           <TrimHandle
             side="start"
+            width={handleWidth}
             selected={selected}
             clip={clip}
             onPointerDown={onPointerDown}
           />
           <TrimHandle
             side="end"
+            width={handleWidth}
             selected={selected}
             clip={clip}
             onPointerDown={onPointerDown}
@@ -167,11 +173,13 @@ export const TimelineClip = memo(function TimelineClip({
 
 function TrimHandle({
   side,
+  width,
   selected,
   clip,
   onPointerDown,
 }: {
   side: "start" | "end";
+  width: number;
   selected: boolean;
   clip: Clip;
   onPointerDown: ClipPointerDown;
@@ -180,10 +188,11 @@ function TrimHandle({
     <div
       aria-hidden
       className={cn(
-        "absolute inset-y-0 z-10 flex w-2 cursor-ew-resize items-center justify-center opacity-0 transition-opacity group-hover/clip:opacity-100",
+        "absolute inset-y-0 z-10 flex cursor-ew-resize items-center justify-center opacity-0 transition-opacity group-hover/clip:opacity-100",
         side === "start" ? "left-0 rounded-l-md" : "right-0 rounded-r-md",
         selected ? "bg-brand opacity-100" : "bg-white/85"
       )}
+      style={{ width }}
       onPointerDown={(event) => {
         event.stopPropagation();
         onPointerDown(

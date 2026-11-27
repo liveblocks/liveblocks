@@ -77,6 +77,7 @@ import {
   libraryItemDuration,
   libraryItemType,
   useClips,
+  useEditableSelection,
   useEditorActions,
   useSelection,
   useTracks,
@@ -84,7 +85,6 @@ import {
 } from "@/hooks/use-editor";
 import { usePlayback, usePlaybackDuration } from "@/hooks/use-playback";
 import {
-  MIN_CLIP_DURATION,
   trackAccepts,
   type Clip,
   type ClipType,
@@ -93,9 +93,7 @@ import {
 import {
   clipEnd,
   findSnap,
-  maxClipDuration,
   nearestFreeStart,
-  neighborBounds,
   snapToFrame,
 } from "@/lib/timeline";
 import { cn } from "@/lib/utils";
@@ -162,9 +160,9 @@ export function Timeline() {
   const clips = useClips();
   const [selection, setSelection] = useSelection();
   const actions = useEditorActions();
-  const { updateClip, addLibraryItem } = actions;
+  const { moveClip, trimClip, addLibraryItem } = actions;
   const ui = useEditorUi();
-  const { snapping, draggedItem, setSidePanelTab } = ui;
+  const { snapping, draggedItem, openSidePanel } = ui;
   const playback = usePlayback();
   const duration = usePlaybackDuration();
   const history = useHistory();
@@ -361,13 +359,19 @@ export function Timeline() {
       const seekTo = (clientX: number) =>
         playback.seek(snapToFrame(timeAt(clientX)));
       seekTo(event.clientX);
-      const onMove = (move: PointerEvent) => seekTo(move.clientX);
-      const onUp = () => {
+      const pointerId = event.pointerId;
+      const onMove = (move: PointerEvent) => {
+        if (move.pointerId === pointerId) seekTo(move.clientX);
+      };
+      const onEnd = (end: PointerEvent) => {
+        if (end.pointerId !== pointerId) return;
         window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointerup", onEnd);
+        window.removeEventListener("pointercancel", onEnd);
       };
       window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointerup", onEnd);
+      window.addEventListener("pointercancel", onEnd);
     },
     [playback, timeAt]
   );
@@ -398,12 +402,13 @@ export function Timeline() {
       if (!track || track.locked) return;
 
       const origin = { x: event.clientX, y: event.clientY };
-      const others = clips.filter((other) => other.id !== clip.id);
+      const pointerId = event.pointerId;
       const targets = snapTargets(clip.id);
       const threshold = SNAP_PIXELS / zoom;
       let moved = false;
 
       const onMove = (move: PointerEvent) => {
+        if (move.pointerId !== pointerId) return;
         if (!moved) {
           if (Math.hypot(move.clientX - origin.x, move.clientY - origin.y) < 3)
             return;
@@ -412,111 +417,81 @@ export function Timeline() {
         }
         const delta = (move.clientX - origin.x) / zoom;
         const snapOn = snapping && !move.altKey;
+        const snapGuideFor = (
+          snap: { target: number } | null,
+          landed: number | null,
+          edge: number
+        ) =>
+          snap && landed !== null && Math.abs(landed - edge) < 1e-6
+            ? snap.target
+            : null;
 
         if (mode === "move") {
           const row = rowAt(move.clientY);
-          const target =
-            row && !row.track.locked && trackAccepts(row.track, clip.type)
-              ? row.track
-              : track;
           let desired = clip.start + delta;
           const snap = snapOn
             ? findSnap([desired, desired + clip.duration], targets, threshold)
             : null;
           if (snap) desired += snap.delta;
-          const start = nearestFreeStart(
-            others.filter((other) => other.trackId === target.id),
-            snapToFrame(desired),
-            clip.duration
+          desired = snapToFrame(desired);
+          const landed = moveClip(
+            clip.id,
+            row?.track.id ?? clip.trackId,
+            desired
           );
-          setSnapGuide(
-            snap && Math.abs(start - snapToFrame(desired)) < 1e-6
-              ? snap.target
-              : null
-          );
-          updateClip(clip.id, { start, trackId: target.id });
+          setSnapGuide(snapGuideFor(snap, landed, desired));
           return;
         }
 
-        const bounds = neighborBounds(
-          others.filter((other) => other.trackId === clip.trackId),
-          clip
+        const edge =
+          mode === "trim-start" ? clip.start + delta : clipEnd(clip) + delta;
+        const snap = snapOn ? findSnap([edge], targets, threshold) : null;
+        const desired = snapToFrame(snap ? edge + snap.delta : edge);
+        const landed = trimClip(
+          clip.id,
+          mode === "trim-start" ? "start" : "end",
+          desired
         );
-
-        if (mode === "trim-start") {
-          const earliest = Math.max(
-            bounds.before,
-            clip.type === "text" ? 0 : clip.start - clip.offset
-          );
-          let desired = clip.start + delta;
-          const snap = snapOn ? findSnap([desired], targets, threshold) : null;
-          if (snap) desired += snap.delta;
-          const start = Math.min(
-            clipEnd(clip) - MIN_CLIP_DURATION,
-            Math.max(earliest, snapToFrame(desired))
-          );
-          setSnapGuide(
-            snap && Math.abs(start - desired) < 1e-6 ? snap.target : null
-          );
-          const shift = start - clip.start;
-          updateClip(clip.id, {
-            start,
-            duration: clip.duration - shift,
-            offset: clip.type === "text" ? 0 : clip.offset + shift,
-          });
-          return;
-        }
-
-        const latest = Math.min(
-          bounds.after,
-          clip.start + maxClipDuration(clip)
-        );
-        let desired = clipEnd(clip) + delta;
-        const snap = snapOn ? findSnap([desired], targets, threshold) : null;
-        if (snap) desired += snap.delta;
-        const end = Math.max(
-          clip.start + MIN_CLIP_DURATION,
-          Math.min(latest, snapToFrame(desired))
-        );
-        setSnapGuide(
-          snap && Math.abs(end - desired) < 1e-6 ? snap.target : null
-        );
-        updateClip(clip.id, { duration: end - clip.start });
+        setSnapGuide(snapGuideFor(snap, landed, desired));
       };
 
-      const onUp = () => {
+      const onEnd = (end: PointerEvent) => {
+        if (end.pointerId !== pointerId) return;
         window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointerup", onEnd);
+        window.removeEventListener("pointercancel", onEnd);
         setSnapGuide(null);
         if (moved) history.resume();
       };
       window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointerup", onEnd);
+      window.addEventListener("pointercancel", onEnd);
     },
     [
       selection,
       setSelection,
       tracks,
-      clips,
       snapTargets,
       zoom,
       history,
       snapping,
       rowAt,
-      updateClip,
+      moveClip,
+      trimClip,
     ]
   );
 
   const onClipDoubleClick = useCallback(
     (clip: Clip) => {
-      setSidePanelTab("inspector");
+      openSidePanel("inspector");
       if (clip.type === "text") {
+        // The inspector may only mount on the next render.
         requestAnimationFrame(() =>
           document.getElementById("text-clip-content")?.focus()
         );
       }
     },
-    [setSidePanelTab]
+    [openSidePanel]
   );
 
   // Dropping from the library: preview where the clip will land as it's
@@ -848,6 +823,7 @@ function TrackHeader({ track }: { track: Track }) {
             <DropdownMenuItem
               variant="destructive"
               className="text-[13px]"
+              disabled={track.locked}
               onSelect={() => deleteTrack(track.id)}
             >
               <Trash2Icon />
@@ -936,6 +912,7 @@ function TimelineToolbar({
   const playback = usePlayback();
   const [selection, setSelection] = useSelection();
   const { splitClips, duplicateClips, deleteClips } = useEditorActions();
+  const editable = useEditableSelection();
   const { snapping, setSnapping } = useEditorUi();
   const hasSelection = selection.length > 0;
 
@@ -970,18 +947,18 @@ function TimelineToolbar({
       <TooltipButton
         label="Duplicate"
         shortcut={["⌘", "D"]}
-        disabled={!hasSelection}
-        onClick={() => setSelection(duplicateClips(selection))}
+        disabled={editable.length === 0}
+        onClick={() => setSelection(duplicateClips(editable))}
       >
         <CopyIcon />
       </TooltipButton>
       <TooltipButton
         label="Delete"
         shortcut={["⌫"]}
-        disabled={!hasSelection}
+        disabled={editable.length === 0}
         onClick={() => {
-          deleteClips(selection);
-          setSelection([]);
+          deleteClips(editable);
+          setSelection(selection.filter((id) => !editable.includes(id)));
         }}
       >
         <Trash2Icon />

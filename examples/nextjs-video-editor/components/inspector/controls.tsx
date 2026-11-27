@@ -83,9 +83,13 @@ export function PropertySlider({
         step={step}
         onPointerDown={() => {
           history.pause();
-          window.addEventListener("pointerup", () => history.resume(), {
-            once: true,
-          });
+          const end = () => {
+            window.removeEventListener("pointerup", end);
+            window.removeEventListener("pointercancel", end);
+            history.resume();
+          };
+          window.addEventListener("pointerup", end);
+          window.addEventListener("pointercancel", end);
         }}
         onValueChange={([next]) => onChange(next)}
       />

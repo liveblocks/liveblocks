@@ -25,7 +25,13 @@ import {
   type TrackKind,
   type TrackLson,
 } from "@/lib/project";
-import { clipEnd, isClipActive, nearestFreeStart } from "@/lib/timeline";
+import {
+  clipEnd,
+  isClipActive,
+  maxClipDuration,
+  nearestFreeStart,
+  neighborBounds,
+} from "@/lib/timeline";
 
 export function useProject() {
   return useStorage((root) => root.project);
@@ -127,6 +133,26 @@ function pickTrack(
   );
 }
 
+function lockedTrackIds(tracks: readonly Track[]) {
+  return new Set(
+    tracks.filter((track) => track.locked).map((track) => track.id)
+  );
+}
+
+/** The selected clips that aren't on locked tracks. */
+export function useEditableSelection() {
+  const [selection] = useSelection();
+  const tracks = useTracks();
+  const clips = useClips();
+  return useMemo(() => {
+    const locked = lockedTrackIds(tracks);
+    return selection.filter((id) => {
+      const clip = clips.find((clip) => clip.id === id);
+      return clip !== undefined && !locked.has(clip.trackId);
+    });
+  }, [selection, tracks, clips]);
+}
+
 export function useEditorActions() {
   const [, setSelection] = useSelection();
 
@@ -140,6 +166,92 @@ export function useEditorActions() {
   const updateClip = useMutation(
     ({ storage }, clipId: string, patch: Partial<ClipLson>) => {
       storage.get("clips").get(clipId)?.update(patch);
+    },
+    []
+  );
+
+  /**
+   * Moves a clip as close to `start` on `trackId` as it fits. Placement is
+   * checked against current Storage, not what the dragging client last saw,
+   * so a collaborator deleting or locking a track, or putting a clip in the
+   * way, can't leave this clip overlapping or on a missing track. Returns
+   * where the clip landed, or null if it can't move.
+   */
+  const moveClip = useMutation(
+    ({ storage }, clipId: string, trackId: string, start: number) => {
+      const clips = storage.get("clips");
+      const live = clips.get(clipId);
+      if (!live) return null;
+      const clip = live.toJSON();
+      const tracks = storage.get("tracks").toJSON();
+      const current = tracks.find((track) => track.id === clip.trackId);
+      if (!current || current.locked) return null;
+      const target =
+        tracks.find(
+          (track) =>
+            track.id === trackId &&
+            !track.locked &&
+            trackAccepts(track, clip.type)
+        ) ?? current;
+      const others = Array.from(clips.values())
+        .map((other) => other.toJSON())
+        .filter((other) => other.trackId === target.id && other.id !== clipId);
+      const landed = nearestFreeStart(others, start, clip.duration);
+      live.update({ start: landed, trackId: target.id });
+      return landed;
+    },
+    []
+  );
+
+  /**
+   * Moves one edge of a clip to `time`, kept clear of its current neighbors
+   * and within its media. Returns where the edge ended up, or null.
+   */
+  const trimClip = useMutation(
+    ({ storage }, clipId: string, edge: "start" | "end", time: number) => {
+      const clips = storage.get("clips");
+      const live = clips.get(clipId);
+      if (!live) return null;
+      const clip = live.toJSON();
+      const track = storage
+        .get("tracks")
+        .toJSON()
+        .find((track) => track.id === clip.trackId);
+      if (!track || track.locked) return null;
+      const bounds = neighborBounds(
+        Array.from(clips.values())
+          .map((other) => other.toJSON())
+          .filter(
+            (other) => other.trackId === clip.trackId && other.id !== clipId
+          ),
+        clip
+      );
+
+      if (edge === "start") {
+        const earliest = Math.max(
+          bounds.before,
+          clip.type === "text" ? 0 : clip.start - clip.offset
+        );
+        const start = Math.min(
+          clipEnd(clip) - MIN_CLIP_DURATION,
+          Math.max(earliest, time)
+        );
+        const shift = start - clip.start;
+        live.update({
+          start,
+          duration: clip.duration - shift,
+          offset: clip.type === "text" ? 0 : clip.offset + shift,
+        });
+        return start;
+      }
+
+      const latest = Math.min(bounds.after, clip.start + maxClipDuration(clip));
+      const end = Math.max(
+        clip.start + MIN_CLIP_DURATION,
+        Math.min(latest, time)
+      );
+      live.update({ duration: end - clip.start });
+      return end;
     },
     []
   );
@@ -173,7 +285,7 @@ export function useEditorActions() {
   const deleteTrack = useMutation(({ storage }, trackId: string) => {
     const tracks = storage.get("tracks");
     const index = tracks.findIndex((track) => track.get("id") === trackId);
-    if (index === -1) return;
+    if (index === -1 || tracks.get(index)?.get("locked")) return;
     tracks.delete(index);
     const clips = storage.get("clips");
     for (const [id, clip] of clips) {
@@ -239,8 +351,12 @@ export function useEditorActions() {
 
   const deleteClips = useMutation(({ storage }, clipIds: string[]) => {
     const clips = storage.get("clips");
+    const locked = lockedTrackIds(storage.get("tracks").toJSON());
     for (const id of clipIds) {
-      clips.delete(id);
+      const trackId = clips.get(id)?.get("trackId");
+      if (trackId !== undefined && !locked.has(trackId)) {
+        clips.delete(id);
+      }
     }
   }, []);
 
@@ -251,13 +367,7 @@ export function useEditorActions() {
   const splitClips = useMutation(
     ({ storage }, clipIds: string[], time: number) => {
       const clips = storage.get("clips");
-      const locked = new Set(
-        storage
-          .get("tracks")
-          .toJSON()
-          .filter((track) => track.locked)
-          .map((track) => track.id)
-      );
+      const locked = lockedTrackIds(storage.get("tracks").toJSON());
       const targets =
         clipIds.length > 0
           ? clipIds
@@ -300,11 +410,12 @@ export function useEditorActions() {
 
   const duplicateClips = useMutation(({ storage }, clipIds: string[]) => {
     const clips = storage.get("clips");
+    const locked = lockedTrackIds(storage.get("tracks").toJSON());
     const all = Array.from(clips.values()).map((clip) => clip.toJSON());
     const created: string[] = [];
     for (const clipId of clipIds) {
       const clip = clips.get(clipId)?.toJSON();
-      if (!clip) continue;
+      if (!clip || locked.has(clip.trackId)) continue;
       const id = createClipId();
       const start = nearestFreeStart(
         all.filter((other) => other.trackId === clip.trackId),
@@ -324,6 +435,8 @@ export function useEditorActions() {
       setSelection,
       updateProject,
       updateClip,
+      moveClip,
+      trimClip,
       updateTrack,
       addTrack,
       deleteTrack,
@@ -336,6 +449,8 @@ export function useEditorActions() {
       setSelection,
       updateProject,
       updateClip,
+      moveClip,
+      trimClip,
       updateTrack,
       addTrack,
       deleteTrack,

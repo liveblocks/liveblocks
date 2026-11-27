@@ -10,7 +10,7 @@ import {
   Trash2Icon,
   TypeIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/collaborators";
 import { FilmstripFrame } from "@/components/filmstrip-frame";
 import {
@@ -415,7 +415,10 @@ function ClipActions({ clip }: { clip: Clip }) {
   const playback = usePlayback();
   const { splitClips, duplicateClips, deleteClips, setSelection } =
     useEditorActions();
+  const locked =
+    useTracks().find((track) => track.id === clip.trackId)?.locked ?? true;
   const canSplit =
+    !locked &&
     time > clip.start + MIN_CLIP_DURATION &&
     time < clipEnd(clip) - MIN_CLIP_DURATION;
 
@@ -432,6 +435,7 @@ function ClipActions({ clip }: { clip: Clip }) {
       <ActionButton
         label="Duplicate"
         shortcut="⌘D"
+        disabled={locked}
         onClick={() => setSelection(duplicateClips([clip.id]))}
       >
         <CopyIcon /> Duplicate
@@ -440,6 +444,7 @@ function ClipActions({ clip }: { clip: Clip }) {
         label="Delete"
         shortcut="⌫"
         className="ml-auto text-neutral-500 hover:text-destructive"
+        disabled={locked}
         onClick={() => {
           deleteClips([clip.id]);
           setSelection([]);
@@ -554,6 +559,18 @@ function TextSections({
 }) {
   const history = useHistory();
   const [draft, setDraft] = useState<string | null>(null);
+  // Removing a focused textarea (say, a collaborator deleted the clip) doesn't
+  // blur it, so the pause it started is also released on unmount.
+  const pausedRef = useRef(false);
+  useEffect(
+    () => () => {
+      if (pausedRef.current) {
+        pausedRef.current = false;
+        history.resume();
+      }
+    },
+    [history]
+  );
 
   return (
     <>
@@ -566,6 +583,7 @@ function TextSections({
           onFocus={() => {
             setDraft(clip.text);
             history.pause();
+            pausedRef.current = true;
           }}
           onChange={(event) => {
             setDraft(event.target.value);
@@ -573,7 +591,10 @@ function TextSections({
           }}
           onBlur={() => {
             setDraft(null);
-            history.resume();
+            if (pausedRef.current) {
+              pausedRef.current = false;
+              history.resume();
+            }
           }}
           className="w-full resize-none rounded-lg bg-white px-3 py-2 text-[13px] leading-snug text-neutral-900 shadow-xs ring-1 ring-neutral-950/10 outline-none placeholder:text-neutral-400 focus:ring-2 focus:ring-ring"
           placeholder="Type something…"
