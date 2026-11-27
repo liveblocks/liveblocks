@@ -36,8 +36,8 @@ declare global {
       // nobody writes their new buildings here: every client works out how
       // far each town has grown from the clock.
       startedAt: number;
-      // Town id → how far the town had grown when a station was last built
-      // or removed near it, which changes how fast it grows from then on
+      // Town id → how far the town had grown when the number of stations
+      // around it last changed, which changes how fast it grows from then on
       towns: LiveMap<string, TownGrowth>;
       // Tile → id of the company that built on it
       roads: LiveMap<string, string>;

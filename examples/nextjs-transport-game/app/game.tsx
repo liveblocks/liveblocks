@@ -4,11 +4,16 @@ import type { ToJson } from "@liveblocks/client";
 import { shallow } from "@liveblocks/react";
 import {
   useBroadcastEvent,
+  useCanRedo,
+  useCanUndo,
   useEventListener,
   useMutation,
   useOthersMapped,
+  useRedo,
+  useRoom,
   useSelf,
   useStorage,
+  useUndo,
   useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -27,6 +32,7 @@ import {
   snapshotView,
   stationCost,
   stationProblem,
+  syncTownGrowth,
 } from "@/game/actions";
 import {
   BUILDINGS,
@@ -73,7 +79,7 @@ import {
 } from "./map-canvas";
 import { StationWindow } from "./station-window";
 import { type OpenWindows, Taskbar } from "./taskbar";
-import { Toolbar, TOOLS } from "./toolbar";
+import { type History, Toolbar, TOOLS } from "./toolbar";
 import { TownWindow } from "./town-window";
 
 type Toast = {
@@ -168,6 +174,7 @@ export function Game() {
 
   useSimulation(world, network);
   useTownNews(world, notify);
+  const history = useHistory(seed, myCompany, balance, floatMoney);
 
   const selectTool = useCallback((next: Tool) => {
     setTool(next);
@@ -228,7 +235,7 @@ export function Game() {
         return NO_COMPANY;
       }
       return lineTool === "bulldoze"
-        ? bulldoze(storage, world, id, tiles, Date.now())
+        ? bulldoze(storage, world, id, tiles)
         : buildTrack(storage, world, id, lineTool, tiles);
     },
     [world]
@@ -269,11 +276,14 @@ export function Game() {
     return id === null ? NO_COMPANY : sellVehicle(storage, id, vehicleId);
   }, []);
 
-  const reset = useMutation(
+  const room = useRoom();
+  const resetStorage = useMutation(
     ({ storage }) =>
       resetGame(storage, Math.floor(Math.random() * 2 ** 31), Date.now()),
     []
   );
+  // A new map is the one thing that can't be undone
+  const reset = () => room.history.disable(resetStorage);
 
   // A hidden cheat: Ctrl + Alt + M adds money to your company
   const cheat = useMutation(({ storage, self }) => {
@@ -287,6 +297,18 @@ export function Game() {
         event.preventDefault();
         if (cheat()) {
           floatMoney(CHEAT_MONEY);
+        }
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && !event.altKey) {
+        const key = event.key.toLowerCase();
+        if (key === "z" || key === "y") {
+          event.preventDefault();
+          if (key === "y" || event.shiftKey) {
+            history.redo();
+          } else {
+            history.undo();
+          }
         }
         return;
       }
@@ -305,7 +327,14 @@ export function Game() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selectTool, cheat, floatMoney, myCompany]);
+  }, [selectTool, cheat, floatMoney, myCompany, history]);
+
+  // The station a route starts from can disappear, e.g. when it is undone
+  useEffect(() => {
+    if (routeFrom !== null && !stations.has(String(routeFrom))) {
+      setRouteFrom(null);
+    }
+  }, [routeFrom, stations]);
 
   const describeVehicle = (kind: Transport, from: number, to: number) => {
     if (kind === "rail") {
@@ -444,7 +473,7 @@ export function Game() {
 
         <div className="pointer-events-none absolute top-2 left-2 flex flex-col items-start gap-2">
           {myCompany !== null ? (
-            <Toolbar tool={tool} onSelect={selectTool} />
+            <Toolbar tool={tool} history={history} onSelect={selectTool} />
           ) : null}
           {selectedStation !== null && selected ? (
             <StationWindow
@@ -566,6 +595,51 @@ function useStorageMap<T>(
   return useMemo(() => new Map(Object.entries(record)), [record]);
 }
 
+// Undo and redo come with Liveblocks: every `useMutation` call a player
+// makes is one step that can be taken back, without touching what others
+// have built. Money is part of Storage too, so it comes back as well.
+function useHistory(
+  seed: number,
+  myCompany: string | null,
+  balance: number,
+  floatMoney: (amount: number) => void
+): History {
+  const room = useRoom();
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+
+  // What was built for another company, or on a previous map, isn't this
+  // player's to take back anymore
+  useEffect(() => {
+    room.history.clear();
+  }, [room, seed, myCompany]);
+
+  // Let the money that an undo or redo gives or takes float up like any
+  // other money, by comparing the balance right before and right after
+  const latest = useRef(balance);
+  const before = useRef<{ balance: number; at: number } | null>(null);
+  useEffect(() => {
+    latest.current = balance;
+    const pending = before.current;
+    if (pending && balance !== pending.balance) {
+      before.current = null;
+      if (Date.now() - pending.at < 500) {
+        floatMoney(balance - pending.balance);
+      }
+    }
+  }, [balance, floatMoney]);
+
+  return useMemo(() => {
+    const track = (step: () => void) => () => {
+      before.current = { balance: latest.current, at: Date.now() };
+      step();
+    };
+    return { canUndo, canRedo, undo: track(undo), redo: track(redo) };
+  }, [canUndo, canRedo, undo, redo]);
+}
+
 function toTiles(keys: string) {
   return keys === "" ? [] : keys.split(",").map(Number);
 }
@@ -627,6 +701,7 @@ function useMyCompany(notify: (text: string, color: string | null) => void) {
   const exists = useStorage(
     (root) => myCompany !== null && myCompany in root.companies
   );
+  const room = useRoom();
   const found = useMutation(({ storage, self }) => {
     if (self.presence.company !== null) {
       ensureCompany(storage, self.presence.company, Date.now());
@@ -634,9 +709,10 @@ function useMyCompany(notify: (text: string, color: string | null) => void) {
   }, []);
   useEffect(() => {
     if (myCompany !== null && !exists) {
-      found();
+      // Not something the player did, so not something to undo
+      room.history.disable(found);
     }
-  }, [myCompany, exists, found]);
+  }, [room, myCompany, exists, found]);
 
   const pickCompany = useCallback(
     (company: string) => updateMyPresence({ company }),
@@ -659,15 +735,28 @@ function useTownSteps(world: World, stationTiles: readonly number[]) {
   const startedAt = useStorage((root) => root.startedAt);
 
   const measure = useCallback(() => {
-    const stations = townStations(world, stationTiles);
     const plans = townPlans(world);
     return world.towns.map(({ id }) =>
       Math.min(
         plans[id].length,
-        Math.floor(townGrowth(saved[id], stations[id], startedAt, Date.now()))
+        Math.floor(townGrowth(saved[id], startedAt, Date.now()))
       )
     );
-  }, [world, stationTiles, saved, startedAt]);
+  }, [world, saved, startedAt]);
+
+  // Towns grow at the speed saved in Storage. When the number of stations
+  // around one changes, save how far it got, and its new speed.
+  const room = useRoom();
+  const sync = useMutation(
+    ({ storage }) => syncTownGrowth(storage, world, Date.now()),
+    [world]
+  );
+  useEffect(() => {
+    const stations = townStations(world, stationTiles);
+    if (world.towns.some(({ id }) => (saved[id]?.stations ?? 0) !== stations[id])) {
+      room.history.disable(sync);
+    }
+  }, [room, world, stationTiles, saved, sync]);
 
   const [steps, setSteps] = useState(measure);
   useEffect(() => {
@@ -736,10 +825,16 @@ function useSimulation(world: World, network: Network) {
     );
   }, []);
 
+  // Vehicles move on their own: none of this ends up in a player's undo
+  // history
+  const room = useRoom();
   useEffect(() => {
-    const interval = window.setInterval(tick, TICK_MS);
+    const interval = window.setInterval(
+      () => room.history.disable(tick),
+      TICK_MS
+    );
     return () => window.clearInterval(interval);
-  }, [tick]);
+  }, [room, tick]);
 }
 
 // The line of text at the bottom of the map: what the current tool does, or

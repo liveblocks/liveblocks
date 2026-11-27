@@ -321,17 +321,16 @@ export function townGrowthRate(stations: number) {
 }
 
 // How many steps a town has grown by now. `saved` is the town's entry in
-// Storage, written the last time a station was built or removed near it. A
-// town without one has been growing at the same speed since the map started.
+// Storage, written the last time the number of stations around it changed.
+// A town without one has been growing on its own since the map started.
 export function townGrowth(
   saved: TownGrowth | undefined,
-  stations: number,
   startedAt: number,
   now: number
 ) {
-  const from = saved ?? { steps: 0, at: startedAt };
+  const from = saved ?? { steps: 0, at: startedAt, stations: 0 };
   const minutes = Math.max(0, now - from.at) / 60_000;
-  return from.steps + townGrowthRate(stations) * minutes;
+  return from.steps + townGrowthRate(from.stations) * minutes;
 }
 
 export type TownStats = {

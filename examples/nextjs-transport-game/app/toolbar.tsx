@@ -3,10 +3,12 @@
 import {
   Anchor,
   MousePointer2,
+  Redo2,
   Signpost,
   TrainTrack,
   Trash2,
   Truck,
+  Undo2,
   Warehouse,
 } from "lucide-react";
 import { ComponentType } from "react";
@@ -106,13 +108,39 @@ export const TOOLS: {
   },
 ];
 
+export type History = {
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
+};
+
 export function Toolbar({
   tool,
+  history,
   onSelect,
 }: {
   tool: Tool;
+  history: History;
   onSelect: (tool: Tool) => void;
 }) {
+  const steps = [
+    {
+      label: "Undo",
+      shortcut: "Ctrl+Z",
+      icon: Undo2,
+      enabled: history.canUndo,
+      run: history.undo,
+    },
+    {
+      label: "Redo",
+      shortcut: "Ctrl+Shift+Z",
+      icon: Redo2,
+      enabled: history.canRedo,
+      run: history.redo,
+    },
+  ];
+
   return (
     <Window title="Build">
       <div className="flex gap-px pt-[3px]">
@@ -132,6 +160,26 @@ export function Toolbar({
             <TooltipContent side="bottom" sideOffset={6}>
               <span className="font-bold">{label}</span> ({shortcut})
               <div>{detail}</div>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+        <div className="win-divider mx-0.5" />
+        {steps.map(({ label, shortcut, icon: Icon, enabled, run }) => (
+          <Tooltip key={label}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="win-button size-8 p-0"
+                aria-label={label}
+                disabled={!enabled}
+                onClick={run}
+              >
+                <Icon className="size-[18px]" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={6}>
+              <span className="font-bold">{label}</span> ({shortcut})
+              <div>Only what your company built, bought or cleared</div>
             </TooltipContent>
           </Tooltip>
         ))}

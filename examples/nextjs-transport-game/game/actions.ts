@@ -16,7 +16,7 @@ import {
 import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
 import { advance } from "./simulation";
-import { stationTown, townGrowth } from "./towns";
+import { townGrowth, townStations } from "./towns";
 import type {
   ActionResult,
   StationData,
@@ -231,26 +231,30 @@ export function demolitionCost(world: World, tiles: readonly number[]) {
   return cost;
 }
 
-// How fast a town grows depends on the stations around it. So right before
-// a station appears or goes away, how far the town has grown until now is
-// saved, and it carries on from there at its new speed.
-function saveTownGrowth(root: Root, world: World, tile: number, now: number) {
-  const town = stationTown(world, tile);
-  if (town === null) {
-    return;
-  }
-  let stations = 0;
-  for (const key of root.get("stations").keys()) {
-    if (stationTown(world, Number(key)) === town) {
-      stations++;
+// How fast a town grows depends on the stations around it. A town keeps
+// growing at the speed that was last saved for it, so when its number of
+// stations changes (one is built, removed, or brought back with undo), how
+// far it has grown until now is saved along with the new number, and it
+// carries on from there. Every client does this when it sees the change:
+// what they save is the same to within a few milliseconds of growth, so it
+// doesn't matter whose write lands last. Returns whether anything was saved.
+export function syncTownGrowth(root: Root, world: World, now: number) {
+  const stations = [...root.get("stations").keys()].map(Number);
+  const counts = townStations(world, stations);
+  const towns = root.get("towns");
+  let changed = false;
+  for (const { id } of world.towns) {
+    const saved = towns.get(String(id));
+    if ((saved?.stations ?? 0) !== counts[id]) {
+      towns.set(String(id), {
+        steps: townGrowth(saved, root.get("startedAt"), now),
+        at: now,
+        stations: counts[id],
+      });
+      changed = true;
     }
   }
-  const towns = root.get("towns");
-  const saved = towns.get(String(town));
-  towns.set(String(town), {
-    steps: townGrowth(saved, stations, root.get("startedAt"), now),
-    at: now,
-  });
+  return changed;
 }
 
 export function buildTrack(
@@ -320,7 +324,6 @@ export function buildStation(
     taken.add(station.get("name"));
   }
   const name = suggestStationName(world, tile, taken);
-  saveTownGrowth(root, world, tile, now);
   root.get("stations").set(
     key,
     new LiveObject<StationData>({
@@ -342,8 +345,7 @@ export function bulldoze(
   root: Root,
   world: World,
   companyId: string,
-  tiles: number[],
-  now: number
+  tiles: number[]
 ): ActionResult {
   const roads = root.get("roads");
   const rails = root.get("rails");
@@ -390,7 +392,6 @@ export function bulldoze(
           vehicles.delete(id);
         }
       }
-      saveTownGrowth(root, world, tile, now);
       stations.delete(key);
       removed++;
     } else if (rails.has(key) || roads.has(key)) {
