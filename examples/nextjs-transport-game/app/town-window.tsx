@@ -1,40 +1,33 @@
 "use client";
 
 import { Window } from "@/components/window";
-import { TOWN_MAX_STATIONS } from "@/game/constants";
-import {
-  townGrowthPerMinute,
-  townPopulation,
-  townServices,
-} from "@/game/economy";
-import type { StationData } from "@/game/types";
+import { BUILDINGS, TOWN_MAX_STATIONS } from "@/game/constants";
+import { townGrowthRate, townStats } from "@/game/towns";
 import type { World } from "@/game/world";
-import { useNow } from "@/hooks/use-now";
 
 type Props = {
   world: World;
   town: number;
-  stations: ReadonlyMap<string, StationData>;
-  startedAt: number;
+  // How many stations are close enough to make the town grow faster
+  stations: number;
+  // Whether the town has nothing left to build
+  grown: boolean;
   onClose: () => void;
 };
 
 // Opens when a town's name is clicked on the map
-export function TownWindow({ world, town, stations, startedAt, onClose }: Props) {
-  // The population isn't stored: it is worked out from the clock
-  const now = useNow();
-  const { name, houses } = world.towns[town];
-  const builtAts = townServices(world, stations)[town];
-  const population = townPopulation(world, town, builtAts, startedAt, now);
-  const growth = townGrowthPerMinute(world, town, builtAts, startedAt, now);
+export function TownWindow({ world, town, stations, grown, onClose }: Props) {
+  const { name } = world.towns[town];
+  const { population, buildings, tallest } = townStats(world)[town];
+  const seconds = Math.round(60 / townGrowthRate(stations));
 
-  let service = "No station yet. Towns grow faster once they are served.";
-  if (builtAts.length >= TOWN_MAX_STATIONS) {
-    service = `Served by ${builtAts.length} stations. More won't speed it up.`;
-  } else if (builtAts.length > 0) {
-    service = `Served by ${builtAts.length} ${
-      builtAts.length === 1 ? "station" : "stations"
-    }. Each one makes it grow faster.`;
+  let service = "No station nearby yet. Towns grow faster with stations.";
+  if (stations >= TOWN_MAX_STATIONS) {
+    service = `${stations} stations nearby. More won't speed it up.`;
+  } else if (stations > 0) {
+    service = `${stations} ${
+      stations === 1 ? "station" : "stations"
+    } nearby. Each one makes it grow faster.`;
   }
 
   return (
@@ -45,14 +38,16 @@ export function TownWindow({ world, town, stations, startedAt, onClose }: Props)
           <dd className="text-right font-bold tabular-nums">
             {population.toLocaleString("en-US")}
           </dd>
+          <dt>Buildings</dt>
+          <dd className="text-right tabular-nums">{buildings}</dd>
+          <dt>Tallest</dt>
+          <dd className="text-right">{BUILDINGS[tallest].label}</dd>
           <dt>Growth</dt>
           <dd className="text-right tabular-nums">
-            {growth > 0 ? `+${growth.toLocaleString("en-US")} per minute` : "None"}
+            {grown ? "Fully grown" : `Something new every ${seconds}s`}
           </dd>
-          <dt>Houses</dt>
-          <dd className="text-right tabular-nums">{houses}</dd>
         </dl>
-        <p>{service}</p>
+        <p>{grown ? "This town has no room left to grow." : service}</p>
       </div>
     </Window>
   );

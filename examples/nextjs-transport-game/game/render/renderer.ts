@@ -6,12 +6,7 @@ import {
   TRAIN_WAGON_GAP,
   TRAIN_WAGONS,
 } from "../constants";
-import {
-  cargoBetween,
-  formatMoney,
-  townPopulation,
-  townServices,
-} from "../economy";
+import { cargoBetween, formatMoney } from "../economy";
 import { headDistance, type PathPoint, pointOnPath } from "../motion";
 import {
   connectionsAt,
@@ -23,6 +18,7 @@ import {
   WEST,
 } from "../network";
 import { hashInt } from "../rng";
+import { townStats } from "../towns";
 import type {
   Cargo,
   CompanyData,
@@ -75,8 +71,6 @@ export type Scene = {
   companies: ReadonlyMap<string, CompanyData>;
   // The company this player runs, if they picked one yet
   myCompany: string | null;
-  // When the map was started, which town populations are worked out from
-  startedAt: number;
   tool: Tool;
   hover: number | null;
   // Tiles about to be built on or cleared while dragging
@@ -120,17 +114,17 @@ type Label = {
   y: number;
   z: number;
   text: string;
-const POPUP_RISE = 60;
-// How far above its center a town's name is drawn, depending on its tallest
-// building (in the order of `BUILDINGS`)
-const TOWN_LABEL_HEIGHTS = [58, 58, 62, 92, 150];
-const MONEY_FONT = "Tahoma, Verdana, Geneva, sans-serif";
   size: number;
   minZoom: number;
 };
 
 const WATER_COLOR = "#4b90d2";
 const POPUP_MS = 1800;
+const POPUP_RISE = 60;
+// How far above its center a town's name is drawn, depending on its tallest
+// building (in the order of `BUILDINGS`)
+const TOWN_LABEL_HEIGHTS = [58, 58, 62, 92, 150];
+const MONEY_FONT = "Tahoma, Verdana, Geneva, sans-serif";
 
 // Where a track leaves a tile toward each neighbor, in tile coordinates
 // relative to the middle of the tile
@@ -288,8 +282,6 @@ export class Renderer {
   private passengerRoutes = new Map<string, boolean>();
   private popups: Popup[] = [];
 
-  private servedStations: ReadonlyMap<string, StationData> | null = null;
-  private services: number[][] = [];
   // Where town names were last drawn on screen, so they can be clicked
   private townLabels: { town: number; x: number; y: number; width: number }[] =
     [];
@@ -317,7 +309,6 @@ export class Renderer {
     this.statics = [];
     this.labels = [];
     this.trackNetwork = null;
-    this.servedStations = null;
     this.passengerRoutes.clear();
 
     const { sprites } = this;
@@ -796,22 +787,15 @@ export class Renderer {
 
     // Town names, with their population. They can be clicked, so remember
     // where each one ends up on screen.
-    if (this.servedStations !== scene.stations) {
-      this.servedStations = scene.stations;
-      this.services = townServices(this.world, scene.stations);
-    }
+    const stats = townStats(this.world);
     this.townLabels = [];
     for (const town of this.world.towns) {
-      const population = townPopulation(
-        this.world,
-        town.id,
-        this.services[town.id],
-        scene.startedAt,
-        now
-      );
+      const { population, tallest } = stats[town.id];
       const label = `${town.name} (${population.toLocaleString("en-US")})`;
+      // The name floats above the town's skyline
+      const height = TOWN_LABEL_HEIGHTS[tallest];
       const x = screenX(worldX(town.x + 0.5, town.y + 0.5));
-      const y = screenY(worldY(town.x + 0.5, town.y + 0.5) - 58);
+      const y = screenY(worldY(town.x + 0.5, town.y + 0.5) - height);
       text(label, x, y, 14);
       this.townLabels.push({
         town: town.id,
@@ -860,14 +844,9 @@ export class Renderer {
         pointOnPath(vehicle.path, size, headDistance(vehicle, now), point);
       }
       const sx = screenX(worldX(point.x, point.y));
-    // Income floats up from the vehicle that earned it, in the same style as
-    // the money that floats up from the cursor when a player spends some
       const sy = screenY(worldY(point.x, point.y));
       if (highlighted) {
         ctx.beginPath();
-    ctx.font = `700 14px ${MONEY_FONT}`;
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = "#000000";
         ctx.arc(sx, sy - 4 * zoom, 16, 0, Math.PI * 2);
         ctx.lineWidth = 3;
         ctx.strokeStyle = "#ffffff";
@@ -881,9 +860,14 @@ export class Renderer {
       }
     }
 
+    // Income floats up from the vehicle that earned it, in the same style as
+    // the money that floats up from the cursor when a player spends some
     this.popups = this.popups.filter(
       (popup) => now - popup.startedAt < POPUP_MS
     );
+    ctx.font = `700 14px ${MONEY_FONT}`;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#000000";
     for (const popup of this.popups) {
       const progress = Math.max(0, (now - popup.startedAt) / POPUP_MS);
       const x = screenX(worldX(popup.x, popup.y));

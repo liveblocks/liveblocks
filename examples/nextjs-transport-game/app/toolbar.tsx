@@ -15,7 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Window } from "@/components/window";
-import { HOUSE_DEMOLISH_COST, TRACK } from "@/game/constants";
+import { BUILDINGS, TRACK } from "@/game/constants";
 import { formatMoney } from "@/game/economy";
 import type { Tool } from "@/game/types";
 
@@ -92,7 +92,7 @@ export const TOOLS: {
   {
     id: "bulldoze",
     label: "Clear",
-    detail: `Remove your tracks and stations · Demolish houses for ${formatMoney(HOUSE_DEMOLISH_COST)} each`,
+    detail: `Remove your tracks and stations · Demolish buildings, from ${formatMoney(BUILDINGS[0].demolishCost)}`,
     shortcut: "7",
     icon: Trash2,
   },

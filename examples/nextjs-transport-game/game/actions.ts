@@ -1,8 +1,8 @@
 import { LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
 import {
+  BUILDINGS,
   COMPANIES,
-  HOUSE_DEMOLISH_COST,
   MAX_VEHICLES_PER_COMPANY,
   TRACK,
 } from "./constants";
@@ -15,6 +15,7 @@ import {
 import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
 import { advance } from "./simulation";
+import { stationTown, townGrowth } from "./towns";
 import type {
   ActionResult,
   StationData,
@@ -185,15 +186,41 @@ export function addMoney(root: Root, companyId: string, amount: number) {
   return company !== undefined;
 }
 
-// What demolishing the houses on these tiles would cost
+// What demolishing the building on this tile costs: more for bigger ones
+function demolishCost(world: World, tile: number) {
+  const house = world.houses[world.houseAt[tile]];
+  return house ? BUILDINGS[house.variant].demolishCost : 0;
+}
+
+// What demolishing the buildings on these tiles would cost
 export function demolitionCost(world: World, tiles: readonly number[]) {
   let cost = 0;
   for (const tile of tiles) {
-    if (world.houseAt[tile] >= 0) {
-      cost += HOUSE_DEMOLISH_COST;
-    }
+    cost += demolishCost(world, tile);
   }
   return cost;
+}
+
+// How fast a town grows depends on the stations around it. So right before
+// a station appears or goes away, how far the town has grown until now is
+// saved, and it carries on from there at its new speed.
+function saveTownGrowth(root: Root, world: World, tile: number, now: number) {
+  const town = stationTown(world, tile);
+  if (town === null) {
+    return;
+  }
+  let stations = 0;
+  for (const key of root.get("stations").keys()) {
+    if (stationTown(world, Number(key)) === town) {
+      stations++;
+    }
+  }
+  const towns = root.get("towns");
+  const saved = towns.get(String(town));
+  towns.set(String(town), {
+    steps: townGrowth(saved, stations, root.get("startedAt"), now),
+    at: now,
+  });
 }
 
 export function buildTrack(
@@ -263,6 +290,7 @@ export function buildStation(
     taken.add(station.get("name"));
   }
   const name = suggestStationName(world, tile, taken);
+  saveTownGrowth(root, world, tile, now);
   root.get("stations").set(
     key,
     new LiveObject<StationData>({
@@ -278,13 +306,14 @@ export function buildStation(
 }
 
 // Clears the given tiles: the company's own stations and tracks are removed
-// for free, and houses are demolished for a price. A tile with a station
+// for free, and buildings are demolished for a price. A tile with a station
 // loses the station first, and its track on a second pass.
 export function bulldoze(
   root: Root,
   world: World,
   companyId: string,
-  tiles: number[]
+  tiles: number[],
+  now: number
 ): ActionResult {
   const roads = root.get("roads");
   const rails = root.get("rails");
@@ -309,12 +338,13 @@ export function bulldoze(
       if (demolished.has(key)) {
         continue;
       }
-      if (cost + HOUSE_DEMOLISH_COST > balance) {
+      const price = demolishCost(world, tile);
+      if (cost + price > balance) {
         problem = "Not enough money";
         continue;
       }
       demolished.set(key, companyId);
-      cost += HOUSE_DEMOLISH_COST;
+      cost += price;
       removed++;
     } else if (world.industryAt[tile] >= 0) {
       problem = "Industries can't be demolished";
@@ -330,6 +360,7 @@ export function bulldoze(
           vehicles.delete(id);
         }
       }
+      saveTownGrowth(root, world, tile, now);
       stations.delete(key);
       removed++;
     } else if (rails.has(key) || roads.has(key)) {
@@ -526,6 +557,7 @@ export function resetGame(root: Root, seed: number, now: number) {
   root.update({
     seed,
     startedAt: now,
+    towns: new LiveMap(),
     demolished: new LiveMap(),
     roads: new LiveMap(),
     rails: new LiveMap(),

@@ -22,14 +22,32 @@ export const COMPANIES: readonly { id: string; name: string; color: string }[] =
 export const START_MONEY = 100_000;
 // What the hidden money cheat adds to your balance
 export const CHEAT_MONEY = 100_000;
-export const HOUSE_DEMOLISH_COST = 600;
 
-// Towns grow by a share of their starting population every minute, and
-// faster for each station that serves them (up to a few stations)
-export const TOWN_GROWTH_PER_MINUTE = 0.012;
-export const TOWN_GROWTH_PER_STATION = 0.02;
+// The buildings towns are made of, from smallest to tallest. As a town
+// grows, its buildings are replaced by the next one up.
+export const BUILDINGS: readonly {
+  label: string;
+  residents: number;
+  // How many passengers it supplies, compared to a cottage
+  passengers: number;
+  demolishCost: number;
+}[] = [
+  { label: "Cottage", residents: 14, passengers: 1, demolishCost: 600 },
+  { label: "Townhouse", residents: 38, passengers: 1.5, demolishCost: 900 },
+  { label: "Office block", residents: 110, passengers: 2.5, demolishCost: 2500 },
+  { label: "Tower", residents: 340, passengers: 4, demolishCost: 8000 },
+  { label: "Skyscraper", residents: 950, passengers: 6, demolishCost: 25_000 },
+];
+
+// Towns grow one step at a time: a new house, another piece of street, or a
+// bigger building. This is how many steps a town takes per minute, and how
+// many more for each station close to it (up to a few stations).
+export const TOWN_GROWTH_PER_MINUTE = 4;
+export const TOWN_GROWTH_PER_STATION = 4;
 export const TOWN_MAX_STATIONS = 4;
-export const TOWN_MAX_GROWTH = 4;
+// How far from its center a town can grow, and how close a station has to be
+// to make it grow faster
+export const TOWN_RADIUS = 6;
 export const MAX_VEHICLES_PER_COMPANY = 30;
 
 // Time a vehicle spends at a station between two legs

@@ -42,7 +42,6 @@ type Props = {
   vehicles: ReadonlyMap<string, Vehicle>;
   companies: ReadonlyMap<string, CompanyData>;
   myCompany: string | null;
-  startedAt: number;
   balance: number;
   tool: Tool;
   routeFrom: number | null;
@@ -85,11 +84,11 @@ const NO_TILES: ReadonlySet<number> = new Set();
 function isLineTool(tool: Tool): tool is LineTool {
   return tool === "road" || tool === "rail" || tool === "bulldoze";
 }
+
 // Whether a press on the map has turned into dragging the map around
 function isPanning(drag: Drag | null) {
   return drag !== null && drag.mode !== "line" && drag.moved;
 }
-
 
 // The map itself. Liveblocks Storage and Presence are copied into a plain
 // `scene` object, which a canvas renderer reads on every animation frame.
@@ -112,7 +111,6 @@ export function MapCanvas(props: Props) {
     vehicles: props.vehicles,
     companies: props.companies,
     myCompany: props.myCompany,
-    startedAt: props.startedAt,
     tool: props.tool,
     hover: null,
     preview: null,
@@ -130,7 +128,6 @@ export function MapCanvas(props: Props) {
       vehicles: props.vehicles,
       companies: props.companies,
       myCompany: props.myCompany,
-      startedAt: props.startedAt,
       tool: props.tool,
       routeFrom: props.routeFrom,
       selectedStation: props.selectedStation,
@@ -432,6 +429,9 @@ export function MapCanvas(props: Props) {
   };
 
   const onPointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
+    const point = pointAt(event);
+    const tile = tileOf(point);
+    const current = drag.current;
     const dx = event.clientX - (current?.x ?? 0);
     const dy = event.clientY - (current?.y ?? 0);
     if (current?.pointerId === event.pointerId && Math.hypot(dx, dy) > 4) {
@@ -448,9 +448,6 @@ export function MapCanvas(props: Props) {
       });
     }
 
-    const point = pointAt(event);
-    const tile = tileOf(point);
-    const current = drag.current;
     if (!current) {
       event.currentTarget.style.cursor =
         townAt(event) !== null ? "pointer" : "";
@@ -477,6 +474,9 @@ export function MapCanvas(props: Props) {
       return;
     }
     drag.current = null;
+    const { tool, onLine, onDragPlan, onTileClick, onTownClick } =
+      latest.current;
+
     // The map was let go: the cursor follows the pointer again
     if (isPanning(current)) {
       const point = pointAt(event);
@@ -486,9 +486,6 @@ export function MapCanvas(props: Props) {
         cursor: tile === null ? null : { x: point.x, y: point.y },
       });
     }
-
-    const { tool, onLine, onDragPlan, onTileClick, onTownClick } =
-      latest.current;
 
     if (current.mode === "line") {
       scene.current.preview = null;

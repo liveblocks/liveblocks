@@ -19,6 +19,7 @@ export default function Page() {
         // empty room at the same time all start on the same map
         seed: hashString(roomId),
         startedAt: Date.now(),
+        towns: new LiveMap(),
         roads: new LiveMap(),
         rails: new LiveMap(),
         stations: new LiveMap(),

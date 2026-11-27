@@ -59,14 +59,15 @@ export type Industry = {
 export type House = {
   x: number;
   y: number;
-  // 0: cottage, 1: townhouse, 2: office block
+  // Index into `BUILDINGS`, from 0 (cottage) to 4 (skyscraper)
   variant: number;
   town: number;
 };
 
-// The static part of the game: terrain, towns, and industries. It is never
-// stored in Liveblocks. Every client generates the exact same world from the
-// `seed` in Storage, so only what players build has to be synced.
+// The part of the game players don't build: terrain, towns, and industries.
+// It is never stored in Liveblocks. Every client generates the exact same
+// world from the `seed` in Storage, so only what players build has to be
+// synced. Towns then grow from there: see `growWorld` in `towns.ts`.
 export type World = {
   seed: number;
   size: number;
@@ -75,7 +76,7 @@ export type World = {
   shade: Uint8Array;
   // Number of trees on each tile
   trees: Uint8Array;
-  // Streets that towns start with. Anyone can drive on them.
+  // Streets that belong to towns. Anyone can drive on them.
   townRoads: Uint8Array;
   // Index into `houses` / `industries`, or -1
   houseAt: Int16Array;
@@ -182,24 +183,6 @@ export function tileY(world: { size: number }, tile: number) {
 
 export function isBlocked(world: World, tile: number) {
   return world.houseAt[tile] >= 0 || world.industryAt[tile] >= 0;
-}
-
-// The same world with the houses on the given tiles demolished. The world a
-// seed generates never changes, so this returns a copy.
-export function withoutHouses(world: World, tiles: readonly number[]): World {
-  if (tiles.length === 0) {
-    return world;
-  }
-  const houseAt = world.houseAt.slice();
-  const towns = world.towns.map((town) => ({ ...town }));
-  for (const tile of tiles) {
-    const house = world.houses[houseAt[tile]];
-    if (house) {
-      towns[house.town].houses--;
-      houseAt[tile] = -1;
-    }
-  }
-  return { ...world, houseAt, towns };
 }
 
 export function nearestTown(world: World, x: number, y: number): Town | null {

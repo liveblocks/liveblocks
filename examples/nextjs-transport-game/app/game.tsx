@@ -29,10 +29,10 @@ import {
   stationProblem,
 } from "@/game/actions";
 import {
+  BUILDINGS,
   CARGO,
   CHEAT_MONEY,
   COMPANIES,
-  HOUSE_DEMOLISH_COST,
   TRACK,
 } from "@/game/constants";
 import {
@@ -43,14 +43,16 @@ import {
 } from "@/game/economy";
 import { dueAt } from "@/game/motion";
 import { buildNetwork, type Network } from "@/game/network";
-import type { ActionResult, Tool, TrackKind } from "@/game/types";
 import {
-  generateWorld,
-  INDUSTRY,
-  WATER,
-  withoutHouses,
-  type World,
-} from "@/game/world";
+  type Built,
+  growWorld,
+  townGrowth,
+  townPlans,
+  townStations,
+  townStats,
+} from "@/game/towns";
+import type { ActionResult, Tool, TrackKind } from "@/game/types";
+import { generateWorld, INDUSTRY, WATER, type World } from "@/game/world";
 import { useMoneyFloaters } from "@/hooks/use-money-floaters";
 import { CompanyPicker } from "./company-picker";
 import { CompaniesWindow, VehiclesWindow } from "./company-windows";
@@ -73,6 +75,8 @@ type Toast = {
 const OVERDUE_MS = 3000;
 const TICK_MS = 250;
 
+const TOWN_NEWS_COLOR = "#737373";
+
 const NO_COMPANY: ActionResult = {
   ok: false,
   message: "Choose a company first",
@@ -80,7 +84,6 @@ const NO_COMPANY: ActionResult = {
 
 export function Game() {
   const seed = useStorage((root) => root.seed);
-  const startedAt = useStorage((root) => root.startedAt);
   const roads = useStorage((root) => root.roads);
   const rails = useStorage((root) => root.rails);
   const demolished = useStorage((root) => root.demolished);
@@ -88,12 +91,26 @@ export function Game() {
   const vehicles = useStorageMap((root) => root.vehicles);
   const companies = useStorageMap((root) => root.companies);
 
-  // The map isn't synced: every player generates the same one from the seed,
-  // then takes away the houses that were demolished since
+  // The map isn't synced: every player generates the same one from the seed.
+  // Its towns then grow with time, around whatever players have built.
   const generated = useMemo(() => generateWorld(seed), [seed]);
+  const stationKeys = [...stations.keys()].join();
+  const railStationKeys = [...stations]
+    .flatMap(([key, station]) => (station.kind === "rail" ? [key] : []))
+    .join();
+  const stationTiles = useMemo(() => toTiles(stationKeys), [stationKeys]);
+  const built = useMemo<Built>(
+    () => ({
+      tracks: new Set([...Object.keys(roads), ...Object.keys(rails)].map(Number)),
+      railStations: new Set(toTiles(railStationKeys)),
+      demolished: new Set(Object.keys(demolished).map(Number)),
+    }),
+    [roads, rails, railStationKeys, demolished]
+  );
+  const townSteps = useTownSteps(generated, stationTiles);
   const world = useMemo(
-    () => withoutHouses(generated, Object.keys(demolished).map(Number)),
-    [generated, demolished]
+    () => growWorld(generated, townSteps, built),
+    [generated, townSteps, built]
   );
   const network = useMemo(
     () => buildNetwork(world, Object.keys(roads), Object.keys(rails)),
@@ -124,6 +141,7 @@ export function Game() {
   });
 
   useSimulation(world, network);
+  useTownNews(world, notify);
 
   const selectTool = useCallback((next: Tool) => {
     setTool(next);
@@ -183,7 +201,7 @@ export function Game() {
         return NO_COMPANY;
       }
       return lineTool === "bulldoze"
-        ? bulldoze(storage, world, id, tiles)
+        ? bulldoze(storage, world, id, tiles, Date.now())
         : buildTrack(storage, world, id, lineTool, tiles);
     },
     [world]
@@ -365,7 +383,6 @@ export function Game() {
           vehicles={vehicles}
           companies={companies}
           myCompany={myCompany}
-          startedAt={startedAt}
           balance={balance}
           tool={tool}
           routeFrom={routeFrom}
@@ -400,8 +417,11 @@ export function Game() {
               key={selectedTown}
               world={world}
               town={selectedTown}
-              stations={stations}
-              startedAt={startedAt}
+              stations={townStations(world, stationTiles)[selectedTown]}
+              grown={
+                townSteps[selectedTown] >=
+                townPlans(generated)[selectedTown].length
+              }
               onClose={() => setSelectedTown(null)}
             />
           ) : null}
@@ -478,6 +498,10 @@ function useStorageMap<T>(
 ): ReadonlyMap<string, T> {
   const record = useStorage(selector);
   return useMemo(() => new Map(Object.entries(record)), [record]);
+}
+
+function toTiles(keys: string) {
+  return keys === "" ? [] : keys.split(",").map(Number);
 }
 
 function useToasts() {
@@ -560,6 +584,64 @@ function useMyCompany(notify: (text: string, color: string | null) => void) {
   return { myCompany, managers, pickCompany, leaveCompany };
 }
 
+// How many steps each town has grown by now. Nobody stores this: it follows
+// from the clock, from the stations around the town, and from the growth
+// saved in Storage the last time one of those stations was built or removed.
+// `world` is the world as generated, before any growth.
+function useTownSteps(world: World, stationTiles: readonly number[]) {
+  const saved = useStorage((root) => root.towns);
+  const startedAt = useStorage((root) => root.startedAt);
+
+  const measure = useCallback(() => {
+    const stations = townStations(world, stationTiles);
+    const plans = townPlans(world);
+    return world.towns.map(({ id }) =>
+      Math.min(
+        plans[id].length,
+        Math.floor(townGrowth(saved[id], stations[id], startedAt, Date.now()))
+      )
+    );
+  }, [world, stationTiles, saved, startedAt]);
+
+  const [steps, setSteps] = useState(measure);
+  useEffect(() => {
+    // Towns only change when one of them reaches its next step
+    const update = () =>
+      setSteps((current) => {
+        const next = measure();
+        return next.join() === current.join() ? current : next;
+      });
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, [measure]);
+
+  return steps;
+}
+
+// Tells the player when a town they are watching grow gets its first tower
+// or skyscraper. Every client notices on its own, so nothing is broadcast.
+function useTownNews(
+  world: World,
+  notify: (text: string, color: string | null) => void
+) {
+  const seen = useRef<{ seed: number; tallest: number[] } | null>(null);
+  useEffect(() => {
+    const tallest = townStats(world).map((town) => town.tallest);
+    const before = seen.current;
+    seen.current = { seed: world.seed, tallest };
+    if (before?.seed !== world.seed) {
+      return;
+    }
+    for (const town of world.towns) {
+      if (tallest[town.id] > before.tallest[town.id] && tallest[town.id] >= 3) {
+        const building = BUILDINGS[tallest[town.id]].label.toLowerCase();
+        notify(`${town.name} has its first ${building}`, TOWN_NEWS_COLOR);
+      }
+    }
+  }, [world, notify]);
+}
+
 // There is no game server: players' browsers move the vehicles. A vehicle
 // only needs attention when it reaches a station, so a few times per second
 // each client checks if any vehicle it is responsible for has arrived.
@@ -634,11 +716,11 @@ function describe({
       return (
         dragPlan.problem ??
         (dragPlan.cost > 0
-          ? `Clear ${tiles} · Demolishing houses costs ${formatMoney(dragPlan.cost)}`
+          ? `Clear ${tiles} · Demolishing buildings costs ${formatMoney(dragPlan.cost)}`
           : `Clear ${tiles}`)
       );
     }
-    return `Clear · Click or drag over your tracks and stations to remove them, or over houses to demolish them for ${formatMoney(HOUSE_DEMOLISH_COST)} each`;
+    return `Clear · Click or drag over your tracks and stations to remove them, or over buildings to demolish them, from ${formatMoney(BUILDINGS[0].demolishCost)} for a cottage`;
   }
 
   if (tool === "road-station" || tool === "rail-station") {
@@ -697,7 +779,8 @@ function describe({
     return `${industry.name} · Accepts ${accepts ? CARGO[accepts].label.toLowerCase() : "nothing"}`;
   }
   if (world.houseAt[hover] >= 0) {
-    return `${world.towns[world.houses[world.houseAt[hover]].town].name} · Houses supply and accept passengers`;
+    const house = world.houses[world.houseAt[hover]];
+    return `${world.towns[house.town].name} · ${BUILDINGS[house.variant].label} · Supplies and accepts passengers`;
   }
   if (network.rail[hover]) {
     return "Railway";

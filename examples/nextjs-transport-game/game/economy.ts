@@ -1,14 +1,11 @@
 import {
   BRIDGE_MULTIPLIER,
+  BUILDINGS,
   CATCHMENT,
   HOUSE_PASSENGER_RATE,
   MIN_HOUSES_FOR_PASSENGERS,
   START_MONEY,
   STOCK_CAP,
-  TOWN_GROWTH_PER_MINUTE,
-  TOWN_GROWTH_PER_STATION,
-  TOWN_MAX_GROWTH,
-  TOWN_MAX_STATIONS,
   TRACK,
   TREE_CLEAR_COST,
 } from "./constants";
@@ -21,7 +18,6 @@ import type {
   VehicleData,
 } from "./types";
 import {
-  type House,
   type Industry,
   INDUSTRY,
   nearestTown,
@@ -58,6 +54,9 @@ export function getStationInfo(world: World, tile: number): StationInfo {
   const y = Math.floor(tile / size);
   const industries = new Set<Industry>();
   let houses = 0;
+  // Bigger buildings supply more passengers, so a station in a town that
+  // grows gets busier
+  let passengers = 0;
 
   for (let dy = -CATCHMENT; dy <= CATCHMENT; dy++) {
     for (let dx = -CATCHMENT; dx <= CATCHMENT; dx++) {
@@ -69,6 +68,8 @@ export function getStationInfo(world: World, tile: number): StationInfo {
       const other = ty * size + tx;
       if (world.houseAt[other] >= 0) {
         houses++;
+        passengers +=
+          BUILDINGS[world.houses[world.houseAt[other]].variant].passengers;
       }
       if (world.industryAt[other] >= 0) {
         industries.add(world.industries[world.industryAt[other]]);
@@ -79,7 +80,7 @@ export function getStationInfo(world: World, tile: number): StationInfo {
   const supply = new Map<Cargo, number>();
   const accepts = new Set<Cargo>();
   if (houses >= MIN_HOUSES_FOR_PASSENGERS) {
-    supply.set("passengers", houses * HOUSE_PASSENGER_RATE);
+    supply.set("passengers", passengers * HOUSE_PASSENGER_RATE);
     accepts.add("passengers");
   }
   for (const industry of industries) {
@@ -200,62 +201,33 @@ export function suggestStationName(
         water = water || world.terrain[ny * size + nx] === WATER;
       }
     }
-    townResidentsCache.set(world, residents);
-  }
-  return residents;
-}
-
-// For each town, when the stations that serve it were built (oldest first).
-// A station serves the town it is closest to, if it has houses in range.
-export function townServices(
-  world: World,
-  stations: ReadonlyMap<string, Pick<StationData, "builtAt">>
-) {
-  const services: number[][] = world.towns.map(() => []);
-  for (const [key, station] of stations) {
-    const info = getStationInfo(world, Number(key));
-    if (info.town && info.houses >= MIN_HOUSES_FOR_PASSENGERS) {
-      services[info.town.id].push(station.builtAt);
+    if (trees) {
+      names.push(`${town} Woods`);
     }
-  }
-  for (const builtAts of services) {
-    builtAts.sort((a, b) => a - b);
-  }
-  return services;
-}
+    if (water) {
+      names.push(`${town} Lakeside`);
+    }
 
-// A town's population is not stored anywhere. It is worked out from when the
-// map was started and when the stations serving the town were built, so
-// every player sees the same number without anyone having to update it.
-export function townPopulation(
-  world: World,
-  town: number,
-  // When the stations serving this town were built: `townServices()[town]`
-  builtAts: readonly number[],
-  startedAt: number,
-  now: number
-) {
-  const minutes = (since: number) => Math.max(0, now - since) / 60_000;
-  let growth = TOWN_GROWTH_PER_MINUTE * minutes(startedAt);
-  for (const builtAt of builtAts.slice(0, TOWN_MAX_STATIONS)) {
-    growth += TOWN_GROWTH_PER_STATION * minutes(builtAt);
+    const others = STATION_NAMES.map((name) => name.replace("*", town));
+    const rng = createRng(hashInt(tile + world.seed));
+    for (let index = others.length - 1; index > 0; index--) {
+      const other = Math.floor(rng() * (index + 1));
+      [others[index], others[other]] = [others[other], others[index]];
+    }
+    names.push(...others);
   }
-  const residents = townResidents(world)[town];
-  return Math.round(residents * (1 + Math.min(TOWN_MAX_GROWTH, growth)));
-}
 
-// How many people a town gains per minute at the moment
-export function townGrowthPerMinute(
-  world: World,
-  town: number,
-  builtAts: readonly number[],
-  startedAt: number,
-  now: number
-) {
-  return (
-    townPopulation(world, town, builtAts, startedAt, now + 60_000) -
-    townPopulation(world, town, builtAts, startedAt, now)
-  );
+  const free = names.find((name) => !taken.has(name));
+  if (free) {
+    return free;
+  }
+  // Every name is in use: number them
+  const base = names[0] ?? "Halt";
+  let number = 2;
+  while (taken.has(`${base} ${number}`)) {
+    number++;
+  }
+  return taken.has(base) ? `${base} ${number}` : base;
 }
 
 export function trackCost(world: World, kind: TrackKind, tile: number) {
