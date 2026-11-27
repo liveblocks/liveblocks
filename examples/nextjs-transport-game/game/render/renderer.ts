@@ -120,6 +120,11 @@ type Label = {
   y: number;
   z: number;
   text: string;
+const POPUP_RISE = 60;
+// How far above its center a town's name is drawn, depending on its tallest
+// building (in the order of `BUILDINGS`)
+const TOWN_LABEL_HEIGHTS = [58, 58, 62, 92, 150];
+const MONEY_FONT = "Tahoma, Verdana, Geneva, sans-serif";
   size: number;
   minZoom: number;
 };
@@ -855,9 +860,14 @@ export class Renderer {
         pointOnPath(vehicle.path, size, headDistance(vehicle, now), point);
       }
       const sx = screenX(worldX(point.x, point.y));
+    // Income floats up from the vehicle that earned it, in the same style as
+    // the money that floats up from the cursor when a player spends some
       const sy = screenY(worldY(point.x, point.y));
       if (highlighted) {
         ctx.beginPath();
+    ctx.font = `700 14px ${MONEY_FONT}`;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#000000";
         ctx.arc(sx, sy - 4 * zoom, 16, 0, Math.PI * 2);
         ctx.lineWidth = 3;
         ctx.strokeStyle = "#ffffff";
@@ -876,14 +886,15 @@ export class Renderer {
     );
     for (const popup of this.popups) {
       const progress = Math.max(0, (now - popup.startedAt) / POPUP_MS);
-      ctx.globalAlpha = 1 - progress * progress;
-      text(
-        popup.text,
-        screenX(worldX(popup.x, popup.y)),
-        screenY(worldY(popup.x, popup.y)) - 30 - progress * 34,
-        13,
-        popup.color
-      );
+      const x = screenX(worldX(popup.x, popup.y));
+      const y =
+        screenY(worldY(popup.x, popup.y)) -
+        12 * zoom -
+        (1 - (1 - progress) ** 2) * POPUP_RISE;
+      ctx.globalAlpha = 1 - progress ** 3;
+      ctx.strokeText(popup.text, x, y);
+      ctx.fillStyle = popup.color;
+      ctx.fillText(popup.text, x, y);
     }
     ctx.globalAlpha = 1;
 
@@ -939,7 +950,7 @@ export class Renderer {
         x: (tile % size) + 0.5,
         y: Math.floor(tile / size) + 0.5,
         text: `+${formatMoney(vehicle.lastIncome)}`,
-        color: vehicle.owner === scene.myCompany ? "#bbf7d0" : "#ffffff",
+        color: vehicle.owner === scene.myCompany ? "#7dff6b" : "#ffffff",
         startedAt: now,
       });
     }
