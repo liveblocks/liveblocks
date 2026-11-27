@@ -85,7 +85,8 @@ export function Taskbar({
       ) : null}
 
       <div className="win-divider" />
-      <AvatarStack size={22} />
+      {/* Everyone who is in the room right now */}
+      <AvatarStack size={22} max={6} />
       <HelpButton />
     </div>
   );

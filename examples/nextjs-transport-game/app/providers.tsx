@@ -4,10 +4,8 @@ import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { PropsWithChildren } from "react";
 import { getRandomUser, getUsers } from "./database";
 
-const USER_STORAGE_KEY = "liveblocks-transport-game-user";
-
-// Each browser tab plays as one of the demo users, picked at random and
-// remembered across reloads.
+// Every time the page loads, you play as one of the demo users, picked at
+// random
 function getDemoUserId() {
   const users = getUsers();
 
@@ -19,17 +17,7 @@ function getDemoUserId() {
     return users[Math.abs(Number(examplePreview)) % users.length].id;
   }
 
-  try {
-    const stored = window.sessionStorage.getItem(USER_STORAGE_KEY);
-    if (stored && users.some((user) => user.id === stored)) {
-      return stored;
-    }
-    const userId = getRandomUser().id;
-    window.sessionStorage.setItem(USER_STORAGE_KEY, userId);
-    return userId;
-  } catch {
-    return getRandomUser().id;
-  }
+  return getRandomUser().id;
 }
 
 function authWithDemoUser(endpoint: string) {
