@@ -1,0 +1,970 @@
+import {
+  CARGO,
+  CATCHMENT,
+  TILE_H,
+  TILE_W,
+  TRAIN_WAGON_GAP,
+  TRAIN_WAGONS,
+} from "../constants";
+import { cargoBetween, formatMoney } from "../economy";
+import { headDistance, type PathPoint, pointOnPath } from "../motion";
+import {
+  connectionsAt,
+  EAST,
+  gridOf,
+  type Network,
+  NORTH,
+  SOUTH,
+  WEST,
+} from "../network";
+import { hashInt } from "../rng";
+import type {
+  Cargo,
+  CompanyData,
+  StationData,
+  Tool,
+  TrackKind,
+  Vehicle,
+} from "../types";
+import { GRASS, INDUSTRY, INDUSTRY_SIZE, SAND, WATER, type World } from "../world";
+import {
+  box,
+  type Ctx,
+  HALF_H,
+  HALF_W,
+  orientedBox,
+  shade,
+  tileAt,
+  tileDiamond,
+  worldX,
+  worldY,
+} from "./shapes";
+import { type CanvasFactory, createSprites, type Sprite } from "./sprites";
+
+export type Camera = {
+  // World position at the center of the screen
+  x: number;
+  y: number;
+  zoom: number;
+};
+
+export type Viewport = {
+  width: number;
+  height: number;
+  dpr: number;
+};
+
+// Everything the renderer needs to draw a frame. The game keeps this object
+// up to date from Liveblocks Storage and Presence, and the renderer reads it
+// on every animation frame, so drawing never goes through React.
+export type Scene = {
+  network: Network;
+  stations: ReadonlyMap<string, StationData>;
+  vehicles: ReadonlyMap<string, Vehicle>;
+  companies: ReadonlyMap<string, CompanyData>;
+  myId: string;
+  tool: Tool;
+  hover: number | null;
+  // Tiles about to be built on or cleared while dragging
+  preview: {
+    tiles: number[];
+    bad: ReadonlySet<number>;
+    tone: "build" | "remove";
+  } | null;
+  // First station picked with the vehicle tool
+  routeFrom: number | null;
+  selectedStation: number | null;
+  highlightedVehicle: string | null;
+  // Other players' cursors, in tile coordinates
+  cursors: { x: number; y: number; name: string; color: string }[];
+};
+
+type StaticItem = {
+  depth: number;
+  sprite: Sprite;
+  x: number;
+  y: number;
+  // Trees disappear when something is built on their tile
+  tile: number;
+};
+
+type DynamicItem = {
+  depth: number;
+  draw: () => void;
+};
+
+type Popup = {
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  startedAt: number;
+};
+
+type Label = {
+  x: number;
+  y: number;
+  z: number;
+  text: string;
+  size: number;
+  minZoom: number;
+};
+
+const WATER_COLOR = "#4b90d2";
+const POPUP_MS = 1800;
+
+const EDGE_OFFSETS: Record<number, [number, number]> = {
+  [NORTH]: [HALF_W / 2, -HALF_H / 2],
+  [EAST]: [HALF_W / 2, HALF_H / 2],
+  [SOUTH]: [-HALF_W / 2, HALF_H / 2],
+  [WEST]: [-HALF_W / 2, -HALF_H / 2],
+};
+const DIRECTIONS = [NORTH, EAST, SOUTH, WEST];
+
+// Adds the centerline of a track tile to a path: a straight line, a curve
+// for corners, or one arm per neighbor for junctions. Returns whether the
+// tile is a plain piece of track (not a junction).
+function addTrackTile(path: Path2D, x: number, y: number, mask: number) {
+  const cx = worldX(x + 0.5, y + 0.5);
+  const cy = worldY(x + 0.5, y + 0.5);
+  const arms = DIRECTIONS.filter((direction) => mask & direction).map(
+    (direction) => EDGE_OFFSETS[direction]
+  );
+
+  if (arms.length === 0) {
+    path.moveTo(cx - HALF_W / 4, cy - HALF_H / 4);
+    path.lineTo(cx + HALF_W / 4, cy + HALF_H / 4);
+    return true;
+  }
+
+  if (arms.length === 2) {
+    const [a, b] = arms;
+    path.moveTo(cx + a[0], cy + a[1]);
+    if (a[0] === -b[0] && a[1] === -b[1]) {
+      path.lineTo(cx + b[0], cy + b[1]);
+    } else {
+      path.quadraticCurveTo(cx, cy, cx + b[0], cy + b[1]);
+    }
+    return true;
+  }
+
+  for (const arm of arms) {
+    path.moveTo(cx, cy);
+    path.lineTo(cx + arm[0], cy + arm[1]);
+  }
+  return arms.length === 1;
+}
+
+function bakeTerrain(world: World, createCanvas: CanvasFactory) {
+  const { size } = world;
+  const canvas = createCanvas(size * TILE_W, size * TILE_H);
+  const ctx = canvas.getContext("2d")!;
+  ctx.translate(size * HALF_W, 0);
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const tile = y * size + x;
+      const variation = world.shade[tile] / 255;
+      const terrain = world.terrain[tile];
+      const px = worldX(x, y);
+      const py = worldY(x, y);
+
+      if (terrain === WATER) {
+        if (variation > 0.86) {
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(px - 7, py + HALF_H);
+          ctx.lineTo(px + 5, py + HALF_H);
+          ctx.stroke();
+        }
+        continue;
+      }
+
+      let color = "#7fbb58";
+      if (terrain === SAND) {
+        color = "#e3d4a2";
+      } else if (terrain === GRASS && world.trees[tile] > 0) {
+        color = "#6fae50";
+      }
+
+      // Slightly oversized, so neighboring tiles leave no gaps
+      ctx.beginPath();
+      ctx.moveTo(px, py - 0.5);
+      ctx.lineTo(px + HALF_W + 1, py + HALF_H);
+      ctx.lineTo(px, py + TILE_H + 0.5);
+      ctx.lineTo(px - HALF_W - 1, py + HALF_H);
+      ctx.closePath();
+      ctx.fillStyle = shade(color, 0.95 + Math.round(variation * 5) * 0.02);
+      ctx.fill();
+    }
+  }
+
+  // A faint grid helps with lining things up
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.05)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (world.terrain[y * size + x] !== WATER) {
+        const px = worldX(x, y);
+        const py = worldY(x, y);
+        ctx.moveTo(px - HALF_W, py + HALF_H);
+        ctx.lineTo(px, py + TILE_H);
+        ctx.lineTo(px + HALF_W, py + HALF_H);
+      }
+    }
+  }
+  ctx.stroke();
+
+  return canvas;
+}
+
+function pill(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+export class Renderer {
+  private readonly world: World;
+  private readonly fontFamily: string;
+  private readonly terrain: HTMLCanvasElement;
+  private readonly statics: StaticItem[] = [];
+  private readonly labels: Label[] = [];
+
+  private trackNetwork: Network | null = null;
+  private roadPath = new Path2D();
+  private roadLinePath = new Path2D();
+  private roadBridgePath = new Path2D();
+  private railPath = new Path2D();
+  private railBridgePath = new Path2D();
+
+  private seenVehicles: ReadonlyMap<string, Vehicle> | null = null;
+  private trips = new Map<string, number>();
+  private passengerRoutes = new Map<string, boolean>();
+  private popups: Popup[] = [];
+
+  constructor(world: World, createCanvas: CanvasFactory, fontFamily: string) {
+    this.world = world;
+    this.fontFamily = fontFamily;
+    this.terrain = bakeTerrain(world, createCanvas);
+
+    const sprites = createSprites(createCanvas);
+    const { size } = world;
+    const place = (
+      sprite: Sprite,
+      x: number,
+      y: number,
+      footprint: number,
+      tile: number
+    ) => {
+      this.statics.push({
+        depth: x + y + footprint,
+        sprite,
+        x: worldX(x, y) - sprite.ax,
+        y: worldY(x, y) - sprite.ay,
+        tile,
+      });
+    };
+
+    for (let tile = 0; tile < size * size; tile++) {
+      const count = world.trees[tile];
+      if (count > 0) {
+        const variants = sprites.trees[Math.min(count, 3) - 1];
+        const variant = variants[hashInt(tile + world.seed) % variants.length];
+        place(variant, tile % size, Math.floor(tile / size), 1, tile);
+      }
+    }
+    for (const house of world.houses) {
+      const colors = sprites.houses[house.variant];
+      const color = colors[hashInt(house.y * size + house.x) % colors.length];
+      place(color, house.x, house.y, 1, -1);
+    }
+    for (const industry of world.industries) {
+      place(
+        sprites.industries[industry.type],
+        industry.x,
+        industry.y,
+        INDUSTRY_SIZE,
+        -1
+      );
+      this.labels.push({
+        x: industry.x + 1,
+        y: industry.y + 1,
+        z: 58,
+        text: INDUSTRY[industry.type].label,
+        size: 11,
+        minZoom: 0.55,
+      });
+    }
+    for (const town of world.towns) {
+      this.labels.push({
+        x: town.x + 0.5,
+        y: town.y + 0.5,
+        z: 58,
+        text: town.name,
+        size: 14,
+        minZoom: 0,
+      });
+    }
+    this.statics.sort((a, b) => a.depth - b.depth);
+  }
+
+  render(
+    ctx: Ctx,
+    viewport: Viewport,
+    camera: Camera,
+    scene: Scene,
+    now: number
+  ) {
+    const { width, height, dpr } = viewport;
+    const { zoom } = camera;
+    const { size } = this.world;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = WATER_COLOR;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.setTransform(
+      dpr * zoom,
+      0,
+      0,
+      dpr * zoom,
+      dpr * (width / 2 - camera.x * zoom),
+      dpr * (height / 2 - camera.y * zoom)
+    );
+
+    const left = camera.x - width / 2 / zoom;
+    const right = camera.x + width / 2 / zoom;
+    const top = camera.y - height / 2 / zoom;
+    const bottom = camera.y + height / 2 / zoom;
+
+    ctx.drawImage(this.terrain, -size * HALF_W, 0);
+
+    this.drawStationPads(ctx, scene);
+    this.drawTracks(ctx, scene.network);
+
+    // Buildings, trees, stations and vehicles, from the back of the map to
+    // the front, so that things closer to the camera cover what's behind
+    const dynamics = this.collectDynamics(ctx, scene, now);
+    let staticIndex = 0;
+    let dynamicIndex = 0;
+    while (
+      staticIndex < this.statics.length ||
+      dynamicIndex < dynamics.length
+    ) {
+      const item = this.statics[staticIndex];
+      const dynamic = dynamics[dynamicIndex];
+      if (!dynamic || (item && item.depth <= dynamic.depth)) {
+        staticIndex++;
+        const { sprite } = item;
+        const hidden =
+          item.x > right ||
+          item.y > bottom ||
+          item.x + sprite.width < left ||
+          item.y + sprite.height < top ||
+          (item.tile >= 0 &&
+            (scene.network.road[item.tile] || scene.network.rail[item.tile]));
+        if (!hidden) {
+          ctx.drawImage(
+            sprite.canvas,
+            item.x,
+            item.y,
+            sprite.width,
+            sprite.height
+          );
+        }
+      } else {
+        dynamicIndex++;
+        dynamic.draw();
+      }
+    }
+
+    this.drawOverlays(ctx, scene, zoom);
+
+    // Labels and markers keep the same size on screen whatever the zoom
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const screenX = (wx: number) => (wx - camera.x) * zoom + width / 2;
+    const screenY = (wy: number) => (wy - camera.y) * zoom + height / 2;
+    this.drawLabels(ctx, scene, zoom, screenX, screenY, now);
+  }
+
+  private rebuildTracks(network: Network) {
+    const { size } = this.world;
+    this.trackNetwork = network;
+    this.roadPath = new Path2D();
+    this.roadLinePath = new Path2D();
+    this.roadBridgePath = new Path2D();
+    this.railPath = new Path2D();
+    this.railBridgePath = new Path2D();
+
+    for (let tile = 0; tile < size * size; tile++) {
+      const x = tile % size;
+      const y = Math.floor(tile / size);
+      const onWater = this.world.terrain[tile] === WATER;
+
+      if (network.road[tile]) {
+        const mask = connectionsAt(network.road, size, tile);
+        if (addTrackTile(this.roadPath, x, y, mask)) {
+          addTrackTile(this.roadLinePath, x, y, mask);
+        }
+        if (onWater) {
+          addTrackTile(this.roadBridgePath, x, y, mask);
+        }
+      }
+      if (network.rail[tile]) {
+        const mask = connectionsAt(network.rail, size, tile);
+        addTrackTile(this.railPath, x, y, mask);
+        if (onWater) {
+          addTrackTile(this.railBridgePath, x, y, mask);
+        }
+      }
+    }
+  }
+
+  private drawTracks(ctx: Ctx, network: Network) {
+    if (this.trackNetwork !== network) {
+      this.rebuildTracks(network);
+    }
+
+    const stroke = (
+      path: Path2D,
+      width: number,
+      color: string,
+      dash?: number[]
+    ) => {
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
+      ctx.lineCap = dash ? "butt" : "round";
+      ctx.setLineDash(dash ?? []);
+      ctx.stroke(path);
+    };
+
+    ctx.lineJoin = "round";
+
+    // The sides of bridge decks, peeking out below the tracks
+    ctx.save();
+    ctx.translate(0, 5);
+    stroke(this.roadBridgePath, 16, "#3b4047");
+    stroke(this.railBridgePath, 13, "#4a443b");
+    ctx.restore();
+
+    stroke(this.roadPath, 16.5, "#565b63");
+    stroke(this.roadPath, 14, "#787d86");
+    stroke(this.roadLinePath, 1, "rgba(255, 255, 255, 0.6)", [3, 4]);
+
+    stroke(this.railPath, 13, "#a39a88");
+    stroke(this.railPath, 9.5, "#6d5a45", [1.6, 3.2]);
+    stroke(this.railPath, 6.6, "#3f4348");
+    stroke(this.railPath, 4.2, "#a39a88");
+    stroke(this.railPath, 4.2, "#6d5a45", [1.6, 3.2]);
+
+    ctx.setLineDash([]);
+    ctx.lineCap = "butt";
+  }
+
+  private drawStationPads(ctx: Ctx, scene: Scene) {
+    const { size } = this.world;
+    for (const [key, station] of scene.stations) {
+      const tile = Number(key);
+      tileDiamond(ctx, tile % size, Math.floor(tile / size), 1);
+      ctx.fillStyle = "#c9c3b6";
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = scene.companies.get(station.owner)?.color ?? "#888888";
+      ctx.stroke();
+    }
+  }
+
+  private collectDynamics(ctx: Ctx, scene: Scene, now: number) {
+    const { size } = this.world;
+    const dynamics: DynamicItem[] = [];
+    const colorOf = (owner: string) =>
+      scene.companies.get(owner)?.color ?? "#888888";
+
+    for (const [key, station] of scene.stations) {
+      const tile = Number(key);
+      const x = tile % size;
+      const y = Math.floor(tile / size);
+      const mask = connectionsAt(gridOf(scene.network, station.kind), size, tile);
+      const alongX = mask === 0 || (mask & (EAST | WEST)) !== 0;
+      const color = colorOf(station.owner);
+      dynamics.push({
+        depth: x + y + 0.55,
+        draw: () => drawStation(ctx, x, y, station.kind, alongX, color),
+      });
+    }
+
+    const point: PathPoint = { x: 0, y: 0, dx: 1, dy: 0 };
+    for (const [id, vehicle] of scene.vehicles) {
+      const color = colorOf(vehicle.owner);
+      const passengers = this.carriesPassengers(id, vehicle);
+      const { cargo } = vehicle;
+
+      if (vehicle.path.length < 2) {
+        // Waiting for a route: parked at its station
+        const tile = Number(vehicle.stops[vehicle.leg % vehicle.stops.length]);
+        point.x = (tile % size) + 0.5;
+        point.y = Math.floor(tile / size) + 0.5;
+        point.dx = 1;
+        point.dy = 0;
+      } else {
+        pointOnPath(vehicle.path, size, headDistance(vehicle, now), point);
+      }
+
+      if (vehicle.kind === "road") {
+        // Keep to the right, so vehicles going opposite ways don't overlap
+        const x = point.x - point.dy * 0.11;
+        const y = point.y + point.dx * 0.11;
+        const { dx, dy } = point;
+        dynamics.push({
+          depth: x + y,
+          draw: () => drawRoadVehicle(ctx, x, y, dx, dy, color, passengers, cargo),
+        });
+        continue;
+      }
+
+      const head = headDistance(vehicle, now);
+      for (let car = 0; car <= TRAIN_WAGONS; car++) {
+        if (vehicle.path.length >= 2) {
+          const distance = Math.max(0, head - car * TRAIN_WAGON_GAP);
+          pointOnPath(vehicle.path, size, distance, point);
+        } else if (car > 0) {
+          break;
+        }
+        const { x, y, dx, dy } = point;
+        dynamics.push({
+          depth: x + y,
+          draw: () =>
+            drawTrainCar(ctx, x, y, dx, dy, color, car === 0, passengers, cargo),
+        });
+      }
+    }
+
+    return dynamics.sort((a, b) => a.depth - b.depth);
+  }
+
+  private carriesPassengers(id: string, vehicle: Vehicle) {
+    let passengers = this.passengerRoutes.get(id);
+    if (passengers === undefined) {
+      const [from, to] = vehicle.stops.map(Number);
+      passengers =
+        cargoBetween(this.world, from, to).includes("passengers") ||
+        cargoBetween(this.world, to, from).includes("passengers");
+      this.passengerRoutes.set(id, passengers);
+    }
+    return passengers;
+  }
+
+  private drawOverlays(ctx: Ctx, scene: Scene, zoom: number) {
+    const { size } = this.world;
+    const outline = (tile: number, color: string, width: number, fill?: string) => {
+      tileDiamond(ctx, tile % size, Math.floor(tile / size));
+      if (fill) {
+        ctx.fillStyle = fill;
+        ctx.fill();
+      }
+      ctx.lineWidth = width / zoom;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    };
+
+    const catchment = (tile: number) => {
+      const x = tile % size;
+      const y = Math.floor(tile / size);
+      const x0 = Math.max(0, x - CATCHMENT);
+      const y0 = Math.max(0, y - CATCHMENT);
+      const x1 = Math.min(size, x + CATCHMENT + 1);
+      const y1 = Math.min(size, y + CATCHMENT + 1);
+      ctx.beginPath();
+      ctx.moveTo(worldX(x0, y0), worldY(x0, y0));
+      ctx.lineTo(worldX(x1, y0), worldY(x1, y0));
+      ctx.lineTo(worldX(x1, y1), worldY(x1, y1));
+      ctx.lineTo(worldX(x0, y1), worldY(x0, y1));
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+      ctx.fill();
+      ctx.setLineDash([6 / zoom, 5 / zoom]);
+      ctx.lineWidth = 1.5 / zoom;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.stroke();
+      ctx.setLineDash([]);
+    };
+
+    if (scene.selectedStation !== null) {
+      catchment(scene.selectedStation);
+      outline(scene.selectedStation, "#ffffff", 2.5);
+    }
+
+    const placingStation =
+      scene.tool === "road-station" || scene.tool === "rail-station";
+    if (placingStation && scene.hover !== null) {
+      catchment(scene.hover);
+    }
+
+    if (scene.preview) {
+      for (const tile of scene.preview.tiles) {
+        const bad = scene.preview.tone === "remove" || scene.preview.bad.has(tile);
+        outline(
+          tile,
+          bad ? "rgba(185, 28, 28, 0.9)" : "rgba(21, 128, 61, 0.9)",
+          1,
+          bad ? "rgba(239, 68, 68, 0.45)" : "rgba(74, 222, 128, 0.5)"
+        );
+      }
+    }
+
+    if (scene.routeFrom !== null) {
+      const color = scene.companies.get(scene.myId)?.color ?? "#ffffff";
+      outline(scene.routeFrom, color, 3.5, "rgba(255, 255, 255, 0.35)");
+      const target = scene.hover !== null ? scene.stations.get(String(scene.hover)) : undefined;
+      if (
+        scene.hover !== null &&
+        scene.hover !== scene.routeFrom &&
+        target?.owner === scene.myId
+      ) {
+        const from = scene.routeFrom;
+        const to = scene.hover;
+        ctx.beginPath();
+        ctx.moveTo(
+          worldX((from % size) + 0.5, Math.floor(from / size) + 0.5),
+          worldY((from % size) + 0.5, Math.floor(from / size) + 0.5)
+        );
+        ctx.lineTo(
+          worldX((to % size) + 0.5, Math.floor(to / size) + 0.5),
+          worldY((to % size) + 0.5, Math.floor(to / size) + 0.5)
+        );
+        ctx.setLineDash([8 / zoom, 6 / zoom]);
+        ctx.lineWidth = 2.5 / zoom;
+        ctx.strokeStyle = "#ffffff";
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    for (const cursor of scene.cursors) {
+      const x = Math.floor(cursor.x);
+      const y = Math.floor(cursor.y);
+      if (x >= 0 && y >= 0 && x < size && y < size) {
+        outline(y * size + x, cursor.color, 2.5);
+      }
+    }
+
+    if (scene.hover !== null) {
+      outline(
+        scene.hover,
+        scene.tool === "bulldoze" ? "#ef4444" : "#ffffff",
+        2,
+        "rgba(255, 255, 255, 0.18)"
+      );
+    }
+  }
+
+  private drawLabels(
+    ctx: Ctx,
+    scene: Scene,
+    zoom: number,
+    screenX: (wx: number) => number,
+    screenY: (wy: number) => number,
+    now: number
+  ) {
+    const { size } = this.world;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+
+    const text = (
+      value: string,
+      x: number,
+      y: number,
+      fontSize: number,
+      color = "#ffffff"
+    ) => {
+      ctx.font = `600 ${fontSize}px ${this.fontFamily}`;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(15, 23, 42, 0.75)";
+      ctx.strokeText(value, x, y);
+      ctx.fillStyle = color;
+      ctx.fillText(value, x, y);
+    };
+
+    for (const label of this.labels) {
+      if (zoom >= label.minZoom) {
+        text(
+          label.text,
+          screenX(worldX(label.x, label.y)),
+          screenY(worldY(label.x, label.y) - label.z),
+          label.size
+        );
+      }
+    }
+
+    if (zoom >= 0.7) {
+      for (const [key, station] of scene.stations) {
+        const tile = Number(key);
+        const x = (tile % size) + 0.5;
+        const y = Math.floor(tile / size) + 0.5;
+        const sx = screenX(worldX(x, y));
+        const sy = screenY(worldY(x, y) - 36);
+        ctx.font = `600 11px ${this.fontFamily}`;
+        const width = ctx.measureText(station.name).width + 22;
+        pill(ctx, sx - width / 2, sy - 9, width, 18, 9);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(sx - width / 2 + 9, sy, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = scene.companies.get(station.owner)?.color ?? "#888888";
+        ctx.fill();
+        ctx.fillStyle = "#262626";
+        ctx.fillText(station.name, sx + 5, sy + 0.5);
+      }
+    }
+
+    // Vehicles: warnings for the ones without a route, a marker on the one
+    // highlighted in the vehicle list, and income popups when they deliver
+    this.trackDeliveries(scene, now);
+    const point: PathPoint = { x: 0, y: 0, dx: 1, dy: 0 };
+    for (const [id, vehicle] of scene.vehicles) {
+      const stalled = vehicle.path.length < 2 && vehicle.departAt > now;
+      const highlighted = id === scene.highlightedVehicle;
+      if (!stalled && !highlighted) {
+        continue;
+      }
+      if (vehicle.path.length < 2) {
+        const tile = Number(vehicle.stops[vehicle.leg % vehicle.stops.length]);
+        point.x = (tile % size) + 0.5;
+        point.y = Math.floor(tile / size) + 0.5;
+      } else {
+        pointOnPath(vehicle.path, size, headDistance(vehicle, now), point);
+      }
+      const sx = screenX(worldX(point.x, point.y));
+      const sy = screenY(worldY(point.x, point.y));
+      if (highlighted) {
+        ctx.beginPath();
+        ctx.arc(sx, sy - 4 * zoom, 16, 0, Math.PI * 2);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#ffffff";
+        ctx.stroke();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "#171717";
+        ctx.stroke();
+      }
+      if (stalled) {
+        text("!", sx, sy - 14 * zoom - 8, 15, "#fca5a5");
+      }
+    }
+
+    this.popups = this.popups.filter(
+      (popup) => now - popup.startedAt < POPUP_MS
+    );
+    for (const popup of this.popups) {
+      const progress = Math.max(0, (now - popup.startedAt) / POPUP_MS);
+      ctx.globalAlpha = 1 - progress * progress;
+      text(
+        popup.text,
+        screenX(worldX(popup.x, popup.y)),
+        screenY(worldY(popup.x, popup.y)) - 30 - progress * 34,
+        13,
+        popup.color
+      );
+    }
+    ctx.globalAlpha = 1;
+
+    for (const cursor of scene.cursors) {
+      const sx = screenX(worldX(cursor.x, cursor.y));
+      const sy = screenY(worldY(cursor.x, cursor.y));
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx, sy + 15);
+      ctx.lineTo(sx + 4, sy + 11.5);
+      ctx.lineTo(sx + 10.5, sy + 11);
+      ctx.closePath();
+      ctx.fillStyle = cursor.color;
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "#ffffff";
+      ctx.stroke();
+
+      ctx.font = `600 11px ${this.fontFamily}`;
+      const width = ctx.measureText(cursor.name).width + 12;
+      pill(ctx, sx + 10, sy + 14, width, 18, 6);
+      ctx.fillStyle = cursor.color;
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(cursor.name, sx + 10 + width / 2, sy + 23.5);
+    }
+  }
+
+  // Spawns a "+$1,200" popup whenever a vehicle completes a paid delivery.
+  // Every client derives these from Storage updates, so everyone sees them.
+  private trackDeliveries(scene: Scene, now: number) {
+    if (this.seenVehicles === scene.vehicles) {
+      return;
+    }
+    const firstTime = this.seenVehicles === null;
+    this.seenVehicles = scene.vehicles;
+
+    const { size } = this.world;
+    const trips = new Map<string, number>();
+    for (const [id, vehicle] of scene.vehicles) {
+      trips.set(id, vehicle.trips);
+      const previous = this.trips.get(id);
+      if (
+        firstTime ||
+        previous === undefined ||
+        vehicle.trips <= previous ||
+        vehicle.lastIncome <= 0
+      ) {
+        continue;
+      }
+      const tile = Number(vehicle.stops[vehicle.leg % vehicle.stops.length]);
+      this.popups.push({
+        x: (tile % size) + 0.5,
+        y: Math.floor(tile / size) + 0.5,
+        text: `+${formatMoney(vehicle.lastIncome)}`,
+        color: vehicle.owner === scene.myId ? "#bbf7d0" : "#ffffff",
+        startedAt: now,
+      });
+    }
+    this.trips = trips;
+  }
+
+  // The tile under a point on screen, as fractional tile coordinates
+  static screenToTile(
+    viewport: Viewport,
+    camera: Camera,
+    screenX: number,
+    screenY: number
+  ) {
+    return tileAt(
+      (screenX - viewport.width / 2) / camera.zoom + camera.x,
+      (screenY - viewport.height / 2) / camera.zoom + camera.y
+    );
+  }
+}
+
+function drawStation(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  kind: TrackKind,
+  alongX: boolean,
+  color: string
+) {
+  if (kind === "road") {
+    if (alongX) {
+      box(ctx, 0, 0, x + 0.14, y + 0.03, x + 0.86, y + 0.2, 0, 9, "#eceef0", color);
+    } else {
+      box(ctx, 0, 0, x + 0.03, y + 0.14, x + 0.2, y + 0.86, 0, 9, "#eceef0", color);
+    }
+    return;
+  }
+
+  const roof = shade(color, 0.8);
+  if (alongX) {
+    box(ctx, 0, 0, x + 0.08, y + 0.03, x + 0.92, y + 0.22, 0, 12, "#efe6d6", roof);
+    box(ctx, 0, 0, x + 0.04, y + 0.01, x + 0.96, y + 0.3, 12, 14, color);
+  } else {
+    box(ctx, 0, 0, x + 0.03, y + 0.08, x + 0.22, y + 0.92, 0, 12, "#efe6d6", roof);
+    box(ctx, 0, 0, x + 0.01, y + 0.04, x + 0.3, y + 0.96, 12, 14, color);
+  }
+}
+
+function cargoColor(cargo: Cargo | null) {
+  return cargo ? CARGO[cargo].color : null;
+}
+
+function shadow(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  dx: number,
+  dy: number,
+  length: number,
+  width: number
+) {
+  orientedBox(ctx, x, y, dx, dy, length, width, 0, 0, "rgba(0, 0, 0, 0.22)");
+}
+
+function drawRoadVehicle(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  dx: number,
+  dy: number,
+  color: string,
+  passengers: boolean,
+  cargo: Cargo | null
+) {
+  shadow(ctx, x, y, dx, dy, 0.4, 0.2);
+
+  if (passengers) {
+    orientedBox(ctx, x, y, dx, dy, 0.36, 0.16, 1.5, 7, color);
+    orientedBox(ctx, x, y, dx, dy, 0.34, 0.15, 7, 9, "#dbe4ec", "#f4f4f5");
+    return;
+  }
+
+  const load = cargoColor(cargo);
+  const cab = () =>
+    orientedBox(ctx, x + dx * 0.125, y + dy * 0.125, dx, dy, 0.11, 0.16, 1.5, 9, color, shade(color, 1.2));
+  const bed = () => {
+    orientedBox(ctx, x - dx * 0.055, y - dy * 0.055, dx, dy, 0.25, 0.16, 1.5, 4.5, "#6b7078");
+    if (load) {
+      orientedBox(ctx, x - dx * 0.055, y - dy * 0.055, dx, dy, 0.23, 0.14, 4.5, 8, load, shade(load, 1.2));
+    }
+  };
+
+  // Whichever half is further from the camera goes first
+  if (dx + dy > 0) {
+    bed();
+    cab();
+  } else {
+    cab();
+    bed();
+  }
+}
+
+function drawTrainCar(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  dx: number,
+  dy: number,
+  color: string,
+  locomotive: boolean,
+  passengers: boolean,
+  cargo: Cargo | null
+) {
+  shadow(ctx, x, y, dx, dy, 0.42, 0.22);
+
+  if (locomotive) {
+    orientedBox(ctx, x, y, dx, dy, 0.38, 0.18, 1.5, 10, color);
+    orientedBox(ctx, x, y, dx, dy, 0.3, 0.14, 10, 12, "#3f4348", "#565b63");
+    return;
+  }
+
+  if (passengers) {
+    orientedBox(ctx, x, y, dx, dy, 0.36, 0.17, 1.5, 6, color);
+    orientedBox(ctx, x, y, dx, dy, 0.36, 0.17, 6, 9.5, "#e5eaf0", shade(color, 0.85));
+    return;
+  }
+
+  const load = cargoColor(cargo);
+  orientedBox(ctx, x, y, dx, dy, 0.36, 0.17, 1.5, 5, "#6b7078");
+  if (load) {
+    orientedBox(ctx, x, y, dx, dy, 0.33, 0.14, 5, 8.5, load, shade(load, 1.2));
+  }
+}
