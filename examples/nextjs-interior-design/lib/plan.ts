@@ -67,6 +67,21 @@ export type Selection = {
 
 export type Tool = "select" | "room" | "door" | "window";
 
+/**
+ * An entry in the list of plans. Only what the list needs is here: the floor
+ * plan itself is in the plan's own Liveblocks room.
+ */
+export type Plan = {
+  id: string;
+  name: string;
+  // What the plan's room is filled with the first time it's opened.
+  template: TemplateId;
+  createdAt: number;
+};
+
+export type TemplateId = "apartment" | "studio" | "blank";
+
+/** The contents of a floor plan. */
 export type PlanData = {
   rooms: Room[];
   openings: Opening[];

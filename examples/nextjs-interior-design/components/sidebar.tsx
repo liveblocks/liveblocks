@@ -1,10 +1,10 @@
 "use client";
 
 import { useSelf } from "@liveblocks/react/suspense";
-import { CheckIcon, ChevronsUpDownIcon, RotateCcwIcon } from "lucide-react";
+import { CheckIcon, ChevronsUpDownIcon, PlusIcon } from "lucide-react";
 import { memo } from "react";
 import type { FurnitureType } from "@/lib/catalog";
-import { PLANS, type Plan, type PlanId } from "@/lib/templates";
+import type { Plan } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { HelpButton } from "./help-button";
 import { Library } from "./library";
@@ -18,8 +18,9 @@ import {
 
 type SidebarProps = {
   plan: Plan;
-  onPlanChange: (planId: PlanId) => void;
-  onResetPlan: () => void;
+  plans: Plan[];
+  onPlanChange: (planId: string) => void;
+  onCreatePlan: () => void;
   onAddFurniture: (type: FurnitureType) => void;
   onDropFurniture: (
     type: FurnitureType,
@@ -36,8 +37,9 @@ type SidebarProps = {
  */
 export const Sidebar = memo(function Sidebar({
   plan,
+  plans,
   onPlanChange,
-  onResetPlan,
+  onCreatePlan,
   onAddFurniture,
   onDropFurniture,
   getZoom,
@@ -52,8 +54,9 @@ export const Sidebar = memo(function Sidebar({
       <div className="px-2 pt-2.5 pb-3">
         <PlanSwitcher
           plan={plan}
+          plans={plans}
           onChange={onPlanChange}
-          onReset={onResetPlan}
+          onCreate={onCreatePlan}
         />
       </div>
 
@@ -86,12 +89,14 @@ export const Sidebar = memo(function Sidebar({
 
 function PlanSwitcher({
   plan,
+  plans,
   onChange,
-  onReset,
+  onCreate,
 }: {
   plan: Plan;
-  onChange: (planId: PlanId) => void;
-  onReset: () => void;
+  plans: Plan[];
+  onChange: (planId: string) => void;
+  onCreate: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -105,27 +110,24 @@ function PlanSwitcher({
             {plan.name}
           </div>
           <div className="truncate text-[11px] leading-tight text-ink-muted">
-            {plan.description}
+            {plans.length === 1 ? "1 plan" : `${plans.length} plans`}
           </div>
         </div>
         <ChevronsUpDownIcon className="size-3.5 shrink-0 text-ink-faint group-hover:text-ink-muted" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">
-        {PLANS.map((item) => {
+        {plans.map((item) => {
           const active = item.id === plan.id;
           return (
             <DropdownMenuItem
               key={item.id}
-              className="h-auto py-1.5 text-[13px]"
+              className="text-[13px]"
               onClick={() => onChange(item.id)}
               aria-current={active ? "true" : undefined}
             >
-              <div className="min-w-0 flex-1 pl-0.5">
-                <div className="truncate">{item.name}</div>
-                <div className="truncate text-[11px] text-ink-muted">
-                  {item.description}
-                </div>
-              </div>
+              <span className="min-w-0 flex-1 truncate pl-0.5">
+                {item.name}
+              </span>
               {active ? (
                 <CheckIcon className="size-3.5 shrink-0 text-ink" />
               ) : null}
@@ -133,9 +135,9 @@ function PlanSwitcher({
           );
         })}
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-[13px]" onClick={onReset}>
-          <RotateCcwIcon className="size-3.5" />
-          Reset this plan
+        <DropdownMenuItem className="text-[13px]" onClick={onCreate}>
+          <PlusIcon className="size-3.5" />
+          New plan
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

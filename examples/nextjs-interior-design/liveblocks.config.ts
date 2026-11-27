@@ -2,6 +2,7 @@ import type { LiveMap, LiveObject } from "@liveblocks/client";
 import type {
   Furniture,
   Opening,
+  Plan,
   Point,
   RoomLson,
   Selection,
@@ -30,11 +31,14 @@ declare global {
       selection: Selection | null;
     };
 
-    // The floor plan. Rooms, openings (doors and windows) and furniture each
-    // live in their own LiveMap of LiveObjects, so two people editing
-    // different things, or different properties of the same thing, never
-    // overwrite each other. See `lib/plan.ts` for the shapes.
+    // The example uses two kinds of rooms. One room holds the list of plans,
+    // in `plans`. Every plan then has a room of its own for its floor plan:
+    // rooms, openings (doors and windows) and furniture each live in their
+    // own LiveMap of LiveObjects, so two people editing different things, or
+    // different properties of the same thing, never overwrite each other.
+    // See `lib/plan.ts` for the shapes.
     Storage: {
+      plans: LiveMap<string, LiveObject<Plan>>;
       rooms: LiveMap<string, LiveObject<RoomLson>>;
       openings: LiveMap<string, LiveObject<Opening>>;
       furniture: LiveMap<string, LiveObject<Furniture>>;

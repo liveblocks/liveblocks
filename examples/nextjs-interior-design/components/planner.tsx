@@ -4,8 +4,7 @@ import { useStorage, useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlanActions } from "@/hooks/use-plan-actions";
 import type { FurnitureType } from "@/lib/catalog";
-import type { Selection, Tool } from "@/lib/plan";
-import type { Plan, PlanId } from "@/lib/templates";
+import type { Plan, Selection, Tool } from "@/lib/plan";
 import type { Unit } from "@/lib/units";
 import { Canvas, type CanvasHandle } from "./canvas/canvas";
 import { Header } from "./header";
@@ -21,10 +20,17 @@ import { TooltipProvider } from "./ui/tooltip";
  */
 export function Planner({
   plan,
+  plans,
   onPlanChange,
+  onCreatePlan,
+  onRenamePlan,
 }: {
   plan: Plan;
-  onPlanChange: (planId: PlanId) => void;
+  // The list of plans comes from another room: see `app/page.tsx`.
+  plans: Plan[];
+  onPlanChange: (planId: string) => void;
+  onCreatePlan: () => void;
+  onRenamePlan: (planId: string, name: string) => void;
 }) {
   // Storage is read as plain JSON: each LiveMap becomes an object keyed by
   // id, and only changes identity when something inside it changes. They're
@@ -81,10 +87,10 @@ export function Planner({
     }
   }, []);
 
-  const handleResetPlan = useCallback(() => {
-    setPicked(null);
-    actions.resetPlan(plan.id);
-  }, [actions, plan.id]);
+  const handleRenamePlan = useCallback(
+    (name: string) => onRenamePlan(plan.id, name),
+    [onRenamePlan, plan.id]
+  );
 
   const handleAddFurniture = useCallback((type: FurnitureType) => {
     canvasRef.current?.addFurniture(type);
@@ -103,15 +109,17 @@ export function Planner({
         <Sidebar
           className="hidden sm:flex"
           plan={plan}
+          plans={plans}
           onPlanChange={onPlanChange}
-          onResetPlan={handleResetPlan}
+          onCreatePlan={onCreatePlan}
           onAddFurniture={handleAddFurniture}
           onDropFurniture={handleDropFurniture}
           getZoom={getZoom}
         />
         <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-surface sm:card">
           <Header
-            plan={plan}
+            name={plan.name}
+            onRename={handleRenamePlan}
             rooms={rooms}
             unit={unit}
             onUnitChange={setUnit}

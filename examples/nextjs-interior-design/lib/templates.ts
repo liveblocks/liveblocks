@@ -6,37 +6,28 @@ import type {
   FloorFinish,
   Furniture,
   Opening,
+  Plan,
   PlanData,
   Room,
+  TemplateId,
 } from "./plan";
 
 /**
- * The plans people can switch between. Each one is its own Liveblocks room,
- * seeded with a template the first time anyone opens it.
+ * The plans a fresh copy of the example starts with. Every plan is its own
+ * Liveblocks room, filled in from its template the first time anyone opens
+ * it; plans people create afterwards start blank.
  */
-export type PlanId = "apartment" | "studio" | "blank";
-
-export type Plan = {
-  id: PlanId;
-  name: string;
-  description: string;
-};
-
-export const PLANS: Plan[] = [
+const STARTER_PLANS: Plan[] = [
   {
     id: "apartment",
     name: "One-bedroom apartment",
-    description: "Five rooms, furnished",
+    template: "apartment",
+    createdAt: 0,
   },
-  { id: "studio", name: "Studio", description: "Open plan, furnished" },
-  { id: "blank", name: "Blank plan", description: "Start from scratch" },
+  { id: "studio", name: "Studio", template: "studio", createdAt: 1 },
 ];
 
-export const DEFAULT_PLAN_ID: PlanId = "apartment";
-
-export function getPlan(id: PlanId) {
-  return PLANS.find((plan) => plan.id === id) ?? PLANS[0];
-}
+export const NEW_PLAN_NAME = "Untitled plan";
 
 /**
  * Small helpers to write a template by hand. All numbers are centimeters.
@@ -269,8 +260,8 @@ function studio(): PlanData {
   return plan.data;
 }
 
-export function getTemplate(planId: PlanId): PlanData {
-  switch (planId) {
+function getTemplate(template: TemplateId): PlanData {
+  switch (template) {
     case "apartment":
       return apartment();
     case "studio":
@@ -280,22 +271,40 @@ export function getTemplate(planId: PlanId): PlanData {
   }
 }
 
-export function toLiveRoom(room: Room) {
-  return new LiveObject({ ...room, points: [...room.points] });
+/**
+ * The Storage the list of plans starts with, the first time the example is
+ * opened. This room only uses `plans`.
+ */
+export function createPlanListStorage(): Liveblocks["Storage"] {
+  return {
+    plans: new LiveMap(
+      STARTER_PLANS.map((plan) => [plan.id, new LiveObject(plan)])
+    ),
+    rooms: new LiveMap(),
+    openings: new LiveMap(),
+    furniture: new LiveMap(),
+  };
 }
 
-/** The Storage a plan's room starts with, the first time it's opened. */
-export function createInitialStorage(planId: PlanId): Liveblocks["Storage"] {
-  const template = getTemplate(planId);
+/**
+ * The Storage a plan's own room starts with, the first time it's opened: the
+ * floor plan of its template. `plans` isn't used in these rooms.
+ */
+export function createPlanStorage(template: TemplateId): Liveblocks["Storage"] {
+  const { rooms, openings, furniture } = getTemplate(template);
   return {
+    plans: new LiveMap(),
     rooms: new LiveMap(
-      template.rooms.map((room) => [room.id, toLiveRoom(room)])
+      rooms.map((room) => [
+        room.id,
+        new LiveObject({ ...room, points: [...room.points] }),
+      ])
     ),
     openings: new LiveMap(
-      template.openings.map((opening) => [opening.id, new LiveObject(opening)])
+      openings.map((opening) => [opening.id, new LiveObject(opening)])
     ),
     furniture: new LiveMap(
-      template.furniture.map((item) => [item.id, new LiveObject(item)])
+      furniture.map((item) => [item.id, new LiveObject(item)])
     ),
   };
 }

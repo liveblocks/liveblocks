@@ -13,7 +13,6 @@ import type {
   Room,
   Selection,
 } from "@/lib/plan";
-import { getTemplate, toLiveRoom, type PlanId } from "@/lib/templates";
 
 /**
  * Every way the plan can change. Each action is a Storage mutation: it's
@@ -236,29 +235,6 @@ export function usePlanActions() {
     }
   }, []);
 
-  // Puts the plan back to its template. Like everything else, it's a single
-  // undoable step.
-  const resetPlan = useMutation(({ storage }, planId: PlanId) => {
-    const template = getTemplate(planId);
-    const rooms = storage.get("rooms");
-    const openings = storage.get("openings");
-    const furniture = storage.get("furniture");
-    for (const map of [rooms, openings, furniture]) {
-      for (const id of [...map.keys()]) {
-        map.delete(id);
-      }
-    }
-    for (const room of template.rooms) {
-      rooms.set(room.id, toLiveRoom(room));
-    }
-    for (const opening of template.openings) {
-      openings.set(opening.id, new LiveObject(opening));
-    }
-    for (const item of template.furniture) {
-      furniture.set(item.id, new LiveObject(item));
-    }
-  }, []);
-
   return useMemo(
     () => ({
       addRoom,
@@ -274,7 +250,6 @@ export function usePlanActions() {
       duplicateFurniture,
       reorderFurniture,
       remove,
-      resetPlan,
     }),
     [
       addRoom,
@@ -290,7 +265,6 @@ export function usePlanActions() {
       duplicateFurniture,
       reorderFurniture,
       remove,
-      resetPlan,
     ]
   );
 }

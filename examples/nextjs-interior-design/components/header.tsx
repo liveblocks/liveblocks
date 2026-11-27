@@ -8,16 +8,22 @@ import {
 } from "@liveblocks/react/suspense";
 import { AvatarStack } from "@liveblocks/react-ui";
 import { Redo2Icon, RulerIcon, Undo2Icon } from "lucide-react";
-import type { ReactNode } from "react";
+import {
+  useRef,
+  useState,
+  type FocusEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { polygonArea } from "@/lib/geometry";
 import type { Room } from "@/lib/plan";
-import type { Plan } from "@/lib/templates";
 import { formatArea, type Unit } from "@/lib/units";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type HeaderProps = {
-  plan: Plan;
+  name: string;
+  onRename: (name: string) => void;
   rooms: ReadonlyMap<string, Room>;
   unit: Unit;
   onUnitChange: (unit: Unit) => void;
@@ -26,7 +32,8 @@ type HeaderProps = {
 };
 
 export function Header({
-  plan,
+  name,
+  onRename,
   rooms,
   unit,
   onUnitChange,
@@ -47,9 +54,8 @@ export function Header({
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-[13px] leading-tight font-semibold text-ink">
-          {plan.name}
-        </h1>
+        <h1 className="sr-only">{name}</h1>
+        <PlanName name={name} onRename={onRename} />
         <p className="truncate text-xs leading-tight text-ink-muted tabular-nums">
           {rooms.size === 0
             ? "No rooms yet"
@@ -122,6 +128,77 @@ export function Header({
       {/* Everyone on this plan right now, from Presence. */}
       <AvatarStack size={26} max={4} />
     </header>
+  );
+}
+
+/**
+ * The plan's name: click it to rename the plan for everyone.
+ *
+ * It's a text field all along rather than a label swapped for a field, so
+ * the text is drawn by the same element whether or not it's being edited
+ * and doesn't move by a pixel when editing starts or ends. Only the
+ * background and the ring change with hover and focus.
+ */
+function PlanName({
+  name,
+  onRename,
+}: {
+  name: string;
+  onRename: (name: string) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const cancelled = useRef(false);
+  const text = draft ?? name;
+
+  // Leaving the field ends the edit. The name is written once, then, rather
+  // than on every keystroke.
+  const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+    event.currentTarget.scrollLeft = 0;
+    const next = cancelled.current ? "" : (draft ?? "").trim();
+    cancelled.current = false;
+    setDraft(null);
+    // An empty name keeps the old one.
+    if (next && next !== name) {
+      onRename(next);
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.currentTarget.blur();
+    } else if (event.key === "Escape") {
+      cancelled.current = true;
+      event.currentTarget.blur();
+    }
+  };
+
+  return (
+    <div className="flex">
+      {/* The field is as wide as its text: an invisible copy of the text
+          sizes the cell they share. The copy is a few pixels wider, to leave
+          room for the caret after the last letter. */}
+      <span className="-mx-1 inline-grid max-w-[calc(100%_+_0.5rem)] min-w-0 text-[13px] leading-5 font-semibold text-ink">
+        <span
+          aria-hidden
+          className="invisible col-start-1 row-start-1 min-w-8 overflow-hidden pr-2 pl-1 whitespace-pre"
+        >
+          {text}
+        </span>
+        <input
+          type="text"
+          aria-label="Plan name"
+          title="Rename plan"
+          autoComplete="off"
+          spellCheck={false}
+          maxLength={60}
+          className="col-start-1 row-start-1 h-5 w-full min-w-0 rounded px-1 text-ellipsis transition-colors outline-none hover:bg-hover focus:bg-surface focus:ring-1 focus:ring-brand"
+          value={text}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+        />
+      </span>
+    </div>
   );
 }
 
