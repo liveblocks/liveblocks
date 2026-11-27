@@ -28,6 +28,10 @@ import { nearestTown, type World } from "@/game/world";
 
 export type LineTool = "road" | "rail" | "bulldoze";
 
+// A spot the map should move to, in tile coordinates. Every new object moves
+// the map again, even to the same spot.
+export type Focus = { x: number; y: number } | null;
+
 // What the line being dragged would build
 export type DragPlan = {
   tiles: number;
@@ -47,6 +51,7 @@ type Props = {
   routeFrom: number | null;
   selectedStation: number | null;
   highlightedVehicle: string | null;
+  focus: Focus;
   onHover: (tile: number | null) => void;
   onDragPlan: (plan: DragPlan) => void;
   onLine: (tool: LineTool, tiles: number[]) => void;
@@ -224,6 +229,14 @@ export function MapCanvas(props: Props) {
   useEffect(() => {
     rendererRef.current?.setWorld(world);
   }, [world]);
+
+  const { focus } = props;
+  useEffect(() => {
+    if (focus) {
+      camera.current.x = worldX(focus.x, focus.y);
+      camera.current.y = worldY(focus.x, focus.y);
+    }
+  }, [focus]);
 
   // Keep the canvas as sharp as the screen it's on
   useEffect(() => {

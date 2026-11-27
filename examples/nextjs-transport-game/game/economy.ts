@@ -1,6 +1,7 @@
 import {
   BRIDGE_MULTIPLIER,
   BUILDINGS,
+  CARGO,
   CATCHMENT,
   HOUSE_PASSENGER_RATE,
   MIN_HOUSES_FOR_PASSENGERS,
@@ -127,6 +128,62 @@ export function cargoBetween(
   return getStationInfo(world, fromTile)
     .supply.map((entry) => entry.cargo)
     .filter((cargo) => accepted.includes(cargo));
+}
+
+function listCargo(cargo: readonly Cargo[]) {
+  return cargo.map((each) => CARGO[each].label.toLowerCase()).join(" and ");
+}
+
+// Why no vehicle could earn anything between two stations, for the player
+// who just tried to buy one
+export function nothingToCarry(
+  world: World,
+  from: { tile: number; name: string },
+  to: { tile: number; name: string }
+) {
+  const reasons = [
+    [from, to],
+    [to, from],
+  ].flatMap(([origin, destination]) => {
+    const supply = getStationInfo(world, origin.tile).supply;
+    return supply.length > 0
+      ? [
+          `${destination.name} doesn't accept ${listCargo(
+            supply.map((entry) => entry.cargo)
+          )}`,
+        ]
+      : [];
+  });
+  return reasons.length > 0
+    ? `Nothing to carry: ${reasons.join(", and ")}`
+    : "Nothing to carry: nothing is produced near either station";
+}
+
+// The industries an industry trades with: the ones that accept what it
+// produces, or that produce what it accepts. Closest first.
+export function tradePartners(world: World, industry: Industry) {
+  const { produces, accepts } = INDUSTRY[industry.type];
+  return world.industries
+    .filter((other) => {
+      const type = INDUSTRY[other.type];
+      return (
+        (produces !== undefined && type.accepts === produces) ||
+        (accepts !== undefined && type.produces === accepts)
+      );
+    })
+    .map((other) => ({
+      industry: other,
+      distance:
+        Math.abs(other.x - industry.x) + Math.abs(other.y - industry.y),
+    }))
+    .sort((a, b) => a.distance - b.distance);
+}
+
+// Whether a station on this tile would serve this industry
+export function servesIndustry(world: World, tile: number, industry: Industry) {
+  return getStationInfo(world, tile).industries.some(
+    (each) => each.id === industry.id
+  );
 }
 
 export function tileDistance(world: World, a: number, b: number) {

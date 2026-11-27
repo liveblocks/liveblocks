@@ -10,7 +10,11 @@ import {
 import { formatMoney } from "@/game/economy";
 import type { CompanyData } from "@/game/types";
 
-export type OpenWindows = { companies: boolean; vehicles: boolean };
+export type OpenWindows = {
+  companies: boolean;
+  vehicles: boolean;
+  cargo: boolean;
+};
 
 type Props = {
   hint: string;
@@ -49,6 +53,14 @@ export function Taskbar({
         onClick={() => onToggle("vehicles")}
       >
         <span>Vehicles</span>
+      </button>
+      <button
+        type="button"
+        className="win-button font-bold max-sm:hidden"
+        aria-pressed={open.cargo}
+        onClick={() => onToggle("cargo")}
+      >
+        <span>Cargo</span>
       </button>
       <div className="win-divider" />
 

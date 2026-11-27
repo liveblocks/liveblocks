@@ -40,6 +40,7 @@ import {
   companyBalance,
   formatMoney,
   getStationInfo,
+  nothingToCarry,
 } from "@/game/economy";
 import { dueAt } from "@/game/motion";
 import { buildNetwork, type Network } from "@/game/network";
@@ -52,11 +53,23 @@ import {
   townStats,
 } from "@/game/towns";
 import type { ActionResult, Tool, TrackKind } from "@/game/types";
-import { generateWorld, INDUSTRY, WATER, type World } from "@/game/world";
+import {
+  generateWorld,
+  type Industry,
+  INDUSTRY,
+  WATER,
+  type World,
+} from "@/game/world";
 import { useMoneyFloaters } from "@/hooks/use-money-floaters";
 import { CompanyPicker } from "./company-picker";
 import { CompaniesWindow, VehiclesWindow } from "./company-windows";
-import { type DragPlan, type LineTool, MapCanvas } from "./map-canvas";
+import { CargoWindow, IndustryWindow } from "./industry-windows";
+import {
+  type DragPlan,
+  type Focus,
+  type LineTool,
+  MapCanvas,
+} from "./map-canvas";
 import { StationWindow } from "./station-window";
 import { type OpenWindows, Taskbar } from "./taskbar";
 import { Toolbar, TOOLS } from "./toolbar";
@@ -131,13 +144,18 @@ export function Game() {
   const [routeFrom, setRouteFrom] = useState<number | null>(null);
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
   const [selectedTown, setSelectedTown] = useState<number | null>(null);
+  const [selectedIndustry, setSelectedIndustry] = useState<number | null>(
+    null
+  );
+  // Where the map was last asked to go, e.g. to an industry picked in a list
+  const [focus, setFocus] = useState<Focus>(null);
   const [highlightedVehicle, setHighlightedVehicle] = useState<string | null>(
     null
   );
   // On small screens the map comes first: windows start closed
   const [open, setOpen] = useState<OpenWindows>(() => {
     const roomy = window.innerWidth >= 900;
-    return { companies: roomy, vehicles: roomy };
+    return { companies: roomy, vehicles: roomy, cargo: false };
   });
 
   useSimulation(world, network);
@@ -160,6 +178,7 @@ export function Game() {
     setRouteFrom(null);
     setSelectedStation(null);
     setSelectedTown(null);
+    setSelectedIndustry(null);
     setHover(null);
   }, [seed]);
 
@@ -296,6 +315,11 @@ export function Game() {
 
     if (tool === "select") {
       setSelectedStation(station ? tile : null);
+      if (!station && world.industryAt[tile] >= 0) {
+        setSelectedIndustry(world.industryAt[tile]);
+      } else if (!station && world.houseAt[tile] >= 0) {
+        setSelectedTown(world.houses[world.houseAt[tile]].town);
+      }
     } else if (tool === "road-station" || tool === "rail-station") {
       const kind = tool === "road-station" ? "road" : "rail";
       const result = settle(placeStation(kind, tile));
@@ -346,6 +370,17 @@ export function Game() {
     }
   };
 
+  // Opens an industry's or a town's window and brings it into view
+  const showIndustry = (industry: Industry) => {
+    setSelectedIndustry(industry.id);
+    setFocus({ x: industry.x + 1, y: industry.y + 1 });
+  };
+  const showTown = (id: number) => {
+    const town = world.towns[id];
+    setSelectedTown(id);
+    setFocus({ x: town.x + 0.5, y: town.y + 0.5 });
+  };
+
   const onStartRoute = (tile: number) => {
     setTool("vehicle");
     setRouteFrom(tile);
@@ -388,6 +423,7 @@ export function Game() {
           routeFrom={routeFrom}
           selectedStation={selectedStation}
           highlightedVehicle={highlightedVehicle}
+          focus={focus}
           onHover={setHover}
           onDragPlan={setDragPlan}
           onLine={(lineTool, tiles) => settle(buildLine(lineTool, tiles))}
@@ -425,6 +461,17 @@ export function Game() {
               onClose={() => setSelectedTown(null)}
             />
           ) : null}
+          {selectedIndustry !== null && world.industries[selectedIndustry] ? (
+            <IndustryWindow
+              key={selectedIndustry}
+              world={world}
+              industry={world.industries[selectedIndustry]}
+              stations={stations}
+              companies={companies}
+              onShowIndustry={showIndustry}
+              onClose={() => setSelectedIndustry(null)}
+            />
+          ) : null}
         </div>
 
         <div className="pointer-events-none absolute top-2 right-2 flex flex-col items-end gap-2">
@@ -448,6 +495,14 @@ export function Game() {
               onClone={onClone}
               onSell={(vehicleId) => settle(sell(vehicleId))}
               onClose={() => setOpen({ ...open, vehicles: false })}
+            />
+          ) : null}
+          {open.cargo ? (
+            <CargoWindow
+              world={world}
+              onShowIndustry={showIndustry}
+              onShowTown={showTown}
+              onClose={() => setOpen({ ...open, cargo: false })}
             />
           ) : null}
         </div>
@@ -758,12 +813,28 @@ function describe({
       return "Vehicle · Click one of your stations to start a route";
     }
     const from = stations.get(String(routeFrom));
+    const to = hover !== null ? stations.get(String(hover)) : undefined;
     const cost = TRACK[from?.kind ?? "road"].vehicleCost;
-    return `Vehicle · Now click the station to go to · ${formatMoney(cost)}`;
+    if (!from || !to || hover === null || hover === routeFrom) {
+      return `Vehicle · Now click the station to go to · ${formatMoney(cost)}`;
+    }
+    const there = cargoBetween(world, routeFrom, hover);
+    const back = cargoBetween(world, hover, routeFrom);
+    if (there.length + back.length === 0) {
+      return nothingToCarry(
+        world,
+        { tile: routeFrom, name: from.name },
+        { tile: hover, name: to.name }
+      );
+    }
+    const carries = [...new Set([...there, ...back])]
+      .map((cargo) => CARGO[cargo].label)
+      .join(", ");
+    return `Vehicle · ${from.name} ↔ ${to.name} · Carries ${carries} · ${formatMoney(cost)}`;
   }
 
   if (hover === null) {
-    return "Drag to move around · Scroll to zoom · Click a station or a town's name to inspect it";
+    return "Drag to move around · Scroll to zoom · Click a station, an industry or a town to inspect it";
   }
 
   const station = stations.get(String(hover));
@@ -773,10 +844,10 @@ function describe({
   if (world.industryAt[hover] >= 0) {
     const industry = world.industries[world.industryAt[hover]];
     const { produces, accepts } = INDUSTRY[industry.type];
-    if (produces) {
-      return `${industry.name} · Produces ${CARGO[produces].label.toLowerCase()}`;
-    }
-    return `${industry.name} · Accepts ${accepts ? CARGO[accepts].label.toLowerCase() : "nothing"}`;
+    const what = produces
+      ? `Produces ${CARGO[produces].label.toLowerCase()}`
+      : `Accepts ${accepts ? CARGO[accepts].label.toLowerCase() : "nothing"}`;
+    return `${industry.name} · ${what} · Click to see where it ${produces ? "goes" : "comes from"}`;
   }
   if (world.houseAt[hover] >= 0) {
     const house = world.houses[world.houseAt[hover]];

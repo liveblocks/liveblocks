@@ -9,6 +9,7 @@ import {
 import {
   cargoBetween,
   companyBalance,
+  nothingToCarry,
   suggestStationName,
   trackCost,
 } from "./economy";
@@ -419,6 +420,21 @@ export function buyVehicle(
     );
   }
 
+  // A vehicle with nothing to carry would only cost money
+  const cargo = [
+    ...cargoBetween(world, fromTile, toTile),
+    ...cargoBetween(world, toTile, fromTile),
+  ];
+  if (cargo.length === 0) {
+    return fail(
+      nothingToCarry(
+        world,
+        { tile: fromTile, name: from.get("name") },
+        { tile: toTile, name: to.get("name") }
+      )
+    );
+  }
+
   let owned = 0;
   for (const vehicle of vehicles.values()) {
     if (vehicle.get("owner") === companyId) {
@@ -452,18 +468,10 @@ export function buyVehicle(
     })
   );
   spend(root, companyId, cost);
-
-  const cargo = [
-    ...cargoBetween(world, fromTile, toTile),
-    ...cargoBetween(world, toTile, fromTile),
-  ];
   return {
     ok: true,
     cost,
-    message:
-      cargo.length > 0
-        ? `${from.get("name")} → ${to.get("name")}`
-        : "Nothing to carry between these two stations",
+    message: `${from.get("name")} → ${to.get("name")}`,
   };
 }
 
