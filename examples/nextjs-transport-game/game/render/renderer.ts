@@ -131,6 +131,9 @@ const MONEY_FONT = "Tahoma, Verdana, Geneva, sans-serif";
 // How far above the middle of its tile a station's name sign is drawn: low
 // enough to touch the tile, so it's clear which station it belongs to
 const STATION_SIGN_HEIGHT = 20;
+// How wide the wall of a canal's far bank looks, in tiles
+const CANAL_WALL = 0.12;
+const CANAL_OVERLAP = 0.05;
 
 // Where a track leaves a tile toward each neighbor, in tile coordinates
 // relative to the middle of the tile
@@ -282,6 +285,9 @@ export class Renderer {
   private roadBridgePath = new Path2D();
   private railPath = new Path2D();
   private railBridgePath = new Path2D();
+  private canalPath = new Path2D();
+  private canalWallPath = new Path2D();
+  private canalBankPath = new Path2D();
 
   private seenVehicles: ReadonlyMap<string, Vehicle> | null = null;
   private trips = new Map<string, number>();
@@ -414,6 +420,7 @@ export class Renderer {
     const bottom = camera.y + height / 2 / zoom;
 
     this.drawTerrain(ctx, zoom);
+    this.drawCanals(ctx, scene.network);
 
     this.drawStationPads(ctx, scene);
     const { dynamics, underBridges } = this.collectDynamics(ctx, scene, now);
@@ -442,7 +449,9 @@ export class Renderer {
           item.x + sprite.width < left ||
           item.y + sprite.height < top ||
           (item.tile >= 0 &&
-            (scene.network.road[item.tile] || scene.network.rail[item.tile]));
+            (scene.network.road[item.tile] ||
+              scene.network.rail[item.tile] ||
+              scene.network.canal[item.tile]));
         if (!hidden) {
           ctx.drawImage(
             spriteImage(sprite, detail),
@@ -488,11 +497,51 @@ export class Renderer {
     this.roadBridgePath = new Path2D();
     this.railPath = new Path2D();
     this.railBridgePath = new Path2D();
+    this.canalPath = new Path2D();
+    this.canalWallPath = new Path2D();
+    this.canalBankPath = new Path2D();
+
+    const isLand = (x: number, y: number) =>
+      x >= 0 && y >= 0 && x < size && y < size && !network.water[y * size + x];
 
     for (let tile = 0; tile < size * size; tile++) {
       const x = tile % size;
       const y = Math.floor(tile / size);
-      const onWater = this.world.terrain[tile] === WATER;
+      const onWater = network.water[tile] === 1;
+
+      if (network.canal[tile]) {
+        // Canals are dug into the ground: the banks on the far side show
+        // their wall, and every bank gets a stone edge. Where a canal meets
+        // other water, it is drawn a little past the edge of its tile, to
+        // cover the rim of the ground under it.
+        const bank = (x0: number, y0: number, x1: number, y1: number) => {
+          this.canalBankPath.moveTo(x0, y0);
+          this.canalBankPath.lineTo(x1, y1);
+        };
+        let x0 = x - CANAL_OVERLAP;
+        let y0 = y - CANAL_OVERLAP;
+        let x1 = x + 1 + CANAL_OVERLAP;
+        let y1 = y + 1 + CANAL_OVERLAP;
+        if (isLand(x, y - 1)) {
+          y0 = y;
+          this.canalWallPath.rect(x, y, 1, CANAL_WALL);
+          bank(x, y, x + 1, y);
+        }
+        if (isLand(x - 1, y)) {
+          x0 = x;
+          this.canalWallPath.rect(x, y, CANAL_WALL, 1);
+          bank(x, y, x, y + 1);
+        }
+        if (isLand(x + 1, y)) {
+          x1 = x + 1;
+          bank(x + 1, y, x + 1, y + 1);
+        }
+        if (isLand(x, y + 1)) {
+          y1 = y + 1;
+          bank(x, y + 1, x + 1, y + 1);
+        }
+        this.canalPath.rect(x0, y0, x1 - x0, y1 - y0);
+      }
 
       if (network.road[tile]) {
         const mask = connectionsAt(network.road, size, tile);
@@ -511,6 +560,24 @@ export class Renderer {
         }
       }
     }
+  }
+
+  // Canals are part of the ground, like the water they are filled with
+  private drawCanals(ctx: Ctx, network: Network) {
+    if (this.trackNetwork !== network) {
+      this.rebuildTracks(network);
+    }
+    ctx.save();
+    ctx.transform(HALF_W, HALF_H, -HALF_W, HALF_H, 0, 0);
+    ctx.fillStyle = WATER_COLOR;
+    ctx.fill(this.canalPath);
+    ctx.fillStyle = "#8b8779";
+    ctx.fill(this.canalWallPath);
+    ctx.lineWidth = 0.07;
+    ctx.lineCap = "square";
+    ctx.strokeStyle = "#d3ccbb";
+    ctx.stroke(this.canalBankPath);
+    ctx.restore();
   }
 
   private drawTracks(ctx: Ctx, network: Network) {
@@ -601,7 +668,7 @@ export class Renderer {
       const x = tile % size;
       const y = Math.floor(tile / size);
       if (station.kind === "water") {
-        const side = this.shoreSide(tile);
+        const side = this.shoreSide(scene.network.water, tile);
         const color = colorOf(station.owner);
         // A pier on the far side of the tile is behind a ship moored at the
         // dock, and one on the near side is in front of it
@@ -686,17 +753,17 @@ export class Renderer {
   }
 
   // Which side of a water tile the land is on. A dock's pier goes there.
-  private shoreSide(tile: number) {
-    const { size, terrain } = this.world;
+  private shoreSide(water: Uint8Array, tile: number) {
+    const { size } = this.world;
     const x = tile % size;
     const y = Math.floor(tile / size);
-    if (y > 0 && terrain[tile - size] !== WATER) {
+    if (y > 0 && !water[tile - size]) {
       return NORTH;
     }
-    if (x > 0 && terrain[tile - 1] !== WATER) {
+    if (x > 0 && !water[tile - 1]) {
       return WEST;
     }
-    if (x < size - 1 && terrain[tile + 1] !== WATER) {
+    if (x < size - 1 && !water[tile + 1]) {
       return EAST;
     }
     return SOUTH;
@@ -759,7 +826,11 @@ export class Renderer {
 
     if (scene.hover !== null) {
       if (scene.tool === "water-station") {
-        catchment(scene.hover, DOCK_CATCHMENT);
+        // A dock on a canal reaches as far as any other station
+        catchment(
+          scene.hover,
+          scene.network.canal[scene.hover] ? CATCHMENT : DOCK_CATCHMENT
+        );
       } else if (scene.tool === "road-station" || scene.tool === "rail-station") {
         catchment(scene.hover, CATCHMENT);
       }

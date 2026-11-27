@@ -42,6 +42,7 @@ declare global {
       // Tile → id of the company that built on it
       roads: LiveMap<string, string>;
       rails: LiveMap<string, string>;
+      canals: LiveMap<string, string>;
       // Tile → station
       stations: LiveMap<string, LiveObject<StationData>>;
       vehicles: LiveMap<string, LiveObject<VehicleData>>;

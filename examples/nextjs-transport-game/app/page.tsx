@@ -22,6 +22,7 @@ export default function Page() {
         towns: new LiveMap(),
         roads: new LiveMap(),
         rails: new LiveMap(),
+        canals: new LiveMap(),
         stations: new LiveMap(),
         vehicles: new LiveMap(),
         companies: new LiveMap(),

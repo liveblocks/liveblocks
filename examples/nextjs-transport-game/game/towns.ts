@@ -217,11 +217,12 @@ function planTown(
   return steps;
 }
 
-// What a town's growth needs to work around: tiles with roads or railways
-// that players built, train stations, and tiles where a house was demolished
+// What a town's growth needs to work around: tiles with roads, railways or
+// canals that players built, the stations a street can't run through (train
+// stations and docks), and tiles where a house was demolished
 export type Built = {
   tracks: ReadonlySet<number>;
-  railStations: ReadonlySet<number>;
+  noStreets: ReadonlySet<number>;
   demolished: ReadonlySet<number>;
 };
 
@@ -253,7 +254,7 @@ export function growWorld(
     for (let index = 0; index < count; index++) {
       const { kind, tile } = plan[index];
       if (kind === "street") {
-        if (!built.railStations.has(tile)) {
+        if (!built.noStreets.has(tile)) {
           townRoads[tile] = 1;
           trees[tile] = 0;
           tiers[tile] = -1;

@@ -1,4 +1,4 @@
-import type { Cargo, TrackKind, Transport } from "./types";
+import type { Cargo, LineKind, Transport } from "./types";
 
 export const MAP_SIZE = 64;
 export const TILE_W = 64;
@@ -83,9 +83,10 @@ export const CARGO: Record<
 };
 
 // Cost per tile
-export const TRACK: Record<TrackKind, { label: string; cost: number }> = {
+export const TRACK: Record<LineKind, { label: string; cost: number }> = {
   road: { label: "Road", cost: 100 },
   rail: { label: "Railway", cost: 220 },
+  canal: { label: "Canal", cost: 400 },
 };
 
 export const TRANSPORT: Record<

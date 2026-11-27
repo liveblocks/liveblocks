@@ -15,8 +15,8 @@ import { createRng, hashInt } from "./rng";
 import type {
   Cargo,
   CompanyData,
+  LineKind,
   StationData,
-  TrackKind,
   VehicleData,
 } from "./types";
 import {
@@ -41,7 +41,8 @@ export type StationInfo = {
 const stationInfoCache = new WeakMap<World, Map<number, StationInfo>>();
 
 // How many tiles around it a station on this tile serves. Only docks are
-// built on water.
+// built out on the water, away from what they serve. A dock on a canal is
+// in among the buildings, and reaches as far as any other station.
 export function catchmentOf(world: World, tile: number) {
   return world.terrain[tile] === WATER ? DOCK_CATCHMENT : CATCHMENT;
 }
@@ -238,7 +239,8 @@ const DOCK_NAMES = ["* Docks", "* Harbour", "* Pier", "* Quay", "* Wharf"];
 export function suggestStationName(
   world: World,
   tile: number,
-  taken: ReadonlySet<string>
+  taken: ReadonlySet<string>,
+  dock: boolean
 ) {
   const { size } = world;
   const info = getStationInfo(world, tile);
@@ -250,7 +252,7 @@ export function suggestStationName(
     const town = info.town.name;
     const dx = x - info.town.x;
     const dy = y - info.town.y;
-    if (world.terrain[tile] === WATER) {
+    if (dock) {
       names.push(...DOCK_NAMES.map((name) => name.replace("*", town)));
     } else if (Math.max(Math.abs(dx), Math.abs(dy)) <= 2) {
       names.push(`${town} Central`);
@@ -300,9 +302,16 @@ export function suggestStationName(
   return taken.has(base) ? `${base} ${number}` : base;
 }
 
-export function trackCost(world: World, kind: TrackKind, tile: number) {
+// What a tile of road, railway or canal costs. Roads and railways cross
+// water, canals included, on bridges.
+export function trackCost(
+  world: World,
+  kind: LineKind,
+  tile: number,
+  overWater: boolean
+) {
   const base = TRACK[kind].cost;
-  if (world.terrain[tile] === WATER) {
+  if (overWater) {
     return base * BRIDGE_MULTIPLIER;
   }
   return base + world.trees[tile] * TREE_CLEAR_COST;

@@ -1,8 +1,12 @@
 // What is laid on the ground for vehicles to run on
 export type TrackKind = "road" | "rail";
 
+// Everything that is built by dragging a line across the map. A canal is
+// water that players dig, for ships to sail on.
+export type LineKind = TrackKind | "canal";
+
 // The ways of moving things around. Ships need no track: they sail on any
-// water, from dock to dock.
+// water, canals included, from dock to dock.
 export type Transport = TrackKind | "water";
 
 export type Cargo = "passengers" | "coal" | "wood" | "grain" | "oil";
@@ -11,6 +15,7 @@ export type Tool =
   | "select"
   | "road"
   | "rail"
+  | "canal"
   | "road-station"
   | "rail-station"
   | "water-station"

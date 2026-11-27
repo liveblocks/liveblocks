@@ -2,12 +2,14 @@ import type { Transport } from "./types";
 import { WATER, type World } from "./world";
 
 // Which tiles have a road or a railway on them, including the streets that
-// towns start with, and which tiles ships can sail on. Rebuilt from Storage
-// whenever someone builds something.
+// towns start with, and which tiles ships can sail on: the water the map
+// came with, and the canals players dug. Rebuilt from Storage whenever
+// someone builds something.
 export type Network = {
   size: number;
   road: Uint8Array;
   rail: Uint8Array;
+  canal: Uint8Array;
   water: Uint8Array;
 };
 
@@ -19,7 +21,8 @@ export const WEST = 8;
 export function buildNetwork(
   world: World,
   roads: Iterable<string>,
-  rails: Iterable<string>
+  rails: Iterable<string>,
+  canals: Iterable<string>
 ): Network {
   const road = Uint8Array.from(world.townRoads);
   const rail = new Uint8Array(world.size * world.size);
@@ -29,8 +32,13 @@ export function buildNetwork(
   for (const key of rails) {
     rail[Number(key)] = 1;
   }
+  const canal = new Uint8Array(world.size * world.size);
   const water = world.terrain.map((terrain) => (terrain === WATER ? 1 : 0));
-  return { size: world.size, road, rail, water };
+  for (const key of canals) {
+    canal[Number(key)] = 1;
+    water[Number(key)] = 1;
+  }
+  return { size: world.size, road, rail, canal, water };
 }
 
 export function gridOf(network: Network, kind: Transport) {

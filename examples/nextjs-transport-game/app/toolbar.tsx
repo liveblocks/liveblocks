@@ -10,6 +10,7 @@ import {
   Truck,
   Undo2,
   Warehouse,
+  Waves,
 } from "lucide-react";
 import { ComponentType } from "react";
 import {
@@ -72,38 +73,45 @@ export const TOOLS: {
     icon: TrainTrack,
   },
   {
+    id: "canal",
+    label: "Canal",
+    detail: `Dig water for ships across land · ${formatMoney(TRACK.canal.cost)} per tile`,
+    shortcut: "4",
+    icon: Waves,
+  },
+  {
     id: "road-station",
     label: "Road stop",
     detail: `For buses and trucks · ${formatMoney(TRANSPORT.road.stationCost)}`,
-    shortcut: "4",
+    shortcut: "5",
     icon: Signpost,
   },
   {
     id: "rail-station",
     label: "Train station",
     detail: formatMoney(TRANSPORT.rail.stationCost),
-    shortcut: "5",
+    shortcut: "6",
     icon: Warehouse,
   },
   {
     id: "water-station",
     label: "Dock",
-    detail: `For ships, on the water by the shore · ${formatMoney(TRANSPORT.water.stationCost)}`,
-    shortcut: "6",
+    detail: `For ships, on the water by the shore or on a canal · ${formatMoney(TRANSPORT.water.stationCost)}`,
+    shortcut: "7",
     icon: Anchor,
   },
   {
     id: "vehicle",
     label: "Vehicle",
     detail: `Click two of your stations of the same kind · from ${formatMoney(TRANSPORT.road.vehicleCost)}`,
-    shortcut: "7",
+    shortcut: "8",
     icon: Truck,
   },
   {
     id: "bulldoze",
     label: "Clear",
-    detail: `Remove your tracks and stations · Demolish buildings, from ${formatMoney(BUILDINGS[0].demolishCost)}`,
-    shortcut: "8",
+    detail: `Remove your tracks, canals and stations · Demolish buildings, from ${formatMoney(BUILDINGS[0].demolishCost)}`,
+    shortcut: "9",
     icon: Trash2,
   },
 ];

@@ -19,8 +19,8 @@ import { advance } from "./simulation";
 import { townGrowth, townStations } from "./towns";
 import type {
   ActionResult,
+  LineKind,
   StationData,
-  TrackKind,
   Transport,
   Vehicle,
   VehicleData,
@@ -39,11 +39,20 @@ const NO_WAY: Record<Transport, string> = {
   water: "These two docks aren't on the same stretch of water",
 };
 
+// Where in Storage each kind of line is kept
+const LAYER: Record<LineKind, "roads" | "rails" | "canals"> = {
+  road: "roads",
+  rail: "rails",
+  canal: "canals",
+};
+
 // What is built on a tile, regardless of where that information comes from
 // (live Storage inside a mutation, or an immutable snapshot when previewing)
 export type TileView = {
   hasRoad: (tile: number) => boolean;
   hasRail: (tile: number) => boolean;
+  // Water that the map came with, or a canal
+  isWater: (tile: number) => boolean;
   stationKind: (tile: number) => Transport | null;
 };
 
@@ -54,10 +63,13 @@ function fail(message: string): ActionResult {
 function liveView(root: Root, world: World): TileView {
   const roads = root.get("roads");
   const rails = root.get("rails");
+  const canals = root.get("canals");
   const stations = root.get("stations");
   return {
     hasRoad: (tile) => world.townRoads[tile] === 1 || roads.has(String(tile)),
     hasRail: (tile) => rails.has(String(tile)),
+    isWater: (tile) =>
+      world.terrain[tile] === WATER || canals.has(String(tile)),
     stationKind: (tile) => stations.get(String(tile))?.get("kind") ?? null,
   };
 }
@@ -70,11 +82,17 @@ export function snapshotView(
   return {
     hasRoad: (tile) => network.road[tile] === 1,
     hasRail: (tile) => network.rail[tile] === 1,
+    isWater: (tile) => network.water[tile] === 1,
     stationKind: (tile) => stations.get(String(tile))?.kind ?? null,
   };
 }
 
-function hasTrack(view: TileView, kind: TrackKind, tile: number) {
+// Whether a tile already has this kind of line. Where there is water, there
+// is no canal left to dig.
+function hasTrack(view: TileView, kind: LineKind, tile: number) {
+  if (kind === "canal") {
+    return view.isWater(tile);
+  }
   return kind === "road" ? view.hasRoad(tile) : view.hasRail(tile);
 }
 
@@ -95,13 +113,18 @@ function spend(root: Root, companyId: string, amount: number) {
   company?.set("spent", company.get("spent") + amount);
 }
 
-// Returns why a road or railway can't go on a tile, or null if it can
+// Returns why a road, railway or canal can't go on a tile, or null if it
+// can. Roads and railways can be built across a canal, and a canal can be
+// dug under them: either way, the crossing becomes a bridge.
 export function trackProblem(
   world: World,
   view: TileView,
-  kind: TrackKind,
+  kind: LineKind,
   tile: number
 ) {
+  if (hasTrack(view, kind, tile)) {
+    return null;
+  }
   if (isBlocked(world, tile)) {
     return "There's a building in the way";
   }
@@ -113,15 +136,14 @@ export function trackProblem(
 }
 
 // Whether a tile touches land on one of its four sides
-function isByTheShore(world: World, tile: number) {
-  const { size } = world;
+function isByTheShore(size: number, view: TileView, tile: number) {
   const x = tile % size;
   const y = Math.floor(tile / size);
   return (
-    (x > 0 && world.terrain[tile - 1] !== WATER) ||
-    (x < size - 1 && world.terrain[tile + 1] !== WATER) ||
-    (y > 0 && world.terrain[tile - size] !== WATER) ||
-    (y < size - 1 && world.terrain[tile + size] !== WATER)
+    (x > 0 && !view.isWater(tile - 1)) ||
+    (x < size - 1 && !view.isWater(tile + 1)) ||
+    (y > 0 && !view.isWater(tile - size)) ||
+    (y < size - 1 && !view.isWater(tile + size))
   );
 }
 
@@ -139,14 +161,14 @@ export function stationProblem(
   }
   if (kind === "water") {
     // Docks are the one thing that is built on the water
-    if (world.terrain[tile] !== WATER || !isByTheShore(world, tile)) {
+    if (!view.isWater(tile) || !isByTheShore(world.size, view, tile)) {
       return "Docks are built on the water, right by the shore";
     }
     return view.hasRoad(tile) || view.hasRail(tile)
       ? "There's a bridge in the way"
       : null;
   }
-  if (world.terrain[tile] === WATER) {
+  if (view.isWater(tile)) {
     return "Stations can't be built on water";
   }
   if (kind === "road" ? view.hasRail(tile) : view.hasRoad(tile)) {
@@ -157,12 +179,12 @@ export function stationProblem(
   return null;
 }
 
-// What laying track over these tiles would cost, skipping the tiles that
-// already have some
+// What laying track or digging a canal over these tiles would cost,
+// skipping the tiles that already have some
 export function trackPlan(
   world: World,
   view: TileView,
-  kind: TrackKind,
+  kind: LineKind,
   tiles: number[]
 ) {
   let cost = 0;
@@ -172,7 +194,7 @@ export function trackPlan(
     problem = problem ?? trackProblem(world, view, kind, tile);
     if (!hasTrack(view, kind, tile)) {
       missing.push(tile);
-      cost += trackCost(world, kind, tile);
+      cost += trackCost(world, kind, tile, view.isWater(tile));
     }
   }
   return { cost, problem, missing };
@@ -187,7 +209,7 @@ export function stationCost(
   const { stationCost } = TRANSPORT[kind];
   return kind === "water" || hasTrack(view, kind, tile)
     ? stationCost
-    : stationCost + trackCost(world, kind, tile);
+    : stationCost + trackCost(world, kind, tile, false);
 }
 
 // Founds a company the first time a player picks it. Later players who pick
@@ -261,7 +283,7 @@ export function buildTrack(
   root: Root,
   world: World,
   companyId: string,
-  kind: TrackKind,
+  kind: LineKind,
   tiles: number[]
 ): ActionResult {
   if (!root.get("companies").has(companyId)) {
@@ -284,7 +306,7 @@ export function buildTrack(
     return fail("Not enough money");
   }
 
-  const tracks = root.get(kind === "road" ? "roads" : "rails");
+  const tracks = root.get(LAYER[kind]);
   for (const tile of missing) {
     tracks.set(String(tile), companyId);
   }
@@ -317,13 +339,13 @@ export function buildStation(
   // A station is also a piece of track, so vehicles can drive through it
   const key = String(tile);
   if (kind !== "water" && !hasTrack(view, kind, tile)) {
-    root.get(kind === "road" ? "roads" : "rails").set(key, companyId);
+    root.get(LAYER[kind]).set(key, companyId);
   }
   const taken = new Set<string>();
   for (const station of root.get("stations").values()) {
     taken.add(station.get("name"));
   }
-  const name = suggestStationName(world, tile, taken);
+  const name = suggestStationName(world, tile, taken, kind === "water");
   root.get("stations").set(
     key,
     new LiveObject<StationData>({
@@ -338,9 +360,10 @@ export function buildStation(
   return { ok: true, cost, message: name };
 }
 
-// Clears the given tiles: the company's own stations and tracks are removed
-// for free, and buildings are demolished for a price. A tile with a station
-// loses the station first, and its track on a second pass.
+// Clears the given tiles: the company's own stations, tracks and canals are
+// removed for free, and buildings are demolished for a price. One thing is
+// removed per tile at a time: a station first, then the track it was on,
+// and a bridge before the canal under it.
 export function bulldoze(
   root: Root,
   world: World,
@@ -349,6 +372,7 @@ export function bulldoze(
 ): ActionResult {
   const roads = root.get("roads");
   const rails = root.get("rails");
+  const canals = root.get("canals");
   const stations = root.get("stations");
   const vehicles = root.get("vehicles");
   const demolished = root.get("demolished");
@@ -394,16 +418,18 @@ export function bulldoze(
       }
       stations.delete(key);
       removed++;
-    } else if (rails.has(key) || roads.has(key)) {
-      const tracks = rails.get(key) === companyId ? rails : roads;
-      if (tracks.get(key) !== companyId) {
+    } else {
+      const mine = [rails, roads, canals].find(
+        (layer) => layer.get(key) === companyId
+      );
+      if (mine) {
+        mine.delete(key);
+        removed++;
+      } else if (rails.has(key) || roads.has(key) || canals.has(key)) {
         problem = "That belongs to another company";
-        continue;
+      } else if (world.townRoads[tile]) {
+        problem = "Town streets can't be removed";
       }
-      tracks.delete(key);
-      removed++;
-    } else if (world.townRoads[tile]) {
-      problem = "Town streets can't be removed";
     }
   }
 
@@ -595,6 +621,7 @@ export function resetGame(root: Root, seed: number, now: number) {
     demolished: new LiveMap(),
     roads: new LiveMap(),
     rails: new LiveMap(),
+    canals: new LiveMap(),
     stations: new LiveMap(),
     vehicles: new LiveMap(),
     companies: new LiveMap(),

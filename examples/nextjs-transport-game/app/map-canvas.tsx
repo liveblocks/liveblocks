@@ -20,13 +20,14 @@ import {
 import { HALF_W, worldX, worldY } from "@/game/render/shapes";
 import type {
   CompanyData,
+  LineKind,
   StationData,
   Tool,
   Vehicle,
 } from "@/game/types";
 import { nearestTown, type World } from "@/game/world";
 
-export type LineTool = "road" | "rail" | "bulldoze";
+export type LineTool = LineKind | "bulldoze";
 
 // A spot the map should move to, in tile coordinates. Every new object moves
 // the map again, even to the same spot.
@@ -87,7 +88,12 @@ const PAN_KEYS: Record<string, [number, number]> = {
 const NO_TILES: ReadonlySet<number> = new Set();
 
 function isLineTool(tool: Tool): tool is LineTool {
-  return tool === "road" || tool === "rail" || tool === "bulldoze";
+  return (
+    tool === "road" ||
+    tool === "rail" ||
+    tool === "canal" ||
+    tool === "bulldoze"
+  );
 }
 
 // Whether a press on the map has turned into dragging the map around

@@ -113,6 +113,7 @@ export function Game() {
   const seed = useStorage((root) => root.seed);
   const roads = useStorage((root) => root.roads);
   const rails = useStorage((root) => root.rails);
+  const canals = useStorage((root) => root.canals);
   const demolished = useStorage((root) => root.demolished);
   const stations = useStorageMap((root) => root.stations);
   const vehicles = useStorageMap((root) => root.vehicles);
@@ -122,17 +123,20 @@ export function Game() {
   // Its towns then grow with time, around whatever players have built.
   const generated = useMemo(() => generateWorld(seed), [seed]);
   const stationKeys = [...stations.keys()].join();
-  const railStationKeys = [...stations]
-    .flatMap(([key, station]) => (station.kind === "rail" ? [key] : []))
+  // A street can run through a road stop, but not through other stations
+  const noStreetKeys = [...stations]
+    .flatMap(([key, station]) => (station.kind === "road" ? [] : [key]))
     .join();
   const stationTiles = useMemo(() => toTiles(stationKeys), [stationKeys]);
   const built = useMemo<Built>(
     () => ({
-      tracks: new Set([...Object.keys(roads), ...Object.keys(rails)].map(Number)),
-      railStations: new Set(toTiles(railStationKeys)),
+      tracks: new Set(
+        [roads, rails, canals].flatMap((layer) => Object.keys(layer)).map(Number)
+      ),
+      noStreets: new Set(toTiles(noStreetKeys)),
       demolished: new Set(Object.keys(demolished).map(Number)),
     }),
-    [roads, rails, railStationKeys, demolished]
+    [roads, rails, canals, noStreetKeys, demolished]
   );
   const townSteps = useTownSteps(generated, stationTiles);
   const world = useMemo(
@@ -140,8 +144,14 @@ export function Game() {
     [generated, townSteps, built]
   );
   const network = useMemo(
-    () => buildNetwork(world, Object.keys(roads), Object.keys(rails)),
-    [world, roads, rails]
+    () =>
+      buildNetwork(
+        world,
+        Object.keys(roads),
+        Object.keys(rails),
+        Object.keys(canals)
+      ),
+    [world, roads, rails, canals]
   );
 
   const { toasts, notify } = useToasts();
@@ -860,7 +870,7 @@ function describe({
   routeFrom: number | null;
   balance: number;
 }) {
-  if (tool === "road" || tool === "rail") {
+  if (tool === "road" || tool === "rail" || tool === "canal") {
     const { label, cost } = TRACK[tool];
     if (dragPlan) {
       return (
@@ -868,7 +878,9 @@ function describe({
         `${label} · ${dragPlan.tiles} ${dragPlan.tiles === 1 ? "tile" : "tiles"} · ${formatMoney(dragPlan.cost)}`
       );
     }
-    return `${label} · Drag across the map to build · ${formatMoney(cost)} per tile`;
+    return tool === "canal"
+      ? `${label} · Drag across land to dig a waterway for ships · ${formatMoney(cost)} per tile`
+      : `${label} · Drag across the map to build · ${formatMoney(cost)} per tile`;
   }
 
   if (tool === "bulldoze") {
@@ -889,7 +901,7 @@ function describe({
     const { stationLabel, stationCost: baseCost } = TRANSPORT[kind];
     if (hover === null) {
       return kind === "water"
-        ? `${stationLabel} · Click on the water by the shore, near a town or an industry · ${formatMoney(baseCost)}`
+        ? `${stationLabel} · Click on the water by the shore, or on a canal, near a town or an industry · ${formatMoney(baseCost)}`
         : `${stationLabel} · Click next to a town or an industry · ${formatMoney(baseCost)}`;
     }
     const view = snapshotView(network, stations);
@@ -966,6 +978,9 @@ function describe({
   }
   if (network.road[hover]) {
     return world.townRoads[hover] ? "Town street · Anyone can drive on it" : "Road";
+  }
+  if (network.canal[hover]) {
+    return "Canal · Ships sail on it like on any water, and roads and railways cross it on bridges";
   }
   if (world.terrain[hover] === WATER) {
     return "Water · Ships sail on it from dock to dock, and roads and railways cross it on bridges";
