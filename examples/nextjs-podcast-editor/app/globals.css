@@ -51,7 +51,7 @@
   background: transparent;
 }
 
-/* Popups (menus, popovers, tooltips): a short settle from the trigger's
+/* Popups (popovers, tooltips, the selection toolbar): a short settle from the trigger's
    side. Closing is instant. */
 @keyframes popup-in {
   from {
@@ -67,11 +67,8 @@
 .popup-animate {
   --popup-y: -4px;
   transform-origin: var(
-    --radix-dropdown-menu-content-transform-origin,
-    var(
-      --radix-popover-content-transform-origin,
-      var(--radix-tooltip-content-transform-origin, top center)
-    )
+    --radix-popover-content-transform-origin,
+    var(--radix-tooltip-content-transform-origin, top center)
   );
 }
 .popup-animate[data-side="top"] {

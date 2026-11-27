@@ -3,11 +3,9 @@
 import { Popover as PopoverPrimitive } from "radix-ui";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
-import { POPUP_CLASS } from "./dropdown-menu";
 
 export const Popover = PopoverPrimitive.Root;
 export const PopoverTrigger = PopoverPrimitive.Trigger;
-export const PopoverAnchor = PopoverPrimitive.Anchor;
 
 export function PopoverContent({
   className,
@@ -18,7 +16,10 @@ export function PopoverContent({
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
         sideOffset={sideOffset}
-        className={cn(POPUP_CLASS, "p-3", className)}
+        className={cn(
+          "popup-animate z-50 min-w-32 rounded-lg bg-white p-3 text-neutral-900 shadow-lg ring-1 ring-neutral-950/10 outline-none",
+          className
+        )}
         {...props}
       />
     </PopoverPrimitive.Portal>
