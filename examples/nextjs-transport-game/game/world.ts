@@ -320,6 +320,20 @@ export function generateWorld(seed: number): World {
     townStreets.push(streets);
   }
 
+  // Whether a tile is right past the end of a street. Streets get longer as
+  // towns grow, so houses are rarely built in their way.
+  const isStreet = (x: number, y: number) =>
+    inBounds(x, y) && townRoads[y * size + x] === 1;
+  const pastStreetEnd = (x: number, y: number) =>
+    [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ].some(
+      ([dx, dy]) => isStreet(x - dx, y - dy) && isStreet(x - 2 * dx, y - 2 * dy)
+    );
+
   // Houses line the streets, and get taller toward the town center
   towns.forEach((town, townIndex) => {
     for (const street of townStreets[townIndex]) {
@@ -340,7 +354,10 @@ export function generateWorld(seed: number): World {
           ) {
             continue;
           }
-          const chance = dx === 0 || dy === 0 ? 0.8 : 0.45;
+          let chance = dx === 0 || dy === 0 ? 0.8 : 0.45;
+          if (pastStreetEnd(hx, hy)) {
+            chance = 0.06;
+          }
           if (rng() > chance) {
             continue;
           }
