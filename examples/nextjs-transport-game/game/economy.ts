@@ -3,6 +3,7 @@ import {
   BUILDINGS,
   CARGO,
   CATCHMENT,
+  DOCK_CATCHMENT,
   HOUSE_PASSENGER_RATE,
   MIN_HOUSES_FOR_PASSENGERS,
   START_MONEY,
@@ -39,6 +40,12 @@ export type StationInfo = {
 
 const stationInfoCache = new WeakMap<World, Map<number, StationInfo>>();
 
+// How many tiles around it a station on this tile serves. Only docks are
+// built on water.
+export function catchmentOf(world: World, tile: number) {
+  return world.terrain[tile] === WATER ? DOCK_CATCHMENT : CATCHMENT;
+}
+
 export function getStationInfo(world: World, tile: number): StationInfo {
   let cache = stationInfoCache.get(world);
   if (!cache) {
@@ -59,8 +66,9 @@ export function getStationInfo(world: World, tile: number): StationInfo {
   // grows gets busier
   let passengers = 0;
 
-  for (let dy = -CATCHMENT; dy <= CATCHMENT; dy++) {
-    for (let dx = -CATCHMENT; dx <= CATCHMENT; dx++) {
+  const reach = catchmentOf(world, tile);
+  for (let dy = -reach; dy <= reach; dy++) {
+    for (let dx = -reach; dx <= reach; dx++) {
       const tx = x + dx;
       const ty = y + dy;
       if (tx < 0 || ty < 0 || tx >= size || ty >= size) {
@@ -221,6 +229,9 @@ const STATION_NAMES = [
   "Old *",
 ];
 
+// What docks are called before they get one of the names above
+const DOCK_NAMES = ["* Docks", "* Harbour", "* Pier", "* Quay", "* Wharf"];
+
 // Picks a name for a new station that no other station has, whichever
 // company owns it. A station is named after what it is next to if that name
 // is still free, and gets one of the other names at random if not.
@@ -239,7 +250,9 @@ export function suggestStationName(
     const town = info.town.name;
     const dx = x - info.town.x;
     const dy = y - info.town.y;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) <= 2) {
+    if (world.terrain[tile] === WATER) {
+      names.push(...DOCK_NAMES.map((name) => name.replace("*", town)));
+    } else if (Math.max(Math.abs(dx), Math.abs(dy)) <= 2) {
       names.push(`${town} Central`);
     } else if (info.houses < MIN_HOUSES_FOR_PASSENGERS) {
       names.push(`${town} Halt`);

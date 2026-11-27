@@ -1,4 +1,9 @@
+// What is laid on the ground for vehicles to run on
 export type TrackKind = "road" | "rail";
+
+// The ways of moving things around. Ships need no track: they sail on any
+// water, from dock to dock.
+export type Transport = TrackKind | "water";
 
 export type Cargo = "passengers" | "coal" | "wood" | "grain" | "oil";
 
@@ -8,6 +13,7 @@ export type Tool =
   | "rail"
   | "road-station"
   | "rail-station"
+  | "water-station"
   | "vehicle"
   | "bulldoze";
 
@@ -18,7 +24,7 @@ export type Stock = { [cargo in Cargo]?: { amount: number; at: number } };
 // `owner` is always the id of a company, not of a player
 export type StationData = {
   owner: string;
-  kind: TrackKind;
+  kind: Transport;
   name: string;
   builtAt: number;
   stock: Stock;
@@ -26,7 +32,7 @@ export type StationData = {
 
 export type VehicleData = {
   owner: string;
-  kind: TrackKind;
+  kind: Transport;
   // Tile keys of the stations this vehicle shuttles between
   stops: string[];
   // Index of the current leg: the vehicle travels from `stops[leg % n]` to

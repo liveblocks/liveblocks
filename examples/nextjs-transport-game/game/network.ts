@@ -1,12 +1,14 @@
-import type { TrackKind } from "./types";
-import type { World } from "./world";
+import type { Transport } from "./types";
+import { WATER, type World } from "./world";
 
 // Which tiles have a road or a railway on them, including the streets that
-// towns start with. Rebuilt from Storage whenever someone builds something.
+// towns start with, and which tiles ships can sail on. Rebuilt from Storage
+// whenever someone builds something.
 export type Network = {
   size: number;
   road: Uint8Array;
   rail: Uint8Array;
+  water: Uint8Array;
 };
 
 export const NORTH = 1;
@@ -27,11 +29,12 @@ export function buildNetwork(
   for (const key of rails) {
     rail[Number(key)] = 1;
   }
-  return { size: world.size, road, rail };
+  const water = world.terrain.map((terrain) => (terrain === WATER ? 1 : 0));
+  return { size: world.size, road, rail, water };
 }
 
-export function gridOf(network: Network, kind: TrackKind) {
-  return kind === "road" ? network.road : network.rail;
+export function gridOf(network: Network, kind: Transport) {
+  return network[kind];
 }
 
 // Bitmask of the neighbors a track tile connects to. Tracks connect to every

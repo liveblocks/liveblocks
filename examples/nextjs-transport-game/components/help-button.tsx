@@ -19,13 +19,13 @@ const FEATURES: Feature[] = [
     icon: <RouteIcon />,
     title: "Build a network",
     description:
-      "Pick the road or rail tool and drag across the map to lay track, then place stations next to towns and industries.",
+      "Pick the road or rail tool and drag across the map to lay track, then place stations next to towns and industries. Docks go on the water by the shore, and ships need no track at all.",
   },
   {
     icon: <TruckIcon />,
     title: "Run vehicles",
     description:
-      "With the vehicle tool, click two of your stations to buy a bus, truck or train that carries passengers and cargo between them.",
+      "With the vehicle tool, click two of your stations to buy a bus, truck, train or ship that carries passengers and cargo between them. Click an industry, or open the Cargo window, to see what needs to go where.",
   },
   {
     icon: <UsersIcon />,

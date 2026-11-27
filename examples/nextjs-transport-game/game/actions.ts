@@ -4,7 +4,7 @@ import {
   BUILDINGS,
   COMPANIES,
   MAX_VEHICLES_PER_COMPANY,
-  TRACK,
+  TRANSPORT,
 } from "./constants";
 import {
   cargoBetween,
@@ -21,6 +21,7 @@ import type {
   ActionResult,
   StationData,
   TrackKind,
+  Transport,
   Vehicle,
   VehicleData,
 } from "./types";
@@ -32,12 +33,18 @@ type Root = LiveObject<Liveblocks["Storage"]>;
 
 const MAX_TILES_PER_BUILD = 160;
 
+const NO_WAY: Record<Transport, string> = {
+  road: "No road connects these two stops",
+  rail: "No railway connects these two stations",
+  water: "These two docks aren't on the same stretch of water",
+};
+
 // What is built on a tile, regardless of where that information comes from
 // (live Storage inside a mutation, or an immutable snapshot when previewing)
 export type TileView = {
   hasRoad: (tile: number) => boolean;
   hasRail: (tile: number) => boolean;
-  stationKind: (tile: number) => TrackKind | null;
+  stationKind: (tile: number) => Transport | null;
 };
 
 function fail(message: string): ActionResult {
@@ -105,20 +112,42 @@ export function trackProblem(
   return null;
 }
 
+// Whether a tile touches land on one of its four sides
+function isByTheShore(world: World, tile: number) {
+  const { size } = world;
+  const x = tile % size;
+  const y = Math.floor(tile / size);
+  return (
+    (x > 0 && world.terrain[tile - 1] !== WATER) ||
+    (x < size - 1 && world.terrain[tile + 1] !== WATER) ||
+    (y > 0 && world.terrain[tile - size] !== WATER) ||
+    (y < size - 1 && world.terrain[tile + size] !== WATER)
+  );
+}
+
 export function stationProblem(
   world: World,
   view: TileView,
-  kind: TrackKind,
+  kind: Transport,
   tile: number
 ) {
   if (isBlocked(world, tile)) {
     return "There's a building in the way";
   }
-  if (world.terrain[tile] === WATER) {
-    return "Stations can't be built on water";
-  }
   if (view.stationKind(tile)) {
     return "There's already a station here";
+  }
+  if (kind === "water") {
+    // Docks are the one thing that is built on the water
+    if (world.terrain[tile] !== WATER || !isByTheShore(world, tile)) {
+      return "Docks are built on the water, right by the shore";
+    }
+    return view.hasRoad(tile) || view.hasRail(tile)
+      ? "There's a bridge in the way"
+      : null;
+  }
+  if (world.terrain[tile] === WATER) {
+    return "Stations can't be built on water";
   }
   if (kind === "road" ? view.hasRail(tile) : view.hasRoad(tile)) {
     return kind === "road"
@@ -152,13 +181,13 @@ export function trackPlan(
 export function stationCost(
   world: World,
   view: TileView,
-  kind: TrackKind,
+  kind: Transport,
   tile: number
 ) {
-  return (
-    TRACK[kind].stationCost +
-    (hasTrack(view, kind, tile) ? 0 : trackCost(world, kind, tile))
-  );
+  const { stationCost } = TRANSPORT[kind];
+  return kind === "water" || hasTrack(view, kind, tile)
+    ? stationCost
+    : stationCost + trackCost(world, kind, tile);
 }
 
 // Founds a company the first time a player picks it. Later players who pick
@@ -263,7 +292,7 @@ export function buildStation(
   root: Root,
   world: World,
   companyId: string,
-  kind: TrackKind,
+  kind: Transport,
   tile: number,
   now: number
 ): ActionResult {
@@ -283,7 +312,7 @@ export function buildStation(
 
   // A station is also a piece of track, so vehicles can drive through it
   const key = String(tile);
-  if (!hasTrack(view, kind, tile)) {
+  if (kind !== "water" && !hasTrack(view, kind, tile)) {
     root.get(kind === "road" ? "roads" : "rails").set(key, companyId);
   }
   const taken = new Set<string>();
@@ -413,11 +442,7 @@ export function buyVehicle(
     return fail("Both stations must be of the same type");
   }
   if (!findPath(gridOf(network, kind), world.size, fromTile, toTile)) {
-    return fail(
-      kind === "road"
-        ? "No road connects these two stops"
-        : "No railway connects these two stations"
-    );
+    return fail(NO_WAY[kind]);
   }
 
   // A vehicle with nothing to carry would only cost money
@@ -445,7 +470,7 @@ export function buyVehicle(
     return fail(`You can't own more than ${MAX_VEHICLES_PER_COMPANY} vehicles`);
   }
 
-  const cost = TRACK[kind].vehicleCost;
+  const cost = TRANSPORT[kind].vehicleCost;
   if (cost > liveBalance(root, companyId)) {
     return fail("Not enough money");
   }
@@ -504,7 +529,7 @@ export function sellVehicle(
   }
 
   // Keep what the vehicle earned, and get half of its price back
-  const refund = Math.round(TRACK[vehicle.get("kind")].vehicleCost / 2);
+  const refund = Math.round(TRANSPORT[vehicle.get("kind")].vehicleCost / 2);
   company.update({
     banked: company.get("banked") + vehicle.get("earned"),
     spent: company.get("spent") - refund,

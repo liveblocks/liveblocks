@@ -1,4 +1,4 @@
-import { TRACK, TRAIN_LENGTH } from "./constants";
+import { TRAIN_LENGTH, TRANSPORT } from "./constants";
 import type { Vehicle } from "./types";
 
 export type PathPoint = {
@@ -11,7 +11,7 @@ export type PathPoint = {
 };
 
 export function travelMs(vehicle: Pick<Vehicle, "kind" | "path">) {
-  return ((vehicle.path.length - 1) / TRACK[vehicle.kind].speed) * 1000;
+  return ((vehicle.path.length - 1) / TRANSPORT[vehicle.kind].speed) * 1000;
 }
 
 // When the vehicle next needs attention: either it reaches the end of its
@@ -35,7 +35,7 @@ export function headDistance(
   }
   const lead = vehicle.kind === "rail" ? Math.min(TRAIN_LENGTH, length) : 0;
   const elapsed = Math.max(0, time - vehicle.departAt) / 1000;
-  return Math.min(length, lead + elapsed * TRACK[vehicle.kind].speed);
+  return Math.min(length, lead + elapsed * TRANSPORT[vehicle.kind].speed);
 }
 
 // Point at `distance` tiles along a path of tiles. Vehicles go straight

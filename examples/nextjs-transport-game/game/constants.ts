@@ -1,4 +1,4 @@
-import type { Cargo, TrackKind } from "./types";
+import type { Cargo, TrackKind, Transport } from "./types";
 
 export const MAP_SIZE = 64;
 export const TILE_W = 64;
@@ -6,6 +6,8 @@ export const TILE_H = 32;
 
 // Stations serve every house and industry within this many tiles
 export const CATCHMENT = 3;
+// Docks sit out on the water, so they reach further
+export const DOCK_CATCHMENT = 5;
 
 // The transport companies players choose from when they join. A company is
 // run by one player at a time, and keeps everything it owns when that player
@@ -80,12 +82,15 @@ export const CARGO: Record<
   oil: { label: "Oil", rate: 3.4, color: "#56606e" },
 };
 
-export const TRACK: Record<
-  TrackKind,
+// Cost per tile
+export const TRACK: Record<TrackKind, { label: string; cost: number }> = {
+  road: { label: "Road", cost: 100 },
+  rail: { label: "Railway", cost: 220 },
+};
+
+export const TRANSPORT: Record<
+  Transport,
   {
-    label: string;
-    // Cost per tile
-    cost: number;
     stationLabel: string;
     stationCost: number;
     vehicleLabel: string;
@@ -98,8 +103,6 @@ export const TRACK: Record<
   }
 > = {
   road: {
-    label: "Road",
-    cost: 100,
     stationLabel: "Road stop",
     stationCost: 1500,
     vehicleLabel: "Road vehicle",
@@ -109,8 +112,6 @@ export const TRACK: Record<
     runningCost: 5,
   },
   rail: {
-    label: "Railway",
-    cost: 220,
     stationLabel: "Train station",
     stationCost: 3500,
     vehicleLabel: "Train",
@@ -118,6 +119,16 @@ export const TRACK: Record<
     capacity: 90,
     speed: 3.6,
     runningCost: 18,
+  },
+  // Slow, but they carry a lot and need nothing built between two docks
+  water: {
+    stationLabel: "Dock",
+    stationCost: 3000,
+    vehicleLabel: "Ship",
+    vehicleCost: 20_000,
+    capacity: 130,
+    speed: 1.5,
+    runningCost: 8,
   },
 };
 

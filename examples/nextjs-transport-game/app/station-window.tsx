@@ -1,7 +1,7 @@
 "use client";
 
 import { Window } from "@/components/window";
-import { CARGO, STOCK_CAP } from "@/game/constants";
+import { CARGO, STOCK_CAP, TRANSPORT } from "@/game/constants";
 import { getStationInfo, stockAt } from "@/game/economy";
 import type { CompanyData, StationData, Vehicle } from "@/game/types";
 import type { World } from "@/game/world";
@@ -47,7 +47,7 @@ export function StationWindow({
           />
           <span className="truncate">
             {owner?.name ?? "Unknown"} ·{" "}
-            {station.kind === "road" ? "Road stop" : "Train station"}
+            {TRANSPORT[station.kind].stationLabel}
           </span>
         </p>
 

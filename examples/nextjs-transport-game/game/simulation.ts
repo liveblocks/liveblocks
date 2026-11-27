@@ -1,4 +1,4 @@
-import { CARGO, CATCHUP_MS, LOAD_MS, RETRY_MS, TRACK } from "./constants";
+import { CARGO, CATCHUP_MS, LOAD_MS, RETRY_MS, TRANSPORT } from "./constants";
 import { getStationInfo, stockAt, tileDistance } from "./economy";
 import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
@@ -59,7 +59,7 @@ export function advance(
       income = vehicle.load * Math.max(1, distance) * CARGO[vehicle.cargo].rate;
     }
     const runningCost =
-      (vehicle.path.length - 1) * TRACK[vehicle.kind].runningCost;
+      (vehicle.path.length - 1) * TRANSPORT[vehicle.kind].runningCost;
 
     vehicle.earned += Math.round(income - runningCost);
     vehicle.lastIncome = Math.round(income);
@@ -109,7 +109,7 @@ export function advance(
       }
     }
 
-    const load = Math.min(TRACK[vehicle.kind].capacity, Math.floor(available));
+    const load = Math.min(TRANSPORT[vehicle.kind].capacity, Math.floor(available));
     if (cargo && load > 0) {
       changedStocks.set(fromKey, {
         ...from.stock,

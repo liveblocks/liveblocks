@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Anchor,
   MousePointer2,
   Signpost,
   TrainTrack,
@@ -15,7 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Window } from "@/components/window";
-import { BUILDINGS, TRACK } from "@/game/constants";
+import { BUILDINGS, TRACK, TRANSPORT } from "@/game/constants";
 import { formatMoney } from "@/game/economy";
 import type { Tool } from "@/game/types";
 
@@ -71,29 +72,36 @@ export const TOOLS: {
   {
     id: "road-station",
     label: "Road stop",
-    detail: `For buses and trucks · ${formatMoney(TRACK.road.stationCost)}`,
+    detail: `For buses and trucks · ${formatMoney(TRANSPORT.road.stationCost)}`,
     shortcut: "4",
     icon: Signpost,
   },
   {
     id: "rail-station",
     label: "Train station",
-    detail: formatMoney(TRACK.rail.stationCost),
+    detail: formatMoney(TRANSPORT.rail.stationCost),
     shortcut: "5",
     icon: Warehouse,
   },
   {
+    id: "water-station",
+    label: "Dock",
+    detail: `For ships, on the water by the shore · ${formatMoney(TRANSPORT.water.stationCost)}`,
+    shortcut: "6",
+    icon: Anchor,
+  },
+  {
     id: "vehicle",
     label: "Vehicle",
-    detail: `Click two of your stations · from ${formatMoney(TRACK.road.vehicleCost)}`,
-    shortcut: "6",
+    detail: `Click two of your stations of the same kind · from ${formatMoney(TRANSPORT.road.vehicleCost)}`,
+    shortcut: "7",
     icon: Truck,
   },
   {
     id: "bulldoze",
     label: "Clear",
     detail: `Remove your tracks and stations · Demolish buildings, from ${formatMoney(BUILDINGS[0].demolishCost)}`,
-    shortcut: "7",
+    shortcut: "8",
     icon: Trash2,
   },
 ];

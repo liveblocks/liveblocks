@@ -1,13 +1,21 @@
 "use client";
 
-import { Bus, Copy, TrainFront, Trash2, TriangleAlert, Truck } from "lucide-react";
+import {
+  Bus,
+  Copy,
+  Ship,
+  TrainFront,
+  Trash2,
+  TriangleAlert,
+  Truck,
+} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Window } from "@/components/window";
-import { CARGO, MAX_VEHICLES_PER_COMPANY, TRACK } from "@/game/constants";
+import { CARGO, MAX_VEHICLES_PER_COMPANY, TRANSPORT } from "@/game/constants";
 import { cargoBetween, companyBalance, formatMoney } from "@/game/economy";
 import type { CompanyData, StationData, Vehicle } from "@/game/types";
 import type { World } from "@/game/world";
@@ -118,7 +126,10 @@ export function VehiclesWindow({
             Place two stations: one next to a town or an industry, one where its
             passengers or cargo should go.
           </li>
-          <li>Connect them with a road or a railway.</li>
+          <li>
+            Connect them with a road or a railway. Docks only need open water
+            between them.
+          </li>
           <li>Pick the vehicle tool and click both stations.</li>
         </ol>
       ) : (
@@ -162,7 +173,12 @@ function VehicleRow({
   const passengers =
     cargoBetween(world, Number(from), Number(to)).includes("passengers") ||
     cargoBetween(world, Number(to), Number(from)).includes("passengers");
-  const Icon = vehicle.kind === "rail" ? TrainFront : passengers ? Bus : Truck;
+  let Icon = passengers ? Bus : Truck;
+  if (vehicle.kind === "rail") {
+    Icon = TrainFront;
+  } else if (vehicle.kind === "water") {
+    Icon = Ship;
+  }
   // Without a path, `departAt` is when the vehicle next looks for a route
   const stalled = vehicle.path.length < 2 && vehicle.departAt > Date.now();
 
@@ -212,7 +228,7 @@ function VehicleRow({
             </button>
           </TooltipTrigger>
           <TooltipContent sideOffset={4}>
-            Buy another one · {formatMoney(TRACK[vehicle.kind].vehicleCost)}
+            Buy another one · {formatMoney(TRANSPORT[vehicle.kind].vehicleCost)}
           </TooltipContent>
         </Tooltip>
         <Tooltip>
@@ -227,7 +243,7 @@ function VehicleRow({
             </button>
           </TooltipTrigger>
           <TooltipContent sideOffset={4}>
-            Sell · {formatMoney(TRACK[vehicle.kind].vehicleCost / 2)} back
+            Sell · {formatMoney(TRANSPORT[vehicle.kind].vehicleCost / 2)} back
           </TooltipContent>
         </Tooltip>
       </span>

@@ -25,8 +25,9 @@ This example shows how to build a multiplayer transport game with
 [Presence](https://liveblocks.io/docs/api-reference/liveblocks-react#Presence), and
 [Next.js](https://nextjs.org/). It's a small tycoon game inspired by classics
 like OpenTTD: every player picks a transport company to run on a shared
-isometric map, building roads, railways and stations, then buying buses, trucks
-and trains to carry passengers and cargo between growing towns and industries.
+isometric map, building roads, railways, stations and docks, then buying buses,
+trucks, trains and ships to carry passengers and cargo between growing towns
+and industries.
 Everything players build, every vehicle and every cursor syncs in realtime.
 
 ## Getting started

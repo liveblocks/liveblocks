@@ -34,6 +34,7 @@ import {
   CHEAT_MONEY,
   COMPANIES,
   TRACK,
+  TRANSPORT,
 } from "@/game/constants";
 import {
   cargoBetween,
@@ -52,7 +53,7 @@ import {
   townStations,
   townStats,
 } from "@/game/towns";
-import type { ActionResult, Tool, TrackKind } from "@/game/types";
+import type { ActionResult, Tool, Transport } from "@/game/types";
 import {
   generateWorld,
   type Industry,
@@ -89,6 +90,13 @@ const OVERDUE_MS = 3000;
 const TICK_MS = 250;
 
 const TOWN_NEWS_COLOR = "#737373";
+
+// The tools that place a station, and the kind of station they place
+const STATION_TOOLS: { [tool in Tool]?: Transport } = {
+  "road-station": "road",
+  "rail-station": "rail",
+  "water-station": "water",
+};
 
 const NO_COMPANY: ActionResult = {
   ok: false,
@@ -227,7 +235,7 @@ export function Game() {
   );
 
   const placeStation = useMutation(
-    ({ storage, self }, kind: TrackKind, tile: number) => {
+    ({ storage, self }, kind: Transport, tile: number) => {
       const { company: id } = self.presence;
       return id === null
         ? NO_COMPANY
@@ -299,19 +307,23 @@ export function Game() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [selectTool, cheat, floatMoney, myCompany]);
 
-  const describeVehicle = (kind: TrackKind, from: number, to: number) => {
+  const describeVehicle = (kind: Transport, from: number, to: number) => {
     if (kind === "rail") {
       return "a train";
     }
-    const cargo = [
+    const passengers = [
       ...cargoBetween(world, from, to),
       ...cargoBetween(world, to, from),
-    ];
-    return cargo.includes("passengers") ? "a bus" : "a truck";
+    ].includes("passengers");
+    if (kind === "water") {
+      return passengers ? "a ferry" : "a ship";
+    }
+    return passengers ? "a bus" : "a truck";
   };
 
   const onTileClick = (tile: number) => {
     const station = stations.get(String(tile));
+    const stationKind = STATION_TOOLS[tool];
 
     if (tool === "select") {
       setSelectedStation(station ? tile : null);
@@ -320,9 +332,8 @@ export function Game() {
       } else if (!station && world.houseAt[tile] >= 0) {
         setSelectedTown(world.houses[world.houseAt[tile]].town);
       }
-    } else if (tool === "road-station" || tool === "rail-station") {
-      const kind = tool === "road-station" ? "road" : "rail";
-      const result = settle(placeStation(kind, tile));
+    } else if (stationKind) {
+      const result = settle(placeStation(stationKind, tile));
       if (result.ok && company) {
         announce(`${company.name} opened ${result.message}`);
       }
@@ -746,7 +757,7 @@ function describe({
 }: {
   world: World;
   network: Network;
-  stations: ReadonlyMap<string, { owner: string; kind: TrackKind; name: string }>;
+  stations: ReadonlyMap<string, { owner: string; kind: Transport; name: string }>;
   companies: ReadonlyMap<string, { name: string }>;
   tool: Tool;
   hover: number | null;
@@ -778,11 +789,13 @@ function describe({
     return `Clear · Click or drag over your tracks and stations to remove them, or over buildings to demolish them, from ${formatMoney(BUILDINGS[0].demolishCost)} for a cottage`;
   }
 
-  if (tool === "road-station" || tool === "rail-station") {
-    const kind = tool === "road-station" ? "road" : "rail";
-    const { stationLabel, stationCost: baseCost } = TRACK[kind];
+  const kind = STATION_TOOLS[tool];
+  if (kind) {
+    const { stationLabel, stationCost: baseCost } = TRANSPORT[kind];
     if (hover === null) {
-      return `${stationLabel} · Click next to a town or an industry · ${formatMoney(baseCost)}`;
+      return kind === "water"
+        ? `${stationLabel} · Click on the water by the shore, near a town or an industry · ${formatMoney(baseCost)}`
+        : `${stationLabel} · Click next to a town or an industry · ${formatMoney(baseCost)}`;
     }
     const view = snapshotView(network, stations);
     const problem = stationProblem(world, view, kind, hover);
@@ -814,7 +827,7 @@ function describe({
     }
     const from = stations.get(String(routeFrom));
     const to = hover !== null ? stations.get(String(hover)) : undefined;
-    const cost = TRACK[from?.kind ?? "road"].vehicleCost;
+    const cost = TRANSPORT[from?.kind ?? "road"].vehicleCost;
     if (!from || !to || hover === null || hover === routeFrom) {
       return `Vehicle · Now click the station to go to · ${formatMoney(cost)}`;
     }
@@ -860,7 +873,7 @@ function describe({
     return world.townRoads[hover] ? "Town street · Anyone can drive on it" : "Road";
   }
   if (world.terrain[hover] === WATER) {
-    return "Water · Roads and railways cross it on bridges";
+    return "Water · Ships sail on it from dock to dock, and roads and railways cross it on bridges";
   }
   return world.trees[hover] > 0 ? "Woodland" : "Open land";
 }

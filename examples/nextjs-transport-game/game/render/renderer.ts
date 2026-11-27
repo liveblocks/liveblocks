@@ -1,12 +1,13 @@
 import {
   CARGO,
   CATCHMENT,
+  DOCK_CATCHMENT,
   TILE_H,
   TILE_W,
   TRAIN_WAGON_GAP,
   TRAIN_WAGONS,
 } from "../constants";
-import { cargoBetween, formatMoney } from "../economy";
+import { cargoBetween, catchmentOf, formatMoney } from "../economy";
 import { headDistance, type PathPoint, pointOnPath } from "../motion";
 import {
   connectionsAt,
@@ -34,6 +35,8 @@ import {
   HALF_H,
   HALF_W,
   orientedBox,
+  type Point3,
+  quad,
   shade,
   tileAt,
   tileDiamond,
@@ -413,11 +416,14 @@ export class Renderer {
     this.drawTerrain(ctx, zoom);
 
     this.drawStationPads(ctx, scene);
+    const { dynamics, underBridges } = this.collectDynamics(ctx, scene, now);
+    for (const ship of underBridges) {
+      ship.draw();
+    }
     this.drawTracks(ctx, scene.network);
 
     // Buildings, trees, stations and vehicles, from the back of the map to
     // the front, so that things closer to the camera cover what's behind
-    const dynamics = this.collectDynamics(ctx, scene, now);
     const detail = spriteScale(dpr * zoom);
     let staticIndex = 0;
     let dynamicIndex = 0;
@@ -567,7 +573,9 @@ export class Renderer {
     for (const [key, station] of scene.stations) {
       const tile = Number(key);
       tileDiamond(ctx, tile % size, Math.floor(tile / size), 1);
-      ctx.fillStyle = "#c9c3b6";
+      // Docks are out on the water: only their berth is marked
+      ctx.fillStyle =
+        station.kind === "water" ? "rgba(255, 255, 255, 0.2)" : "#c9c3b6";
       ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = scene.companies.get(station.owner)?.color ?? "#888888";
@@ -578,19 +586,39 @@ export class Renderer {
   private collectDynamics(ctx: Ctx, scene: Scene, now: number) {
     const { size } = this.world;
     const dynamics: DynamicItem[] = [];
+    // Ships that are passing under a bridge: they are drawn before the
+    // tracks, so that the bridge covers them
+    const underBridges: DynamicItem[] = [];
     const colorOf = (owner: string) =>
       scene.companies.get(owner)?.color ?? "#888888";
+    const isBridge = (x: number, y: number) => {
+      const tile = Math.floor(y) * size + Math.floor(x);
+      return scene.network.road[tile] === 1 || scene.network.rail[tile] === 1;
+    };
 
     for (const [key, station] of scene.stations) {
       const tile = Number(key);
       const x = tile % size;
       const y = Math.floor(tile / size);
-      const mask = connectionsAt(gridOf(scene.network, station.kind), size, tile);
+      if (station.kind === "water") {
+        const side = this.shoreSide(tile);
+        const color = colorOf(station.owner);
+        // A pier on the far side of the tile is behind a ship moored at the
+        // dock, and one on the near side is in front of it
+        const behind = side === NORTH || side === WEST;
+        dynamics.push({
+          depth: x + y + (behind ? 0.3 : 1.5),
+          draw: () => drawDock(ctx, x, y, side, color),
+        });
+        continue;
+      }
+      const { kind } = station;
+      const mask = connectionsAt(gridOf(scene.network, kind), size, tile);
       const alongX = mask === 0 || (mask & (EAST | WEST)) !== 0;
       const color = colorOf(station.owner);
       dynamics.push({
         depth: x + y + 0.55,
-        draw: () => drawStation(ctx, x, y, station.kind, alongX, color),
+        draw: () => drawStation(ctx, x, y, kind, alongX, color),
       });
     }
 
@@ -609,6 +637,19 @@ export class Renderer {
         point.dy = 0;
       } else {
         pointOnPath(vehicle.path, size, headDistance(vehicle, now), point);
+      }
+
+      if (vehicle.kind === "water") {
+        const { x, y, dx, dy } = point;
+        const under =
+          isBridge(x, y) ||
+          isBridge(x + dx * SHIP_LENGTH * 0.5, y + dy * SHIP_LENGTH * 0.5) ||
+          isBridge(x - dx * SHIP_LENGTH * 0.5, y - dy * SHIP_LENGTH * 0.5);
+        (under ? underBridges : dynamics).push({
+          depth: x + y,
+          draw: () => drawShip(ctx, x, y, dx, dy, color, passengers, cargo),
+        });
+        continue;
       }
 
       if (vehicle.kind === "road") {
@@ -640,7 +681,25 @@ export class Renderer {
       }
     }
 
-    return dynamics.sort((a, b) => a.depth - b.depth);
+    dynamics.sort((a, b) => a.depth - b.depth);
+    return { dynamics, underBridges };
+  }
+
+  // Which side of a water tile the land is on. A dock's pier goes there.
+  private shoreSide(tile: number) {
+    const { size, terrain } = this.world;
+    const x = tile % size;
+    const y = Math.floor(tile / size);
+    if (y > 0 && terrain[tile - size] !== WATER) {
+      return NORTH;
+    }
+    if (x > 0 && terrain[tile - 1] !== WATER) {
+      return WEST;
+    }
+    if (x < size - 1 && terrain[tile + 1] !== WATER) {
+      return EAST;
+    }
+    return SOUTH;
   }
 
   private carriesPassengers(id: string, vehicle: Vehicle) {
@@ -668,13 +727,13 @@ export class Renderer {
       ctx.stroke();
     };
 
-    const catchment = (tile: number) => {
+    const catchment = (tile: number, reach: number) => {
       const x = tile % size;
       const y = Math.floor(tile / size);
-      const x0 = Math.max(0, x - CATCHMENT);
-      const y0 = Math.max(0, y - CATCHMENT);
-      const x1 = Math.min(size, x + CATCHMENT + 1);
-      const y1 = Math.min(size, y + CATCHMENT + 1);
+      const x0 = Math.max(0, x - reach);
+      const y0 = Math.max(0, y - reach);
+      const x1 = Math.min(size, x + reach + 1);
+      const y1 = Math.min(size, y + reach + 1);
       ctx.beginPath();
       ctx.moveTo(worldX(x0, y0), worldY(x0, y0));
       ctx.lineTo(worldX(x1, y0), worldY(x1, y0));
@@ -691,14 +750,19 @@ export class Renderer {
     };
 
     if (scene.selectedStation !== null) {
-      catchment(scene.selectedStation);
+      catchment(
+        scene.selectedStation,
+        catchmentOf(this.world, scene.selectedStation)
+      );
       outline(scene.selectedStation, "#ffffff", 2.5);
     }
 
-    const placingStation =
-      scene.tool === "road-station" || scene.tool === "rail-station";
-    if (placingStation && scene.hover !== null) {
-      catchment(scene.hover);
+    if (scene.hover !== null) {
+      if (scene.tool === "water-station") {
+        catchment(scene.hover, DOCK_CATCHMENT);
+      } else if (scene.tool === "road-station" || scene.tool === "rail-station") {
+        catchment(scene.hover, CATCHMENT);
+      }
     }
 
     if (scene.preview) {
@@ -1000,6 +1064,122 @@ function drawStation(
   } else {
     box(ctx, 0, 0, x + 0.03, y + 0.08, x + 0.22, y + 0.92, 0, 12, "#efe6d6", roof);
     box(ctx, 0, 0, x + 0.01, y + 0.04, x + 0.3, y + 0.96, 12, 14, color);
+  }
+}
+
+// A wooden pier along the shore, with a harbor office in the company's color
+function drawDock(ctx: Ctx, x: number, y: number, side: number, color: string) {
+  const wood = "#a07c50";
+  const planks = "#c39e6c";
+  const depth = 0.32;
+  const alongX = side === NORTH || side === SOUTH;
+  // The pier runs along the edge of the tile that touches land
+  let x0 = x + 0.04;
+  let y0 = y + 0.04;
+  let x1 = x + 0.96;
+  let y1 = y + 0.96;
+  if (side === NORTH) {
+    y0 = y - 0.06;
+    y1 = y + depth;
+  } else if (side === SOUTH) {
+    y0 = y + 1 - depth;
+    y1 = y + 1.06;
+  } else if (side === WEST) {
+    x0 = x - 0.06;
+    x1 = x + depth;
+  } else {
+    x0 = x + 1 - depth;
+    x1 = x + 1.06;
+  }
+  box(ctx, 0, 0, x0, y0, x1, y1, 0, 4, wood, planks);
+
+  const office = alongX
+    ? ([x0 + 0.08, y0 + 0.06, x0 + 0.36, y1 - 0.06] as const)
+    : ([x0 + 0.06, y0 + 0.08, x1 - 0.06, y0 + 0.36] as const);
+  box(ctx, 0, 0, office[0], office[1], office[2], office[3], 4, 12, "#efe6d6", color);
+
+  // Bollards to tie ships to
+  for (const along of [0.55, 0.8]) {
+    const bx = alongX ? x0 + along * (x1 - x0) : (x0 + x1) / 2;
+    const by = alongX ? (y0 + y1) / 2 : y0 + along * (y1 - y0);
+    box(ctx, 0, 0, bx - 0.025, by - 0.025, bx + 0.025, by + 0.025, 4, 7, "#3f4348");
+  }
+}
+
+const SHIP_LENGTH = 0.74;
+// The outline of a hull seen from above, as [along, across] in tiles, with
+// the bow pointing along the first axis
+const HULL: readonly (readonly [number, number])[] = [
+  [0.37, 0],
+  [0.2, 0.1],
+  [-0.33, 0.1],
+  [-0.37, 0.06],
+  [-0.37, -0.06],
+  [-0.33, -0.1],
+  [0.2, -0.1],
+];
+const HULL_HEIGHT = 5;
+
+function drawShip(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  dx: number,
+  dy: number,
+  color: string,
+  passengers: boolean,
+  cargo: Cargo | null
+) {
+  const outline = (z: number, grow = 1): Point3[] =>
+    HULL.map(([along, across]) => [
+      x + (dx * along - dy * across) * grow,
+      y + (dy * along + dx * across) * grow,
+      z,
+    ]);
+
+  // Foam around the hull, then the hull itself, built up in thin layers so
+  // it looks right from every direction
+  quad(ctx, 0, 0, outline(0, 1.18), "rgba(255, 255, 255, 0.4)");
+  for (let z = 0; z < HULL_HEIGHT; z++) {
+    quad(ctx, 0, 0, outline(z), z < HULL_HEIGHT - 2 ? "#2b3440" : color);
+  }
+  quad(ctx, 0, 0, outline(HULL_HEIGHT), passengers ? "#e8edf2" : "#c9b48a");
+
+  // Parts on deck, by how far along the hull they are (the bow is positive)
+  const part = (
+    along: number,
+    length: number,
+    width: number,
+    z0: number,
+    z1: number,
+    side: string,
+    top = side
+  ) =>
+    orientedBox(ctx, x + dx * along, y + dy * along, dx, dy, length, width, z0, z1, side, top);
+  const deck = HULL_HEIGHT;
+  const load = cargoColor(cargo);
+
+  const parts = passengers
+    ? [
+        // A ferry: a long cabin, with a funnel toward the stern
+        () => part(-0.16, 0.07, 0.07, deck + 5, deck + 10, color, shade(color, 0.7)),
+        () => {
+          part(-0.02, 0.44, 0.15, deck, deck + 1.5, "#f4f4f5");
+          part(-0.02, 0.44, 0.15, deck + 1.5, deck + 3.5, "#6f8fae");
+          part(-0.02, 0.44, 0.15, deck + 3.5, deck + 5, "#f4f4f5", "#ffffff");
+        },
+      ]
+    : [
+        // A freighter: the bridge at the stern, and a hold in front of it
+        () => part(-0.25, 0.12, 0.15, deck, deck + 8, "#f4f4f5", color),
+        () => part(0.01, 0.36, 0.13, deck, deck + 2, "#6b7078", load ?? "#4b5057"),
+      ];
+  // Whichever part is further from the camera goes first
+  if (dx + dy < 0) {
+    parts.reverse();
+  }
+  for (const draw of parts) {
+    draw();
   }
 }
 
