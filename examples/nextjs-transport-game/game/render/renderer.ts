@@ -173,11 +173,20 @@ function addTrackTile(path: Path2D, x: number, y: number, mask: number) {
   return arms.length === 1;
 }
 
-function bakeTerrain(world: World, createCanvas: CanvasFactory) {
+type Terrain = {
+  // Every tile of the same color, as one shape
+  ground: { color: string; path: Path2D }[];
+  grid: Path2D;
+  ripples: Path2D;
+};
+
+// The ground is kept as shapes rather than as a picture, so the edges of
+// tiles stay sharp however far the map is zoomed in
+function buildTerrain(world: World): Terrain {
   const { size } = world;
-  const canvas = createCanvas(size * TILE_W, size * TILE_H);
-  const ctx = canvas.getContext("2d")!;
-  ctx.translate(size * HALF_W, 0);
+  const ground = new Map<string, Path2D>();
+  const grid = new Path2D();
+  const ripples = new Path2D();
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -189,53 +198,44 @@ function bakeTerrain(world: World, createCanvas: CanvasFactory) {
 
       if (terrain === WATER) {
         if (variation > 0.86) {
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(px - 7, py + HALF_H);
-          ctx.lineTo(px + 5, py + HALF_H);
-          ctx.stroke();
+          ripples.moveTo(px - 7, py + HALF_H);
+          ripples.lineTo(px + 5, py + HALF_H);
         }
         continue;
       }
 
-      let color = "#7fbb58";
+      let base = "#7fbb58";
       if (terrain === SAND) {
-        color = "#e3d4a2";
+        base = "#e3d4a2";
       } else if (terrain === GRASS && world.trees[tile] > 0) {
-        color = "#6fae50";
+        base = "#6fae50";
+      }
+      const color = shade(base, 0.95 + Math.round(variation * 5) * 0.02);
+      let path = ground.get(color);
+      if (!path) {
+        path = new Path2D();
+        ground.set(color, path);
       }
 
       // Slightly oversized, so neighboring tiles leave no gaps
-      ctx.beginPath();
-      ctx.moveTo(px, py - 0.5);
-      ctx.lineTo(px + HALF_W + 1, py + HALF_H);
-      ctx.lineTo(px, py + TILE_H + 0.5);
-      ctx.lineTo(px - HALF_W - 1, py + HALF_H);
-      ctx.closePath();
-      ctx.fillStyle = shade(color, 0.95 + Math.round(variation * 5) * 0.02);
-      ctx.fill();
+      path.moveTo(px, py - 0.5);
+      path.lineTo(px + HALF_W + 1, py + HALF_H);
+      path.lineTo(px, py + TILE_H + 0.5);
+      path.lineTo(px - HALF_W - 1, py + HALF_H);
+      path.closePath();
+
+      // A faint grid helps with lining things up
+      grid.moveTo(px - HALF_W, py + HALF_H);
+      grid.lineTo(px, py + TILE_H);
+      grid.lineTo(px + HALF_W, py + HALF_H);
     }
   }
 
-  // A faint grid helps with lining things up
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.05)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      if (world.terrain[y * size + x] !== WATER) {
-        const px = worldX(x, y);
-        const py = worldY(x, y);
-        ctx.moveTo(px - HALF_W, py + HALF_H);
-        ctx.lineTo(px, py + TILE_H);
-        ctx.lineTo(px + HALF_W, py + HALF_H);
-      }
-    }
-  }
-  ctx.stroke();
-
-  return canvas;
+  return {
+    ground: [...ground].map(([color, path]) => ({ color, path })),
+    grid,
+    ripples,
+  };
 }
 
 // Black or white, whichever reads best on top of a #rrggbb color
@@ -268,7 +268,7 @@ function pill(
 export class Renderer {
   private world: World;
   private readonly fontFamily: string;
-  private readonly terrain: HTMLCanvasElement;
+  private readonly terrain: Terrain;
   private readonly sprites: ReturnType<typeof createSprites>;
   private statics: StaticItem[] = [];
   private labels: Label[] = [];
@@ -292,7 +292,7 @@ export class Renderer {
   constructor(world: World, createCanvas: CanvasFactory, fontFamily: string) {
     this.world = world;
     this.fontFamily = fontFamily;
-    this.terrain = bakeTerrain(world, createCanvas);
+    this.terrain = buildTerrain(world);
     this.sprites = createSprites(createCanvas);
     this.populate();
   }
@@ -391,8 +391,6 @@ export class Renderer {
   ) {
     const { width, height, dpr } = viewport;
     const { zoom } = camera;
-    const { size } = this.world;
-
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalAlpha = 1;
     ctx.fillStyle = WATER_COLOR;
@@ -412,7 +410,7 @@ export class Renderer {
     const top = camera.y - height / 2 / zoom;
     const bottom = camera.y + height / 2 / zoom;
 
-    ctx.drawImage(this.terrain, -size * HALF_W, 0);
+    this.drawTerrain(ctx, zoom);
 
     this.drawStationPads(ctx, scene);
     this.drawTracks(ctx, scene.network);
@@ -461,6 +459,19 @@ export class Renderer {
     const screenX = (wx: number) => (wx - camera.x) * zoom + width / 2;
     const screenY = (wy: number) => (wy - camera.y) * zoom + height / 2;
     this.drawLabels(ctx, scene, zoom, screenX, screenY, now);
+  }
+
+  private drawTerrain(ctx: Ctx, zoom: number) {
+    for (const { color, path } of this.terrain.ground) {
+      ctx.fillStyle = color;
+      ctx.fill(path);
+    }
+    // Both stay one pixel wide on screen
+    ctx.lineWidth = 1 / zoom;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
+    ctx.stroke(this.terrain.ripples);
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+    ctx.stroke(this.terrain.grid);
   }
 
   private rebuildTracks(network: Network) {
