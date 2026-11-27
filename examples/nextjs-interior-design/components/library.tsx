@@ -101,7 +101,7 @@ export const Library = memo(function Library({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="px-2">
-        <label className="flex h-7 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-ink-faint focus-within:border-line-strong">
+        <label className="flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-ink-faint focus-within:border-line-strong">
           <SearchIcon className="size-3.5 shrink-0" />
           <input
             type="search"
