@@ -6,7 +6,12 @@ import {
   TRAIN_WAGON_GAP,
   TRAIN_WAGONS,
 } from "../constants";
-import { cargoBetween, formatMoney } from "../economy";
+import {
+  cargoBetween,
+  formatMoney,
+  townPopulation,
+  townServices,
+} from "../economy";
 import { headDistance, type PathPoint, pointOnPath } from "../motion";
 import {
   connectionsAt,
@@ -62,7 +67,10 @@ export type Scene = {
   stations: ReadonlyMap<string, StationData>;
   vehicles: ReadonlyMap<string, Vehicle>;
   companies: ReadonlyMap<string, CompanyData>;
-  myId: string;
+  // The company this player runs, if they picked one yet
+  myCompany: string | null;
+  // When the map was started, which town populations are worked out from
+  startedAt: number;
   tool: Tool;
   hover: number | null;
   // Tiles about to be built on or cleared while dragging
@@ -222,6 +230,16 @@ function bakeTerrain(world: World, createCanvas: CanvasFactory) {
   return canvas;
 }
 
+// Black or white, whichever reads best on top of a #rrggbb color
+function inkOn(color: string) {
+  const value = parseInt(color.slice(1), 16);
+  const luminance =
+    0.299 * ((value >> 16) & 255) +
+    0.587 * ((value >> 8) & 255) +
+    0.114 * (value & 255);
+  return luminance > 150 ? "#171717" : "#ffffff";
+}
+
 function pill(
   ctx: Ctx,
   x: number,
@@ -240,11 +258,12 @@ function pill(
 }
 
 export class Renderer {
-  private readonly world: World;
+  private world: World;
   private readonly fontFamily: string;
   private readonly terrain: HTMLCanvasElement;
-  private readonly statics: StaticItem[] = [];
-  private readonly labels: Label[] = [];
+  private readonly sprites: ReturnType<typeof createSprites>;
+  private statics: StaticItem[] = [];
+  private labels: Label[] = [];
 
   private trackNetwork: Network | null = null;
   private roadPath = new Path2D();
@@ -258,12 +277,39 @@ export class Renderer {
   private passengerRoutes = new Map<string, boolean>();
   private popups: Popup[] = [];
 
+  private servedStations: ReadonlyMap<string, StationData> | null = null;
+  private services: number[][] = [];
+  // Where town names were last drawn on screen, so they can be clicked
+  private townLabels: { town: number; x: number; y: number; width: number }[] =
+    [];
+
   constructor(world: World, createCanvas: CanvasFactory, fontFamily: string) {
     this.world = world;
     this.fontFamily = fontFamily;
     this.terrain = bakeTerrain(world, createCanvas);
+    this.sprites = createSprites(createCanvas);
+    this.populate();
+  }
 
-    const sprites = createSprites(createCanvas);
+  // Swaps in a version of the same map with different buildings on it (for
+  // example after a house was demolished). The terrain doesn't change, so
+  // only the list of things standing on it is rebuilt.
+  setWorld(world: World) {
+    if (world !== this.world) {
+      this.world = world;
+      this.populate();
+    }
+  }
+
+  private populate() {
+    const { world } = this;
+    this.statics = [];
+    this.labels = [];
+    this.trackNetwork = null;
+    this.servedStations = null;
+    this.passengerRoutes.clear();
+
+    const { sprites } = this;
     const { size } = world;
     const place = (
       sprite: Sprite,
@@ -289,7 +335,11 @@ export class Renderer {
         place(variant, tile % size, Math.floor(tile / size), 1, tile);
       }
     }
-    for (const house of world.houses) {
+    for (let index = 0; index < world.houses.length; index++) {
+      const house = world.houses[index];
+      if (world.houseAt[house.y * size + house.x] !== index) {
+        continue;
+      }
       const colors = sprites.houses[house.variant];
       const color = colors[hashInt(house.y * size + house.x) % colors.length];
       place(color, house.x, house.y, 1, -1);
@@ -311,17 +361,20 @@ export class Renderer {
         minZoom: 0.55,
       });
     }
-    for (const town of world.towns) {
-      this.labels.push({
-        x: town.x + 0.5,
-        y: town.y + 0.5,
-        z: 58,
-        text: town.name,
-        size: 14,
-        minZoom: 0,
-      });
-    }
     this.statics.sort((a, b) => a.depth - b.depth);
+  }
+
+  // The town whose name is drawn at this point of the screen, if any
+  townAt(screenX: number, screenY: number) {
+    for (const label of this.townLabels) {
+      if (
+        Math.abs(screenX - label.x) <= label.width / 2 + 4 &&
+        Math.abs(screenY - label.y) <= 12
+      ) {
+        return label.town;
+      }
+    }
+    return null;
   }
 
   render(
@@ -644,13 +697,14 @@ export class Renderer {
     }
 
     if (scene.routeFrom !== null) {
-      const color = scene.companies.get(scene.myId)?.color ?? "#ffffff";
+      const color =
+        scene.companies.get(scene.myCompany ?? "")?.color ?? "#ffffff";
       outline(scene.routeFrom, color, 3.5, "rgba(255, 255, 255, 0.35)");
       const target = scene.hover !== null ? scene.stations.get(String(scene.hover)) : undefined;
       if (
         scene.hover !== null &&
         scene.hover !== scene.routeFrom &&
-        target?.owner === scene.myId
+        target?.owner === scene.myCompany
       ) {
         const from = scene.routeFrom;
         const to = scene.hover;
@@ -726,6 +780,33 @@ export class Renderer {
           label.size
         );
       }
+    }
+
+    // Town names, with their population. They can be clicked, so remember
+    // where each one ends up on screen.
+    if (this.servedStations !== scene.stations) {
+      this.servedStations = scene.stations;
+      this.services = townServices(this.world, scene.stations);
+    }
+    this.townLabels = [];
+    for (const town of this.world.towns) {
+      const population = townPopulation(
+        this.world,
+        town.id,
+        this.services[town.id],
+        scene.startedAt,
+        now
+      );
+      const label = `${town.name} (${population.toLocaleString("en-US")})`;
+      const x = screenX(worldX(town.x + 0.5, town.y + 0.5));
+      const y = screenY(worldY(town.x + 0.5, town.y + 0.5) - 58);
+      text(label, x, y, 14);
+      this.townLabels.push({
+        town: town.id,
+        x,
+        y,
+        width: ctx.measureText(label).width,
+      });
     }
 
     if (zoom >= 0.7) {
@@ -819,7 +900,7 @@ export class Renderer {
       pill(ctx, sx + 10, sy + 14, width, 18, 6);
       ctx.fillStyle = cursor.color;
       ctx.fill();
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = inkOn(cursor.color);
       ctx.fillText(cursor.name, sx + 10 + width / 2, sy + 23.5);
     }
   }
@@ -851,7 +932,7 @@ export class Renderer {
         x: (tile % size) + 0.5,
         y: Math.floor(tile / size) + 0.5,
         text: `+${formatMoney(vehicle.lastIncome)}`,
-        color: vehicle.owner === scene.myId ? "#bbf7d0" : "#ffffff",
+        color: vehicle.owner === scene.myCompany ? "#bbf7d0" : "#ffffff",
         startedAt: now,
       });
     }
