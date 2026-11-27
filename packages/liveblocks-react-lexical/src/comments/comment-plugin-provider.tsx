@@ -223,7 +223,13 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
           .findMany(roomId, { resolved: false }, "asc", undefined)
           .some((thread) => thread.id === id);
       });
-      setActiveThreads(threadIds);
+      // Keep the previous array when the active thread ids haven't changed.
+      // Setting a new array on every editor update re-renders on each keystroke
+      // and can hit React's update-depth limit, which interrupts the other
+      // Lexical update listeners (including the Yjs binding) and drops edits.
+      setActiveThreads((previous) =>
+        shallow(previous, threadIds) ? previous : threadIds
+      );
     }
 
     const unsubscribeCache = store.outputs.threads.subscribe(() => {
