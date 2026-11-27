@@ -128,7 +128,7 @@ export const TRANSPORT: Record<
     vehicleCost: 20_000,
     capacity: 130,
     speed: 1.5,
-    runningCost: 8,
+    runningCost: 5,
   },
 };
 
