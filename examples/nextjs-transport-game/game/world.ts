@@ -1,4 +1,3 @@
-import { MAP_SIZE } from "./constants";
 import { createRng, type Rng } from "./rng";
 import type { Cargo } from "./types";
 
@@ -127,12 +126,13 @@ const TOWN_SUFFIXES = [
   "bridge",
 ];
 
-const INDUSTRY_PLAN: IndustryType[] = [
-  // Consumers first, so producers can be placed far away from them
+const CONSUMERS: IndustryType[] = [
   "power_station",
   "sawmill",
   "factory",
   "refinery",
+];
+const PRODUCERS: IndustryType[] = [
   "coal_mine",
   "coal_mine",
   "forest",
@@ -189,9 +189,12 @@ export function nearestTown(world: World, x: number, y: number): Town | null {
   return world.towns.length > 0 ? nearestTownOf(world.towns, x, y) : null;
 }
 
-export function generateWorld(seed: number): World {
-  const size = MAP_SIZE;
+// Bigger maps have the same kind of landscape, and more of everything on
+// it. `size` is the length of a side, in tiles.
+export function generateWorld(seed: number, size: number): World {
   const count = size * size;
+  // How many times bigger than the smallest map this one is
+  const scale = count / (64 * 64);
   const rng = createRng(seed);
 
   const terrain = new Uint8Array(count);
@@ -253,7 +256,12 @@ export function generateWorld(seed: number): World {
   // Towns
   const usedNames = new Set<string>();
   const townStreets: number[][] = [];
-  for (let attempt = 0; attempt < 800 && towns.length < 7; attempt++) {
+  const townCount = Math.round(7 * scale);
+  for (
+    let attempt = 0;
+    attempt < 800 * scale && towns.length < townCount;
+    attempt++
+  ) {
     const x = 7 + Math.floor(rng() * (size - 14));
     const y = 7 + Math.floor(rng() * (size - 14));
     if (terrain[y * size + x] === WATER) {
@@ -405,7 +413,13 @@ export function generateWorld(seed: number): World {
     );
   };
 
-  for (const type of INDUSTRY_PLAN) {
+  // Every round of the plan adds one more set of industries. Consumers come
+  // first, so producers can be placed far away from them.
+  const rounds = Math.max(1, Math.round(scale));
+  const plan = [CONSUMERS, PRODUCERS].flatMap((types) =>
+    Array.from({ length: rounds }, () => types).flat()
+  );
+  for (const type of plan) {
     const produces = INDUSTRY[type].produces;
     const consumers = industries.filter(
       (other) => produces && INDUSTRY[other.type].accepts === produces

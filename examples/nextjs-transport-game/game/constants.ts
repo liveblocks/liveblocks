@@ -1,6 +1,17 @@
 import type { Cargo, LineKind, Transport } from "./types";
 
-export const MAP_SIZE = 64;
+// The maps a game can be played on. A map has as many tiles on each side as
+// its size says, and a new game starts on the smallest one.
+export const MAP_SIZES: readonly {
+  size: number;
+  label: string;
+  detail: string;
+}[] = [
+  { size: 64, label: "Small", detail: "7 towns" },
+  { size: 96, label: "Medium", detail: "16 towns" },
+  { size: 128, label: "Large", detail: "28 towns" },
+];
+export const DEFAULT_MAP_SIZE = 64;
 export const TILE_W = 64;
 export const TILE_H = 32;
 

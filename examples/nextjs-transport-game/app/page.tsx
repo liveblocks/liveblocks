@@ -3,6 +3,7 @@
 import { LiveMap } from "@liveblocks/client";
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
 import { Loader2 } from "lucide-react";
+import { DEFAULT_MAP_SIZE } from "@/game/constants";
 import { hashString } from "@/game/rng";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import { Game } from "./game";
@@ -18,6 +19,7 @@ export default function Page() {
         // Derived from the room id rather than random, so players joining an
         // empty room at the same time all start on the same map
         seed: hashString(roomId),
+        size: DEFAULT_MAP_SIZE,
         startedAt: Date.now(),
         towns: new LiveMap(),
         roads: new LiveMap(),

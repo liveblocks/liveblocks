@@ -32,6 +32,8 @@ declare global {
     // stored: every client generates them from `seed`.
     Storage: {
       seed: number;
+      // How many tiles the map has on each side
+      size: number;
       // When this map was started. Towns have been growing since then, and
       // nobody writes their new buildings here: every client works out how
       // far each town has grown from the clock.

@@ -73,7 +73,9 @@ type Drag = {
   tiles: number[];
 };
 
-const MIN_ZOOM = 0.35;
+// How far out the map can be zoomed: far enough to see a good part of it,
+// whatever its size
+const minZoom = (size: number) => Math.min(0.35, 22 / size);
 const MAX_ZOOM = 2.5;
 const PAN_KEYS: Record<string, [number, number]> = {
   ArrowUp: [0, -1],
@@ -156,7 +158,10 @@ export function MapCanvas(props: Props) {
   const zoomAt = (factor: number, screenX: number, screenY: number) => {
     const view = camera.current;
     const { width, height } = viewport.current;
-    const zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, view.zoom * factor));
+    const zoom = Math.max(
+      minZoom(latest.current.world.size),
+      Math.min(MAX_ZOOM, view.zoom * factor)
+    );
     // Keep the point under the cursor where it is
     view.x += (screenX - width / 2) * (1 / view.zoom - 1 / zoom);
     view.y += (screenY - height / 2) * (1 / view.zoom - 1 / zoom);
@@ -164,7 +169,7 @@ export function MapCanvas(props: Props) {
     clampCamera();
   };
 
-  // Rendering loop. The renderer is rebuilt for every new map (seed), and
+  // Rendering loop. The renderer is rebuilt for every new map, and
   // kept when the same map only changes, e.g. when a house is demolished.
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -230,7 +235,7 @@ export function MapCanvas(props: Props) {
       cancelAnimationFrame(frame);
       rendererRef.current = null;
     };
-  }, [world.seed]);
+  }, [world.seed, world.size]);
 
   useEffect(() => {
     rendererRef.current?.setWorld(world);

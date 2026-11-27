@@ -39,6 +39,8 @@ import {
   CARGO,
   CHEAT_MONEY,
   COMPANIES,
+  DEFAULT_MAP_SIZE,
+  MAP_SIZES,
   TRACK,
   TRANSPORT,
 } from "@/game/constants";
@@ -71,6 +73,7 @@ import { useMoneyFloaters } from "@/hooks/use-money-floaters";
 import { CompanyPicker } from "./company-picker";
 import { CompaniesWindow, VehiclesWindow } from "./company-windows";
 import { CargoWindow, IndustryWindow } from "./industry-windows";
+import { NewMapWindow } from "./new-map-window";
 import {
   type DragPlan,
   type Focus,
@@ -111,6 +114,11 @@ const NO_COMPANY: ActionResult = {
 
 export function Game() {
   const seed = useStorage((root) => root.seed);
+  const storedSize = useStorage((root) => root.size);
+  // Whatever ends up in Storage, only play on a map size the game knows
+  const size = MAP_SIZES.some((option) => option.size === storedSize)
+    ? storedSize
+    : DEFAULT_MAP_SIZE;
   const roads = useStorage((root) => root.roads);
   const rails = useStorage((root) => root.rails);
   const canals = useStorage((root) => root.canals);
@@ -121,7 +129,7 @@ export function Game() {
 
   // The map isn't synced: every player generates the same one from the seed.
   // Its towns then grow with time, around whatever players have built.
-  const generated = useMemo(() => generateWorld(seed), [seed]);
+  const generated = useMemo(() => generateWorld(seed, size), [seed, size]);
   const stationKeys = [...stations.keys()].join();
   // A street can run through a road stop, but not through other stations
   const noStreetKeys = [...stations]
@@ -171,6 +179,7 @@ export function Game() {
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
   const [selectedTown, setSelectedTown] = useState<number | null>(null);
   const [selectedIndustry, setSelectedIndustry] = useState<number | null>(null);
+  const [choosingMap, setChoosingMap] = useState(false);
   // Where the map was last asked to go, e.g. to an industry picked in a list
   const [focus, setFocus] = useState<Focus>(null);
   const [highlightedVehicle, setHighlightedVehicle] = useState<string | null>(
@@ -205,7 +214,8 @@ export function Game() {
     setSelectedTown(null);
     setSelectedIndustry(null);
     setHover(null);
-  }, [seed]);
+    setChoosingMap(false);
+  }, [seed, size]);
 
   // Nothing can be built without a company
   useEffect(() => {
@@ -288,12 +298,18 @@ export function Game() {
 
   const room = useRoom();
   const resetStorage = useMutation(
-    ({ storage }) =>
-      resetGame(storage, Math.floor(Math.random() * 2 ** 31), Date.now()),
+    ({ storage }, newSize: number) =>
+      resetGame(
+        storage,
+        Math.floor(Math.random() * 2 ** 31),
+        newSize,
+        Date.now()
+      ),
     []
   );
   // A new map is the one thing that can't be undone
-  const reset = () => room.history.disable(resetStorage);
+  const reset = (newSize: number) =>
+    room.history.disable(() => resetStorage(newSize));
 
   // A hidden cheat: Ctrl + Alt + M adds money to your company
   const cheat = useMutation(({ storage, self }) => {
@@ -409,15 +425,10 @@ export function Game() {
     }
   };
 
-  const onReset = () => {
-    if (
-      window.confirm(
-        "Start over on a new map? This removes everything all players have built."
-      )
-    ) {
-      reset();
-      announce(`${company?.name ?? "Someone"} started a new map`);
-    }
+  const onNewMap = (newSize: number) => {
+    setChoosingMap(false);
+    reset(newSize);
+    announce(`${company?.name ?? "Someone"} started a new map`);
   };
 
   // Opens an industry's or a town's window and brings it into view
@@ -531,7 +542,7 @@ export function Game() {
               vehicles={vehicles}
               companies={companies}
               managers={managers}
-              onReset={onReset}
+              onReset={() => setChoosingMap(true)}
               onClose={() => setOpen({ ...open, companies: false })}
             />
           ) : null}
@@ -556,6 +567,14 @@ export function Game() {
             />
           ) : null}
         </div>
+
+        {choosingMap ? (
+          <NewMapWindow
+            size={size}
+            onStart={onNewMap}
+            onClose={() => setChoosingMap(false)}
+          />
+        ) : null}
 
         {myCompany === null ? (
           <CompanyPicker

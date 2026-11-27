@@ -622,9 +622,10 @@ export function runSimulation(
 }
 
 // Wipes everything players have built and starts over on a new map
-export function resetGame(root: Root, seed: number, now: number) {
+export function resetGame(root: Root, seed: number, size: number, now: number) {
   root.update({
     seed,
+    size,
     startedAt: now,
     towns: new LiveMap(),
     demolished: new LiveMap(),

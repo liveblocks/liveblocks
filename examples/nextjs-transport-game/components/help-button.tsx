@@ -37,7 +37,7 @@ const FEATURES: Feature[] = [
     icon: <GlobeIcon />,
     title: "Shared world",
     description:
-      "Tracks are shared, so you can connect to another company's network. Towns grow on their own, from cottages to skyscrapers, and faster with stations nearby: click a town's name to see how it's doing.",
+      "Tracks are shared, so you can connect to another company's network. Towns grow on their own, from cottages to skyscrapers, and faster with stations nearby: click a town's name to see how it's doing. Your company window starts a new map, in three sizes.",
   },
 ];
 

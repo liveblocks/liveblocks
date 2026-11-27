@@ -186,23 +186,47 @@ function addTrackTile(path: Path2D, x: number, y: number, mask: number) {
   return arms.length === 1;
 }
 
-type Terrain = {
+// A square piece of the ground, of `TERRAIN_CHUNK` tiles on each side
+type TerrainChunk = {
   // Every tile of the same color, as one shape
   ground: { color: string; path: Path2D }[];
   grid: Path2D;
   ripples: Path2D;
+  // The part of the map it covers, in world coordinates
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
 };
 
+const TERRAIN_CHUNK = 16;
+// From far away the ground is drawn from a picture of the whole map, which
+// is no wider than this
+const FAR_PICTURE_WIDTH = 4096;
+
 // The ground is kept as shapes rather than as a picture, so the edges of
-// tiles stay sharp however far the map is zoomed in
-function buildTerrain(world: World): Terrain {
+// tiles stay sharp however far the map is zoomed in. It is cut in pieces, so
+// that on a big map only the pieces in view are drawn.
+function buildTerrain(world: World) {
+  const chunks: TerrainChunk[] = [];
+  for (let y = 0; y < world.size; y += TERRAIN_CHUNK) {
+    for (let x = 0; x < world.size; x += TERRAIN_CHUNK) {
+      chunks.push(buildTerrainChunk(world, x, y));
+    }
+  }
+  return chunks;
+}
+
+function buildTerrainChunk(world: World, x0: number, y0: number): TerrainChunk {
   const { size } = world;
+  const x1 = Math.min(size, x0 + TERRAIN_CHUNK);
+  const y1 = Math.min(size, y0 + TERRAIN_CHUNK);
   const ground = new Map<string, Path2D>();
   const grid = new Path2D();
   const ripples = new Path2D();
 
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
       const tile = y * size + x;
       const variation = world.shade[tile] / 255;
       const terrain = world.terrain[tile];
@@ -248,6 +272,10 @@ function buildTerrain(world: World): Terrain {
     ground: [...ground].map(([color, path]) => ({ color, path })),
     grid,
     ripples,
+    left: worldX(x0, y1) - 1,
+    right: worldX(x1, y0) + 1,
+    top: worldY(x0, y0) - 1,
+    bottom: worldY(x1, y1) + 1,
   };
 }
 
@@ -281,7 +309,11 @@ function pill(
 export class Renderer {
   private world: World;
   private readonly fontFamily: string;
-  private readonly terrain: Terrain;
+  private readonly terrain: TerrainChunk[];
+  private readonly createCanvas: CanvasFactory;
+  // A picture of all the ground, made the first time the map is seen from
+  // far away. Drawing thousands of tiny tiles one by one is slow.
+  private farTerrain: HTMLCanvasElement | null = null;
   private readonly sprites: ReturnType<typeof createSprites>;
   private statics: StaticItem[] = [];
   private labels: Label[] = [];
@@ -309,6 +341,7 @@ export class Renderer {
     this.world = world;
     this.fontFamily = fontFamily;
     this.terrain = buildTerrain(world);
+    this.createCanvas = createCanvas;
     this.sprites = createSprites(createCanvas);
     this.populate();
   }
@@ -426,7 +459,7 @@ export class Renderer {
     const top = camera.y - height / 2 / zoom;
     const bottom = camera.y + height / 2 / zoom;
 
-    this.drawTerrain(ctx, zoom);
+    this.drawTerrain(ctx, zoom, dpr, left, right, top, bottom);
     this.drawCanals(ctx, scene.network);
 
     this.drawStationPads(ctx, scene);
@@ -483,17 +516,77 @@ export class Renderer {
     this.drawLabels(ctx, scene, zoom, screenX, screenY, now);
   }
 
-  private drawTerrain(ctx: Ctx, zoom: number) {
-    for (const { color, path } of this.terrain.ground) {
-      ctx.fillStyle = color;
-      ctx.fill(path);
+  private drawTerrain(
+    ctx: Ctx,
+    zoom: number,
+    dpr: number,
+    left: number,
+    right: number,
+    top: number,
+    bottom: number
+  ) {
+    // The picture is only used where it is shown at its own size or smaller,
+    // so the ground never looks blurry
+    const { size } = this.world;
+    const scale = Math.min(0.5 * dpr, FAR_PICTURE_WIDTH / (size * TILE_W));
+    if (size > TERRAIN_CHUNK * 4 && zoom * dpr <= scale) {
+      this.farTerrain ??= this.paintTerrain(scale);
+      ctx.drawImage(
+        this.farTerrain,
+        worldX(0, size),
+        0,
+        size * TILE_W,
+        size * TILE_H
+      );
+      return;
     }
-    // Both stay one pixel wide on screen
+    this.drawTiles(ctx, zoom, left, right, top, bottom);
+  }
+
+  private drawTiles(
+    ctx: Ctx,
+    zoom: number,
+    left: number,
+    right: number,
+    top: number,
+    bottom: number
+  ) {
+    const visible = this.terrain.filter(
+      (chunk) =>
+        chunk.left < right &&
+        chunk.right > left &&
+        chunk.top < bottom &&
+        chunk.bottom > top
+    );
+    for (const chunk of visible) {
+      for (const { color, path } of chunk.ground) {
+        ctx.fillStyle = color;
+        ctx.fill(path);
+      }
+    }
+    // Both stay one pixel wide on screen. They go on top of all the ground,
+    // as tiles are drawn a little over their edges.
     ctx.lineWidth = 1 / zoom;
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
-    ctx.stroke(this.terrain.ripples);
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
-    ctx.stroke(this.terrain.grid);
+    for (const chunk of visible) {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
+      ctx.stroke(chunk.ripples);
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+      ctx.stroke(chunk.grid);
+    }
+  }
+
+  private paintTerrain(scale: number) {
+    const { size } = this.world;
+    const canvas = this.createCanvas(
+      Math.ceil(size * TILE_W * scale),
+      Math.ceil(size * TILE_H * scale)
+    );
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.setTransform(scale, 0, 0, scale, -worldX(0, size) * scale, 0);
+      this.drawTiles(ctx, scale, -Infinity, Infinity, -Infinity, Infinity);
+    }
+    return canvas;
   }
 
   private rebuildTracks(network: Network) {
