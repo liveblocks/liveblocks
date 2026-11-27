@@ -5,9 +5,14 @@ import {
   MIN_HOUSES_FOR_PASSENGERS,
   START_MONEY,
   STOCK_CAP,
+  TOWN_GROWTH_PER_MINUTE,
+  TOWN_GROWTH_PER_STATION,
+  TOWN_MAX_GROWTH,
+  TOWN_MAX_STATIONS,
   TRACK,
   TREE_CLEAR_COST,
 } from "./constants";
+import { hashInt } from "./rng";
 import type {
   Cargo,
   CompanyData,
@@ -16,6 +21,7 @@ import type {
   VehicleData,
 } from "./types";
 import {
+  type House,
   type Industry,
   INDUSTRY,
   nearestTown,
@@ -150,6 +156,84 @@ export function suggestStationName(world: World, tile: number) {
     return `${info.town.name} ${dx > 0 ? "East" : "West"}`;
   }
   return `${info.town.name} ${dy > 0 ? "South" : "North"}`;
+}
+
+// People living in a house, depending on its size (cottage, townhouse or
+// office block)
+function residentsOf(house: House) {
+  const variation = hashInt(house.x * 131 + house.y);
+  return [14, 38, 110][house.variant] + (variation % [8, 20, 50][house.variant]);
+}
+
+const townResidentsCache = new WeakMap<World, number[]>();
+
+// The people living in each town's houses, before any growth
+function townResidents(world: World) {
+  let residents = townResidentsCache.get(world);
+  if (!residents) {
+    residents = world.towns.map(() => 0);
+    for (let index = 0; index < world.houses.length; index++) {
+      const house = world.houses[index];
+      if (world.houseAt[house.y * world.size + house.x] === index) {
+        residents[house.town] += residentsOf(house);
+      }
+    }
+    townResidentsCache.set(world, residents);
+  }
+  return residents;
+}
+
+// For each town, when the stations that serve it were built (oldest first).
+// A station serves the town it is closest to, if it has houses in range.
+export function townServices(
+  world: World,
+  stations: ReadonlyMap<string, Pick<StationData, "builtAt">>
+) {
+  const services: number[][] = world.towns.map(() => []);
+  for (const [key, station] of stations) {
+    const info = getStationInfo(world, Number(key));
+    if (info.town && info.houses >= MIN_HOUSES_FOR_PASSENGERS) {
+      services[info.town.id].push(station.builtAt);
+    }
+  }
+  for (const builtAts of services) {
+    builtAts.sort((a, b) => a - b);
+  }
+  return services;
+}
+
+// A town's population is not stored anywhere. It is worked out from when the
+// map was started and when the stations serving the town were built, so
+// every player sees the same number without anyone having to update it.
+export function townPopulation(
+  world: World,
+  town: number,
+  // When the stations serving this town were built: `townServices()[town]`
+  builtAts: readonly number[],
+  startedAt: number,
+  now: number
+) {
+  const minutes = (since: number) => Math.max(0, now - since) / 60_000;
+  let growth = TOWN_GROWTH_PER_MINUTE * minutes(startedAt);
+  for (const builtAt of builtAts.slice(0, TOWN_MAX_STATIONS)) {
+    growth += TOWN_GROWTH_PER_STATION * minutes(builtAt);
+  }
+  const residents = townResidents(world)[town];
+  return Math.round(residents * (1 + Math.min(TOWN_MAX_GROWTH, growth)));
+}
+
+// How many people a town gains per minute at the moment
+export function townGrowthPerMinute(
+  world: World,
+  town: number,
+  builtAts: readonly number[],
+  startedAt: number,
+  now: number
+) {
+  return (
+    townPopulation(world, town, builtAts, startedAt, now + 60_000) -
+    townPopulation(world, town, builtAts, startedAt, now)
+  );
 }
 
 export function trackCost(world: World, kind: TrackKind, tile: number) {

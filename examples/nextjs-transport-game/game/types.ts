@@ -15,6 +15,7 @@ export type Tool =
 // was waiting at time `at`, and it keeps growing at the station's supply rate.
 export type Stock = { [cargo in Cargo]?: { amount: number; at: number } };
 
+// `owner` is always the id of a company, not of a player
 export type StationData = {
   owner: string;
   kind: TrackKind;

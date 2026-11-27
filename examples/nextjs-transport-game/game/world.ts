@@ -184,6 +184,24 @@ export function isBlocked(world: World, tile: number) {
   return world.houseAt[tile] >= 0 || world.industryAt[tile] >= 0;
 }
 
+// The same world with the houses on the given tiles demolished. The world a
+// seed generates never changes, so this returns a copy.
+export function withoutHouses(world: World, tiles: readonly number[]): World {
+  if (tiles.length === 0) {
+    return world;
+  }
+  const houseAt = world.houseAt.slice();
+  const towns = world.towns.map((town) => ({ ...town }));
+  for (const tile of tiles) {
+    const house = world.houses[houseAt[tile]];
+    if (house) {
+      towns[house.town].houses--;
+      houseAt[tile] = -1;
+    }
+  }
+  return { ...world, houseAt, towns };
+}
+
 export function nearestTown(world: World, x: number, y: number): Town | null {
   return world.towns.length > 0 ? nearestTownOf(world.towns, x, y) : null;
 }

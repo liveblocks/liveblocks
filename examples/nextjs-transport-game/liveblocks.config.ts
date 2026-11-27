@@ -14,30 +14,35 @@ declare global {
       info: {
         name: string;
         avatar: string;
-        // Also used as the color of the player's company
         color: string;
       };
     };
 
-    // Where each player is pointing on the map (in tile coordinates), and the
-    // tool they are holding
+    // Where each player is pointing on the map (in tile coordinates), the
+    // tool they are holding, and the company they chose to run. A company
+    // counts as taken for as long as a connected player has it here.
     Presence: {
       cursor: { x: number; y: number } | null;
       tool: Tool;
+      company: string | null;
     };
 
     // Everything players build. The terrain, towns and industries are not
     // stored: every client generates them from `seed`.
     Storage: {
       seed: number;
-      // Tile → id of the player who built on it
+      // When this map was started. Town populations grow from this moment.
+      startedAt: number;
+      // Tile → id of the company that built on it
       roads: LiveMap<string, string>;
       rails: LiveMap<string, string>;
       // Tile → station
       stations: LiveMap<string, LiveObject<StationData>>;
       vehicles: LiveMap<string, LiveObject<VehicleData>>;
-      // User id → company
+      // Company id → company. Companies appear here once someone picks them.
       companies: LiveMap<string, LiveObject<CompanyData>>;
+      // Tiles of the houses that were demolished → id of the company that did
+      demolished: LiveMap<string, string>;
     };
 
     // News shown to everyone in the room, e.g. when a player buys a train

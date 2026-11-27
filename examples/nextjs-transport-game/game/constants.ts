@@ -7,7 +7,29 @@ export const TILE_H = 32;
 // Stations serve every house and industry within this many tiles
 export const CATCHMENT = 3;
 
+// The transport companies players choose from when they join. A company is
+// run by one player at a time, and keeps everything it owns when that player
+// leaves, ready for the next one to take over.
+export const COMPANIES: readonly { id: string; name: string; color: string }[] = [
+  { id: "redline", name: "Redline Haulage", color: "#DC3D43" },
+  { id: "bluebird", name: "Bluebird Transit", color: "#3358D4" },
+  { id: "sunray", name: "Sunray Freight", color: "#EBB000" },
+  { id: "greenfield", name: "Greenfield Lines", color: "#2B9A4B" },
+  { id: "violet", name: "Violet Valley Rail", color: "#8445BC" },
+  { id: "copper", name: "Copper Kettle Cargo", color: "#A85B24" },
+];
+
 export const START_MONEY = 100_000;
+// What the hidden money cheat adds to your balance
+export const CHEAT_MONEY = 100_000;
+export const HOUSE_DEMOLISH_COST = 600;
+
+// Towns grow by a share of their starting population every minute, and
+// faster for each station that serves them (up to a few stations)
+export const TOWN_GROWTH_PER_MINUTE = 0.012;
+export const TOWN_GROWTH_PER_STATION = 0.02;
+export const TOWN_MAX_STATIONS = 4;
+export const TOWN_MAX_GROWTH = 4;
 export const MAX_VEHICLES_PER_COMPANY = 30;
 
 // Time a vehicle spends at a station between two legs

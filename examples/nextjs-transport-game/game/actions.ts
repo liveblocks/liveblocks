@@ -1,6 +1,11 @@
 import { LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
-import { MAX_VEHICLES_PER_COMPANY, TRACK } from "./constants";
+import {
+  COMPANIES,
+  HOUSE_DEMOLISH_COST,
+  MAX_VEHICLES_PER_COMPANY,
+  TRACK,
+} from "./constants";
 import {
   cargoBetween,
   companyBalance,
@@ -64,20 +69,20 @@ function hasTrack(view: TileView, kind: TrackKind, tile: number) {
   return kind === "road" ? view.hasRoad(tile) : view.hasRail(tile);
 }
 
-function liveBalance(root: Root, userId: string) {
+function liveBalance(root: Root, companyId: string) {
   const owned: { owner: string; earned: number }[] = [];
   for (const vehicle of root.get("vehicles").values()) {
     owned.push({ owner: vehicle.get("owner"), earned: vehicle.get("earned") });
   }
   return companyBalance(
-    root.get("companies").get(userId)?.toJSON(),
+    root.get("companies").get(companyId)?.toJSON(),
     owned,
-    userId
+    companyId
   );
 }
 
-function spend(root: Root, userId: string, amount: number) {
-  const company = root.get("companies").get(userId);
+function spend(root: Root, companyId: string, amount: number) {
+  const company = root.get("companies").get(companyId);
   company?.set("spent", company.get("spent") + amount);
 }
 
@@ -154,19 +159,17 @@ export function stationCost(
   );
 }
 
-export function ensureCompany(
-  root: Root,
-  userId: string,
-  info: { name: string; color: string },
-  now: number
-) {
+// Founds a company the first time a player picks it. Later players who pick
+// it take over what is already there.
+export function ensureCompany(root: Root, companyId: string, now: number) {
   const companies = root.get("companies");
-  if (!companies.has(userId)) {
+  const preset = COMPANIES.find((company) => company.id === companyId);
+  if (preset && !companies.has(companyId)) {
     companies.set(
-      userId,
+      companyId,
       new LiveObject({
-        name: `${info.name.split(" ")[0]} Transport`,
-        color: info.color,
+        name: preset.name,
+        color: preset.color,
         spent: 0,
         banked: 0,
         foundedAt: now,
@@ -175,14 +178,32 @@ export function ensureCompany(
   }
 }
 
+// The hidden cheat: free money
+export function addMoney(root: Root, companyId: string, amount: number) {
+  const company = root.get("companies").get(companyId);
+  company?.set("banked", company.get("banked") + amount);
+  return company !== undefined;
+}
+
+// What demolishing the houses on these tiles would cost
+export function demolitionCost(world: World, tiles: readonly number[]) {
+  let cost = 0;
+  for (const tile of tiles) {
+    if (world.houseAt[tile] >= 0) {
+      cost += HOUSE_DEMOLISH_COST;
+    }
+  }
+  return cost;
+}
+
 export function buildTrack(
   root: Root,
   world: World,
-  userId: string,
+  companyId: string,
   kind: TrackKind,
   tiles: number[]
 ): ActionResult {
-  if (!root.get("companies").has(userId)) {
+  if (!root.get("companies").has(companyId)) {
     return fail("Your company isn't ready yet");
   }
   if (tiles.length > MAX_TILES_PER_BUILD) {
@@ -198,27 +219,27 @@ export function buildTrack(
   if (problem) {
     return fail(problem);
   }
-  if (cost > liveBalance(root, userId)) {
+  if (cost > liveBalance(root, companyId)) {
     return fail("Not enough money");
   }
 
   const tracks = root.get(kind === "road" ? "roads" : "rails");
   for (const tile of missing) {
-    tracks.set(String(tile), userId);
+    tracks.set(String(tile), companyId);
   }
-  spend(root, userId, cost);
+  spend(root, companyId, cost);
   return { ok: true, cost };
 }
 
 export function buildStation(
   root: Root,
   world: World,
-  userId: string,
+  companyId: string,
   kind: TrackKind,
   tile: number,
   now: number
 ): ActionResult {
-  if (!root.get("companies").has(userId)) {
+  if (!root.get("companies").has(companyId)) {
     return fail("Your company isn't ready yet");
   }
 
@@ -228,68 +249,88 @@ export function buildStation(
     return fail(problem);
   }
   const cost = stationCost(world, view, kind, tile);
-  if (cost > liveBalance(root, userId)) {
+  if (cost > liveBalance(root, companyId)) {
     return fail("Not enough money");
   }
 
   // A station is also a piece of track, so vehicles can drive through it
   const key = String(tile);
   if (!hasTrack(view, kind, tile)) {
-    root.get(kind === "road" ? "roads" : "rails").set(key, userId);
+    root.get(kind === "road" ? "roads" : "rails").set(key, companyId);
   }
   const name = suggestStationName(world, tile);
   root.get("stations").set(
     key,
     new LiveObject<StationData>({
-      owner: userId,
+      owner: companyId,
       kind,
       name,
       builtAt: now,
       stock: {},
     })
   );
-  spend(root, userId, cost);
+  spend(root, companyId, cost);
   return { ok: true, cost, message: name };
 }
 
-// Removes the player's own stations and tracks from the given tiles. A tile
-// with a station loses the station first, and its track on a second pass.
+// Clears the given tiles: the company's own stations and tracks are removed
+// for free, and houses are demolished for a price. A tile with a station
+// loses the station first, and its track on a second pass.
 export function bulldoze(
   root: Root,
   world: World,
-  userId: string,
+  companyId: string,
   tiles: number[]
 ): ActionResult {
   const roads = root.get("roads");
   const rails = root.get("rails");
   const stations = root.get("stations");
   const vehicles = root.get("vehicles");
-  const company = root.get("companies").get(userId);
+  const demolished = root.get("demolished");
+  const company = root.get("companies").get(companyId);
+  if (!company) {
+    return fail("Your company isn't ready yet");
+  }
+  const balance = liveBalance(root, companyId);
 
   let removed = 0;
+  let cost = 0;
   let problem = "Nothing to remove here";
 
   for (const tile of tiles.slice(0, MAX_TILES_PER_BUILD)) {
     const key = String(tile);
     const station = stations.get(key);
 
-    if (station) {
-      if (station.get("owner") !== userId) {
+    if (world.houseAt[tile] >= 0) {
+      if (demolished.has(key)) {
+        continue;
+      }
+      if (cost + HOUSE_DEMOLISH_COST > balance) {
+        problem = "Not enough money";
+        continue;
+      }
+      demolished.set(key, companyId);
+      cost += HOUSE_DEMOLISH_COST;
+      removed++;
+    } else if (world.industryAt[tile] >= 0) {
+      problem = "Industries can't be demolished";
+    } else if (station) {
+      if (station.get("owner") !== companyId) {
         problem = "That belongs to another company";
         continue;
       }
       // Vehicles serving this station have nowhere to go: sell them
       for (const [id, vehicle] of [...vehicles.entries()]) {
         if (vehicle.get("stops").includes(key)) {
-          company?.set("banked", company.get("banked") + vehicle.get("earned"));
+          company.set("banked", company.get("banked") + vehicle.get("earned"));
           vehicles.delete(id);
         }
       }
       stations.delete(key);
       removed++;
     } else if (rails.has(key) || roads.has(key)) {
-      const tracks = rails.get(key) === userId ? rails : roads;
-      if (tracks.get(key) !== userId) {
+      const tracks = rails.get(key) === companyId ? rails : roads;
+      if (tracks.get(key) !== companyId) {
         problem = "That belongs to another company";
         continue;
       }
@@ -300,14 +341,17 @@ export function bulldoze(
     }
   }
 
-  return removed > 0 ? { ok: true, cost: 0 } : fail(problem);
+  if (cost > 0) {
+    spend(root, companyId, cost);
+  }
+  return removed > 0 ? { ok: true, cost } : fail(problem);
 }
 
 export function buyVehicle(
   root: Root,
   world: World,
   network: Network,
-  userId: string,
+  companyId: string,
   fromTile: number,
   toTile: number,
   now: number
@@ -319,13 +363,13 @@ export function buyVehicle(
   const from = stations.get(fromKey);
   const to = stations.get(toKey);
 
-  if (!root.get("companies").has(userId)) {
+  if (!root.get("companies").has(companyId)) {
     return fail("Your company isn't ready yet");
   }
   if (!from || !to || fromTile === toTile) {
     return fail("Pick two different stations");
   }
-  if (from.get("owner") !== userId || to.get("owner") !== userId) {
+  if (from.get("owner") !== companyId || to.get("owner") !== companyId) {
     return fail("Vehicles can only stop at your own stations");
   }
   const kind = from.get("kind");
@@ -342,7 +386,7 @@ export function buyVehicle(
 
   let owned = 0;
   for (const vehicle of vehicles.values()) {
-    if (vehicle.get("owner") === userId) {
+    if (vehicle.get("owner") === companyId) {
       owned++;
     }
   }
@@ -351,14 +395,14 @@ export function buyVehicle(
   }
 
   const cost = TRACK[kind].vehicleCost;
-  if (cost > liveBalance(root, userId)) {
+  if (cost > liveBalance(root, companyId)) {
     return fail("Not enough money");
   }
 
   vehicles.set(
     nanoid(),
     new LiveObject<VehicleData>({
-      owner: userId,
+      owner: companyId,
       kind,
       stops: [fromKey, toKey],
       leg: 0,
@@ -372,7 +416,7 @@ export function buyVehicle(
       trips: 0,
     })
   );
-  spend(root, userId, cost);
+  spend(root, companyId, cost);
 
   const cargo = [
     ...cargoBetween(world, fromTile, toTile),
@@ -392,27 +436,27 @@ export function cloneVehicle(
   root: Root,
   world: World,
   network: Network,
-  userId: string,
+  companyId: string,
   vehicleId: string,
   now: number
 ): ActionResult {
   const vehicle = root.get("vehicles").get(vehicleId);
-  if (!vehicle || vehicle.get("owner") !== userId) {
+  if (!vehicle || vehicle.get("owner") !== companyId) {
     return fail("That vehicle isn't yours");
   }
   const [from, to] = vehicle.get("stops");
-  return buyVehicle(root, world, network, userId, Number(from), Number(to), now);
+  return buyVehicle(root, world, network, companyId, Number(from), Number(to), now);
 }
 
 export function sellVehicle(
   root: Root,
-  userId: string,
+  companyId: string,
   vehicleId: string
 ): ActionResult {
   const vehicles = root.get("vehicles");
   const vehicle = vehicles.get(vehicleId);
-  const company = root.get("companies").get(userId);
-  if (!vehicle || !company || vehicle.get("owner") !== userId) {
+  const company = root.get("companies").get(companyId);
+  if (!vehicle || !company || vehicle.get("owner") !== companyId) {
     return fail("That vehicle isn't yours");
   }
 
@@ -474,9 +518,11 @@ export function runSimulation(
 }
 
 // Wipes everything players have built and starts over on a new map
-export function resetGame(root: Root, seed: number) {
+export function resetGame(root: Root, seed: number, now: number) {
   root.update({
     seed,
+    startedAt: now,
+    demolished: new LiveMap(),
     roads: new LiveMap(),
     rails: new LiveMap(),
     stations: new LiveMap(),
