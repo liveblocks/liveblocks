@@ -100,6 +100,7 @@ export const ROOM_NAMES = [
   "Entry",
   "Hallway",
   "Office",
+  "Study",
   "Closet",
   "Laundry",
   "Balcony",
