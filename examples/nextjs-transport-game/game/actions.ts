@@ -258,7 +258,11 @@ export function buildStation(
   if (!hasTrack(view, kind, tile)) {
     root.get(kind === "road" ? "roads" : "rails").set(key, companyId);
   }
-  const name = suggestStationName(world, tile);
+  const taken = new Set<string>();
+  for (const station of root.get("stations").values()) {
+    taken.add(station.get("name"));
+  }
+  const name = suggestStationName(world, tile, taken);
   root.get("stations").set(
     key,
     new LiveObject<StationData>({

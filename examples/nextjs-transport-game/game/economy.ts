@@ -12,7 +12,7 @@ import {
   TRACK,
   TREE_CLEAR_COST,
 } from "./constants";
-import { hashInt } from "./rng";
+import { createRng, hashInt } from "./rng";
 import type {
   Cargo,
   CompanyData,
@@ -136,46 +136,68 @@ export function tileDistance(world: World, a: number, b: number) {
   );
 }
 
-export function suggestStationName(world: World, tile: number) {
+// Names a station can get when the ones that describe where it is are gone.
+// `*` is the name of the town.
+const STATION_NAMES = [
+  "* Transfer",
+  "* Exchange",
+  "* Annexe",
+  "* Sidings",
+  "* Branch",
+  "* Junction",
+  "* Cross",
+  "* Green",
+  "* Parkway",
+  "* Market",
+  "* Gate",
+  "* Heights",
+  "* Valley",
+  "* Fields",
+  "* Common",
+  "* Square",
+  "* Lane",
+  "* Halt",
+  "Upper *",
+  "Lower *",
+  "New *",
+  "Old *",
+];
+
+// Picks a name for a new station that no other station has, whichever
+// company owns it. A station is named after what it is next to if that name
+// is still free, and gets one of the other names at random if not.
+export function suggestStationName(
+  world: World,
+  tile: number,
+  taken: ReadonlySet<string>
+) {
+  const { size } = world;
   const info = getStationInfo(world, tile);
-  if (info.industries.length > 0) {
-    return info.industries[0].name;
-  }
-  if (!info.town) {
-    return "Halt";
-  }
-  const dx = (tile % world.size) - info.town.x;
-  const dy = Math.floor(tile / world.size) - info.town.y;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) <= 2) {
-    return `${info.town.name} Central`;
-  }
-  if (info.houses < MIN_HOUSES_FOR_PASSENGERS) {
-    return `${info.town.name} Halt`;
-  }
-  if (Math.abs(dx) > Math.abs(dy)) {
-    return `${info.town.name} ${dx > 0 ? "East" : "West"}`;
-  }
-  return `${info.town.name} ${dy > 0 ? "South" : "North"}`;
-}
+  const x = tile % size;
+  const y = Math.floor(tile / size);
+  const names = info.industries.map((industry) => industry.name);
 
-// People living in a house, depending on its size (cottage, townhouse or
-// office block)
-function residentsOf(house: House) {
-  const variation = hashInt(house.x * 131 + house.y);
-  return [14, 38, 110][house.variant] + (variation % [8, 20, 50][house.variant]);
-}
+  if (info.town) {
+    const town = info.town.name;
+    const dx = x - info.town.x;
+    const dy = y - info.town.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) <= 2) {
+      names.push(`${town} Central`);
+    } else if (info.houses < MIN_HOUSES_FOR_PASSENGERS) {
+      names.push(`${town} Halt`);
+    }
+    names.push(
+      Math.abs(dx) > Math.abs(dy)
+        ? `${town} ${dx > 0 ? "East" : "West"}`
+        : `${town} ${dy > 0 ? "South" : "North"}`
+    );
 
-const townResidentsCache = new WeakMap<World, number[]>();
-
-// The people living in each town's houses, before any growth
-function townResidents(world: World) {
-  let residents = townResidentsCache.get(world);
-  if (!residents) {
-    residents = world.towns.map(() => 0);
-    for (let index = 0; index < world.houses.length; index++) {
-      const house = world.houses[index];
-      if (world.houseAt[house.y * world.size + house.x] === index) {
-        residents[house.town] += residentsOf(house);
+    let trees = false;
+    let water = false;
+    for (let ny = Math.max(0, y - 2); ny <= Math.min(size - 1, y + 2); ny++) {
+      for (let nx = Math.max(0, x - 2); nx <= Math.min(size - 1, x + 2); nx++) {
+        trees = trees || world.trees[ny * size + nx] > 0;
+        water = water || world.terrain[ny * size + nx] === WATER;
       }
     }
     townResidentsCache.set(world, residents);
