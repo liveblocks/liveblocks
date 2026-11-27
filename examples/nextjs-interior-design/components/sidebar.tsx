@@ -1,0 +1,179 @@
+"use client";
+
+import { useSelf } from "@liveblocks/react/suspense";
+import { CheckIcon, ChevronsUpDownIcon, PlusIcon } from "lucide-react";
+import { memo } from "react";
+import type { FurnitureType } from "@/lib/catalog";
+import type { Plan } from "@/lib/plan";
+import { formatPlanSummary, type Unit } from "@/lib/units";
+import { cn } from "@/lib/utils";
+import { HelpButton } from "./help-button";
+import { Library } from "./library";
+import {
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuItemIndicator,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuSeparator,
+  MenuTrigger,
+} from "./ui/menu";
+
+type SidebarProps = {
+  plan: Plan;
+  plans: Plan[];
+  onPlanChange: (planId: string) => void;
+  onCreatePlan: () => void;
+  unit: Unit;
+  onAddFurniture: (type: FurnitureType) => void;
+  onDropFurniture: (
+    type: FurnitureType,
+    clientX: number,
+    clientY: number
+  ) => void;
+  getZoom: () => number;
+  className?: string;
+};
+
+/**
+ * The left column: which plan is open, the furniture library, and who you
+ * are. Memoized so it sits still while the plan next to it is being edited.
+ */
+export const Sidebar = memo(function Sidebar({
+  plan,
+  plans,
+  onPlanChange,
+  onCreatePlan,
+  unit,
+  onAddFurniture,
+  onDropFurniture,
+  getZoom,
+  className,
+}: SidebarProps) {
+  const self = useSelf();
+
+  return (
+    <aside
+      className={cn("flex w-[216px] shrink-0 flex-col lg:w-[272px]", className)}
+    >
+      <div className="px-2 pt-2.5 pb-3">
+        <PlanSwitcher
+          plan={plan}
+          plans={plans}
+          onChange={onPlanChange}
+          onCreate={onCreatePlan}
+          unit={unit}
+        />
+      </div>
+
+      <Library
+        onAdd={onAddFurniture}
+        onDrop={onDropFurniture}
+        getZoom={getZoom}
+      />
+
+      <div className="flex items-center gap-2.5 border-t border-line px-3 py-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={self.info.avatar}
+          alt=""
+          className="size-8 shrink-0 rounded-full bg-hover object-cover"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] font-medium text-ink">
+            {self.info.name}
+          </div>
+          <div className="truncate text-xs text-ink-muted">
+            {self.info.title}
+          </div>
+        </div>
+        <HelpButton />
+      </div>
+    </aside>
+  );
+});
+
+function PlanSwitcher({
+  plan,
+  plans,
+  onChange,
+  onCreate,
+  unit,
+}: {
+  plan: Plan;
+  plans: Plan[];
+  onChange: (planId: string) => void;
+  onCreate: () => void;
+  unit: Unit;
+}) {
+  return (
+    <Menu>
+      <MenuTrigger
+        className="group flex h-10 w-full items-center gap-2.5 rounded-md px-2 text-left transition-colors outline-none hover:bg-ink/8 focus-visible:bg-ink/8 data-open:bg-ink/8"
+        aria-label={`Plan: ${plan.name}`}
+      >
+        <LiveblocksMark />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] leading-tight font-medium text-ink">
+            {plan.name}
+          </div>
+          <div className="truncate text-[11px] leading-tight text-ink-muted">
+            {formatPlanSummary(plan.roomCount, plan.area, unit)}
+          </div>
+        </div>
+        <ChevronsUpDownIcon className="size-3.5 shrink-0 text-ink-faint group-hover:text-ink-muted" />
+      </MenuTrigger>
+      <MenuContent align="start" className="w-60">
+        <MenuRadioGroup
+          name="plan"
+          aria-label="Plans"
+          value={plan.id}
+          onValueChange={(planId) => onChange(planId)}
+        >
+          {plans.map((item) => (
+            <MenuRadioItem
+              key={item.id}
+              value={item.id}
+              label={item.name}
+              closeOnSelect
+              className="h-auto py-1.5"
+            >
+              <div className="min-w-0 flex-1 pl-0.5">
+                <div className="truncate">{item.name}</div>
+                <div className="truncate text-[11px] text-ink-muted tabular-nums">
+                  {formatPlanSummary(item.roomCount, item.area, unit)}
+                </div>
+              </div>
+              <MenuItemIndicator>
+                <CheckIcon className="text-ink" />
+              </MenuItemIndicator>
+            </MenuRadioItem>
+          ))}
+        </MenuRadioGroup>
+        <MenuSeparator />
+        <MenuItem onSelect={() => onCreate()}>
+          <PlusIcon />
+          New plan
+        </MenuItem>
+      </MenuContent>
+    </Menu>
+  );
+}
+
+function LiveblocksMark() {
+  return (
+    <span
+      className="flex size-7 shrink-0 items-center justify-center rounded-md bg-ink text-surface"
+      aria-hidden
+    >
+      <svg viewBox="768 320 264 160" fill="currentColor" className="size-5">
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M954 320H768L821 376V453L954 320ZM847 480H1032L979 424V347L847 480Z"
+        />
+      </svg>
+    </span>
+  );
+}
