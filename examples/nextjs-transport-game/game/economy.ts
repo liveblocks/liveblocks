@@ -2,6 +2,7 @@ import {
   BRIDGE_MULTIPLIER,
   BUILDINGS,
   CARGO,
+  CARGO_KINDS,
   CATCHMENT,
   DOCK_CATCHMENT,
   HOUSE_PASSENGER_RATE,
@@ -125,6 +126,14 @@ export function stockAt(
   const entry = station.stock[cargo] ?? { amount: 0, at: station.builtAt };
   const elapsed = Math.max(0, time - entry.at) / 1000;
   return Math.min(STOCK_CAP, entry.amount + elapsed * rate);
+}
+
+// What a vehicle has on board, the biggest load first
+export function loadOf(vehicle: Pick<VehicleData, "load">) {
+  return CARGO_KINDS.flatMap((cargo) => {
+    const amount = vehicle.load[cargo] ?? 0;
+    return amount > 0 ? [{ cargo, amount }] : [];
+  }).sort((a, b) => b.amount - a.amount);
 }
 
 // The cargo a vehicle would carry on a trip between two stations

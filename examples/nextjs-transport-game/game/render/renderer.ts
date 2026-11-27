@@ -7,7 +7,7 @@ import {
   TRAIN_WAGON_GAP,
   TRAIN_WAGONS,
 } from "../constants";
-import { cargoBetween, catchmentOf, formatMoney } from "../economy";
+import { cargoBetween, catchmentOf, formatMoney, loadOf } from "../economy";
 import { headDistance, type PathPoint, pointOnPath } from "../motion";
 import {
   connectionsAt,
@@ -291,7 +291,7 @@ export class Renderer {
 
   private seenVehicles: ReadonlyMap<string, Vehicle> | null = null;
   private trips = new Map<string, number>();
-  private passengerRoutes = new Map<string, boolean>();
+  private routes = new Map<string, { passengers: boolean; freight: boolean }>();
   private popups: Popup[] = [];
 
   // Where town names were last drawn on screen, so they can be clicked
@@ -321,7 +321,7 @@ export class Renderer {
     this.statics = [];
     this.labels = [];
     this.trackNetwork = null;
-    this.passengerRoutes.clear();
+    this.routes.clear();
 
     const { sprites } = this;
     const { size } = world;
@@ -692,8 +692,14 @@ export class Renderer {
     const point: PathPoint = { x: 0, y: 0, dx: 1, dy: 0 };
     for (const [id, vehicle] of scene.vehicles) {
       const color = colorOf(vehicle.owner);
-      const passengers = this.carriesPassengers(id, vehicle);
-      const { cargo } = vehicle;
+      // A route with both passengers and freight gets a vehicle for both:
+      // a train pulls a coach and freight wagons, and a road vehicle or a
+      // ship looks like whatever it is carrying at the moment
+      const route = this.routeCargo(id, vehicle);
+      const cargo =
+        loadOf(vehicle).find((each) => each.cargo !== "passengers")?.cargo ??
+        null;
+      const passengers = route.passengers && (!route.freight || cargo === null);
 
       if (vehicle.path.length < 2) {
         // Waiting for a route: parked at its station
@@ -743,7 +749,17 @@ export class Renderer {
         dynamics.push({
           depth: x + y,
           draw: () =>
-            drawTrainCar(ctx, x, y, dx, dy, color, car === 0, passengers, cargo),
+            drawTrainCar(
+              ctx,
+              x,
+              y,
+              dx,
+              dy,
+              color,
+              car === 0,
+              route.passengers && (!route.freight || car === 1),
+              cargo
+            ),
         });
       }
     }
@@ -769,16 +785,22 @@ export class Renderer {
     return SOUTH;
   }
 
-  private carriesPassengers(id: string, vehicle: Vehicle) {
-    let passengers = this.passengerRoutes.get(id);
-    if (passengers === undefined) {
+  // Whether a vehicle's route has passengers to carry, freight, or both
+  private routeCargo(id: string, vehicle: Vehicle) {
+    let route = this.routes.get(id);
+    if (!route) {
       const [from, to] = vehicle.stops.map(Number);
-      passengers =
-        cargoBetween(this.world, from, to).includes("passengers") ||
-        cargoBetween(this.world, to, from).includes("passengers");
-      this.passengerRoutes.set(id, passengers);
+      const kinds = [
+        ...cargoBetween(this.world, from, to),
+        ...cargoBetween(this.world, to, from),
+      ];
+      route = {
+        passengers: kinds.includes("passengers"),
+        freight: kinds.some((cargo) => cargo !== "passengers"),
+      };
+      this.routes.set(id, route);
     }
-    return passengers;
+    return route;
   }
 
   private drawOverlays(ctx: Ctx, scene: Scene, zoom: number) {

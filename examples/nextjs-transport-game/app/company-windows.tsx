@@ -16,7 +16,12 @@ import {
 } from "@/components/ui/tooltip";
 import { Window } from "@/components/window";
 import { CARGO, MAX_VEHICLES_PER_COMPANY, TRANSPORT } from "@/game/constants";
-import { cargoBetween, companyBalance, formatMoney } from "@/game/economy";
+import {
+  cargoBetween,
+  companyBalance,
+  formatMoney,
+  loadOf,
+} from "@/game/economy";
 import type { CompanyData, StationData, Vehicle } from "@/game/types";
 import type { World } from "@/game/world";
 
@@ -181,12 +186,15 @@ function VehicleRow({
   }
   // Without a path, `departAt` is when the vehicle next looks for a route
   const stalled = vehicle.path.length < 2 && vehicle.departAt > Date.now();
+  const onBoard = loadOf(vehicle);
 
   let status = "Heading out empty";
   if (stalled) {
     status = "Can't find a way to its next station";
-  } else if (vehicle.cargo) {
-    status = `Carrying ${vehicle.load} ${CARGO[vehicle.cargo].label.toLowerCase()}`;
+  } else if (onBoard.length > 0) {
+    status = `Carrying ${onBoard
+      .map(({ cargo, amount }) => `${amount} ${CARGO[cargo].label.toLowerCase()}`)
+      .join(" and ")}`;
   } else if (vehicle.trips === 0) {
     status = "Getting ready";
   }

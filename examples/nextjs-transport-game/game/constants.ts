@@ -82,6 +82,14 @@ export const CARGO: Record<
   oil: { label: "Oil", rate: 3.4, color: "#56606e" },
 };
 
+export const CARGO_KINDS: readonly Cargo[] = [
+  "passengers",
+  "coal",
+  "wood",
+  "grain",
+  "oil",
+];
+
 // Cost per tile
 export const TRACK: Record<LineKind, { label: string; cost: number }> = {
   road: { label: "Road", cost: 100 },

@@ -1,8 +1,8 @@
 import { CARGO, CATCHUP_MS, LOAD_MS, RETRY_MS, TRANSPORT } from "./constants";
-import { getStationInfo, stockAt, tileDistance } from "./economy";
+import { getStationInfo, loadOf, stockAt, tileDistance } from "./economy";
 import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
-import type { Cargo, StationData, Stock, Vehicle } from "./types";
+import type { Load, StationData, Stock, Vehicle } from "./types";
 import type { World } from "./world";
 
 const MAX_EVENTS = 500;
@@ -49,14 +49,14 @@ export function advance(
     const destination = stationOf(toKey);
 
     let income = 0;
-    if (
-      vehicle.cargo &&
-      vehicle.load > 0 &&
-      destination &&
-      getStationInfo(world, Number(toKey)).accepts.includes(vehicle.cargo)
-    ) {
+    if (destination) {
+      const accepted = getStationInfo(world, Number(toKey)).accepts;
       const distance = tileDistance(world, Number(fromKey), Number(toKey));
-      income = vehicle.load * Math.max(1, distance) * CARGO[vehicle.cargo].rate;
+      for (const { cargo, amount } of loadOf(vehicle)) {
+        if (accepted.includes(cargo)) {
+          income += amount * Math.max(1, distance) * CARGO[cargo].rate;
+        }
+      }
     }
     const runningCost =
       (vehicle.path.length - 1) * TRANSPORT[vehicle.kind].runningCost;
@@ -65,8 +65,7 @@ export function advance(
     vehicle.lastIncome = Math.round(income);
     vehicle.trips += 1;
     vehicle.leg = (vehicle.leg + 1) % count;
-    vehicle.cargo = null;
-    vehicle.load = 0;
+    vehicle.load = {};
     vehicle.path = [];
   };
 
@@ -94,32 +93,37 @@ export function advance(
       return;
     }
 
-    // Load whichever cargo there is the most of that the destination accepts
+    // Load every kind of cargo that the destination accepts. A station can
+    // have several, e.g. passengers from a town and coal from a mine next to
+    // it. When more is waiting than fits, the room on board is split evenly
+    // between the kinds, and what one kind leaves unused goes to the others.
     const accepted = getStationInfo(world, Number(toKey)).accepts;
-    let cargo: Cargo | null = null;
-    let available = 0;
-    for (const supply of getStationInfo(world, Number(fromKey)).supply) {
-      if (!accepted.includes(supply.cargo)) {
-        continue;
-      }
-      const waiting = stockAt(from, supply.cargo, supply.rate, time);
-      if (waiting > available) {
-        cargo = supply.cargo;
-        available = waiting;
-      }
-    }
+    const waiting = getStationInfo(world, Number(fromKey))
+      .supply.filter((supply) => accepted.includes(supply.cargo))
+      .map(({ cargo, rate }) => ({
+        cargo,
+        amount: stockAt(from, cargo, rate, time),
+      }))
+      .sort((a, b) => a.amount - b.amount);
 
-    const load = Math.min(TRANSPORT[vehicle.kind].capacity, Math.floor(available));
-    if (cargo && load > 0) {
-      changedStocks.set(fromKey, {
-        ...from.stock,
-        [cargo]: { amount: available - load, at: time },
-      });
+    const load: Load = {};
+    const stock = { ...from.stock };
+    let room = TRANSPORT[vehicle.kind].capacity;
+    waiting.forEach(({ cargo, amount }, index) => {
+      const fairShare = Math.floor(room / (waiting.length - index));
+      const taken = Math.min(Math.floor(amount), fairShare);
+      if (taken > 0) {
+        load[cargo] = taken;
+        stock[cargo] = { amount: amount - taken, at: time };
+        room -= taken;
+      }
+    });
+    if (Object.keys(load).length > 0) {
+      changedStocks.set(fromKey, stock);
     }
 
     vehicle.path = path;
     vehicle.departAt = time + LOAD_MS;
-    vehicle.cargo = load > 0 ? cargo : null;
     vehicle.load = load;
   };
 

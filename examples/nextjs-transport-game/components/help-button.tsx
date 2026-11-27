@@ -25,7 +25,7 @@ const FEATURES: Feature[] = [
     icon: <TruckIcon />,
     title: "Run vehicles",
     description:
-      "With the vehicle tool, click two of your stations to buy a bus, truck, train or ship that carries passengers and cargo between them. Click an industry, or open the Cargo window, to see what needs to go where.",
+      "With the vehicle tool, click two of your stations to buy a bus, truck, train or ship that carries passengers and cargo between them. A station takes everything around it, so one vehicle can carry passengers and freight together. Click an industry, or open the Cargo window, to see what needs to go where.",
   },
   {
     icon: <UsersIcon />,

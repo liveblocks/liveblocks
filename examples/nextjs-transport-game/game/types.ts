@@ -26,6 +26,9 @@ export type Tool =
 // was waiting at time `at`, and it keeps growing at the station's supply rate.
 export type Stock = { [cargo in Cargo]?: { amount: number; at: number } };
 
+// How many units of each kind of cargo a vehicle is carrying
+export type Load = { [cargo in Cargo]?: number };
+
 // `owner` is always the id of a company, not of a player
 export type StationData = {
   owner: string;
@@ -48,8 +51,9 @@ export type VehicleData = {
   // When the vehicle leaves (or left) the station at the start of `path`.
   // Everyone derives the vehicle's position from this timestamp.
   departAt: number;
-  cargo: Cargo | null;
-  load: number;
+  // What is on board for this leg: a vehicle takes along every kind of
+  // cargo that its next station accepts
+  load: Load;
   // Lifetime profit and stats
   earned: number;
   lastIncome: number;
