@@ -1,4 +1,5 @@
 import {
+  BUILDINGS,
   CARGO,
   CATCHMENT,
   DOCK_CATCHMENT,
@@ -396,7 +397,7 @@ export class Renderer {
       }
       const colors = sprites.houses[house.variant];
       const color = colors[hashInt(house.y * size + house.x) % colors.length];
-      place(color, house.x, house.y, 1, -1);
+      place(color, house.x, house.y, BUILDINGS[house.variant].size ?? 1, -1);
     }
     for (const industry of world.industries) {
       place(

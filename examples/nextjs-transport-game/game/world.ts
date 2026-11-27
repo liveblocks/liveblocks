@@ -1,3 +1,4 @@
+import { BUILDINGS, CHURCH, PARK, SHOPS, STADIUM } from "./constants";
 import { createRng, type Rng } from "./rng";
 import type { Cargo } from "./types";
 
@@ -70,12 +71,25 @@ export type Industry = {
 };
 
 export type House = {
+  // Its top corner, for the few buildings that cover more than one tile
   x: number;
   y: number;
-  // Index into `BUILDINGS`, from 0 (cottage) to 4 (skyscraper)
+  // Index into `BUILDINGS`
   variant: number;
   town: number;
 };
+
+// The tiles a building of this kind covers, from its top corner
+export function buildingTiles(size: number, tile: number, variant: number) {
+  const side = BUILDINGS[variant].size ?? 1;
+  const tiles: number[] = [];
+  for (let dy = 0; dy < side; dy++) {
+    for (let dx = 0; dx < side; dx++) {
+      tiles.push(tile + dy * size + dx);
+    }
+  }
+  return tiles;
+}
 
 // The part of the game players don't build: terrain, towns, and industries.
 // It is never stored in Liveblocks. Every client generates the exact same
@@ -362,9 +376,58 @@ export function generateWorld(seed: number, size: number): World {
     townStreets.push(streets);
   }
 
+  // Some towns have a stadium from the start, at the edge of town. The
+  // others get one when they have grown for a while.
+  for (const town of towns) {
+    if (rng() > 0.35) {
+      continue;
+    }
+    const sites: number[] = [];
+    for (let dy = -5; dy <= 4; dy++) {
+      for (let dx = -5; dx <= 4; dx++) {
+        const corner = (town.y + dy) * size + town.x + dx;
+        const tiles = buildingTiles(size, corner, STADIUM);
+        const fits = tiles.every((tile) => {
+          const lines = streetLines(town, tile % size, Math.floor(tile / size));
+          return (
+            terrain[tile] !== WATER &&
+            houseAt[tile] < 0 &&
+            !lines.northSouth &&
+            !lines.eastWest
+          );
+        });
+        const onStreet = tiles.some(
+          (tile) =>
+            townRoads[tile - 1] ||
+            townRoads[tile + 1] ||
+            townRoads[tile - size] ||
+            townRoads[tile + size]
+        );
+        const central = dx >= -2 && dx <= 1 && dy >= -2 && dy <= 1;
+        if (fits && onStreet && !central) {
+          sites.push(corner);
+        }
+      }
+    }
+    if (sites.length > 0) {
+      const corner = sites[Math.floor(rng() * sites.length)];
+      for (const tile of buildingTiles(size, corner, STADIUM)) {
+        houseAt[tile] = houses.length;
+      }
+      houses.push({
+        x: corner % size,
+        y: Math.floor(corner / size),
+        variant: STADIUM,
+        town: town.id,
+      });
+      town.houses++;
+    }
+  }
+
   // Houses line the streets, and get taller toward the town center. They
   // keep off the tiles where the town's streets will run as it grows.
   towns.forEach((town, townIndex) => {
+    const first = houses.length;
     for (const street of townStreets[townIndex]) {
       const sx = street % size;
       const sy = Math.floor(street / size);
@@ -404,6 +467,30 @@ export function generateWorld(seed: number, size: number): World {
           houses.push({ x: hx, y: hy, variant, town: town.id });
           town.houses++;
         }
+      }
+    }
+
+    // A few of them are not houses: every town has a church and shops near
+    // its center, and most have a park
+    const places = [CHURCH, SHOPS];
+    if (rng() < 0.5) {
+      places.push(SHOPS);
+    }
+    if (rng() < 0.6) {
+      places.push(PARK);
+    }
+    for (const variant of places) {
+      const reach = variant === PARK ? 4 : 2;
+      const choices = houses
+        .slice(first)
+        .filter(
+          (house) =>
+            house.variant <= 1 &&
+            Math.max(Math.abs(house.x - town.x), Math.abs(house.y - town.y)) <=
+              reach
+        );
+      if (choices.length > 0) {
+        choices[Math.floor(rng() * choices.length)].variant = variant;
       }
     }
   });

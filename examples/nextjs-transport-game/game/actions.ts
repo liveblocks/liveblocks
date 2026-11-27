@@ -25,7 +25,7 @@ import type {
   Vehicle,
   VehicleData,
 } from "./types";
-import { isBlocked, WATER, type World } from "./world";
+import { buildingTiles, isBlocked, WATER, type World } from "./world";
 
 // Every change to the game goes through one of these functions. They take the
 // root of Liveblocks Storage, so they can be called from `useMutation`.
@@ -244,11 +244,14 @@ function demolishCost(world: World, tile: number) {
   return house ? BUILDINGS[house.variant].demolishCost : 0;
 }
 
-// What demolishing the buildings on these tiles would cost
+// What demolishing the buildings on these tiles would cost. A building that
+// covers several of them is only paid for once.
 export function demolitionCost(world: World, tiles: readonly number[]) {
+  const buildings = new Set(tiles.map((tile) => world.houseAt[tile]));
   let cost = 0;
-  for (const tile of tiles) {
-    cost += demolishCost(world, tile);
+  for (const index of buildings) {
+    cost +=
+      index >= 0 ? BUILDINGS[world.houses[index].variant].demolishCost : 0;
   }
   return cost;
 }
@@ -391,7 +394,14 @@ export function bulldoze(
     const station = stations.get(key);
 
     if (world.houseAt[tile] >= 0) {
-      if (demolished.has(key)) {
+      // All of the building goes, also when it covers more tiles than this
+      const house = world.houses[world.houseAt[tile]];
+      const covered = buildingTiles(
+        world.size,
+        house.y * world.size + house.x,
+        house.variant
+      );
+      if (covered.some((other) => demolished.has(String(other)))) {
         continue;
       }
       const price = demolishCost(world, tile);
@@ -399,7 +409,9 @@ export function bulldoze(
         problem = "Not enough money";
         continue;
       }
-      demolished.set(key, companyId);
+      for (const other of covered) {
+        demolished.set(String(other), companyId);
+      }
       cost += price;
       removed++;
     } else if (world.industryAt[tile] >= 0) {

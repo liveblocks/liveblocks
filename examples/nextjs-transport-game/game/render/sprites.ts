@@ -322,6 +322,248 @@ function drawSkyscraper(ctx: Ctx, ox: number, oy: number, color: number) {
   ctx.fillRect(ox - 1, oy + HALF_H - crown - 20, 2, 2);
 }
 
+const AWNINGS = ["#d9534f", "#3f8fbf", "#4a9d5b", "#e0a030"];
+
+// A row of shops, with striped awnings over their windows
+function drawShops(ctx: Ctx, ox: number, oy: number, color: number) {
+  const wall = WALLS[(color + 2) % WALLS.length];
+  const awning = AWNINGS[color % AWNINGS.length];
+  groundShadow(ctx, ox, oy + HALF_H + 3, 22);
+  box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 0, 14, wall, "#a9a498");
+  box(
+    ctx,
+    ox,
+    oy,
+    0.14,
+    0.14,
+    0.86,
+    0.86,
+    14,
+    15.5,
+    shade(wall, 0.9),
+    "#b9b4a8"
+  );
+  windowBand(ctx, ox, oy, "left", 0.2, 0.42, 0.86, 1.5, 7.5, GLASS);
+  windowBand(ctx, ox, oy, "left", 0.46, 0.56, 0.86, 0, 7.5, "#6b4a2b");
+  windowBand(ctx, ox, oy, "left", 0.6, 0.8, 0.86, 1.5, 7.5, GLASS);
+  windowBand(ctx, ox, oy, "right", 0.2, 0.8, 0.86, 1.5, 7.5, GLASS);
+  for (let stripe = 0; stripe < 8; stripe++) {
+    const from = 0.14 + stripe * 0.09;
+    const fill = stripe % 2 === 0 ? awning : "#f4f1ea";
+    quad(
+      ctx,
+      ox,
+      oy,
+      [
+        [from, 0.86, 11],
+        [from + 0.09, 0.86, 11],
+        [from + 0.09, 1, 8],
+        [from, 1, 8],
+      ],
+      fill
+    );
+    quad(
+      ctx,
+      ox,
+      oy,
+      [
+        [0.86, from, 11],
+        [0.86, from + 0.09, 11],
+        [1, from + 0.09, 8],
+        [1, from, 8],
+      ],
+      shade(fill, 0.84)
+    );
+  }
+  box(ctx, ox, oy, 0.5, 0.3, 0.74, 0.54, 15.5, 18.5, "#8f98a3");
+}
+
+function drawChurch(ctx: Ctx, ox: number, oy: number) {
+  const stone = "#ddd5c2";
+  const slate = "#5f6b7a";
+  groundShadow(ctx, ox, oy + HALF_H + 3, 22);
+
+  // The tower stands at the far end, with the nave in front of it
+  box(ctx, ox, oy, 0.12, 0.34, 0.4, 0.66, 0, 32, stone);
+  windowBand(ctx, ox, oy, "left", 0.22, 0.3, 0.66, 22, 28, "#4a4f57");
+  quad(
+    ctx,
+    ox,
+    oy,
+    [
+      [0.1, 0.68, 32],
+      [0.42, 0.68, 32],
+      [0.26, 0.5, 50],
+    ],
+    shade(slate, 0.9)
+  );
+  quad(
+    ctx,
+    ox,
+    oy,
+    [
+      [0.42, 0.32, 32],
+      [0.42, 0.68, 32],
+      [0.26, 0.5, 50],
+    ],
+    shade(slate, 0.66)
+  );
+  const top = oy + 0.76 * HALF_H - 50;
+  const middle = ox - 0.24 * HALF_W;
+  ctx.fillStyle = "#e9cf7a";
+  ctx.fillRect(middle - 0.6, top - 6, 1.2, 6);
+  ctx.fillRect(middle - 2.2, top - 4.4, 4.4, 1.2);
+
+  box(ctx, ox, oy, 0.38, 0.28, 0.9, 0.72, 0, 13, stone);
+  for (const from of [0.46, 0.6, 0.74]) {
+    windowBand(
+      ctx,
+      ox,
+      oy,
+      "left",
+      from,
+      from + 0.07,
+      0.72,
+      3.5,
+      10.5,
+      "#4f74b3"
+    );
+  }
+  windowBand(ctx, ox, oy, "right", 0.43, 0.57, 0.9, 0, 8, "#6b4a2b");
+  gableRoof(ctx, ox, oy, 0.36, 0.25, 0.92, 0.75, 13, 11, slate, stone);
+}
+
+// A lawn with paths to a fountain, and trees around it
+function drawPark(ctx: Ctx, ox: number, oy: number, variant: number) {
+  flat(ctx, ox, oy, 0.05, 0.05, 0.95, 0.95, "#93cf6b");
+  flat(ctx, ox, oy, 0.45, 0.05, 0.55, 0.95, "#e3d6ad");
+  flat(ctx, ox, oy, 0.05, 0.45, 0.95, 0.55, "#e3d6ad");
+  cylinder(ctx, ox, oy, 0.5, 0.5, 0.15, 0, 2.5, "#cfc9bb", "#74b6e6");
+  cylinder(ctx, ox, oy, 0.5, 0.5, 0.03, 2.5, 6, "#cfc9bb", "#e9f4fb");
+  drawTrees(
+    ctx,
+    ox,
+    oy,
+    createRng(31 + variant),
+    5,
+    1,
+    0.15,
+    (x, y) => Math.abs(x - 0.5) > 0.2 && Math.abs(y - 0.5) > 0.2
+  );
+}
+
+function floodlight(ctx: Ctx, ox: number, oy: number, x: number, y: number) {
+  const px = ox + (x - y) * HALF_W;
+  const py = oy + (x + y) * HALF_H;
+  ctx.fillStyle = "#6f757d";
+  ctx.fillRect(px - 0.7, py - 36, 1.4, 36);
+  ctx.fillStyle = "#f4f1dc";
+  ctx.fillRect(px - 3.5, py - 40, 7, 4.5);
+}
+
+// Stands on all four sides of a pitch. The ones at the back are taller, so
+// the pitch shows from where the map is looked at.
+function drawStadium(ctx: Ctx, ox: number, oy: number) {
+  const concrete = "#d5d1c7";
+  const seats = ["#c8504b", "#e4e0d6", "#c8504b"];
+  ground(ctx, ox, oy, "#b9b5aa");
+  floodlight(ctx, ox, oy, 0.1, 0.1);
+
+  // Three rows of seats per stand, stepping down toward the pitch
+  for (let row = 0; row < 3; row++) {
+    const from = 0.12 + row * 0.11;
+    const height = 20 - row * 6;
+    box(
+      ctx,
+      ox,
+      oy,
+      0.12,
+      from,
+      1.88,
+      from + 0.11,
+      0,
+      height,
+      concrete,
+      seats[row]
+    );
+  }
+  for (let row = 0; row < 3; row++) {
+    const from = 0.12 + row * 0.11;
+    const height = 20 - row * 6;
+    box(
+      ctx,
+      ox,
+      oy,
+      from,
+      0.45,
+      from + 0.11,
+      1.88,
+      0,
+      height,
+      concrete,
+      seats[row]
+    );
+  }
+  floodlight(ctx, ox, oy, 1.9, 0.1);
+  floodlight(ctx, ox, oy, 0.1, 1.9);
+
+  flat(ctx, ox, oy, 0.5, 0.5, 1.5, 1.5, "#58a84a");
+  for (let stripe = 0; stripe < 5; stripe += 2) {
+    flat(
+      ctx,
+      ox,
+      oy,
+      0.5 + stripe * 0.2,
+      0.5,
+      0.7 + stripe * 0.2,
+      1.5,
+      "#62b453"
+    );
+  }
+  const chalk = "#eef5ea";
+  flat(ctx, ox, oy, 0.54, 0.54, 1.46, 0.56, chalk);
+  flat(ctx, ox, oy, 0.54, 1.44, 1.46, 1.46, chalk);
+  flat(ctx, ox, oy, 0.54, 0.54, 0.56, 1.46, chalk);
+  flat(ctx, ox, oy, 1.44, 0.54, 1.46, 1.46, chalk);
+  flat(ctx, ox, oy, 0.99, 0.54, 1.01, 1.46, chalk);
+
+  for (let row = 2; row >= 0; row--) {
+    const from = 1.55 + (2 - row) * 0.11;
+    const height = 10 - row * 3;
+    box(
+      ctx,
+      ox,
+      oy,
+      from,
+      0.45,
+      from + 0.11,
+      1.55,
+      0,
+      height,
+      concrete,
+      seats[row]
+    );
+  }
+  for (let row = 2; row >= 0; row--) {
+    const from = 1.55 + (2 - row) * 0.11;
+    const height = 10 - row * 3;
+    box(
+      ctx,
+      ox,
+      oy,
+      0.45,
+      from,
+      1.88,
+      from + 0.11,
+      0,
+      height,
+      concrete,
+      seats[row]
+    );
+  }
+  floodlight(ctx, ox, oy, 1.9, 1.9);
+}
+
 function ground(ctx: Ctx, ox: number, oy: number, color: string) {
   quad(
     ctx,
@@ -572,6 +814,21 @@ export function createSprites(createCanvas: CanvasFactory): Sprites {
         draw(ctx, ox, oy, color)
       )
     )
+  );
+  // Then the places people go to: shops, a church, a park and a stadium
+  houses.push(
+    [0, 1, 2, 3].map((color) =>
+      makeSprite(createCanvas, 1, 22, (ctx, ox, oy) =>
+        drawShops(ctx, ox, oy, color)
+      )
+    ),
+    [makeSprite(createCanvas, 1, 60, drawChurch)],
+    [0, 1, 2].map((variant) =>
+      makeSprite(createCanvas, 1, 30, (ctx, ox, oy) =>
+        drawPark(ctx, ox, oy, variant)
+      )
+    ),
+    [makeSprite(createCanvas, 2, 44, drawStadium)]
   );
 
   const industry = (type: IndustryType) =>

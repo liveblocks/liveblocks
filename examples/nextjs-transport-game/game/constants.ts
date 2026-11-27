@@ -37,14 +37,17 @@ export const START_MONEY = 100_000;
 // What the hidden money cheat adds to your balance
 export const CHEAT_MONEY = 100_000;
 
-// The buildings towns are made of, from smallest to tallest. As a town
-// grows, its buildings are replaced by the next one up.
+// The buildings towns are made of. The first few are where people live and
+// work, from smallest to tallest: as a town grows, they are replaced by the
+// next one up. The others are places people go to, which stay as they are.
 export const BUILDINGS: readonly {
   label: string;
   residents: number;
-  // How many passengers it supplies, compared to a cottage
+  // How many passengers each of its tiles supplies, compared to a cottage
   passengers: number;
   demolishCost: number;
+  // How many tiles it covers on each side, if more than one
+  size?: number;
 }[] = [
   { label: "Cottage", residents: 14, passengers: 1, demolishCost: 600 },
   { label: "Townhouse", residents: 38, passengers: 1.5, demolishCost: 900 },
@@ -56,7 +59,24 @@ export const BUILDINGS: readonly {
   },
   { label: "Tower", residents: 340, passengers: 4, demolishCost: 8000 },
   { label: "Skyscraper", residents: 950, passengers: 6, demolishCost: 25_000 },
+  { label: "Shops", residents: 0, passengers: 3, demolishCost: 2000 },
+  { label: "Church", residents: 0, passengers: 2, demolishCost: 5000 },
+  { label: "Park", residents: 0, passengers: 1.5, demolishCost: 1000 },
+  {
+    label: "Stadium",
+    residents: 0,
+    passengers: 3,
+    demolishCost: 30_000,
+    size: 2,
+  },
 ];
+// How many of them people live and work in
+export const BUILDING_TIERS = 5;
+// Where the others are in `BUILDINGS`
+export const SHOPS = 5;
+export const CHURCH = 6;
+export const PARK = 7;
+export const STADIUM = 8;
 
 // Towns grow one step at a time: a new house, another piece of street, or a
 // bigger building. This is how many steps a town takes per minute, and how

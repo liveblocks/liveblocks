@@ -1,7 +1,7 @@
 "use client";
 
 import { Window } from "@/components/window";
-import { BUILDINGS, TOWN_MAX_STATIONS } from "@/game/constants";
+import { BUILDING_TIERS, BUILDINGS, TOWN_MAX_STATIONS } from "@/game/constants";
 import { townGrowthRate, townStats } from "@/game/towns";
 import type { World } from "@/game/world";
 
@@ -15,10 +15,28 @@ type Props = {
   onClose: () => void;
 };
 
+function pluralize(label: string) {
+  return label.endsWith("ch") ? `${label}es` : `${label}s`;
+}
+
 // Opens when a town's name is clicked on the map
 export function TownWindow({ world, town, stations, grown, onClose }: Props) {
   const { name } = world.towns[town];
-  const { population, buildings, tallest } = townStats(world)[town];
+  const { population, buildings, tallest, counts } = townStats(world)[town];
+  // What the town has besides houses and offices, e.g. "Church, 2 shops"
+  const places = BUILDINGS.map(({ label }, variant) => ({
+    label: label.toLowerCase(),
+    count: counts[variant],
+  }))
+    .slice(BUILDING_TIERS)
+    .filter((place) => place.count > 0)
+    .map(({ label, count }) => {
+      if (count === 1) {
+        return label;
+      }
+      return `${count} ${label.endsWith("s") ? label : pluralize(label)}`;
+    })
+    .join(", ");
   const seconds = Math.round(60 / townGrowthRate(stations));
 
   let service = "No station nearby yet. Towns grow faster with stations.";
@@ -42,6 +60,12 @@ export function TownWindow({ world, town, stations, grown, onClose }: Props) {
           <dd className="text-right tabular-nums">{buildings}</dd>
           <dt>Tallest</dt>
           <dd className="text-right">{BUILDINGS[tallest].label}</dd>
+          {places ? (
+            <>
+              <dt>Also has</dt>
+              <dd className="text-right first-letter:uppercase">{places}</dd>
+            </>
+          ) : null}
           <dt>Growth</dt>
           <dd className="text-right tabular-nums">
             {grown ? "Fully grown" : `Something new every ${seconds}s`}

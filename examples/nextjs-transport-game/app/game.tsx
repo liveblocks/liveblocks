@@ -41,6 +41,7 @@ import {
   COMPANIES,
   DEFAULT_MAP_SIZE,
   MAP_SIZES,
+  STADIUM,
   TRACK,
   TRANSPORT,
 } from "@/game/constants";
@@ -806,16 +807,23 @@ function useTownSteps(world: World, stationTiles: readonly number[]) {
 }
 
 // Tells the player when a town they are watching grow gets its first tower
-// or skyscraper. Every client notices on its own, so nothing is broadcast.
+// or skyscraper, or a stadium. Every client notices on its own, so nothing
+// is broadcast.
 function useTownNews(
   world: World,
   notify: (text: string, color: string | null) => void
 ) {
-  const seen = useRef<{ seed: number; tallest: number[] } | null>(null);
+  const seen = useRef<{
+    seed: number;
+    tallest: number[];
+    stadiums: number[];
+  } | null>(null);
   useEffect(() => {
-    const tallest = townStats(world).map((town) => town.tallest);
+    const stats = townStats(world);
+    const tallest = stats.map((town) => town.tallest);
+    const stadiums = stats.map((town) => town.counts[STADIUM]);
     const before = seen.current;
-    seen.current = { seed: world.seed, tallest };
+    seen.current = { seed: world.seed, tallest, stadiums };
     if (before?.seed !== world.seed) {
       return;
     }
@@ -823,6 +831,9 @@ function useTownNews(
       if (tallest[town.id] > before.tallest[town.id] && tallest[town.id] >= 3) {
         const building = BUILDINGS[tallest[town.id]].label.toLowerCase();
         notify(`${town.name} has its first ${building}`, TOWN_NEWS_COLOR);
+      }
+      if (stadiums[town.id] > before.stadiums[town.id]) {
+        notify(`${town.name} has a new stadium`, TOWN_NEWS_COLOR);
       }
     }
   }, [world, notify]);

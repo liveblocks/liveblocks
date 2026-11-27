@@ -1,5 +1,9 @@
 import {
+  BUILDING_TIERS,
   BUILDINGS,
+  PARK,
+  SHOPS,
+  STADIUM,
   TOWN_GROWTH_PER_MINUTE,
   TOWN_GROWTH_PER_STATION,
   TOWN_MAX_STATIONS,
@@ -8,6 +12,7 @@ import {
 import { createRng, hashInt } from "./rng";
 import type { TownGrowth } from "./types";
 import {
+  buildingTiles,
   type House,
   nearestTown,
   streetLines,
@@ -18,7 +23,8 @@ import {
 
 // Towns grow on their own: streets get longer along the town's grid, houses
 // appear along them, and buildings are replaced by bigger ones, up to
-// skyscrapers in the center.
+// skyscrapers in the center. Now and then a town gets something else than a
+// house: shops, a park, a stadium.
 //
 // None of that is stored. Each town has a fixed list of growth steps that
 // every client works out from the map seed, and how far down that list a
@@ -26,12 +32,13 @@ import {
 // players see the same buildings appear at the same time, without anyone
 // writing them to Storage.
 
-export type GrowthStep = {
-  kind: "street" | "house" | "upgrade";
-  tile: number;
-};
+export type GrowthStep =
+  | { kind: "street" | "house" | "upgrade"; tile: number }
+  // Shops, a park or a stadium, as an index into `BUILDINGS`. It takes the
+  // place of the small houses that are in its way.
+  | { kind: "place"; tile: number; variant: number };
 
-const MAX_TIER = BUILDINGS.length - 1;
+const MAX_TIER = BUILDING_TIERS - 1;
 // Buildings are allowed to get taller as a town moves through its first
 // steps. After this many, the only thing left is to catch up.
 const STEPS_TO_FULL_HEIGHT = 240;
@@ -56,7 +63,10 @@ export function townPlans(world: World) {
     const streets = world.townRoads.slice();
     const tiers = new Int8Array(world.size * world.size).fill(-1);
     for (const house of world.houses) {
-      tiers[house.y * world.size + house.x] = house.variant;
+      const corner = house.y * world.size + house.x;
+      for (const tile of buildingTiles(world.size, corner, house.variant)) {
+        tiers[tile] = house.variant;
+      }
     }
     result = world.towns.map((town) => planTown(world, town, streets, tiers));
     plans.set(world, result);
@@ -145,6 +155,72 @@ function planTown(
     return score;
   };
 
+  const nextToStreet = (tile: number) =>
+    isStreet(neighbor(tile, 1, 0)) ||
+    isStreet(neighbor(tile, -1, 0)) ||
+    isStreet(neighbor(tile, 0, 1)) ||
+    isStreet(neighbor(tile, 0, -1));
+
+  // Where shops, a park or a stadium could go: on a street, on tiles that
+  // are empty or only have small houses. Shops go toward the center, parks
+  // and stadiums away from it.
+  const inArea = new Set(area);
+  const sitesFor = (variant: number) => {
+    const sites: { tile: number; weight: number }[] = [];
+    for (const corner of area) {
+      const tiles = buildingTiles(size, corner, variant);
+      const free = tiles.every((tile) => {
+        const lines = linesAt(tile);
+        return (
+          inArea.has(tile) &&
+          !streets[tile] &&
+          !lines.northSouth &&
+          !lines.eastWest &&
+          tiers[tile] <= 1
+        );
+      });
+      if (!free || !tiles.some(nextToStreet)) {
+        continue;
+      }
+      const far = Math.min(...tiles.map(distance));
+      const empty = tiles.filter((tile) => tiers[tile] < 0).length;
+      let weight = (1 + empty) / (1 + far);
+      if (variant === STADIUM) {
+        weight = far >= 3 ? (1 + empty) ** 2 : 0;
+      } else if (variant === PARK) {
+        weight = far >= 2 ? 1 + empty : 0;
+      }
+      if (weight > 0) {
+        sites.push({ tile: corner, weight });
+      }
+    }
+    return sites;
+  };
+
+  // What the town gets besides houses, and after how many steps: shops every
+  // now and then, and a park and a stadium if it didn't start with one
+  const startsWith = (variant: number) =>
+    world.houses.some(
+      (house) => house.town === town.id && house.variant === variant
+    );
+  const places: { variant: number; after: number; tries: number }[] = [];
+  for (
+    let after = 15 + rng() * 30;
+    places.length < 4;
+    after += 40 + rng() * 40
+  ) {
+    places.push({ variant: SHOPS, after, tries: 1 });
+  }
+  places.push({
+    variant: PARK,
+    after: startsWith(PARK) ? 150 + rng() * 60 : 25 + rng() * 50,
+    tries: 2,
+  });
+  if (!startsWith(STADIUM)) {
+    places.push({ variant: STADIUM, after: 50 + rng() * 80, tries: 4 });
+  }
+  places.sort((a, b) => a.after - b.after);
+
   const pick = (options: { tile: number; weight: number }[]) => {
     let total = 0;
     for (const option of options) {
@@ -163,6 +239,27 @@ function planTown(
   const steps: GrowthStep[] = [];
   for (let turn = 0; steps.length < MAX_STEPS; turn++) {
     const progress = Math.min(1, turn / STEPS_TO_FULL_HEIGHT);
+
+    const place = places[0];
+    if (place && steps.length >= place.after) {
+      const sites = sitesFor(place.variant);
+      place.tries--;
+      if (sites.length > 0) {
+        const tile = pick(sites);
+        for (const covered of buildingTiles(size, tile, place.variant)) {
+          tiers[covered] = place.variant;
+        }
+        steps.push({ kind: "place", tile, variant: place.variant });
+        places.shift();
+        continue;
+      }
+      // No room for it yet: try again when the town is a bit bigger
+      place.after += 25;
+      if (place.tries <= 0) {
+        places.shift();
+      }
+      places.sort((a, b) => a.after - b.after);
+    }
     const lots: { tile: number; weight: number }[] = [];
     const upgrades: { tile: number; weight: number }[] = [];
     const streetEnds: { tile: number; weight: number }[] = [];
@@ -258,7 +355,10 @@ export function growWorld(
 
   for (const house of world.houses) {
     const tile = house.y * size + house.x;
-    if (!built.demolished.has(tile)) {
+    const gone = buildingTiles(size, tile, house.variant).some((covered) =>
+      built.demolished.has(covered)
+    );
+    if (!gone) {
       tiers[tile] = house.variant;
       townOf[tile] = house.town;
     }
@@ -267,7 +367,8 @@ export function growWorld(
   townPlans(world).forEach((plan, town) => {
     const count = Math.min(plan.length, Math.floor(steps[town] ?? 0));
     for (let index = 0; index < count; index++) {
-      const { kind, tile } = plan[index];
+      const step = plan[index];
+      const { kind, tile } = step;
       if (kind === "street") {
         if (!built.noStreets.has(tile)) {
           townRoads[tile] = 1;
@@ -279,8 +380,22 @@ export function growWorld(
           townOf[tile] = town;
           trees[tile] = 0;
         }
-      } else if (tiers[tile] >= 0) {
-        tiers[tile] = Math.min(MAX_TIER, tiers[tile] + 1);
+      } else if (kind === "place") {
+        const tiles = buildingTiles(size, tile, step.variant);
+        const free = tiles.every(
+          (covered) =>
+            !built.tracks.has(covered) && !built.demolished.has(covered)
+        );
+        if (free) {
+          for (const covered of tiles) {
+            tiers[covered] = -1;
+            trees[covered] = 0;
+          }
+          tiers[tile] = step.variant;
+          townOf[tile] = town;
+        }
+      } else if (tiers[tile] >= 0 && tiers[tile] < MAX_TIER) {
+        tiers[tile]++;
       }
     }
   });
@@ -290,7 +405,9 @@ export function growWorld(
   const towns = world.towns.map((town) => ({ ...town, houses: 0 }));
   for (let tile = 0; tile < size * size; tile++) {
     if (tiers[tile] >= 0) {
-      houseAt[tile] = houses.length;
+      for (const covered of buildingTiles(size, tile, tiers[tile])) {
+        houseAt[covered] = houses.length;
+      }
       houses.push({
         x: tile % size,
         y: Math.floor(tile / size),
@@ -353,6 +470,8 @@ export type TownStats = {
   buildings: number;
   // Index into `BUILDINGS` of the town's tallest building
   tallest: number;
+  // How many it has of each kind of building, in the order of `BUILDINGS`
+  counts: number[];
 };
 
 const statsCache = new WeakMap<World, TownStats[]>();
@@ -365,14 +484,18 @@ export function townStats(world: World) {
       population: 0,
       buildings: 0,
       tallest: 0,
+      counts: BUILDINGS.map(() => 0),
     }));
     for (const house of world.houses) {
       const { residents } = BUILDINGS[house.variant];
-      const variation = hashInt(house.x * 131 + house.y) % (residents >> 1);
       const town = stats[house.town];
-      town.population += residents + variation;
       town.buildings++;
-      town.tallest = Math.max(town.tallest, house.variant);
+      town.counts[house.variant]++;
+      if (house.variant < BUILDING_TIERS) {
+        const variation = hashInt(house.x * 131 + house.y) % (residents >> 1);
+        town.population += residents + variation;
+        town.tallest = Math.max(town.tallest, house.variant);
+      }
     }
     statsCache.set(world, stats);
   }
