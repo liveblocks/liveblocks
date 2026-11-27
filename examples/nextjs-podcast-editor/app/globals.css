@@ -1,0 +1,244 @@
+@import "tailwindcss";
+@import "@liveblocks/react-ui/styles.css";
+
+/* Let hover styles also apply for touch/synthetic pointers. */
+@custom-variant hover (&:hover);
+
+:root {
+  --radius: 0.375rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --primary: oklch(0.54 0.23 285);
+  --primary-foreground: oklch(0.985 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --border: oklch(0.922 0 0);
+  --ring: oklch(0.54 0.23 285 / 50%);
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+/* Align Liveblocks UI (avatars, comments, mentions) with the app's primary
+   color. Liveblocks styles are em-based, so the root font size scales the
+   comments down to match the rest of the app. */
+.lb-root {
+  --lb-accent: oklch(0.54 0.23 285);
+  font-size: 0.875rem;
+}
+
+/* Comments sit in cards in the side panel; they don't need their own
+   background or padding on top of the card's. */
+.comment-card .lb-thread {
+  background: transparent;
+}
+
+/* Popups (menus, popovers, tooltips): a short settle from the trigger's
+   side. Closing is instant. */
+@keyframes popup-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--popup-x, 0), var(--popup-y, 0)) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.popup-animate {
+  --popup-y: -4px;
+  transform-origin: var(
+    --radix-dropdown-menu-content-transform-origin,
+    var(
+      --radix-popover-content-transform-origin,
+      var(--radix-tooltip-content-transform-origin, top center)
+    )
+  );
+}
+.popup-animate[data-side="top"] {
+  --popup-y: 4px;
+}
+.popup-animate[data-side="left"] {
+  --popup-x: 4px;
+  --popup-y: 0px;
+}
+.popup-animate[data-side="right"] {
+  --popup-x: -4px;
+  --popup-y: 0px;
+}
+.popup-animate[data-state="open"],
+.popup-animate[data-state="delayed-open"],
+.popup-animate[data-state="instant-open"] {
+  animation: popup-in 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+.dialog-overlay[data-state="open"] {
+  animation: fade-in 150ms ease-out;
+}
+.dialog-content[data-state="open"] {
+  animation: dialog-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sheet-animate {
+  animation: sheet-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popup-animate,
+  .dialog-overlay,
+  .dialog-content,
+  .sheet-animate {
+    animation: none !important;
+  }
+}
+
+/* The transcript. Each word is a span (`data-word`), so selecting text maps
+   to a range of words, and words carry their own state as attributes. */
+.transcript {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--color-neutral-800);
+}
+
+.transcript ::selection {
+  background: oklch(0.54 0.23 285 / 22%);
+}
+
+.word {
+  border-radius: 3px;
+  padding: 1px 0;
+  cursor: text;
+  transition:
+    background-color 120ms,
+    color 120ms;
+  box-decoration-break: clone;
+}
+
+.word:hover {
+  background: var(--color-neutral-100);
+}
+
+.word[data-current] {
+  background: oklch(0.54 0.23 285 / 14%);
+  color: oklch(0.38 0.2 285);
+  box-shadow: 0 0 0 2px oklch(0.54 0.23 285 / 14%);
+}
+
+.word[data-comment] {
+  background: oklch(0.95 0.08 95);
+  box-shadow: inset 0 -2px 0 oklch(0.85 0.15 90);
+}
+
+.word[data-comment="active"] {
+  background: oklch(0.9 0.13 92);
+}
+
+.word[data-filler-preview] {
+  background: oklch(0.94 0.05 15);
+  color: oklch(0.5 0.18 20);
+  box-shadow: inset 0 -2px 0 oklch(0.75 0.15 18);
+}
+
+.word[data-cut] {
+  color: var(--color-neutral-400);
+  text-decoration: line-through;
+  text-decoration-color: oklch(0.65 0.2 20 / 70%);
+  text-decoration-thickness: 1.5px;
+}
+
+.word[data-cut][data-current] {
+  color: var(--color-neutral-400);
+}
+
+/* Another person's selection: tinted with their color. */
+.word[data-other-selection] {
+  background: color-mix(in oklab, var(--other-color) 22%, transparent);
+}
+
+/* Another person's playhead, as a caret before the word they're at. */
+.presence-caret {
+  position: relative;
+  display: inline-block;
+  width: 0;
+  height: 1.2em;
+  vertical-align: text-bottom;
+}
+
+.presence-caret::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: -1px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--other-color);
+}
+
+.presence-caret[data-playing]::before {
+  animation: caret-pulse 1.2s ease-in-out infinite;
+}
+
+.presence-caret-label {
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: -1px;
+  padding: 1px 5px;
+  border-radius: 4px 4px 4px 0;
+  background: var(--other-color);
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes caret-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Quiet scrollbars. */
+.scroll-quiet {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-200) transparent;
+}
