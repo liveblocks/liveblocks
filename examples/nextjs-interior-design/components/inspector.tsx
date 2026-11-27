@@ -10,7 +10,7 @@ import {
   SendToBackIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import type { PlanActions } from "@/hooks/use-plan-actions";
 import { getCatalogItem } from "@/lib/catalog";
 import {
@@ -38,6 +38,7 @@ import {
   type Unit,
 } from "@/lib/units";
 import { cn } from "@/lib/utils";
+import { SuggestInput } from "./suggest-input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type InspectorProps = {
@@ -136,23 +137,18 @@ function RoomInspector({
   unit: Unit;
   onRemove: () => void;
 }) {
-  const listId = useId();
   return (
     <>
       <Title label="Room" onRemove={onRemove} />
       <Section>
         <Field label="Name">
-          <TextInput
+          <SuggestInput
             value={room.name}
-            list={listId}
+            options={ROOM_NAMES}
             placeholder="Room"
+            className={INPUT_CLASS}
             onCommit={(name) => actions.updateRoom(room.id, { name })}
           />
-          <datalist id={listId}>
-            {ROOM_NAMES.map((name) => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
         </Field>
         <Field label="Floor">
           <div className="grid grid-cols-4 gap-1">
@@ -517,47 +513,6 @@ function Action({
 
 const INPUT_CLASS =
   "h-7 w-full min-w-0 rounded-md border border-line bg-surface px-2 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint hover:border-line-strong focus:border-brand focus:ring-2 focus:ring-brand/15";
-
-// A text field that writes to Storage when you're done typing (Enter, or
-// leaving the field) rather than on every keystroke, so a rename is a single
-// change, and a single undo step.
-function TextInput({
-  value,
-  onCommit,
-  ...props
-}: {
-  value: string;
-  onCommit: (value: string) => void;
-  list?: string;
-  placeholder?: string;
-}) {
-  const [draft, setDraft] = useState<string | null>(null);
-
-  const commit = () => {
-    if (draft !== null && draft.trim() !== value) {
-      onCommit(draft.trim());
-    }
-    setDraft(null);
-  };
-
-  return (
-    <input
-      type="text"
-      className={INPUT_CLASS}
-      value={draft ?? value}
-      onChange={(event) => setDraft(event.target.value)}
-      onBlur={commit}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          event.currentTarget.blur();
-        } else if (event.key === "Escape") {
-          setDraft(null);
-        }
-      }}
-      {...props}
-    />
-  );
-}
 
 function NumberInput({
   value,
