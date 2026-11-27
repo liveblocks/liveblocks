@@ -27,7 +27,10 @@ export type Sprite = {
   draw: (ctx: Ctx, ox: number, oy: number) => void;
 };
 
-export type CanvasFactory = (width: number, height: number) => HTMLCanvasElement;
+export type CanvasFactory = (
+  width: number,
+  height: number
+) => HTMLCanvasElement;
 
 export type Sprites = {
   // [tree count - 1][variant]
@@ -152,7 +155,11 @@ function drawTrees(
   keep: (x: number, y: number) => boolean = () => true
 ) {
   const trees: { x: number; y: number; conifer: boolean; scale: number }[] = [];
-  for (let attempt = 0; attempt < count * 6 && trees.length < count; attempt++) {
+  for (
+    let attempt = 0;
+    attempt < count * 6 && trees.length < count;
+    attempt++
+  ) {
     const x = 0.16 + rng() * (tiles - 0.32);
     const y = 0.16 + rng() * (tiles - 0.32);
     if (keep(x, y)) {
@@ -230,8 +237,30 @@ function floors(
   color: string
 ) {
   for (let z = z0 + 3; z + 3 <= z1; z += 5.5) {
-    windowBand(ctx, ox, oy, "left", from + 0.05, to - 0.05, to, z, z + 3, color);
-    windowBand(ctx, ox, oy, "right", from + 0.05, to - 0.05, to, z, z + 3, color);
+    windowBand(
+      ctx,
+      ox,
+      oy,
+      "left",
+      from + 0.05,
+      to - 0.05,
+      to,
+      z,
+      z + 3,
+      color
+    );
+    windowBand(
+      ctx,
+      ox,
+      oy,
+      "right",
+      from + 0.05,
+      to - 0.05,
+      to,
+      z,
+      z + 3,
+      color
+    );
   }
 }
 
@@ -277,7 +306,18 @@ function drawSkyscraper(ctx: Ctx, ox: number, oy: number, color: number) {
   box(ctx, ox, oy, 0.3, 0.3, 0.7, 0.7, shaft, crown, glass, frame);
   floors(ctx, ox, oy, 0.3, 0.7, shaft, crown, shade(glass, 1.45));
   box(ctx, ox, oy, 0.42, 0.42, 0.58, 0.58, crown, crown + 4, "#8f98a3");
-  box(ctx, ox, oy, 0.485, 0.485, 0.515, 0.515, crown + 4, crown + 18, "#c8ced6");
+  box(
+    ctx,
+    ox,
+    oy,
+    0.485,
+    0.485,
+    0.515,
+    0.515,
+    crown + 4,
+    crown + 18,
+    "#c8ced6"
+  );
   ctx.fillStyle = "#e5484d";
   ctx.fillRect(ox - 1, oy + HALF_H - crown - 20, 2, 2);
 }
@@ -337,7 +377,12 @@ function mound(
   const ry = radius * Math.SQRT2 * HALF_H;
   ctx.beginPath();
   ctx.moveTo(px - rx, py);
-  ctx.quadraticCurveTo(px - rx * 0.3, py - height * 1.6, px + rx * 0.1, py - height);
+  ctx.quadraticCurveTo(
+    px - rx * 0.3,
+    py - height * 1.6,
+    px + rx * 0.1,
+    py - height
+  );
   ctx.quadraticCurveTo(px + rx * 0.6, py - height * 0.7, px + rx, py);
   ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI);
   ctx.closePath();
@@ -416,8 +461,26 @@ const INDUSTRY_ARTISTS: Record<
     flat(ctx, ox, oy, 0.12, 1.1, 0.9, 1.88, "#c7a546");
     for (let row = 0; row < 5; row++) {
       const offset = 0.2 + row * 0.15;
-      flat(ctx, ox, oy, 1.1 + offset - 0.1, 0.14, 1.1 + offset - 0.06, 0.88, "#bfa443");
-      flat(ctx, ox, oy, 0.14, 1.1 + offset - 0.1, 0.88, 1.1 + offset - 0.06, "#ad8d38");
+      flat(
+        ctx,
+        ox,
+        oy,
+        1.1 + offset - 0.1,
+        0.14,
+        1.1 + offset - 0.06,
+        0.88,
+        "#bfa443"
+      );
+      flat(
+        ctx,
+        ox,
+        oy,
+        0.14,
+        1.1 + offset - 0.1,
+        0.88,
+        1.1 + offset - 0.06,
+        "#ad8d38"
+      );
     }
     box(ctx, ox, oy, 0.25, 0.25, 0.95, 0.8, 0, 11, "#b5412f");
     windowBand(ctx, ox, oy, "left", 0.5, 0.7, 0.8, 0, 7, "#f1e7d6");

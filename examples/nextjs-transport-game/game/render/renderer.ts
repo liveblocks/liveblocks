@@ -28,7 +28,14 @@ import type {
   TrackKind,
   Vehicle,
 } from "../types";
-import { GRASS, INDUSTRY, INDUSTRY_SIZE, SAND, WATER, type World } from "../world";
+import {
+  GRASS,
+  INDUSTRY,
+  INDUSTRY_SIZE,
+  SAND,
+  WATER,
+  type World,
+} from "../world";
 import {
   box,
   type Ctx,
@@ -732,7 +739,8 @@ export class Renderer {
         const { dx, dy } = point;
         dynamics.push({
           depth: x + y,
-          draw: () => drawRoadVehicle(ctx, x, y, dx, dy, color, passengers, cargo),
+          draw: () =>
+            drawRoadVehicle(ctx, x, y, dx, dy, color, passengers, cargo),
         });
         continue;
       }
@@ -805,7 +813,12 @@ export class Renderer {
 
   private drawOverlays(ctx: Ctx, scene: Scene, zoom: number) {
     const { size } = this.world;
-    const outline = (tile: number, color: string, width: number, fill?: string) => {
+    const outline = (
+      tile: number,
+      color: string,
+      width: number,
+      fill?: string
+    ) => {
       tileDiamond(ctx, tile % size, Math.floor(tile / size));
       if (fill) {
         ctx.fillStyle = fill;
@@ -853,14 +866,18 @@ export class Renderer {
           scene.hover,
           scene.network.canal[scene.hover] ? CATCHMENT : DOCK_CATCHMENT
         );
-      } else if (scene.tool === "road-station" || scene.tool === "rail-station") {
+      } else if (
+        scene.tool === "road-station" ||
+        scene.tool === "rail-station"
+      ) {
         catchment(scene.hover, CATCHMENT);
       }
     }
 
     if (scene.preview) {
       for (const tile of scene.preview.tiles) {
-        const bad = scene.preview.tone === "remove" || scene.preview.bad.has(tile);
+        const bad =
+          scene.preview.tone === "remove" || scene.preview.bad.has(tile);
         outline(
           tile,
           bad ? "rgba(185, 28, 28, 0.9)" : "rgba(21, 128, 61, 0.9)",
@@ -874,7 +891,10 @@ export class Renderer {
       const color =
         scene.companies.get(scene.myCompany ?? "")?.color ?? "#ffffff";
       outline(scene.routeFrom, color, 3.5, "rgba(255, 255, 255, 0.35)");
-      const target = scene.hover !== null ? scene.stations.get(String(scene.hover)) : undefined;
+      const target =
+        scene.hover !== null
+          ? scene.stations.get(String(scene.hover))
+          : undefined;
       if (
         scene.hover !== null &&
         scene.hover !== scene.routeFrom &&
@@ -1143,19 +1163,67 @@ function drawStation(
 ) {
   if (kind === "road") {
     if (alongX) {
-      box(ctx, 0, 0, x + 0.14, y + 0.03, x + 0.86, y + 0.2, 0, 9, "#eceef0", color);
+      box(
+        ctx,
+        0,
+        0,
+        x + 0.14,
+        y + 0.03,
+        x + 0.86,
+        y + 0.2,
+        0,
+        9,
+        "#eceef0",
+        color
+      );
     } else {
-      box(ctx, 0, 0, x + 0.03, y + 0.14, x + 0.2, y + 0.86, 0, 9, "#eceef0", color);
+      box(
+        ctx,
+        0,
+        0,
+        x + 0.03,
+        y + 0.14,
+        x + 0.2,
+        y + 0.86,
+        0,
+        9,
+        "#eceef0",
+        color
+      );
     }
     return;
   }
 
   const roof = shade(color, 0.8);
   if (alongX) {
-    box(ctx, 0, 0, x + 0.08, y + 0.03, x + 0.92, y + 0.22, 0, 12, "#efe6d6", roof);
+    box(
+      ctx,
+      0,
+      0,
+      x + 0.08,
+      y + 0.03,
+      x + 0.92,
+      y + 0.22,
+      0,
+      12,
+      "#efe6d6",
+      roof
+    );
     box(ctx, 0, 0, x + 0.04, y + 0.01, x + 0.96, y + 0.3, 12, 14, color);
   } else {
-    box(ctx, 0, 0, x + 0.03, y + 0.08, x + 0.22, y + 0.92, 0, 12, "#efe6d6", roof);
+    box(
+      ctx,
+      0,
+      0,
+      x + 0.03,
+      y + 0.08,
+      x + 0.22,
+      y + 0.92,
+      0,
+      12,
+      "#efe6d6",
+      roof
+    );
     box(ctx, 0, 0, x + 0.01, y + 0.04, x + 0.3, y + 0.96, 12, 14, color);
   }
 }
@@ -1189,13 +1257,36 @@ function drawDock(ctx: Ctx, x: number, y: number, side: number, color: string) {
   const office = alongX
     ? ([x0 + 0.08, y0 + 0.06, x0 + 0.36, y1 - 0.06] as const)
     : ([x0 + 0.06, y0 + 0.08, x1 - 0.06, y0 + 0.36] as const);
-  box(ctx, 0, 0, office[0], office[1], office[2], office[3], 4, 12, "#efe6d6", color);
+  box(
+    ctx,
+    0,
+    0,
+    office[0],
+    office[1],
+    office[2],
+    office[3],
+    4,
+    12,
+    "#efe6d6",
+    color
+  );
 
   // Bollards to tie ships to
   for (const along of [0.55, 0.8]) {
     const bx = alongX ? x0 + along * (x1 - x0) : (x0 + x1) / 2;
     const by = alongX ? (y0 + y1) / 2 : y0 + along * (y1 - y0);
-    box(ctx, 0, 0, bx - 0.025, by - 0.025, bx + 0.025, by + 0.025, 4, 7, "#3f4348");
+    box(
+      ctx,
+      0,
+      0,
+      bx - 0.025,
+      by - 0.025,
+      bx + 0.025,
+      by + 0.025,
+      4,
+      7,
+      "#3f4348"
+    );
   }
 }
 
@@ -1248,14 +1339,35 @@ function drawShip(
     side: string,
     top = side
   ) =>
-    orientedBox(ctx, x + dx * along, y + dy * along, dx, dy, length, width, z0, z1, side, top);
+    orientedBox(
+      ctx,
+      x + dx * along,
+      y + dy * along,
+      dx,
+      dy,
+      length,
+      width,
+      z0,
+      z1,
+      side,
+      top
+    );
   const deck = HULL_HEIGHT;
   const load = cargoColor(cargo);
 
   const parts = passengers
     ? [
         // A ferry: a long cabin, with a funnel toward the stern
-        () => part(-0.16, 0.07, 0.07, deck + 5, deck + 10, color, shade(color, 0.7)),
+        () =>
+          part(
+            -0.16,
+            0.07,
+            0.07,
+            deck + 5,
+            deck + 10,
+            color,
+            shade(color, 0.7)
+          ),
         () => {
           part(-0.02, 0.44, 0.15, deck, deck + 1.5, "#f4f4f5");
           part(-0.02, 0.44, 0.15, deck + 1.5, deck + 3.5, "#6f8fae");
@@ -1265,7 +1377,8 @@ function drawShip(
     : [
         // A freighter: the bridge at the stern, and a hold in front of it
         () => part(-0.25, 0.12, 0.15, deck, deck + 8, "#f4f4f5", color),
-        () => part(0.01, 0.36, 0.13, deck, deck + 2, "#6b7078", load ?? "#4b5057"),
+        () =>
+          part(0.01, 0.36, 0.13, deck, deck + 2, "#6b7078", load ?? "#4b5057"),
       ];
   // Whichever part is further from the camera goes first
   if (dx + dy < 0) {
@@ -1312,11 +1425,46 @@ function drawRoadVehicle(
 
   const load = cargoColor(cargo);
   const cab = () =>
-    orientedBox(ctx, x + dx * 0.125, y + dy * 0.125, dx, dy, 0.11, 0.16, 1.5, 9, color, shade(color, 1.2));
+    orientedBox(
+      ctx,
+      x + dx * 0.125,
+      y + dy * 0.125,
+      dx,
+      dy,
+      0.11,
+      0.16,
+      1.5,
+      9,
+      color,
+      shade(color, 1.2)
+    );
   const bed = () => {
-    orientedBox(ctx, x - dx * 0.055, y - dy * 0.055, dx, dy, 0.25, 0.16, 1.5, 4.5, "#6b7078");
+    orientedBox(
+      ctx,
+      x - dx * 0.055,
+      y - dy * 0.055,
+      dx,
+      dy,
+      0.25,
+      0.16,
+      1.5,
+      4.5,
+      "#6b7078"
+    );
     if (load) {
-      orientedBox(ctx, x - dx * 0.055, y - dy * 0.055, dx, dy, 0.23, 0.14, 4.5, 8, load, shade(load, 1.2));
+      orientedBox(
+        ctx,
+        x - dx * 0.055,
+        y - dy * 0.055,
+        dx,
+        dy,
+        0.23,
+        0.14,
+        4.5,
+        8,
+        load,
+        shade(load, 1.2)
+      );
     }
   };
 
@@ -1351,7 +1499,19 @@ function drawTrainCar(
 
   if (passengers) {
     orientedBox(ctx, x, y, dx, dy, 0.36, 0.17, 1.5, 6, color);
-    orientedBox(ctx, x, y, dx, dy, 0.36, 0.17, 6, 9.5, "#e5eaf0", shade(color, 0.85));
+    orientedBox(
+      ctx,
+      x,
+      y,
+      dx,
+      dy,
+      0.36,
+      0.17,
+      6,
+      9.5,
+      "#e5eaf0",
+      shade(color, 0.85)
+    );
     return;
   }
 

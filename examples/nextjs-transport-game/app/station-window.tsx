@@ -46,8 +46,7 @@ export function StationWindow({
             style={{ background: owner?.color ?? "#a3a3a3" }}
           />
           <span className="truncate">
-            {owner?.name ?? "Unknown"} ·{" "}
-            {TRANSPORT[station.kind].stationLabel}
+            {owner?.name ?? "Unknown"} · {TRANSPORT[station.kind].stationLabel}
           </span>
         </p>
 

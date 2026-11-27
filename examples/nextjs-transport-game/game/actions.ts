@@ -539,7 +539,15 @@ export function cloneVehicle(
     return fail("That vehicle isn't yours");
   }
   const [from, to] = vehicle.get("stops");
-  return buyVehicle(root, world, network, companyId, Number(from), Number(to), now);
+  return buyVehicle(
+    root,
+    world,
+    network,
+    companyId,
+    Number(from),
+    Number(to),
+    now
+  );
 }
 
 export function sellVehicle(
@@ -594,15 +602,18 @@ export function runSimulation(
   const result = advance(world, network, vehicles, stations, now);
   for (const [id, vehicle] of result.vehicles) {
     // Only the fields that change from one leg to the next
-    root.get("vehicles").get(id)?.update({
-      leg: vehicle.leg,
-      path: [...vehicle.path],
-      departAt: vehicle.departAt,
-      load: { ...vehicle.load },
-      earned: vehicle.earned,
-      lastIncome: vehicle.lastIncome,
-      trips: vehicle.trips,
-    });
+    root
+      .get("vehicles")
+      .get(id)
+      ?.update({
+        leg: vehicle.leg,
+        path: [...vehicle.path],
+        departAt: vehicle.departAt,
+        load: { ...vehicle.load },
+        earned: vehicle.earned,
+        lastIncome: vehicle.lastIncome,
+        trips: vehicle.trips,
+      });
   }
   for (const [key, stock] of result.stocks) {
     root.get("stations").get(key)?.set("stock", stock);

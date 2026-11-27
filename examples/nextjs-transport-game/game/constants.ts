@@ -12,14 +12,15 @@ export const DOCK_CATCHMENT = 5;
 // The transport companies players choose from when they join. A company is
 // run by one player at a time, and keeps everything it owns when that player
 // leaves, ready for the next one to take over.
-export const COMPANIES: readonly { id: string; name: string; color: string }[] = [
-  { id: "redline", name: "Redline Haulage", color: "#DC3D43" },
-  { id: "bluebird", name: "Bluebird Transit", color: "#3358D4" },
-  { id: "sunray", name: "Sunray Freight", color: "#EBB000" },
-  { id: "greenfield", name: "Greenfield Lines", color: "#2B9A4B" },
-  { id: "violet", name: "Violet Valley Rail", color: "#8445BC" },
-  { id: "copper", name: "Copper Kettle Cargo", color: "#A85B24" },
-];
+export const COMPANIES: readonly { id: string; name: string; color: string }[] =
+  [
+    { id: "redline", name: "Redline Haulage", color: "#DC3D43" },
+    { id: "bluebird", name: "Bluebird Transit", color: "#3358D4" },
+    { id: "sunray", name: "Sunray Freight", color: "#EBB000" },
+    { id: "greenfield", name: "Greenfield Lines", color: "#2B9A4B" },
+    { id: "violet", name: "Violet Valley Rail", color: "#8445BC" },
+    { id: "copper", name: "Copper Kettle Cargo", color: "#A85B24" },
+  ];
 
 export const START_MONEY = 100_000;
 // What the hidden money cheat adds to your balance
@@ -36,7 +37,12 @@ export const BUILDINGS: readonly {
 }[] = [
   { label: "Cottage", residents: 14, passengers: 1, demolishCost: 600 },
   { label: "Townhouse", residents: 38, passengers: 1.5, demolishCost: 900 },
-  { label: "Office block", residents: 110, passengers: 2.5, demolishCost: 2500 },
+  {
+    label: "Office block",
+    residents: 110,
+    passengers: 2.5,
+    demolishCost: 2500,
+  },
   { label: "Tower", residents: 340, passengers: 4, demolishCost: 8000 },
   { label: "Skyscraper", residents: 950, passengers: 6, demolishCost: 25_000 },
 ];

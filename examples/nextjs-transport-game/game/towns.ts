@@ -347,7 +347,11 @@ const statsCache = new WeakMap<World, TownStats[]>();
 export function townStats(world: World) {
   let stats = statsCache.get(world);
   if (!stats) {
-    stats = world.towns.map(() => ({ population: 0, buildings: 0, tallest: 0 }));
+    stats = world.towns.map(() => ({
+      population: 0,
+      buildings: 0,
+      tallest: 0,
+    }));
     for (const house of world.houses) {
       const { residents } = BUILDINGS[house.variant];
       const variation = hashInt(house.x * 131 + house.y) % (residents >> 1);

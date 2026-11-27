@@ -105,7 +105,8 @@ export function IndustryWindow({
                 <span
                   className="size-2.5 shrink-0 border border-black"
                   style={{
-                    background: companies.get(station.owner)?.color ?? "#a3a3a3",
+                    background:
+                      companies.get(station.owner)?.color ?? "#a3a3a3",
                   }}
                 />
                 <span className="truncate">{station.name}</span>

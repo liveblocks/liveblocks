@@ -191,8 +191,7 @@ export function tradePartners(world: World, industry: Industry) {
     })
     .map((other) => ({
       industry: other,
-      distance:
-        Math.abs(other.x - industry.x) + Math.abs(other.y - industry.y),
+      distance: Math.abs(other.x - industry.x) + Math.abs(other.y - industry.y),
     }))
     .sort((a, b) => a.distance - b.distance);
 }

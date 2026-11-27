@@ -81,7 +81,9 @@ export function CompaniesWindow({
             </span>
             <span
               className={`tabular-nums ${
-                entry.balance < 0 && entry.id !== myCompany ? "text-[#c00000]" : ""
+                entry.balance < 0 && entry.id !== myCompany
+                  ? "text-[#c00000]"
+                  : ""
               }`}
             >
               {formatMoney(entry.balance)}
@@ -117,7 +119,9 @@ export function VehiclesWindow({
   onSell: (vehicleId: string) => void;
   onClose: () => void;
 }) {
-  const mine = [...vehicles].filter(([, vehicle]) => vehicle.owner === myCompany);
+  const mine = [...vehicles].filter(
+    ([, vehicle]) => vehicle.owner === myCompany
+  );
 
   return (
     <Window
@@ -193,7 +197,9 @@ function VehicleRow({
     status = "Can't find a way to its next station";
   } else if (onBoard.length > 0) {
     status = `Carrying ${onBoard
-      .map(({ cargo, amount }) => `${amount} ${CARGO[cargo].label.toLowerCase()}`)
+      .map(
+        ({ cargo, amount }) => `${amount} ${CARGO[cargo].label.toLowerCase()}`
+      )
       .join(" and ")}`;
   } else if (vehicle.trips === 0) {
     status = "Getting ready";

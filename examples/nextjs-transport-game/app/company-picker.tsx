@@ -15,7 +15,12 @@ type Props = {
 
 // Shown when joining: every player picks one of the transport companies.
 // Companies someone else is running at the moment can't be picked.
-export function CompanyPicker({ companies, vehicles, managers, onPick }: Props) {
+export function CompanyPicker({
+  companies,
+  vehicles,
+  managers,
+  onPick,
+}: Props) {
   return (
     <div className="pointer-events-none absolute inset-0 grid place-items-center p-2">
       <Window

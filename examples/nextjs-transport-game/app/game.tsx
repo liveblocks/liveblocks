@@ -131,7 +131,9 @@ export function Game() {
   const built = useMemo<Built>(
     () => ({
       tracks: new Set(
-        [roads, rails, canals].flatMap((layer) => Object.keys(layer)).map(Number)
+        [roads, rails, canals]
+          .flatMap((layer) => Object.keys(layer))
+          .map(Number)
       ),
       noStreets: new Set(toTiles(noStreetKeys)),
       demolished: new Set(Object.keys(demolished).map(Number)),
@@ -168,9 +170,7 @@ export function Game() {
   const [routeFrom, setRouteFrom] = useState<number | null>(null);
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
   const [selectedTown, setSelectedTown] = useState<number | null>(null);
-  const [selectedIndustry, setSelectedIndustry] = useState<number | null>(
-    null
-  );
+  const [selectedIndustry, setSelectedIndustry] = useState<number | null>(null);
   // Where the map was last asked to go, e.g. to an industry picked in a list
   const [focus, setFocus] = useState<Focus>(null);
   const [highlightedVehicle, setHighlightedVehicle] = useState<string | null>(
@@ -763,7 +763,9 @@ function useTownSteps(world: World, stationTiles: readonly number[]) {
   );
   useEffect(() => {
     const stations = townStations(world, stationTiles);
-    if (world.towns.some(({ id }) => (saved[id]?.stations ?? 0) !== stations[id])) {
+    if (
+      world.towns.some(({ id }) => (saved[id]?.stations ?? 0) !== stations[id])
+    ) {
       room.history.disable(sync);
     }
   }, [room, world, stationTiles, saved, sync]);
@@ -862,7 +864,10 @@ function describe({
 }: {
   world: World;
   network: Network;
-  stations: ReadonlyMap<string, { owner: string; kind: Transport; name: string }>;
+  stations: ReadonlyMap<
+    string,
+    { owner: string; kind: Transport; name: string }
+  >;
   companies: ReadonlyMap<string, { name: string }>;
   tool: Tool;
   hover: number | null;
@@ -977,7 +982,9 @@ function describe({
     return "Railway";
   }
   if (network.road[hover]) {
-    return world.townRoads[hover] ? "Town street · Anyone can drive on it" : "Road";
+    return world.townRoads[hover]
+      ? "Town street · Anyone can drive on it"
+      : "Road";
   }
   if (network.canal[hover]) {
     return "Canal · Ships sail on it like on any water, and roads and railways cross it on bridges";

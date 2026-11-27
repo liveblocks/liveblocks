@@ -422,8 +422,7 @@ export function generateWorld(seed: number): World {
       const minDistance = attempt < 800 ? 16 : 8;
       if (
         consumers.some(
-          (other) =>
-            Math.abs(other.x - x) + Math.abs(other.y - y) < minDistance
+          (other) => Math.abs(other.x - x) + Math.abs(other.y - y) < minDistance
         )
       ) {
         continue;

@@ -35,7 +35,8 @@ export function advance(
   const changedVehicles = new Map<string, Vehicle>();
   const changedStocks = new Map<string, Stock>();
 
-  const vehicleOf = (id: string) => changedVehicles.get(id) ?? vehicles.get(id)!;
+  const vehicleOf = (id: string) =>
+    changedVehicles.get(id) ?? vehicles.get(id)!;
   const stationOf = (key: string): StationData | undefined => {
     const station = stations.get(key);
     const stock = changedStocks.get(key);
