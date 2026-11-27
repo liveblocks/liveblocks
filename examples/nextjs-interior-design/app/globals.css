@@ -1,0 +1,363 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@liveblocks/react-ui/styles.css";
+
+/* Tailwind v4 only applies `hover:` on devices that support hover. Make it
+   work with touch/synthetic pointers too so hover-revealed controls are usable
+   everywhere. */
+@custom-variant hover (&:hover);
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+
+  /* Cool, blue-gray neutrals, on Tailwind's gray scale. */
+  --color-canvas: oklch(0.975 0.003 264);
+  --color-surface: oklch(1 0 0);
+  --color-line: var(--color-gray-200);
+  --color-line-strong: var(--color-gray-300);
+  --color-ink: var(--color-gray-900);
+  --color-ink-secondary: var(--color-gray-600);
+  --color-ink-muted: var(--color-gray-500);
+  --color-ink-faint: var(--color-gray-400);
+  --color-hover: var(--color-gray-100);
+  --color-selected: oklch(0.945 0.006 264);
+
+  /* Blueprint blue: selections, handles, guides, and the active tool. */
+  --color-brand: oklch(0.56 0.2 258);
+  --color-brand-soft: oklch(0.56 0.2 258 / 10%);
+
+  /* The drawing itself: ink for walls and outlines, a lighter line for
+     details inside furniture, and a pale fill for upholstery. */
+  --color-plan-ink: oklch(0.3 0.025 262);
+  --color-plan-detail: oklch(0.66 0.015 262);
+  --color-plan-soft: oklch(0.955 0.004 262);
+  --color-plan-hatch: oklch(0.915 0.006 262);
+  --color-grid-major: oklch(0.21 0.034 264 / 7%);
+  --color-grid-minor: oklch(0.21 0.034 264 / 3.5%);
+
+  /* shadcn-style tokens used by the copied UI primitives. */
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-ink);
+  --color-primary-foreground: var(--color-gray-50);
+  --color-secondary: var(--color-hover);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-hover);
+  --color-muted-foreground: var(--color-ink-muted);
+  --color-accent: var(--color-hover);
+  --color-accent-foreground: var(--color-ink);
+  --color-destructive: oklch(0.6 0.2 25);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line-strong);
+  --color-ring: var(--color-gray-400);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+    font-feature-settings:
+      "cv11" 1,
+      "ss01" 1,
+      "ss03" 1;
+    text-rendering: optimizeLegibility;
+    /* The canvas handles its own gestures; keep the page from bouncing. */
+    overscroll-behavior: none;
+  }
+
+  ::selection {
+    background: oklch(0.9 0.03 264);
+  }
+
+  /* Quiet scrollbars that match the neutrals. */
+  .scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+  .scroll-quiet::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-quiet::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scroll-quiet::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* White panels floating on the canvas. */
+@utility card {
+  @apply rounded-lg border border-line bg-surface;
+  box-shadow: 0 1px 2px oklch(0.21 0.034 264.665 / 4%);
+}
+
+/* Panels floating over the drawing get a little more lift. */
+@utility card-floating {
+  @apply rounded-lg border border-line bg-surface;
+  box-shadow:
+    0 1px 2px oklch(0.21 0.034 264.665 / 5%),
+    0 8px 24px -8px oklch(0.21 0.034 264.665 / 14%);
+}
+
+/* Liveblocks UI (the avatar stack) in the app's accent color. */
+.lb-root {
+  --lb-accent: var(--color-brand);
+}
+
+/* ---------------------------------------------------------------------
+   The floor plan
+
+   The plan is an SVG drawn in centimeters and scaled by the zoom level.
+   `vector-effect: non-scaling-stroke` keeps every line the same weight on
+   screen at any zoom, the way a drawing is plotted: only the walls, which
+   have a real thickness, scale with the plan.
+   --------------------------------------------------------------------- */
+
+.plan-floor {
+  fill: var(--color-surface);
+}
+
+.plan-hatch {
+  fill: none;
+  stroke: var(--color-plan-hatch);
+  stroke-width: 1;
+}
+
+.plan-stipple {
+  fill: var(--color-plan-hatch);
+}
+
+.plan-wall {
+  fill: none;
+  stroke: var(--color-plan-ink);
+  stroke-linejoin: miter;
+  pointer-events: none;
+}
+
+/* Furniture symbols: white shapes with an ink outline. */
+.plan-symbol {
+  fill: var(--color-surface);
+  stroke: var(--color-plan-ink);
+  stroke-width: 1.15;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.plan-symbol * {
+  vector-effect: non-scaling-stroke;
+}
+.plan-symbol .detail {
+  fill: none;
+  stroke: var(--color-plan-detail);
+  stroke-width: 1;
+}
+.plan-symbol .line {
+  fill: none;
+}
+.plan-symbol .soft {
+  fill: var(--color-plan-soft);
+}
+.plan-symbol .solid {
+  fill: var(--color-plan-ink);
+}
+.plan-symbol .rug {
+  fill: oklch(0.975 0.004 262 / 85%);
+  stroke: var(--color-plan-detail);
+}
+.plan-symbol .dashed {
+  stroke-dasharray: 3 3;
+}
+
+/* Doors and windows. */
+.plan-opening {
+  fill: none;
+  stroke: var(--color-plan-ink);
+  stroke-width: 1.15;
+  stroke-linecap: round;
+}
+.plan-opening * {
+  vector-effect: non-scaling-stroke;
+}
+.plan-opening .gap {
+  fill: var(--color-surface);
+  stroke: none;
+}
+.plan-opening .frame {
+  fill: var(--color-surface);
+}
+.plan-opening .swing {
+  stroke: var(--color-plan-detail);
+  stroke-width: 1;
+}
+.plan-opening .leaf {
+  stroke-width: 2;
+}
+.plan-opening .dashed {
+  stroke-dasharray: 3 3;
+}
+.plan-opening[data-ghost] {
+  opacity: 0.75;
+}
+
+/* Room names and areas, lettered like a drawing. */
+.plan-label text {
+  text-anchor: middle;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.plan-label .name {
+  fill: var(--color-ink);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.plan-label .area {
+  fill: var(--color-ink-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+/* Dimension lines. */
+.plan-dimension line {
+  stroke: var(--color-ink-faint);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.plan-dimension text {
+  fill: var(--color-ink-secondary);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  paint-order: stroke;
+  stroke: var(--color-canvas);
+  stroke-linejoin: round;
+}
+.plan-dimension[data-accent] line {
+  stroke: var(--color-brand);
+}
+.plan-dimension[data-accent] text {
+  fill: var(--color-brand);
+}
+
+/* Selection outlines and handles. */
+.plan-outline {
+  fill: none;
+  stroke: var(--color-brand);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.plan-handle {
+  fill: var(--color-surface);
+  stroke: var(--color-brand);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.plan-handle:hover {
+  fill: var(--color-brand);
+}
+.plan-add-handle circle {
+  fill: var(--color-brand);
+  stroke: var(--color-surface);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.plan-add-handle path {
+  fill: none;
+  stroke: var(--color-surface);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.plan-add-handle {
+  opacity: 0.55;
+  transition: opacity 120ms;
+}
+.plan-add-handle:hover {
+  opacity: 1;
+}
+
+.plan-draft {
+  fill: var(--color-brand-soft);
+  stroke: var(--color-brand);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.plan-guide {
+  stroke: oklch(0.65 0.24 350);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.plan-peer-label {
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-linejoin: round;
+}
+
+/* Menus and popovers: a short settle from the trigger's side, scaling from
+   the anchored corner. Opening eases out over 160ms; closing is instant. */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--menu-x, 0), var(--menu-y, 0)) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.menu-animate {
+  --menu-x: 0px;
+  --menu-y: -4px;
+  transform-origin: var(
+    --radix-dropdown-menu-content-transform-origin,
+    var(--menu-origin, top left)
+  );
+}
+.menu-animate[data-side="top"] {
+  --menu-y: 4px;
+}
+.menu-animate[data-side="left"] {
+  --menu-x: 4px;
+  --menu-y: 0px;
+}
+.menu-animate[data-side="right"] {
+  --menu-x: -4px;
+  --menu-y: 0px;
+}
+.menu-animate[data-state="open"] {
+  animation: menu-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-animate[data-state="open"] {
+    animation: none;
+  }
+}
