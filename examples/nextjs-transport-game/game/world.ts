@@ -44,7 +44,21 @@ export type Town = {
   x: number;
   y: number;
   houses: number;
+  // How far apart the town's streets are: one runs north-south every
+  // `blockX` tiles, and one east-west every `blockY` tiles
+  blockX: number;
+  blockY: number;
 };
+
+// Towns are laid out as a grid of streets around their center, with blocks
+// of buildings in between. This tells which streets of that grid can run
+// through a tile: buildings only go where none can.
+export function streetLines(town: Town, x: number, y: number) {
+  return {
+    northSouth: (x - town.x) % town.blockX === 0,
+    eastWest: (y - town.y) % town.blockY === 0,
+  };
+}
 
 export type Industry = {
   id: number;
@@ -312,37 +326,44 @@ export function generateWorld(seed: number, size: number): World {
       }
     };
 
+    // Blocks are two buildings deep, so every building is on a street, and
+    // a few buildings long. Which way they lie differs per town.
+    const long = 4 + Math.floor(rng() * 3);
+    const sideStreetsAlongX = rng() < 0.5;
+
+    // Two main streets cross in the center
     layStreet(x, y, 1, 0, 3 + Math.floor(rng() * 3));
     layStreet(x, y, -1, 0, 3 + Math.floor(rng() * 3));
-    layStreet(x, y, 0, 1, 2 + Math.floor(rng() * 3));
-    layStreet(x, y, 0, -1, 2 + Math.floor(rng() * 3));
+    layStreet(x, y, 0, 1, 3 + Math.floor(rng() * 2));
+    layStreet(x, y, 0, -1, 3 + Math.floor(rng() * 2));
+    // And most towns start with a side street or two, one block away
     for (const side of [-1, 1]) {
-      if (rng() < 0.6) {
-        const offset = side * (2 + Math.floor(rng() * 2));
-        layStreet(x + offset, y, 0, 1, 1 + Math.floor(rng() * 3));
-        layStreet(x + offset, y, 0, -1, 1 + Math.floor(rng() * 3));
+      if (rng() > 0.7) {
+        continue;
+      }
+      const [dx, dy] = sideStreetsAlongX ? [1, 0] : [0, 1];
+      const cornerX = x + dy * side * 3;
+      const cornerY = y + dx * side * 3;
+      if (inBounds(cornerX, cornerY) && townRoads[cornerY * size + cornerX]) {
+        layStreet(cornerX, cornerY, dx, dy, 1 + Math.floor(rng() * 3));
+        layStreet(cornerX, cornerY, -dx, -dy, 1 + Math.floor(rng() * 3));
       }
     }
 
-    towns.push({ id: towns.length, name, x, y, houses: 0 });
+    towns.push({
+      id: towns.length,
+      name,
+      x,
+      y,
+      houses: 0,
+      blockX: sideStreetsAlongX ? long : 3,
+      blockY: sideStreetsAlongX ? 3 : long,
+    });
     townStreets.push(streets);
   }
 
-  // Whether a tile is right past the end of a street. Streets get longer as
-  // towns grow, so houses are rarely built in their way.
-  const isStreet = (x: number, y: number) =>
-    inBounds(x, y) && townRoads[y * size + x] === 1;
-  const pastStreetEnd = (x: number, y: number) =>
-    [
-      [1, 0],
-      [-1, 0],
-      [0, 1],
-      [0, -1],
-    ].some(
-      ([dx, dy]) => isStreet(x - dx, y - dy) && isStreet(x - 2 * dx, y - 2 * dy)
-    );
-
-  // Houses line the streets, and get taller toward the town center
+  // Houses line the streets, and get taller toward the town center. They
+  // keep off the tiles where the town's streets will run as it grows.
   towns.forEach((town, townIndex) => {
     for (const street of townStreets[townIndex]) {
       const sx = street % size;
@@ -355,17 +376,16 @@ export function generateWorld(seed: number, size: number): World {
             continue;
           }
           const tile = hy * size + hx;
+          const lines = streetLines(town, hx, hy);
           if (
             terrain[tile] === WATER ||
-            townRoads[tile] ||
-            houseAt[tile] >= 0
+            houseAt[tile] >= 0 ||
+            lines.northSouth ||
+            lines.eastWest
           ) {
             continue;
           }
-          let chance = dx === 0 || dy === 0 ? 0.8 : 0.45;
-          if (pastStreetEnd(hx, hy)) {
-            chance = 0.06;
-          }
+          const chance = dx === 0 || dy === 0 ? 0.8 : 0.45;
           if (rng() > chance) {
             continue;
           }

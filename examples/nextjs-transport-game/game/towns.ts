@@ -7,10 +7,18 @@ import {
 } from "./constants";
 import { createRng, hashInt } from "./rng";
 import type { TownGrowth } from "./types";
-import { type House, nearestTown, type Town, WATER, type World } from "./world";
+import {
+  type House,
+  nearestTown,
+  streetLines,
+  type Town,
+  WATER,
+  type World,
+} from "./world";
 
-// Towns grow on their own: streets get longer, houses appear along them, and
-// buildings are replaced by bigger ones, up to skyscrapers in the center.
+// Towns grow on their own: streets get longer along the town's grid, houses
+// appear along them, and buildings are replaced by bigger ones, up to
+// skyscrapers in the center.
 //
 // None of that is stored. Each town has a fixed list of growth steps that
 // every client works out from the map seed, and how far down that list a
@@ -28,9 +36,13 @@ const MAX_TIER = BUILDINGS.length - 1;
 // steps. After this many, the only thing left is to catch up.
 const STEPS_TO_FULL_HEIGHT = 240;
 const MAX_STEPS = 600;
-// How good a spot the empty tile right past the end of a street is for more
-// street (branching off sideways scores 1)
+// How good a tile is for more street: making a street longer is better than
+// starting a new one at a corner (which scores 1), and closing a gap between
+// two pieces of the same street is best
 const STREET_END = 3;
+const STREET_GAP = 6;
+// The two streets through the center of a town grow faster than the others
+const MAIN_STREET = 1.5;
 
 const plans = new WeakMap<World, GrowthStep[][]>();
 
@@ -99,11 +111,14 @@ function planTown(
     return Math.max(0, Math.min(MAX_TIER, Math.floor(tier)));
   };
 
+  const linesAt = (tile: number) =>
+    streetLines(town, tile % size, Math.floor(tile / size));
+
   // How good a tile is for a new piece of street, or 0 if it can't have one.
-  // Streets get longer from their ends or branch off sideways, and keep two
-  // tiles between each other so there is room for buildings. A small house
-  // that is in the way of a new street makes way for it.
+  // Streets only follow the lines of the town's grid, and only get there
+  // from a street that is already on that line or crosses it.
   const streetScore = (tile: number) => {
+    const { northSouth, eastWest } = linesAt(tile);
     let score = 0;
     for (const [dx, dy] of [
       [1, 0],
@@ -111,21 +126,21 @@ function planTown(
       [0, 1],
       [0, -1],
     ]) {
-      if (!isStreet(neighbor(tile, -dx, -dy))) {
+      const onLine = dx !== 0 ? eastWest : northSouth;
+      if (!onLine || !isStreet(neighbor(tile, -dx, -dy))) {
         continue;
       }
-      const crowded = [-2, -1, 1, 2].some((side) =>
-        isStreet(neighbor(tile, dy * side, dx * side))
-      );
-      if (crowded) {
-        continue;
+      const main =
+        dx !== 0
+          ? tile >= town.y * size && tile < (town.y + 1) * size
+          : tile % size === town.x;
+      let kind = 1;
+      if (isStreet(neighbor(tile, dx, dy))) {
+        kind = STREET_GAP;
+      } else if (isStreet(neighbor(tile, -2 * dx, -2 * dy))) {
+        kind = STREET_END;
       }
-      const straight = isStreet(neighbor(tile, -2 * dx, -2 * dy));
-      if (tiers[tile] < 0) {
-        score = Math.max(score, straight ? STREET_END : 1);
-      } else if (tiers[tile] <= 1) {
-        score = Math.max(score, straight ? 2 : 0.5);
-      }
+      score = Math.max(score, kind * (main ? MAIN_STREET : 1));
     }
     return score;
   };
@@ -157,9 +172,13 @@ function planTown(
         continue;
       }
       const far = distance(tile);
-      const score = streetScore(tile);
-      if (score > 0) {
-        streetEnds.push({ tile, weight: score / (1 + far / 4) });
+      const lines = linesAt(tile);
+      if (lines.northSouth || lines.eastWest) {
+        const score = streetScore(tile);
+        if (score > 0) {
+          streetEnds.push({ tile, weight: score / (1 + far / 4) });
+        }
+        continue;
       }
       if (tiers[tile] >= 0) {
         if (tiers[tile] < tallest(tile, progress)) {
@@ -171,10 +190,7 @@ function planTown(
         isStreet(neighbor(tile, 0, 1)) ||
         isStreet(neighbor(tile, 0, -1))
       ) {
-        // The tile right past the end of a street is where that street will
-        // most likely go next, so it rarely gets a house
-        const inTheWay = score >= STREET_END ? 0.04 : 1;
-        lots.push({ tile, weight: inTheWay / (1 + (far * far) / 6) });
+        lots.push({ tile, weight: 1 / (1 + (far * far) / 6) });
       }
     }
 
@@ -202,7 +218,6 @@ function planTown(
     if (kind === "street") {
       const tile = pick(streetEnds);
       streets[tile] = 1;
-      tiers[tile] = -1;
       steps.push({ kind, tile });
     } else if (kind === "house") {
       const tile = pick(lots);
@@ -257,7 +272,6 @@ export function growWorld(
         if (!built.noStreets.has(tile)) {
           townRoads[tile] = 1;
           trees[tile] = 0;
-          tiers[tile] = -1;
         }
       } else if (kind === "house") {
         if (!built.tracks.has(tile) && !built.demolished.has(tile)) {
