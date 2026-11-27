@@ -1,0 +1,490 @@
+"use client";
+
+import { useRoom, useUpdateMyPresence } from "@liveblocks/react/suspense";
+import { Minus, Plus } from "lucide-react";
+import { PointerEvent, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { snapshotView, trackPlan, trackProblem } from "@/game/actions";
+import { TILE_H } from "@/game/constants";
+import { lineBetween, type Network } from "@/game/network";
+import {
+  type Camera,
+  Renderer,
+  type Scene,
+  type Viewport,
+} from "@/game/render/renderer";
+import { HALF_W, worldX, worldY } from "@/game/render/shapes";
+import type {
+  CompanyData,
+  StationData,
+  Tool,
+  Vehicle,
+} from "@/game/types";
+import { nearestTown, type World } from "@/game/world";
+
+export type LineTool = "road" | "rail" | "bulldoze";
+
+// What the line being dragged would build
+export type DragPlan = {
+  tiles: number;
+  cost: number;
+  problem: string | null;
+} | null;
+
+type Props = {
+  world: World;
+  network: Network;
+  stations: ReadonlyMap<string, StationData>;
+  vehicles: ReadonlyMap<string, Vehicle>;
+  companies: ReadonlyMap<string, CompanyData>;
+  myId: string;
+  balance: number;
+  tool: Tool;
+  routeFrom: number | null;
+  selectedStation: number | null;
+  highlightedVehicle: string | null;
+  onHover: (tile: number | null) => void;
+  onDragPlan: (plan: DragPlan) => void;
+  onLine: (tool: LineTool, tiles: number[]) => void;
+  onTileClick: (tile: number) => void;
+};
+
+type Drag = {
+  pointerId: number;
+  mode: "pan" | "line" | "click";
+  x: number;
+  y: number;
+  cameraX: number;
+  cameraY: number;
+  moved: boolean;
+  startTile: number;
+  lastTile: number;
+  tiles: number[];
+};
+
+const MIN_ZOOM = 0.35;
+const MAX_ZOOM = 2.5;
+const PAN_KEYS: Record<string, [number, number]> = {
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  w: [0, -1],
+  s: [0, 1],
+  a: [-1, 0],
+  d: [1, 0],
+};
+const NO_TILES: ReadonlySet<number> = new Set();
+
+function isLineTool(tool: Tool): tool is LineTool {
+  return tool === "road" || tool === "rail" || tool === "bulldoze";
+}
+
+// The map itself. Liveblocks Storage and Presence are copied into a plain
+// `scene` object, which a canvas renderer reads on every animation frame.
+export function MapCanvas(props: Props) {
+  const { world } = props;
+  const room = useRoom();
+  const updateMyPresence = useUpdateMyPresence();
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const viewport = useRef<Viewport>({ width: 1, height: 1, dpr: 1 });
+  const camera = useRef<Camera>({ x: 0, y: 0, zoom: 1 });
+  const drag = useRef<Drag | null>(null);
+  const pressedKeys = useRef(new Set<string>());
+  const latest = useRef(props);
+  const scene = useRef<Scene>({
+    network: props.network,
+    stations: props.stations,
+    vehicles: props.vehicles,
+    companies: props.companies,
+    myId: props.myId,
+    tool: props.tool,
+    hover: null,
+    preview: null,
+    routeFrom: props.routeFrom,
+    selectedStation: props.selectedStation,
+    highlightedVehicle: props.highlightedVehicle,
+    cursors: [],
+  });
+
+  useEffect(() => {
+    latest.current = props;
+    Object.assign(scene.current, {
+      network: props.network,
+      stations: props.stations,
+      vehicles: props.vehicles,
+      companies: props.companies,
+      myId: props.myId,
+      tool: props.tool,
+      routeFrom: props.routeFrom,
+      selectedStation: props.selectedStation,
+      highlightedVehicle: props.highlightedVehicle,
+    });
+  });
+
+  const clampCamera = () => {
+    const { size } = latest.current.world;
+    const view = camera.current;
+    view.x = Math.max(-size * HALF_W, Math.min(size * HALF_W, view.x));
+    view.y = Math.max(0, Math.min(size * TILE_H, view.y));
+  };
+
+  const zoomAt = (factor: number, screenX: number, screenY: number) => {
+    const view = camera.current;
+    const { width, height } = viewport.current;
+    const zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, view.zoom * factor));
+    // Keep the point under the cursor where it is
+    view.x += (screenX - width / 2) * (1 / view.zoom - 1 / zoom);
+    view.y += (screenY - height / 2) * (1 / view.zoom - 1 / zoom);
+    view.zoom = zoom;
+    clampCamera();
+  };
+
+  // Rendering loop
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) {
+      return;
+    }
+
+    const renderer = new Renderer(
+      world,
+      (width, height) => {
+        const offscreen = document.createElement("canvas");
+        offscreen.width = width;
+        offscreen.height = height;
+        return offscreen;
+      },
+      getComputedStyle(canvas).fontFamily || "sans-serif"
+    );
+
+    // Start on the town closest to the middle of the map
+    const middle = world.size / 2;
+    const town = nearestTown(world, middle, middle);
+    camera.current = {
+      x: worldX(town?.x ?? middle, town?.y ?? middle),
+      y: worldY(town?.x ?? middle, town?.y ?? middle),
+      zoom: 1,
+    };
+    scene.current.hover = null;
+    scene.current.preview = null;
+
+    let frame = 0;
+    let previous = performance.now();
+    const loop = (time: number) => {
+      const elapsed = Math.min(0.05, (time - previous) / 1000);
+      previous = time;
+
+      let panX = 0;
+      let panY = 0;
+      for (const key of pressedKeys.current) {
+        panX += PAN_KEYS[key][0];
+        panY += PAN_KEYS[key][1];
+      }
+      if (panX !== 0 || panY !== 0) {
+        const speed = (900 * elapsed) / camera.current.zoom;
+        camera.current.x += panX * speed;
+        camera.current.y += panY * speed;
+        clampCamera();
+      }
+
+      renderer.render(
+        ctx,
+        viewport.current,
+        camera.current,
+        scene.current,
+        Date.now()
+      );
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
+  }, [world]);
+
+  // Keep the canvas as sharp as the screen it's on
+  useEffect(() => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) {
+      return;
+    }
+    const resize = () => {
+      const rect = container.getBoundingClientRect();
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      viewport.current = {
+        width: Math.max(1, rect.width),
+        height: Math.max(1, rect.height),
+        dpr,
+      };
+      canvas.width = Math.max(1, Math.round(rect.width * dpr));
+      canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  // Other players' cursors go straight from Presence to the renderer,
+  // without re-rendering React on every mouse move
+  useEffect(() => {
+    const update = (others: ReturnType<typeof room.getOthers>) => {
+      scene.current.cursors = others.flatMap((other) =>
+        other.presence.cursor
+          ? [
+              {
+                x: other.presence.cursor.x,
+                y: other.presence.cursor.y,
+                name: other.info.name.split(" ")[0],
+                color: other.info.color,
+              },
+            ]
+          : []
+      );
+    };
+    update(room.getOthers());
+    return room.subscribe("others", update);
+  }, [room]);
+
+  // Scroll to zoom, arrow keys or WASD to move around
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      zoomAt(
+        Math.exp(-event.deltaY * 0.0015),
+        event.clientX - rect.left,
+        event.clientY - rect.top
+      );
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+      if (event.key in PAN_KEYS) {
+        pressedKeys.current.add(event.key);
+        event.preventDefault();
+      }
+      if (event.key === "Escape" && drag.current?.mode === "line") {
+        drag.current = null;
+        scene.current.preview = null;
+        latest.current.onDragPlan(null);
+      }
+    };
+    const onKeyUp = (event: KeyboardEvent) => {
+      pressedKeys.current.delete(event.key);
+    };
+    const onBlur = () => pressedKeys.current.clear();
+
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      canvas.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, []);
+
+  const pointAt = (event: PointerEvent<HTMLCanvasElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    return Renderer.screenToTile(
+      viewport.current,
+      camera.current,
+      event.clientX - rect.left,
+      event.clientY - rect.top
+    );
+  };
+
+  const tileOf = (point: { x: number; y: number }) => {
+    const x = Math.floor(point.x);
+    const y = Math.floor(point.y);
+    const { size } = latest.current.world;
+    return x >= 0 && y >= 0 && x < size && y < size ? y * size + x : null;
+  };
+
+  const setHover = (tile: number | null) => {
+    if (scene.current.hover !== tile) {
+      scene.current.hover = tile;
+      latest.current.onHover(tile);
+    }
+  };
+
+  const updateLine = (current: Drag, tile: number) => {
+    const { tool, network, stations, balance, onDragPlan } = latest.current;
+    if (!isLineTool(tool)) {
+      return;
+    }
+    const tiles = lineBetween(world.size, current.startTile, tile);
+    current.tiles = tiles;
+    current.lastTile = tile;
+
+    if (tool === "bulldoze") {
+      scene.current.preview = { tiles, bad: NO_TILES, tone: "remove" };
+      onDragPlan({ tiles: tiles.length, cost: 0, problem: null });
+      return;
+    }
+
+    const view = snapshotView(network, stations);
+    const plan = trackPlan(world, view, tool, tiles);
+    const tooExpensive = plan.cost > balance;
+    const bad = new Set(
+      tiles.filter(
+        (each) => tooExpensive || trackProblem(world, view, tool, each)
+      )
+    );
+    scene.current.preview = { tiles, bad, tone: "build" };
+    onDragPlan({
+      tiles: plan.missing.length,
+      cost: plan.cost,
+      problem: plan.problem ?? (tooExpensive ? "Not enough money" : null),
+    });
+  };
+
+  const onPointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
+    if (drag.current) {
+      return;
+    }
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const tile = tileOf(pointAt(event));
+    const lineTool = isLineTool(latest.current.tool);
+
+    let mode: Drag["mode"] = "click";
+    if (event.button !== 0 || (lineTool && tile === null)) {
+      mode = "pan";
+    } else if (lineTool) {
+      mode = "line";
+    }
+
+    drag.current = {
+      pointerId: event.pointerId,
+      mode,
+      x: event.clientX,
+      y: event.clientY,
+      cameraX: camera.current.x,
+      cameraY: camera.current.y,
+      moved: false,
+      startTile: tile ?? 0,
+      lastTile: -1,
+      tiles: [],
+    };
+    if (mode === "line" && tile !== null) {
+      updateLine(drag.current, tile);
+    }
+  };
+
+  const onPointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
+    const point = pointAt(event);
+    const tile = tileOf(point);
+    setHover(tile);
+    updateMyPresence({
+      cursor: tile === null ? null : { x: point.x, y: point.y },
+    });
+
+    const current = drag.current;
+    if (!current || current.pointerId !== event.pointerId) {
+      return;
+    }
+    const dx = event.clientX - current.x;
+    const dy = event.clientY - current.y;
+    if (Math.hypot(dx, dy) > 4) {
+      current.moved = true;
+    }
+
+    if (current.mode === "line") {
+      if (tile !== null && tile !== current.lastTile) {
+        updateLine(current, tile);
+      }
+    } else if (current.moved) {
+      // Dragging with any other tool moves the map
+      camera.current.x = current.cameraX - dx / camera.current.zoom;
+      camera.current.y = current.cameraY - dy / camera.current.zoom;
+      clampCamera();
+    }
+  };
+
+  const onPointerUp = (event: PointerEvent<HTMLCanvasElement>) => {
+    const current = drag.current;
+    if (!current || current.pointerId !== event.pointerId) {
+      return;
+    }
+    drag.current = null;
+    const { tool, onLine, onDragPlan, onTileClick } = latest.current;
+
+    if (current.mode === "line") {
+      scene.current.preview = null;
+      onDragPlan(null);
+      if (isLineTool(tool) && current.tiles.length > 0) {
+        onLine(tool, current.tiles);
+      }
+    } else if (current.mode === "click" && !current.moved) {
+      const tile = tileOf(pointAt(event));
+      if (tile !== null) {
+        onTileClick(tile);
+      }
+    }
+  };
+
+  const onPointerCancel = () => {
+    drag.current = null;
+    scene.current.preview = null;
+    latest.current.onDragPlan(null);
+  };
+
+  const onPointerLeave = () => {
+    if (!drag.current) {
+      setHover(null);
+      updateMyPresence({ cursor: null });
+    }
+  };
+
+  const zoomButton = (factor: number) => () =>
+    zoomAt(factor, viewport.current.width / 2, viewport.current.height / 2);
+
+  return (
+    <div ref={containerRef} className="absolute inset-0">
+      <canvas
+        ref={canvasRef}
+        className={`absolute inset-0 h-full w-full touch-none select-none ${
+          props.tool === "select" ? "cursor-grab" : "cursor-crosshair"
+        }`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onPointerLeave={onPointerLeave}
+        onContextMenu={(event) => event.preventDefault()}
+      />
+      <div className="absolute right-3 bottom-3 flex flex-col gap-px overflow-hidden rounded-lg bg-white shadow ring-1 ring-neutral-950/5">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="rounded-none"
+          aria-label="Zoom in"
+          onClick={zoomButton(1.3)}
+        >
+          <Plus />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="rounded-none"
+          aria-label="Zoom out"
+          onClick={zoomButton(1 / 1.3)}
+        >
+          <Minus />
+        </Button>
+      </div>
+    </div>
+  );
+}
