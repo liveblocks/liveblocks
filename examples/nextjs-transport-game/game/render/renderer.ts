@@ -44,7 +44,13 @@ import {
   worldX,
   worldY,
 } from "./shapes";
-import { type CanvasFactory, createSprites, type Sprite } from "./sprites";
+import {
+  type CanvasFactory,
+  createSprites,
+  type Sprite,
+  spriteImage,
+  spriteScale,
+} from "./sprites";
 
 export type Camera = {
   // World position at the center of the screen
@@ -415,6 +421,7 @@ export class Renderer {
     // Buildings, trees, stations and vehicles, from the back of the map to
     // the front, so that things closer to the camera cover what's behind
     const dynamics = this.collectDynamics(ctx, scene, now);
+    const detail = spriteScale(dpr * zoom);
     let staticIndex = 0;
     let dynamicIndex = 0;
     while (
@@ -435,7 +442,7 @@ export class Renderer {
             (scene.network.road[item.tile] || scene.network.rail[item.tile]));
         if (!hidden) {
           ctx.drawImage(
-            sprite.canvas,
+            spriteImage(sprite, detail),
             item.x,
             item.y,
             sprite.width,

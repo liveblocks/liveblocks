@@ -16,12 +16,15 @@ import {
 // Everything that never changes (trees, houses, industries) is drawn once
 // into a small off-screen canvas, then stamped onto the map every frame.
 export type Sprite = {
-  canvas: CanvasImageSource;
+  canvas: HTMLCanvasElement;
+  // How many canvas pixels the picture has per world pixel
+  scale: number;
   // Size in world pixels, and where the tile-space origin is inside of it
   width: number;
   height: number;
   ax: number;
   ay: number;
+  draw: (ctx: Ctx, ox: number, oy: number) => void;
 };
 
 export type CanvasFactory = (width: number, height: number) => HTMLCanvasElement;
@@ -34,9 +37,43 @@ export type Sprites = {
   industries: Record<IndustryType, Sprite>;
 };
 
-const SPRITE_SCALE = 2;
+// A sprite that has fewer pixels than the screen shows looks blurry, so
+// sprites are drawn again with more pixels when the map is zoomed in.
+const MIN_SPRITE_SCALE = 2;
+const MAX_SPRITE_SCALE = 6;
 const PADDING = 3;
 
+// How many pixels per world pixel a sprite needs to look sharp, when one
+// world pixel covers this many screen pixels
+export function spriteScale(screenPixels: number) {
+  return Math.max(
+    MIN_SPRITE_SCALE,
+    Math.min(MAX_SPRITE_SCALE, Math.ceil(screenPixels - 0.01))
+  );
+}
+
+function paint(sprite: Sprite, scale: number) {
+  const { canvas } = sprite;
+  // Resizing a canvas also clears it
+  canvas.width = Math.ceil(sprite.width * scale);
+  canvas.height = Math.ceil(sprite.height * scale);
+  const ctx = canvas.getContext("2d")!;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  sprite.draw(ctx, sprite.ax, sprite.ay);
+  sprite.scale = scale;
+}
+
+// The sprite's picture, with this many pixels per world pixel. Each sprite
+// only keeps one version, so memory use doesn't grow while zooming.
+export function spriteImage(sprite: Sprite, scale: number) {
+  if (sprite.scale !== scale) {
+    paint(sprite, scale);
+  }
+  return sprite.canvas;
+}
+
+// `draw` runs again every time the sprite changes resolution, so it has to
+// draw the exact same picture each time
 function makeSprite(
   createCanvas: CanvasFactory,
   tiles: number,
@@ -45,14 +82,17 @@ function makeSprite(
 ): Sprite {
   const width = tiles * TILE_W + PADDING * 2;
   const height = maxHeight + tiles * TILE_H + PADDING * 2;
-  const ax = tiles * HALF_W + PADDING;
-  const ay = maxHeight + PADDING;
-
-  const canvas = createCanvas(width * SPRITE_SCALE, height * SPRITE_SCALE);
-  const ctx = canvas.getContext("2d")!;
-  ctx.scale(SPRITE_SCALE, SPRITE_SCALE);
-  draw(ctx, ax, ay);
-  return { canvas, width, height, ax, ay };
+  const sprite: Sprite = {
+    canvas: createCanvas(1, 1),
+    scale: 0,
+    width,
+    height,
+    ax: tiles * HALF_W + PADDING,
+    ay: maxHeight + PADDING,
+    draw,
+  };
+  paint(sprite, MIN_SPRITE_SCALE);
+  return sprite;
 }
 
 function circle(ctx: Ctx, x: number, y: number, radius: number, fill: string) {
@@ -374,15 +414,17 @@ const INDUSTRY_ARTISTS: Record<
 };
 
 export function createSprites(createCanvas: CanvasFactory): Sprites {
-  const rng = createRng(7);
-
+  // Randomly placed details start from a fixed seed per sprite, so that a
+  // sprite looks the same every time it's drawn
   const trees: Sprite[][] = [];
   for (let count = 1; count <= 3; count++) {
     const variants: Sprite[] = [];
     for (let variant = 0; variant < 4; variant++) {
+      const seed = 7 + count * 4 + variant;
+      const conifers = variant % 2 === 0 ? 0.75 : 0.25;
       variants.push(
         makeSprite(createCanvas, 1, 30, (ctx, ox, oy) =>
-          drawTrees(ctx, ox, oy, rng, count, 1, variant % 2 === 0 ? 0.75 : 0.25)
+          drawTrees(ctx, ox, oy, createRng(seed), count, 1, conifers)
         )
       );
     }
@@ -400,7 +442,7 @@ export function createSprites(createCanvas: CanvasFactory): Sprites {
 
   const industry = (type: IndustryType) =>
     makeSprite(createCanvas, 2, 56, (ctx, ox, oy) =>
-      INDUSTRY_ARTISTS[type](ctx, ox, oy, rng)
+      INDUSTRY_ARTISTS[type](ctx, ox, oy, createRng(7))
     );
 
   return {
