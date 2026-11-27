@@ -12,6 +12,7 @@ import { Suspense, useCallback, useMemo, useState } from "react";
 import { Loading } from "@/components/loading";
 import { Planner } from "@/components/planner";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
+import type { Plan } from "@/lib/plan";
 import {
   createPlanListStorage,
   createPlanStorage,
@@ -28,9 +29,9 @@ export default function Page() {
 }
 
 /**
- * The outer room: the list of plans, shared by everyone. Its name is the
- * only thing a plan keeps here, so renaming or adding a plan shows up in
- * everyone's plan switcher right away.
+ * The outer room: the list of plans, shared by everyone. A plan keeps its
+ * name and a short summary here, so adding, renaming or editing a plan shows
+ * up in everyone's plan switcher right away.
  */
 function PlanList() {
   const roomId = useExampleRoomId();
@@ -78,6 +79,8 @@ function OpenPlan() {
         name: NEW_PLAN_NAME,
         template: "blank",
         createdAt: Date.now(),
+        roomCount: 0,
+        area: 0,
       })
     );
     return id;
@@ -86,6 +89,13 @@ function OpenPlan() {
   const renamePlan = useMutation(({ storage }, id: string, name: string) => {
     storage.get("plans").get(id)?.set("name", name);
   }, []);
+
+  const summarizePlan = useMutation(
+    ({ storage }, id: string, summary: Pick<Plan, "roomCount" | "area">) => {
+      storage.get("plans").get(id)?.update(summary);
+    },
+    []
+  );
 
   const handleCreatePlan = useCallback(() => {
     setPlanId(createPlan());
@@ -111,6 +121,7 @@ function OpenPlan() {
           onPlanChange={setPlanId}
           onCreatePlan={handleCreatePlan}
           onRenamePlan={renamePlan}
+          onSummarizePlan={summarizePlan}
         />
       </ClientSideSuspense>
     </RoomProvider>

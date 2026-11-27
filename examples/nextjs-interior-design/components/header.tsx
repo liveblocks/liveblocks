@@ -15,16 +15,16 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { polygonArea } from "@/lib/geometry";
-import type { Room } from "@/lib/plan";
-import { formatArea, type Unit } from "@/lib/units";
+import { formatPlanSummary, type Unit } from "@/lib/units";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type HeaderProps = {
   name: string;
   onRename: (name: string) => void;
-  rooms: ReadonlyMap<string, Room>;
+  roomCount: number;
+  // Total floor area, in square centimeters.
+  area: number;
   unit: Unit;
   onUnitChange: (unit: Unit) => void;
   showDimensions: boolean;
@@ -34,7 +34,8 @@ type HeaderProps = {
 export function Header({
   name,
   onRename,
-  rooms,
+  roomCount,
+  area,
   unit,
   onUnitChange,
   showDimensions,
@@ -46,20 +47,13 @@ export function Header({
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
 
-  let area = 0;
-  for (const room of rooms.values()) {
-    area += polygonArea(room.points);
-  }
-
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
       <div className="min-w-0 flex-1">
         <h1 className="sr-only">{name}</h1>
         <PlanName name={name} onRename={onRename} />
         <p className="truncate text-xs leading-tight text-ink-muted tabular-nums">
-          {rooms.size === 0
-            ? "No rooms yet"
-            : `${rooms.size} ${rooms.size === 1 ? "room" : "rooms"} · ${formatArea(area, unit)}`}
+          {formatPlanSummary(roomCount, area, unit)}
         </p>
       </div>
 

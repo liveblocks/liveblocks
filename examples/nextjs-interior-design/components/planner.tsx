@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlanActions } from "@/hooks/use-plan-actions";
 import type { FurnitureType } from "@/lib/catalog";
 import type { Plan, Selection, Tool } from "@/lib/plan";
+import { summarize } from "@/lib/templates";
 import type { Unit } from "@/lib/units";
 import { Canvas, type CanvasHandle } from "./canvas/canvas";
 import { Header } from "./header";
@@ -24,6 +25,7 @@ export function Planner({
   onPlanChange,
   onCreatePlan,
   onRenamePlan,
+  onSummarizePlan,
 }: {
   plan: Plan;
   // The list of plans comes from another room: see `app/page.tsx`.
@@ -31,6 +33,10 @@ export function Planner({
   onPlanChange: (planId: string) => void;
   onCreatePlan: () => void;
   onRenamePlan: (planId: string, name: string) => void;
+  onSummarizePlan: (
+    planId: string,
+    summary: Pick<Plan, "roomCount" | "area">
+  ) => void;
 }) {
   // Storage is read as plain JSON: each LiveMap becomes an object keyed by
   // id, and only changes identity when something inside it changes. They're
@@ -48,6 +54,24 @@ export function Planner({
     [furnitureById]
   );
   const actions = usePlanActions();
+
+  // Keep the plan's entry in the list of plans (its room count and area) in
+  // step with the floor plan. Everyone with the plan open computes the same
+  // summary, so it doesn't matter who writes it; waiting for a pause keeps a
+  // wall being dragged from rewriting it on every frame.
+  const { roomCount, area } = useMemo(() => summarize(rooms.values()), [rooms]);
+  const planId = plan.id;
+  const stale = plan.roomCount !== roomCount || plan.area !== area;
+  useEffect(() => {
+    if (!stale) {
+      return;
+    }
+    const timeout = setTimeout(
+      () => onSummarizePlan(planId, { roomCount, area }),
+      400
+    );
+    return () => clearTimeout(timeout);
+  }, [stale, planId, roomCount, area, onSummarizePlan]);
   const updateMyPresence = useUpdateMyPresence();
 
   const canvasRef = useRef<CanvasHandle>(null);
@@ -112,6 +136,7 @@ export function Planner({
           plans={plans}
           onPlanChange={onPlanChange}
           onCreatePlan={onCreatePlan}
+          unit={unit}
           onAddFurniture={handleAddFurniture}
           onDropFurniture={handleDropFurniture}
           getZoom={getZoom}
@@ -120,7 +145,8 @@ export function Planner({
           <Header
             name={plan.name}
             onRename={handleRenamePlan}
-            rooms={rooms}
+            roomCount={roomCount}
+            area={area}
             unit={unit}
             onUnitChange={setUnit}
             showDimensions={showDimensions}

@@ -34,6 +34,13 @@ export function formatArea(cm2: number, unit: Unit) {
     : `${Math.round(cm2 / CM2_PER_FT2)} ft²`;
 }
 
+/** A plan in a few words: `5 rooms · 84.5 m²`. */
+export function formatPlanSummary(roomCount: number, area: number, unit: Unit) {
+  return roomCount === 0
+    ? "No rooms yet"
+    : `${roomCount} ${roomCount === 1 ? "room" : "rooms"} · ${formatArea(area, unit)}`;
+}
+
 /** Converts centimeters to the number shown in a size field. */
 export function toDisplaySize(cm: number, unit: Unit) {
   return unit === "metric"

@@ -5,6 +5,7 @@ import { CheckIcon, ChevronsUpDownIcon, PlusIcon } from "lucide-react";
 import { memo } from "react";
 import type { FurnitureType } from "@/lib/catalog";
 import type { Plan } from "@/lib/plan";
+import { formatPlanSummary, type Unit } from "@/lib/units";
 import { cn } from "@/lib/utils";
 import { HelpButton } from "./help-button";
 import { Library } from "./library";
@@ -21,6 +22,7 @@ type SidebarProps = {
   plans: Plan[];
   onPlanChange: (planId: string) => void;
   onCreatePlan: () => void;
+  unit: Unit;
   onAddFurniture: (type: FurnitureType) => void;
   onDropFurniture: (
     type: FurnitureType,
@@ -40,6 +42,7 @@ export const Sidebar = memo(function Sidebar({
   plans,
   onPlanChange,
   onCreatePlan,
+  unit,
   onAddFurniture,
   onDropFurniture,
   getZoom,
@@ -57,6 +60,7 @@ export const Sidebar = memo(function Sidebar({
           plans={plans}
           onChange={onPlanChange}
           onCreate={onCreatePlan}
+          unit={unit}
         />
       </div>
 
@@ -92,11 +96,13 @@ function PlanSwitcher({
   plans,
   onChange,
   onCreate,
+  unit,
 }: {
   plan: Plan;
   plans: Plan[];
   onChange: (planId: string) => void;
   onCreate: () => void;
+  unit: Unit;
 }) {
   return (
     <DropdownMenu>
@@ -110,7 +116,7 @@ function PlanSwitcher({
             {plan.name}
           </div>
           <div className="truncate text-[11px] leading-tight text-ink-muted">
-            {plans.length === 1 ? "1 plan" : `${plans.length} plans`}
+            {formatPlanSummary(plan.roomCount, plan.area, unit)}
           </div>
         </div>
         <ChevronsUpDownIcon className="size-3.5 shrink-0 text-ink-faint group-hover:text-ink-muted" />
@@ -121,13 +127,16 @@ function PlanSwitcher({
           return (
             <DropdownMenuItem
               key={item.id}
-              className="text-[13px]"
+              className="h-auto py-1.5 text-[13px]"
               onClick={() => onChange(item.id)}
               aria-current={active ? "true" : undefined}
             >
-              <span className="min-w-0 flex-1 truncate pl-0.5">
-                {item.name}
-              </span>
+              <div className="min-w-0 flex-1 pl-0.5">
+                <div className="truncate">{item.name}</div>
+                <div className="truncate text-[11px] text-ink-muted tabular-nums">
+                  {formatPlanSummary(item.roomCount, item.area, unit)}
+                </div>
+              </div>
               {active ? (
                 <CheckIcon className="size-3.5 shrink-0 text-ink" />
               ) : null}

@@ -1,5 +1,6 @@
 import { LiveMap, LiveObject } from "@liveblocks/client";
 import { getCatalogItem, type FurnitureType } from "./catalog";
+import { polygonArea } from "./geometry";
 import type {
   Corner,
   DoorStyle,
@@ -17,14 +18,9 @@ import type {
  * Liveblocks room, filled in from its template the first time anyone opens
  * it; plans people create afterwards start blank.
  */
-const STARTER_PLANS: Plan[] = [
-  {
-    id: "apartment",
-    name: "One-bedroom apartment",
-    template: "apartment",
-    createdAt: 0,
-  },
-  { id: "studio", name: "Studio", template: "studio", createdAt: 1 },
+const STARTER_PLANS: Pick<Plan, "id" | "name" | "template">[] = [
+  { id: "apartment", name: "One-bedroom apartment", template: "apartment" },
+  { id: "studio", name: "Studio", template: "studio" },
 ];
 
 export const NEW_PLAN_NAME = "Untitled plan";
@@ -271,6 +267,17 @@ function getTemplate(template: TemplateId): PlanData {
   }
 }
 
+/** What the list of plans says about a floor plan: see `Plan`. */
+export function summarize(rooms: Iterable<Pick<Room, "points">>) {
+  let roomCount = 0;
+  let area = 0;
+  for (const room of rooms) {
+    roomCount++;
+    area += polygonArea(room.points);
+  }
+  return { roomCount, area: Math.round(area) };
+}
+
 /**
  * The Storage the list of plans starts with, the first time the example is
  * opened. This room only uses `plans`.
@@ -278,7 +285,14 @@ function getTemplate(template: TemplateId): PlanData {
 export function createPlanListStorage(): Liveblocks["Storage"] {
   return {
     plans: new LiveMap(
-      STARTER_PLANS.map((plan) => [plan.id, new LiveObject(plan)])
+      STARTER_PLANS.map((plan, index) => [
+        plan.id,
+        new LiveObject({
+          ...plan,
+          createdAt: index,
+          ...summarize(getTemplate(plan.template).rooms),
+        }),
+      ])
     ),
     rooms: new LiveMap(),
     openings: new LiveMap(),

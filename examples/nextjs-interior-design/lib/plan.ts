@@ -77,6 +77,11 @@ export type Plan = {
   // What the plan's room is filled with the first time it's opened.
   template: TemplateId;
   createdAt: number;
+  // A summary of the floor plan, kept up to date by whoever has the plan
+  // open, so the list can describe plans without opening their rooms.
+  roomCount: number;
+  // Total floor area, in square centimeters.
+  area: number;
 };
 
 export type TemplateId = "apartment" | "studio" | "blank";
