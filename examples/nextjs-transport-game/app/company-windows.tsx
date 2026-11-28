@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Window } from "@/components/window";
+import { gameTime } from "@/game/clock";
 import { CARGO, MAX_VEHICLES_PER_COMPANY, TRANSPORT } from "@/game/constants";
 import {
   cargoBetween,
@@ -24,6 +25,7 @@ import {
 } from "@/game/economy";
 import type { CompanyData, StationData, Vehicle } from "@/game/types";
 import type { World } from "@/game/world";
+import { useClock } from "@/hooks/use-now";
 
 // The league table: every company that has been started, richest first
 export function CompaniesWindow({
@@ -178,6 +180,7 @@ function VehicleRow({
   onClone: () => void;
   onSell: () => void;
 }) {
+  const clock = useClock();
   const [from, to] = vehicle.stops;
   const passengers =
     cargoBetween(world, Number(from), Number(to)).includes("passengers") ||
@@ -189,7 +192,7 @@ function VehicleRow({
     Icon = Ship;
   }
   // Without a path, `departAt` is when the vehicle next looks for a route
-  const stalled = vehicle.path.length < 2 && vehicle.departAt > Date.now();
+  const stalled = vehicle.path.length < 2 && vehicle.departAt > gameTime(clock, Date.now());
   const onBoard = loadOf(vehicle);
 
   let status = "Heading out empty";

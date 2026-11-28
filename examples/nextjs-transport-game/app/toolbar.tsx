@@ -3,6 +3,8 @@
 import {
   Anchor,
   MousePointer2,
+  Pause,
+  Play,
   Redo2,
   Signpost,
   TrainTrack,
@@ -126,12 +128,17 @@ export type History = {
 export function Toolbar({
   tool,
   history,
+  paused,
   onSelect,
+  onTogglePause,
 }: {
   tool: Tool;
   history: History;
+  paused: boolean;
   onSelect: (tool: Tool) => void;
+  onTogglePause: () => void;
 }) {
+  const PauseIcon = paused ? Play : Pause;
   const steps = [
     {
       label: "Undo",
@@ -191,6 +198,27 @@ export function Toolbar({
             </TooltipContent>
           </Tooltip>
         ))}
+        <div className="win-divider mx-0.5" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="win-button size-8 p-0"
+              aria-label={paused ? "Resume the game" : "Pause the game"}
+              aria-pressed={paused}
+              onClick={onTogglePause}
+            >
+              <PauseIcon className="size-[18px]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={6}>
+            <span className="font-bold">{paused ? "Resume" : "Pause"}</span>{" "}
+            (P)
+            <div>
+              Stops vehicles, cargo and towns for everyone. You can still build.
+            </div>
+          </TooltipContent>
+        </Tooltip>
       </div>
     </Window>
   );

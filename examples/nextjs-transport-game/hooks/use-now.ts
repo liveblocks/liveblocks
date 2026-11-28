@@ -1,15 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useStorage } from "@liveblocks/react/suspense";
+import { useEffect, useMemo, useState } from "react";
+import { type Clock, gameTime } from "@/game/clock";
 
-// The current time, refreshed on an interval. Many numbers in the game
-// (cargo waiting at a station, a town's population) aren't stored but worked
-// out from the clock, so showing them live only takes re-rendering.
+// The game clock, which stands still while the game is paused
+export function useClock(): Clock {
+  const pausedAt = useStorage((root) => root.pausedAt);
+  const pausedFor = useStorage((root) => root.pausedFor);
+  return useMemo(() => ({ pausedAt, pausedFor }), [pausedAt, pausedFor]);
+}
+
+// The current time in the game, refreshed on an interval. Many numbers in
+// the game (cargo waiting at a station, a town's population) aren't stored
+// but worked out from the clock, so showing them live only takes
+// re-rendering.
 export function useNow(intervalMs = 1000) {
-  const [now, setNow] = useState(() => Date.now());
+  const clock = useClock();
+  const [wallTime, setWallTime] = useState(() => Date.now());
   useEffect(() => {
-    const interval = window.setInterval(() => setNow(Date.now()), intervalMs);
+    const interval = window.setInterval(
+      () => setWallTime(Date.now()),
+      intervalMs
+    );
     return () => window.clearInterval(interval);
   }, [intervalMs]);
-  return now;
+  return gameTime(clock, wallTime);
 }

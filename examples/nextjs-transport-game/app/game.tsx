@@ -29,11 +29,14 @@ import {
   resetGame,
   runSimulation,
   sellVehicle,
+  setPaused,
   snapshotView,
   stationCost,
   stationProblem,
   syncTownGrowth,
+  timeOf,
 } from "@/game/actions";
+import { type Clock, gameTime } from "@/game/clock";
 import {
   BUILDINGS,
   CARGO,
@@ -71,6 +74,7 @@ import {
   type World,
 } from "@/game/world";
 import { useMoneyFloaters } from "@/hooks/use-money-floaters";
+import { useClock } from "@/hooks/use-now";
 import { CompanyPicker } from "./company-picker";
 import { CompaniesWindow, VehiclesWindow } from "./company-windows";
 import { CargoWindow, IndustryWindow } from "./industry-windows";
@@ -149,7 +153,9 @@ export function Game() {
     }),
     [roads, rails, canals, noStreetKeys, demolished]
   );
-  const townSteps = useTownSteps(generated, stationTiles);
+  const clock = useClock();
+  const paused = clock.pausedAt !== null;
+  const townSteps = useTownSteps(generated, stationTiles, clock);
   const world = useMemo(
     () => growWorld(generated, townSteps, built),
     [generated, townSteps, built]
@@ -267,7 +273,14 @@ export function Game() {
       const { company: id } = self.presence;
       return id === null
         ? NO_COMPANY
-        : buildStation(storage, world, id, kind, tile, Date.now());
+        : buildStation(
+            storage,
+            world,
+            id,
+            kind,
+            tile,
+            timeOf(storage, Date.now())
+          );
     },
     [world]
   );
@@ -277,7 +290,15 @@ export function Game() {
       const { company: id } = self.presence;
       return id === null
         ? NO_COMPANY
-        : buyVehicle(storage, world, network, id, from, to, Date.now());
+        : buyVehicle(
+            storage,
+            world,
+            network,
+            id,
+            from,
+            to,
+            timeOf(storage, Date.now())
+          );
     },
     [world, network]
   );
@@ -287,7 +308,14 @@ export function Game() {
       const { company: id } = self.presence;
       return id === null
         ? NO_COMPANY
-        : cloneVehicle(storage, world, network, id, vehicleId, Date.now());
+        : cloneVehicle(
+            storage,
+            world,
+            network,
+            id,
+            vehicleId,
+            timeOf(storage, Date.now())
+          );
     },
     [world, network]
   );
@@ -312,12 +340,28 @@ export function Game() {
   const reset = (newSize: number) =>
     room.history.disable(() => resetStorage(newSize));
 
+  // The game is paused for everyone, so it isn't one player's to undo
+  const pause = useMutation(
+    ({ storage }, on: boolean) => setPaused(storage, on, Date.now()),
+    []
+  );
+  const togglePause = () => {
+    room.history.disable(() => pause(!paused));
+    announce(
+      `${company?.name ?? "Someone"} ${paused ? "resumed" : "paused"} the game`
+    );
+  };
+
   // A hidden cheat: Ctrl + Alt + M adds money to your company
   const cheat = useMutation(({ storage, self }) => {
     const { company: id } = self.presence;
     return id !== null && addMoney(storage, id, CHEAT_MONEY);
   }, []);
 
+  const latestTogglePause = useRef(togglePause);
+  useEffect(() => {
+    latestTogglePause.current = togglePause;
+  });
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.altKey && event.code === "KeyM") {
@@ -345,6 +389,10 @@ export function Game() {
       if (event.key === "Escape") {
         selectTool("select");
         setSelectedStation(null);
+        return;
+      }
+      if (event.key.toLowerCase() === "p" && myCompany !== null) {
+        latestTogglePause.current();
         return;
       }
       const match = TOOLS.find((each) => each.shortcut === event.key);
@@ -485,6 +533,7 @@ export function Game() {
           routeFrom={routeFrom}
           selectedStation={selectedStation}
           highlightedVehicle={highlightedVehicle}
+          clock={clock}
           focus={focus}
           onHover={setHover}
           onDragPlan={setDragPlan}
@@ -495,7 +544,13 @@ export function Game() {
 
         <div className="pointer-events-none absolute top-2 left-2 flex flex-col items-start gap-2">
           {myCompany !== null ? (
-            <Toolbar tool={tool} history={history} onSelect={selectTool} />
+            <Toolbar
+              tool={tool}
+              history={history}
+              paused={paused}
+              onSelect={selectTool}
+              onTogglePause={togglePause}
+            />
           ) : null}
           {selectedStation !== null && selected ? (
             <StationWindow
@@ -535,6 +590,12 @@ export function Game() {
             />
           ) : null}
         </div>
+
+        {paused ? (
+          <div className="win pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 font-bold">
+            Game paused
+          </div>
+        ) : null}
 
         <div className="pointer-events-none absolute top-2 right-2 flex flex-col items-end gap-2">
           {open.companies ? (
@@ -734,7 +795,11 @@ function useMyCompany(notify: (text: string, color: string | null) => void) {
   const room = useRoom();
   const found = useMutation(({ storage, self }) => {
     if (self.presence.company !== null) {
-      ensureCompany(storage, self.presence.company, Date.now());
+      ensureCompany(
+        storage,
+        self.presence.company,
+        timeOf(storage, Date.now())
+      );
     }
   }, []);
   useEffect(() => {
@@ -760,7 +825,11 @@ function useMyCompany(notify: (text: string, color: string | null) => void) {
 // from the clock, from the stations around the town, and from the growth
 // saved in Storage the last time one of those stations was built or removed.
 // `world` is the world as generated, before any growth.
-function useTownSteps(world: World, stationTiles: readonly number[]) {
+function useTownSteps(
+  world: World,
+  stationTiles: readonly number[],
+  clock: Clock
+) {
   const saved = useStorage((root) => root.towns);
   const startedAt = useStorage((root) => root.startedAt);
 
@@ -769,16 +838,19 @@ function useTownSteps(world: World, stationTiles: readonly number[]) {
     return world.towns.map(({ id }) =>
       Math.min(
         plans[id].length,
-        Math.floor(townGrowth(saved[id], startedAt, Date.now()))
+        Math.floor(
+          townGrowth(saved[id], startedAt, gameTime(clock, Date.now()))
+        )
       )
     );
-  }, [world, saved, startedAt]);
+  }, [world, saved, startedAt, clock]);
 
   // Towns grow at the speed saved in Storage. When the number of stations
   // around one changes, save how far it got, and its new speed.
   const room = useRoom();
   const sync = useMutation(
-    ({ storage }) => syncTownGrowth(storage, world, Date.now()),
+    ({ storage }) =>
+      syncTownGrowth(storage, world, timeOf(storage, Date.now())),
     [world]
   );
   useEffect(() => {
@@ -849,7 +921,11 @@ function useSimulation(world: World, network: Network) {
   });
 
   const tick = useMutation(({ storage, self, others }) => {
-    const now = Date.now();
+    // Nothing arrives anywhere while the game is paused
+    if (storage.get("pausedAt") !== null) {
+      return;
+    }
+    const now = timeOf(storage, Date.now());
     const managed = new Set(others.map((other) => other.presence.company));
     const isHost = others.every(
       (other) => other.connectionId > self.connectionId

@@ -9,6 +9,7 @@ import {
   trackPlan,
   trackProblem,
 } from "@/game/actions";
+import type { Clock } from "@/game/clock";
 import { COMPANIES, TILE_H } from "@/game/constants";
 import { lineBetween, type Network } from "@/game/network";
 import {
@@ -52,6 +53,7 @@ type Props = {
   routeFrom: number | null;
   selectedStation: number | null;
   highlightedVehicle: string | null;
+  clock: Clock;
   focus: Focus;
   onHover: (tile: number | null) => void;
   onDragPlan: (plan: DragPlan) => void;
@@ -134,6 +136,7 @@ export function MapCanvas(props: Props) {
     selectedStation: props.selectedStation,
     highlightedVehicle: props.highlightedVehicle,
     cursors: [],
+    clock: props.clock,
   });
 
   useEffect(() => {
@@ -148,6 +151,7 @@ export function MapCanvas(props: Props) {
       routeFrom: props.routeFrom,
       selectedStation: props.selectedStation,
       highlightedVehicle: props.highlightedVehicle,
+      clock: props.clock,
     });
   });
 

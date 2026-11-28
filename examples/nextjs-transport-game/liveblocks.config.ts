@@ -38,6 +38,10 @@ declare global {
       // nobody writes their new buildings here: every client works out how
       // far each town has grown from the clock.
       startedAt: number;
+      // The game clock stands still while the game is paused: see
+      // `game/clock.ts`. Pausing only writes these two.
+      pausedAt: number | null;
+      pausedFor: number;
       // Town id → how far the town had grown when the number of stations
       // around it last changed, which changes how fast it grows from then on
       towns: LiveMap<string, TownGrowth>;

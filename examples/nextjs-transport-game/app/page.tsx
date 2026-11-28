@@ -21,6 +21,8 @@ export default function Page() {
         seed: hashString(roomId),
         size: DEFAULT_MAP_SIZE,
         startedAt: Date.now(),
+        pausedAt: null,
+        pausedFor: 0,
         towns: new LiveMap(),
         roads: new LiveMap(),
         rails: new LiveMap(),

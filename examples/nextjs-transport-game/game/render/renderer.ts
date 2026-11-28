@@ -8,6 +8,7 @@ import {
   TRAIN_WAGON_GAP,
   TRAIN_WAGONS,
 } from "../constants";
+import { type Clock, gameTime } from "../clock";
 import { cargoBetween, catchmentOf, formatMoney, loadOf } from "../economy";
 import { headDistance, type PathPoint, pointOnPath } from "../motion";
 import {
@@ -96,6 +97,9 @@ export type Scene = {
   highlightedVehicle: string | null;
   // Other players' cursors, in tile coordinates
   cursors: { x: number; y: number; name: string; color: string }[];
+  // Vehicles are drawn where they are on the game clock, so they stand
+  // still while the game is paused
+  clock: Clock;
 };
 
 type StaticItem = {
@@ -464,7 +468,8 @@ export class Renderer {
     this.drawCanals(ctx, scene.network);
 
     this.drawStationPads(ctx, scene);
-    const { dynamics, underBridges } = this.collectDynamics(ctx, scene, now);
+    const time = gameTime(scene.clock, now);
+    const { dynamics, underBridges } = this.collectDynamics(ctx, scene, time);
     for (const ship of underBridges) {
       ship.draw();
     }
@@ -514,7 +519,7 @@ export class Renderer {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const screenX = (wx: number) => (wx - camera.x) * zoom + width / 2;
     const screenY = (wy: number) => (wy - camera.y) * zoom + height / 2;
-    this.drawLabels(ctx, scene, zoom, screenX, screenY, now);
+    this.drawLabels(ctx, scene, zoom, screenX, screenY, now, time);
   }
 
   private drawTerrain(
@@ -1037,7 +1042,9 @@ export class Renderer {
     zoom: number,
     screenX: (wx: number) => number,
     screenY: (wy: number) => number,
-    now: number
+    now: number,
+    // The same moment on the game clock, which is what vehicles go by
+    time: number
   ) {
     const { size } = this.world;
     ctx.textAlign = "center";
@@ -1123,7 +1130,7 @@ export class Renderer {
     this.trackDeliveries(scene, now);
     const point: PathPoint = { x: 0, y: 0, dx: 1, dy: 0 };
     for (const [id, vehicle] of scene.vehicles) {
-      const stalled = vehicle.path.length < 2 && vehicle.departAt > now;
+      const stalled = vehicle.path.length < 2 && vehicle.departAt > time;
       const highlighted = id === scene.highlightedVehicle;
       if (!stalled && !highlighted) {
         continue;
@@ -1133,7 +1140,7 @@ export class Renderer {
         point.x = (tile % size) + 0.5;
         point.y = Math.floor(tile / size) + 0.5;
       } else {
-        pointOnPath(vehicle.path, size, headDistance(vehicle, now), point);
+        pointOnPath(vehicle.path, size, headDistance(vehicle, time), point);
       }
       const sx = screenX(worldX(point.x, point.y));
       const sy = screenY(worldY(point.x, point.y));

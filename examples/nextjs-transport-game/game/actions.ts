@@ -16,6 +16,7 @@ import {
 import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
 import { advance } from "./simulation";
+import { gameTime } from "./clock";
 import { townGrowth, townStations } from "./towns";
 import type {
   ActionResult,
@@ -30,6 +31,29 @@ import { buildingTiles, isBlocked, WATER, type World } from "./world";
 // Every change to the game goes through one of these functions. They take the
 // root of Liveblocks Storage, so they can be called from `useMutation`.
 type Root = LiveObject<Liveblocks["Storage"]>;
+
+// What time it is in the game, for the `now` that actions are given
+export function timeOf(root: Root, wallTime: number) {
+  return gameTime(
+    { pausedAt: root.get("pausedAt"), pausedFor: root.get("pausedFor") },
+    wallTime
+  );
+}
+
+// Pauses the game for everyone, or lets it run again. While it is paused
+// the game clock stands still, so vehicles stop where they are, no cargo
+// piles up and towns don't grow. Players can still build.
+export function setPaused(root: Root, paused: boolean, wallTime: number) {
+  const pausedAt = root.get("pausedAt");
+  if (paused && pausedAt === null) {
+    root.set("pausedAt", wallTime);
+  } else if (!paused && pausedAt !== null) {
+    root.update({
+      pausedAt: null,
+      pausedFor: root.get("pausedFor") + Math.max(0, wallTime - pausedAt),
+    });
+  }
+}
 
 const MAX_TILES_PER_BUILD = 160;
 
@@ -633,8 +657,16 @@ export function runSimulation(
   return result.vehicles.size;
 }
 
-// Wipes everything players have built and starts over on a new map
-export function resetGame(root: Root, seed: number, size: number, now: number) {
+// Wipes everything players have built and starts over on a new map, which
+// is never paused
+export function resetGame(
+  root: Root,
+  seed: number,
+  size: number,
+  wallTime: number
+) {
+  setPaused(root, false, wallTime);
+  const now = timeOf(root, wallTime);
   root.update({
     seed,
     size,
