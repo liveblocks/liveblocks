@@ -101,6 +101,19 @@ export type CompanyData = {
 // worked out from this and from the clock.
 export type TownGrowth = { steps: number; at: number; stations: number };
 
+// How the game stood at one moment, for the graphs in the statistics window
+export type StatsSample = {
+  // Company id → its money, what its vehicles have earned so far, and how
+  // many vehicles it has
+  companies: {
+    [company: string]: { balance: number; earned: number; vehicles: number };
+  };
+  // How many people live in all the towns together
+  population: number;
+  // How much freight has been delivered to industries so far
+  freight: number;
+};
+
 export type ActionResult =
   | { ok: true; cost: number; message?: string }
   | { ok: false; message: string };

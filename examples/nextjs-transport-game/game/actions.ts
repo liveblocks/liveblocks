@@ -4,6 +4,8 @@ import {
   BUILDINGS,
   COMPANIES,
   MAX_VEHICLES_PER_COMPANY,
+  STATS_PERIOD_MS,
+  STATS_SAMPLES,
   TRANSPORT,
 } from "./constants";
 import {
@@ -15,13 +17,14 @@ import {
 } from "./economy";
 import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
-import { advance } from "./simulation";
 import { gameTime } from "./clock";
-import { servedStations, townStations, townSteps } from "./towns";
+import { advance } from "./simulation";
+import { servedStations, townStations, townStats, townSteps } from "./towns";
 import type {
   ActionResult,
   LineKind,
   StationData,
+  StatsSample,
   Transport,
   Vehicle,
   VehicleData,
@@ -674,6 +677,62 @@ export function runSimulation(
   return result.vehicles.size;
 }
 
+// Writes down how every company is doing, once per period, for the graphs
+// in the statistics window. Any client can do this: they would all write
+// the same thing. `eager` clients write as soon as a period starts, the
+// others only when nobody has for a while. `world` is the map with its
+// towns as they are now. Returns whether anything was written.
+export function recordStats(
+  root: Root,
+  world: World,
+  now: number,
+  eager: boolean
+) {
+  const stats = root.get("stats");
+  const elapsed = Math.max(0, now - root.get("startedAt"));
+  const index = Math.floor(elapsed / STATS_PERIOD_MS);
+  const late = elapsed - index * STATS_PERIOD_MS > STATS_PERIOD_MS / 3;
+  if (stats.has(String(index)) || !(eager || late)) {
+    return false;
+  }
+
+  const companies: StatsSample["companies"] = {};
+  for (const [id, company] of root.get("companies").entries()) {
+    companies[id] = {
+      balance: liveBalance(root, id),
+      earned: company.get("banked"),
+      vehicles: 0,
+    };
+  }
+  for (const vehicle of root.get("vehicles").values()) {
+    const entry = companies[vehicle.get("owner")];
+    if (entry) {
+      entry.earned += vehicle.get("earned");
+      entry.vehicles++;
+    }
+  }
+  let freight = 0;
+  for (const industry of root.get("industries").values()) {
+    freight += industry.received;
+  }
+  stats.set(String(index), {
+    companies,
+    population: townStats(world).reduce(
+      (sum, town) => sum + town.population,
+      0
+    ),
+    freight,
+  });
+
+  // Only the last hour or so is kept
+  for (const key of [...stats.keys()]) {
+    if (Number(key) <= index - STATS_SAMPLES) {
+      stats.delete(key);
+    }
+  }
+  return true;
+}
+
 // Wipes everything players have built and starts over on a new map, which
 // is never paused
 export function resetGame(
@@ -690,6 +749,7 @@ export function resetGame(
     startedAt: now,
     towns: new LiveMap(),
     industries: new LiveMap(),
+    stats: new LiveMap(),
     demolished: new LiveMap(),
     roads: new LiveMap(),
     rails: new LiveMap(),

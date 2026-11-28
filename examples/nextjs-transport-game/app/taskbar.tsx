@@ -14,6 +14,7 @@ export type OpenWindows = {
   companies: boolean;
   vehicles: boolean;
   cargo: boolean;
+  stats: boolean;
 };
 
 type Props = {
@@ -61,6 +62,14 @@ export function Taskbar({
         onClick={() => onToggle("cargo")}
       >
         <span>Cargo</span>
+      </button>
+      <button
+        type="button"
+        className="win-button font-bold max-sm:hidden"
+        aria-pressed={open.stats}
+        onClick={() => onToggle("stats")}
+      >
+        <span>Stats</span>
       </button>
       <div className="win-divider" />
 

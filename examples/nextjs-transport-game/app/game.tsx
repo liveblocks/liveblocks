@@ -26,6 +26,7 @@ import {
   buyVehicle,
   cloneVehicle,
   ensureCompany,
+  recordStats,
   resetGame,
   runSimulation,
   sellVehicle,
@@ -89,6 +90,7 @@ import {
   MapCanvas,
 } from "./map-canvas";
 import { StationWindow } from "./station-window";
+import { StatsWindow } from "./stats-window";
 import { type OpenWindows, Taskbar } from "./taskbar";
 import { type History, Toolbar, TOOLS } from "./toolbar";
 import { TownWindow } from "./town-window";
@@ -106,6 +108,8 @@ type Toast = {
 // the longest steps in once a vehicle is this late.
 const OVERDUE_MS = 3000;
 const TICK_MS = 250;
+// How often to check whether it is time to write down the statistics
+const STATS_TICK_MS = 2000;
 
 const TOWN_NEWS_COLOR = "#737373";
 
@@ -136,6 +140,7 @@ export function Game() {
   const vehicles = useStorageMap((root) => root.vehicles);
   const companies = useStorageMap((root) => root.companies);
   const industries = useStorageMap((root) => root.industries);
+  const stats = useStorageMap((root) => root.stats);
   const startedAt = useStorage((root) => root.startedAt);
 
   // The map isn't synced: every player generates the same one from the seed.
@@ -209,10 +214,11 @@ export function Game() {
   // On small screens the map comes first: windows start closed
   const [open, setOpen] = useState<OpenWindows>(() => {
     const roomy = window.innerWidth >= 900;
-    return { companies: roomy, vehicles: roomy, cargo: false };
+    return { companies: roomy, vehicles: roomy, cargo: false, stats: false };
   });
 
   useSimulation(world, network);
+  useStatsRecorder(world);
   useTownNews(world, notify);
   const history = useHistory(seed, myCompany, balance, floatMoney);
 
@@ -682,6 +688,13 @@ export function Game() {
               onClose={() => setOpen({ ...open, vehicles: false })}
             />
           ) : null}
+          {open.stats ? (
+            <StatsWindow
+              stats={stats}
+              companies={companies}
+              onClose={() => setOpen({ ...open, stats: false })}
+            />
+          ) : null}
           {open.cargo ? (
             <CargoWindow
               world={world}
@@ -1010,6 +1023,35 @@ function useSimulation(world: World, network: Network) {
     );
     return () => window.clearInterval(interval);
   }, [room, tick]);
+}
+
+// How every company is doing is written to Storage every few seconds, for
+// the graphs in the statistics window. One client does it, the one that has
+// been in the room the longest. The others step in if it doesn't.
+function useStatsRecorder(world: World) {
+  const latest = useRef(world);
+  useEffect(() => {
+    latest.current = world;
+  });
+
+  const record = useMutation(({ storage, self, others }) => {
+    if (storage.get("pausedAt") !== null) {
+      return;
+    }
+    const isHost = others.every(
+      (other) => other.connectionId > self.connectionId
+    );
+    recordStats(storage, latest.current, timeOf(storage, Date.now()), isHost);
+  }, []);
+
+  const room = useRoom();
+  useEffect(() => {
+    const interval = window.setInterval(
+      () => room.history.disable(record),
+      STATS_TICK_MS
+    );
+    return () => window.clearInterval(interval);
+  }, [room, record]);
 }
 
 // The line of text at the bottom of the map: what the current tool does, or

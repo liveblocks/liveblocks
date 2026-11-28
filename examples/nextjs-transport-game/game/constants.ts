@@ -86,6 +86,11 @@ export const TOWN_MAX_STATIONS = 4;
 export const TOWN_RADIUS = 12;
 export const MAX_VEHICLES_PER_COMPANY = 30;
 
+// How every company is doing is written down this often, for the graphs in
+// the statistics window, and kept for this many times: an hour of play
+export const STATS_PERIOD_MS = 15_000;
+export const STATS_SAMPLES = 240;
+
 // Time a vehicle spends at a station between two legs
 export const LOAD_MS = 2500;
 // How often a vehicle without a valid route looks for one again

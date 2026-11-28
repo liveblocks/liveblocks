@@ -3,6 +3,7 @@ import type {
   CompanyData,
   IndustryState,
   StationData,
+  StatsSample,
   Tool,
   TownGrowth,
   VehicleData,
@@ -58,6 +59,9 @@ declare global {
       vehicles: LiveMap<string, LiveObject<VehicleData>>;
       // Company id → company. Companies appear here once someone picks them.
       companies: LiveMap<string, LiveObject<CompanyData>>;
+      // How every company was doing over time, for the statistics window.
+      // The key counts the periods since the map started.
+      stats: LiveMap<string, StatsSample>;
       // Tiles where a building was demolished → id of the company that did.
       // Towns don't build there again.
       demolished: LiveMap<string, string>;

@@ -25,6 +25,7 @@ export default function Page() {
         pausedFor: 0,
         towns: new LiveMap(),
         industries: new LiveMap(),
+        stats: new LiveMap(),
         roads: new LiveMap(),
         rails: new LiveMap(),
         canals: new LiveMap(),
