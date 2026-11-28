@@ -21,7 +21,12 @@ import {
   type PathPoint,
   vehiclePoint,
 } from "@/game/motion";
-import { lineBetween, type Network, straightLine } from "@/game/network";
+import {
+  lineBetween,
+  type Network,
+  railDragLine,
+  straightLine,
+} from "@/game/network";
 import {
   type Camera,
   type MapView,
@@ -512,11 +517,13 @@ export function MapCanvas(props: Props) {
     if (!isLineTool(tool)) {
       return;
     }
-    // A platform is straight
+    // A platform is straight, and a railway runs straight and diagonally
     const tiles =
       tool === "rail-station"
         ? straightLine(world.size, current.startTile, tile)
-        : lineBetween(world.size, current.startTile, tile, current.flipped);
+        : tool === "rail"
+          ? railDragLine(network, current.startTile, tile, current.flipped)
+          : lineBetween(world.size, current.startTile, tile, current.flipped);
     current.tiles = tiles;
     current.lastTile = tile;
 

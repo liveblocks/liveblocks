@@ -105,7 +105,7 @@ type ToolButton = {
 const signalTool = (kind: SignalKind, id: Tool): ToolButton => ({
   id,
   label: SIGNALS[kind].label,
-  detail: `${SIGNALS[kind].detail} · Click a piece of track, and again to turn the signal around · ${formatMoney(SIGNALS[kind].cost)}`,
+  detail: `${SIGNALS[kind].detail} · Click a piece of track, and again to ${kind === "block" ? "make it face one way, the other way, or both" : "turn the signal around"} · ${formatMoney(SIGNALS[kind].cost)}`,
   icon: ({ className }) => <SignalIcon className={className} kind={kind} />,
 });
 
@@ -146,7 +146,7 @@ export const MENUS: {
       {
         id: "rail",
         label: "Railway",
-        detail: `Drag to lay track. Tracks only join where you drag one into another · ${formatMoney(TRACK.rail.cost)} per tile`,
+        detail: `Drag to lay track, straight or diagonally. Tracks only join where you drag one into another · ${formatMoney(TRACK.rail.cost)} per tile`,
         icon: TrainTrack,
       },
       {

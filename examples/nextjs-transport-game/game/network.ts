@@ -131,8 +131,9 @@ export function buildNetwork(
   const signalMap = new Map<number, SignalData>();
   for (const [key, signal] of Object.entries(signals)) {
     // A signal only means something where its track still runs
-    if (links[Number(key)] & signal.side) {
-      signalMap.set(Number(key), signal);
+    const side = signal.side & links[Number(key)];
+    if (side) {
+      signalMap.set(Number(key), { ...signal, side });
     }
   }
 
@@ -251,7 +252,7 @@ export function canRun(network: Network, tile: number, side: number) {
     return false;
   }
   const signal = network.signals.get(neighbor(network.size, tile, side));
-  return !(signal?.kind === "oneway" && signal.side === opposite(side));
+  return !(signal?.kind === "oneway" && signal.side & opposite(side));
 }
 
 // The cheapest way for a train from a tile to one of the tiles where
@@ -259,7 +260,8 @@ export function canRun(network: Network, tile: number, side: number) {
 // turns around on the spot: one that is heading for `heading` (a side, or 0
 // for a train that can leave either way) doesn't set off the other way.
 // `isGoal` is given the side the train arrives from. Every tile costs 1,
-// plus whatever `extra` says: that keeps trains away from busy tracks.
+// or less where the train turns and cuts the corner on a diagonal, plus
+// whatever `extra` says: that keeps trains away from busy tracks.
 export function findRailPath(
   network: Network,
   from: number,
@@ -310,7 +312,8 @@ export function findRailPath(
         continue;
       }
       const other = neighbor(size, tile, side);
-      const next = cost.get(tile)! + 1 + (extra?.(other) ?? 0);
+      const length = arrived !== 0 && side !== arrived ? Math.SQRT1_2 : 1;
+      const next = cost.get(tile)! + length + (extra?.(other) ?? 0);
       if (!done.has(other) && next < (cost.get(other) ?? Infinity)) {
         cost.set(other, next);
         previous.set(other, tile);
@@ -349,8 +352,8 @@ export function blockFrom(network: Network, tile: number, side: number) {
         !(network.links[at] & out) ||
         seen.has(other) ||
         (at === tile && out === side) ||
-        signals.get(at)?.side === out ||
-        signals.get(other)?.side === opposite(out)
+        (signals.get(at)?.side ?? 0) & out ||
+        (signals.get(other)?.side ?? 0) & opposite(out)
       ) {
         continue;
       }
@@ -382,8 +385,75 @@ export function straightLine(size: number, from: number, to: number) {
   return tiles;
 }
 
+// The tiles of a line between two tiles that runs straight for one part
+// and diagonally for the other: what dragging a railway builds. A diagonal
+// is a staircase of tiles, one step along and one step across at a time,
+// and a train cuts the corner of every one of them. The straight part comes
+// first, or the diagonal one when the line is flipped.
+export function railLine(
+  size: number,
+  from: number,
+  to: number,
+  flipped = false
+) {
+  const dx = (to % size) - (from % size);
+  const dy = Math.floor(to / size) - Math.floor(from / size);
+  const wide = Math.abs(dx) >= Math.abs(dy);
+  const along = wide ? Math.sign(dx) : Math.sign(dy) * size;
+  const across = wide ? Math.sign(dy) * size : Math.sign(dx);
+  const stairs = Math.min(Math.abs(dx), Math.abs(dy));
+  const straight = Math.abs(Math.abs(dx) - Math.abs(dy));
+
+  const tiles = [from];
+  let tile = from;
+  const step = (by: number) => {
+    tile += by;
+    tiles.push(tile);
+  };
+  const run = () => {
+    for (let count = 0; count < straight; count++) {
+      step(along);
+    }
+  };
+  const climb = (first: number, second: number) => {
+    for (let count = 0; count < stairs; count++) {
+      step(first);
+      step(second);
+    }
+  };
+
+  if (flipped) {
+    climb(along, across);
+    run();
+  } else {
+    run();
+    climb(across, along);
+  }
+  return tiles;
+}
+
+// The line that dragging a railway from one tile to another builds. Of the
+// two ways to lay it, it is the one that runs over less of the track that
+// is already there: a second diagonal right next to another one then lies
+// beside it, not on top of it. `flipped` asks for the other one.
+export function railDragLine(
+  network: Network,
+  from: number,
+  to: number,
+  flipped = false
+) {
+  const lines = [false, true].map((each) =>
+    railLine(network.size, from, to, each)
+  );
+  const [straightFirst, diagonalFirst] = lines.map(
+    (tiles) => tiles.slice(1, -1).filter((tile) => network.rail[tile]).length
+  );
+  const best = diagonalFirst < straightFirst ? 1 : 0;
+  return lines[flipped ? 1 - best : best];
+}
+
 // The tiles of an L-shaped line between two tiles, used when dragging to
-// build. The longer side of the L comes first, or the shorter one when the
+// build a road or a canal. The longer side of the L comes first, or the shorter one when the
 // line is flipped, which puts its corner on the other side.
 export function lineBetween(
   size: number,

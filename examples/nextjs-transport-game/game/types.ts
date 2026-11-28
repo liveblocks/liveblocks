@@ -81,7 +81,8 @@ export type StationData = {
 
 // A signal beside a piece of railway. `side` is the side of its tile that
 // trains leave by when they pass it: one of the direction bits in
-// `network.ts`.
+// `network.ts`. A block signal can face both ways, with a light on each side
+// of the track: then `side` has the bits of both sides.
 export type SignalData = {
   owner: string;
   kind: SignalKind;

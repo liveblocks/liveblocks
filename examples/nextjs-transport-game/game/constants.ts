@@ -337,8 +337,9 @@ export const VEHICLE_LENGTH: Record<Transport, number> = {
   water: 0.74,
 };
 
-// Signals stand beside a piece of railway and face one way. A train going
-// that way stops at a signal until it lets the train through.
+// Signals stand beside a piece of railway and face one way, or both ways
+// for a block signal. A train going that way stops at a signal until it
+// lets the train through.
 export const SIGNALS: Record<
   SignalKind,
   { label: string; detail: string; cost: number }

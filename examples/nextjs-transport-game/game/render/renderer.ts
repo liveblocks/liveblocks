@@ -10,14 +10,17 @@ import {
 import { type Clock, gameTime } from "../clock";
 import { cargoBetween, catchmentOf, formatMoney, loadOf } from "../economy";
 import {
+  along,
   headDistance,
   isInside,
   modelOf,
   type PathPoint,
   pointOnPath,
+  vehiclePoint,
 } from "../motion";
 import {
   connectionsAt,
+  countSides,
   EAST,
   type Network,
   NORTH,
@@ -25,7 +28,7 @@ import {
   WEST,
 } from "../network";
 import { hashInt } from "../rng";
-import { greenSignals } from "../simulation";
+import { greenSignals, signalKey } from "../simulation";
 import { groupStations } from "../stations";
 import { townStats } from "../towns";
 import type {
@@ -212,6 +215,69 @@ function addTrackTile(path: Path2D, x: number, y: number, mask: number) {
   return arms.length === 1;
 }
 
+// The same for a railway tile. A railway has no curves: track runs straight
+// from one side of a tile to another, across it or diagonally across one of
+// its corners, and there is a piece for every two sides that are joined.
+function addRailTile(path: Path2D, x: number, y: number, mask: number) {
+  const cx = x + 0.5;
+  const cy = y + 0.5;
+  const ends = DIRECTIONS.filter((direction) => mask & direction).map(
+    (direction) => EDGE_OFFSETS[direction]
+  );
+
+  if (ends.length === 0) {
+    path.moveTo(cx - 0.25, cy);
+    path.lineTo(cx + 0.25, cy);
+    return;
+  }
+  if (ends.length === 1) {
+    path.moveTo(cx, cy);
+    path.lineTo(cx + ends[0][0], cy + ends[0][1]);
+    return;
+  }
+  for (let a = 0; a < ends.length; a++) {
+    for (let b = a + 1; b < ends.length; b++) {
+      path.moveTo(cx + ends[a][0], cy + ends[a][1]);
+      path.lineTo(cx + ends[b][0], cy + ends[b][1]);
+    }
+  }
+}
+
+// Where a signal is, and which way the trains that it is for are going. It
+// is on the piece of track that runs to its side of the tile, three
+// quarters of the way along: trains wait for it in the middle.
+function signalPlace(network: Network, tile: number, side: number) {
+  const { size } = network;
+  const [bx, by] = EDGE_OFFSETS[side];
+  const from = network.links[tile] & ~side;
+  const [ax, ay] = countSides(from) === 1 ? EDGE_OFFSETS[from] : [-bx, -by];
+  const length = Math.hypot(bx - ax, by - ay);
+  return {
+    x: (tile % size) + 0.5 + ax + (bx - ax) * 0.75,
+    y: Math.floor(tile / size) + 0.5 + ay + (by - ay) * 0.75,
+    dx: (bx - ax) / length,
+    dy: (by - ay) / length,
+  };
+}
+
+// An arrow painted on the track at a signal, pointing the way of the trains
+// that the signal is for
+function addSignalArrow(
+  path: Path2D,
+  x: number,
+  y: number,
+  dx: number,
+  dy: number
+) {
+  const point = (along: number, across: number) =>
+    [x + dx * along - dy * across, y + dy * along + dx * across] as const;
+  path.moveTo(...point(0.17, 0));
+  path.lineTo(...point(-0.14, 0.15));
+  path.lineTo(...point(-0.05, 0));
+  path.lineTo(...point(-0.14, -0.15));
+  path.closePath();
+}
+
 // A square piece of the ground, of `TERRAIN_CHUNK` tiles on each side
 type TerrainChunk = {
   // Every tile of the same color, as one shape
@@ -355,6 +421,7 @@ export class Renderer {
   private roadBridgePath = new Path2D();
   private railPath = new Path2D();
   private railBridgePath = new Path2D();
+  private signalArrowPath = new Path2D();
   private canalPath = new Path2D();
   private canalWallPath = new Path2D();
   private canalBankPath = new Path2D();
@@ -728,6 +795,7 @@ export class Renderer {
     this.roadBridgePath = new Path2D();
     this.railPath = new Path2D();
     this.railBridgePath = new Path2D();
+    this.signalArrowPath = new Path2D();
     this.canalPath = new Path2D();
     this.canalWallPath = new Path2D();
     this.canalBankPath = new Path2D();
@@ -786,9 +854,24 @@ export class Renderer {
       if (network.rail[tile]) {
         // Railways only join where they were built to
         const mask = network.arms[tile];
-        addTrackTile(this.railPath, x, y, mask);
+        addRailTile(this.railPath, x, y, mask);
         if (onWater) {
-          addTrackTile(this.railBridgePath, x, y, mask);
+          addRailTile(this.railBridgePath, x, y, mask);
+        }
+      }
+    }
+
+    for (const [tile, signal] of network.signals) {
+      for (const side of DIRECTIONS) {
+        if (signal.side & side) {
+          const place = signalPlace(network, tile, side);
+          addSignalArrow(
+            this.signalArrowPath,
+            place.x,
+            place.y,
+            place.dx,
+            place.dy
+          );
         }
       }
     }
@@ -865,6 +948,17 @@ export class Renderer {
     stroke(this.railPath, 0.19, "#aba28f");
     stroke(this.railPath, 0.19, "#5d4a38", [0.05, 0.075]);
     stroke(this.railPath, 0.25, "rgba(255, 255, 255, 0.18)", [0.02, 0.105]);
+
+    // The arrows at signals, painted over the track
+    ctx.save();
+    ctx.transform(HALF_W, HALF_H, -HALF_W, HALF_H, 0, 0);
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 0.05;
+    ctx.strokeStyle = ink("#2c2f34");
+    ctx.stroke(this.signalArrowPath);
+    ctx.fillStyle = ink("#ffe45c");
+    ctx.fill(this.signalArrowPath);
+    ctx.restore();
   }
 
   private drawStationPads(ctx: Ctx, scene: Scene) {
@@ -939,15 +1033,21 @@ export class Renderer {
 
     const green = greenSignals(scene.network, scene.vehicles.values(), now);
     for (const [tile, signal] of scene.network.signals) {
-      // Beside the track, on the right of a train that comes up to it
-      const [ex, ey] = EDGE_OFFSETS[signal.side];
-      const x = (tile % size) + 0.5 + ex * 0.5 - ey * 0.72;
-      const y = Math.floor(tile / size) + 0.5 + ey * 0.5 + ex * 0.72;
-      const lit = green.has(tile);
-      dynamics.push({
-        depth: x + y + 0.2,
-        draw: () => drawSignal(ctx, x, y, signal.kind, lit),
-      });
+      // A block signal that faces both ways has a light for each
+      for (const side of DIRECTIONS) {
+        if (!(signal.side & side)) {
+          continue;
+        }
+        // Beside the track, on the right of a train that comes up to it
+        const { dx, dy, ...place } = signalPlace(scene.network, tile, side);
+        const x = place.x - dy * SIGNAL_OFFSET;
+        const y = place.y + dx * SIGNAL_OFFSET;
+        const lit = green.has(signalKey(tile, side));
+        dynamics.push({
+          depth: x + y + 0.2,
+          draw: () => drawSignal(ctx, x, y, dx, dy, signal.kind, lit),
+        });
+      }
     }
 
     const isNarrow = (tile: number) =>
@@ -1011,12 +1111,12 @@ export class Renderer {
       }
 
       for (let car = 0; car <= vehicle.cars; car++) {
-        const distance = head - car * CAR_GAP;
+        const distance = along(vehicle, head, -car * CAR_GAP);
         // The carriages of a new train follow it out of its shed
         if (isInside(vehicle, distance)) {
           break;
         }
-        pointOnPath(vehicle.path, size, Math.max(0, distance), point);
+        pointOnPath(vehicle.path, size, Math.max(0, distance), point, true);
         let { x, y, dx, dy } = point;
         if (wreck) {
           // What is left of it lies across the track
@@ -1373,7 +1473,7 @@ export class Renderer {
       if (!stalled && !highlighted) {
         continue;
       }
-      pointOnPath(vehicle.path, size, headDistance(vehicle, time), point);
+      vehiclePoint(vehicle, size, time, point);
       const sx = screenX(worldX(point.x, point.y));
       const sy = screenY(worldY(point.x, point.y));
       if (highlighted) {
@@ -1644,45 +1744,148 @@ function drawDepot(
   }
 }
 
-// A signal: a traffic light on a pole. Path signals have a white board
-// behind the lights, and one-way ones a no-entry sign under them.
+// How far from the middle of its track a signal stands, in tiles
+const SIGNAL_OFFSET = 0.36;
+
+// How far up the screen is as long as one tile along the ground
+const TILE_RISE = Math.sqrt(2 * (HALF_W * HALF_W - HALF_H * HALF_H));
+
+// A signal: a traffic light on a pole, turned to face the trains that it is
+// for, which are going the way of (dx, dy). From the front it shows both of
+// its lights. From behind it shows its back, with a small light for what it
+// says. Path signals have a white board behind the lights, and one-way ones
+// a no-entry sign under them. All of it is drawn in perspective, as it
+// stands across the track.
 function drawSignal(
   ctx: Ctx,
   x: number,
   y: number,
+  dx: number,
+  dy: number,
   kind: SignalKind,
   green: boolean
 ) {
   const px = worldX(x, y);
   const py = worldY(x, y);
-  const lamp = (cy: number, color: string) => {
+  // How much of its front the camera sees: 1 for a signal that faces it,
+  // -1 for one that is seen from behind, 0 for one that is seen from the
+  // side
+  const facing = -(dx + dy) / Math.SQRT2;
+  const front = facing > 0.2;
+  const sideways = !front && facing > -0.2;
+
+  // Paints on an upright plane across the track, `at` tiles along it and
+  // `height` above the ground: (0, 0) is the middle of what is painted
+  const onFace = (at: number, height: number, paint: () => void) => {
+    ctx.save();
+    ctx.transform(
+      worldX(-dy, dx) / TILE_RISE,
+      worldY(-dy, dx) / TILE_RISE,
+      0,
+      1,
+      worldX(x + dx * at, y + dy * at),
+      worldY(x + dx * at, y + dy * at) - height
+    );
+    paint();
+    ctx.restore();
+  };
+  const disc = (radius: number, color: string) => {
     ctx.beginPath();
-    ctx.arc(px, cy, 1.55, 0, Math.PI * 2);
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
     ctx.fillStyle = ink(color);
     ctx.fill();
+  };
+  const post = () => {
+    ctx.fillStyle = ink("#4a4e55");
+    ctx.fillRect(px - 0.7, py - 14, 1.4, 14);
   };
 
   ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
   ctx.beginPath();
   ctx.ellipse(px, py, 3, 1.5, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = ink("#4a4e55");
-  ctx.fillRect(px - 0.7, py - 14, 1.4, 14);
-  if (kind !== "block") {
-    ctx.fillStyle = ink("#f4f4f5");
-    ctx.fillRect(px - 3.9, py - 24.4, 7.8, 11.8);
+  if (kind !== "oneway") {
+    post();
+  } else if (front) {
+    post();
+    onFace(-0.02, 9.2, () => {
+      disc(2.8, "#d92d20");
+      ctx.fillStyle = ink("#ffffff");
+      ctx.fillRect(-1.9, -0.65, 3.8, 1.3);
+    });
+  } else if (sideways) {
+    post();
+    orientedBox(
+      ctx,
+      x - dx * 0.025,
+      y - dy * 0.025,
+      dx,
+      dy,
+      0.02,
+      0.14,
+      6.4,
+      12,
+      "#d92d20"
+    );
+  } else {
+    onFace(-0.02, 9.2, () => disc(2.8, "#8d9299"));
+    post();
   }
-  ctx.fillStyle = ink("#17181b");
-  ctx.fillRect(px - 2.7, py - 23.2, 5.4, 9.4);
-  lamp(py - 20.7, green ? "#4d1a17" : "#ff3b30");
-  lamp(py - 16.3, green ? "#46f06f" : "#173f20");
-  if (kind === "oneway") {
-    ctx.beginPath();
-    ctx.arc(px, py - 9.2, 2.6, 0, Math.PI * 2);
-    ctx.fillStyle = ink("#d92d20");
-    ctx.fill();
-    ctx.fillStyle = ink("#ffffff");
-    ctx.fillRect(px - 1.7, py - 9.8, 3.4, 1.2);
+
+  const head = () =>
+    orientedBox(ctx, x, y, dx, dy, 0.07, 0.2, 13.5, 23.5, "#24262b");
+  const board = () =>
+    orientedBox(
+      ctx,
+      x + dx * 0.05,
+      y + dy * 0.05,
+      dx,
+      dy,
+      0.03,
+      0.3,
+      12,
+      25,
+      "#f4f4f5"
+    );
+  if (kind === "block") {
+    head();
+  } else if (facing > 0) {
+    board();
+    head();
+  } else {
+    head();
+    board();
+  }
+
+  const red = green ? "#4d1a17" : "#ff3b30";
+  const go = green ? "#46f06f" : "#173f20";
+  if (front) {
+    onFace(-0.035, 20.9, () => disc(1.75, red));
+    onFace(-0.035, 16.4, () => disc(1.75, go));
+  } else if (sideways) {
+    // Seen from the side, the lights stick out toward the trains
+    for (const [height, color] of [
+      [16.4, go],
+      [20.9, red],
+    ] as const) {
+      orientedBox(
+        ctx,
+        x - dx * 0.06,
+        y - dy * 0.06,
+        dx,
+        dy,
+        0.05,
+        0.08,
+        height - 1.4,
+        height + 1.4,
+        color
+      );
+    }
+  } else {
+    const back = kind === "block" ? 0.035 : 0.065;
+    const height = green ? 16.4 : 20.9;
+    onFace(back, height, () => disc(1.9, "#17181b"));
+    onFace(back, height, () => disc(1.1, green ? "#46f06f" : "#ff3b30"));
   }
 }
 

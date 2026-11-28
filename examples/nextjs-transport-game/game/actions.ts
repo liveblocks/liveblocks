@@ -789,12 +789,16 @@ export function buildSignal(
   }
 
   const signals = root.get("signals");
-  const sides = SIDES.filter((side) => view.links(tile) & side);
+  const [first, second] = SIDES.filter((side) => view.links(tile) & side);
   const existing = signals.get(key);
   if (existing?.kind === kind) {
+    // Clicking a signal again changes which way it faces: the one way, the
+    // other and, for a block signal, both
+    const ways =
+      kind === "block" ? [first | second, first, second] : [first, second];
     signals.set(key, {
       ...existing,
-      side: sides.find((side) => side !== existing.side) ?? sides[0],
+      side: ways[(ways.indexOf(existing.side) + 1) % ways.length],
     });
     return { ok: true, cost: 0 };
   }
@@ -803,10 +807,18 @@ export function buildSignal(
   if (cost > liveBalance(root, companyId)) {
     return fail("Not enough money");
   }
+  // Another kind of signal takes the place of the one that is there, and
+  // faces the way that one did. A new block signal faces both ways.
+  const faced = existing ? existing.side & (first | second) : 0;
   signals.set(key, {
     owner: companyId,
     kind,
-    side: existing && sides.includes(existing.side) ? existing.side : sides[0],
+    side:
+      faced === first || faced === second
+        ? faced
+        : kind === "block" && !existing
+          ? first | second
+          : first,
   });
   spend(root, companyId, cost);
   return { ok: true, cost };

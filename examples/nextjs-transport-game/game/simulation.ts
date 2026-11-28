@@ -20,6 +20,7 @@ import {
   waitingAt,
 } from "./economy";
 import {
+  along,
   capacityOf,
   headDistance,
   modelOf,
@@ -39,6 +40,7 @@ import {
   NORTH,
   opposite,
   sideIndex,
+  SIDES,
   sideToward,
 } from "./network";
 import {
@@ -117,7 +119,7 @@ function nextSignal(network: Network, path: readonly number[], index: number) {
   const last = path.length - 1;
   for (let at = Math.max(0, index); at < last; at++) {
     if (
-      network.signals.get(path[at])?.side ===
+      (network.signals.get(path[at])?.side ?? 0) &
       sideToward(network.size, path[at], path[at + 1])
     ) {
       return at;
@@ -612,12 +614,17 @@ export function advance(
     if (onward && (!back || onward.length <= back.length)) {
       return { path: [...body, ...onward.slice(1)], from: head - tail };
     }
-    return back
-      ? {
-          path: [...body.reverse(), ...back.slice(1)],
-          from: Math.min(vehicle.cars * CAR_GAP, head - tail),
-        }
-      : null;
+    if (!back) {
+      return null;
+    }
+    const reversed = [...body.reverse(), ...back.slice(1)];
+    return {
+      path: reversed,
+      from: Math.min(
+        along({ kind: "rail", path: reversed }, 0, vehicle.cars * CAR_GAP),
+        head - tail
+      ),
+    };
   };
 
   // Loads every kind of cargo that the destination accepts. A station can
@@ -874,9 +881,15 @@ export function isHeldUp(vehicle: Vehicle, time: number) {
   );
 }
 
-// The tiles whose signal shows green at a given time. A block signal is
-// green while there is no train in the block behind it. A path signal only
-// turns green for a train that it has let through.
+// What stands for the signal on a tile that faces the trains leaving by
+// one of its sides, in the set that `greenSignals` returns
+export function signalKey(tile: number, side: number) {
+  return tile * 16 + side;
+}
+
+// The signals that show green at a given time. A block signal is green
+// while there is no train in the block behind it. A path signal only turns
+// green for a train that it has let through.
 export function greenSignals(
   network: Network,
   vehicles: Iterable<Vehicle>,
@@ -904,29 +917,28 @@ export function greenSignals(
         taken.add(path[index]);
       }
       // A signal that the front of the train has yet to pass
-      if (
-        index >= under.last &&
-        index < last &&
-        signals.get(path[index])?.side ===
-          sideToward(size, path[index], path[index + 1])
-      ) {
-        green.add(path[index]);
+      const out =
+        index >= under.last && index < last
+          ? sideToward(size, path[index], path[index + 1])
+          : 0;
+      if ((signals.get(path[index])?.side ?? 0) & out) {
+        green.add(signalKey(path[index], out));
       }
     }
   }
 
   for (const [tile, signal] of signals) {
-    if (signal.kind !== "block" || green.has(tile)) {
-      continue;
-    }
-    const behind = neighbor(size, tile, signal.side);
-    if (
-      behind >= 0 &&
-      blockFrom(network, behind, opposite(signal.side)).every(
-        (each) => !taken.has(each)
-      )
-    ) {
-      green.add(tile);
+    for (const side of signal.kind === "block" ? SIDES : []) {
+      const behind = neighbor(size, tile, side);
+      if (
+        signal.side & side &&
+        behind >= 0 &&
+        blockFrom(network, behind, opposite(side)).every(
+          (each) => !taken.has(each)
+        )
+      ) {
+        green.add(signalKey(tile, side));
+      }
     }
   }
   return green;

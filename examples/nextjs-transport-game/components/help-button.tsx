@@ -19,7 +19,7 @@ const FEATURES: Feature[] = [
     icon: <RouteIcon />,
     title: "Build a network",
     description:
-      "The Build window has a menu for railways, one for roads and one for waterways, and each stays open until you close it. Drag across the map to lay track, then place stations next to towns and industries. Drag a train station for a platform as long as your trains, and drag along it again to make it longer. Docks go on the water by the shore, and ships need no track at all: dig a canal to bring them inland.",
+      "The Build window has a menu for railways, one for roads and one for waterways, and each stays open until you close it. Drag across the map to lay track, then place stations next to towns and industries. Railways can run diagonally too: drag at an angle. Drag a train station for a platform as long as your trains, and drag along it again to make it longer. Docks go on the water by the shore, and ships need no track at all: dig a canal to bring them inland.",
   },
   {
     icon: <TruckIcon />,
@@ -31,7 +31,7 @@ const FEATURES: Feature[] = [
     icon: <SignalIcon />,
     title: "Keep them apart",
     description:
-      "Vehicles can't drive through each other. Buses and trucks queue, and a canal has room for one ship at a time. Trains that meet on the same track crash, and both are lost: lay two tracks, one for each way, and put signals beside them. A block signal lets a train through when the track behind it is empty, a path signal when the train's own way to the next signal is free, and a one-way path signal can't be passed from behind. Only the carriages that fit beside a platform load and unload.",
+      "Vehicles can't drive through each other. Buses and trucks queue, and a canal has room for one ship at a time. Trains that meet on the same track crash, and both are lost: lay two tracks, one for each way, and put signals beside them. A block signal lets a train through when the track behind it is empty, a path signal when the train's own way to the next signal is free, and a one-way path signal can't be passed from behind. The arrow painted on the track at a signal shows which trains it is for. Click a signal again to turn it around; a block signal can also face both ways. Only the carriages that fit beside a platform load and unload.",
   },
   {
     icon: <UsersIcon />,

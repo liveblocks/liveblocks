@@ -1417,7 +1417,7 @@ function describe({
       return `${label} · Drag across land to dig a waterway for ships · Hold ${flipKey} to flip the corner · ${formatMoney(cost)} per tile`;
     }
     return tool === "rail"
-      ? `${label} · Drag across the map to build · Tracks only join where you drag one into another, so two can run side by side · Hold ${flipKey} to flip the corner · ${formatMoney(cost)} per tile`
+      ? `${label} · Drag across the map to build, straight or diagonally · Tracks only join where you drag one into another, so two can run side by side · Hold ${flipKey} to lay it the other way around · ${formatMoney(cost)} per tile`
       : `${label} · Drag across the map to build · Hold ${flipKey} to flip the corner · ${formatMoney(cost)} per tile`;
   }
 
@@ -1521,14 +1521,16 @@ function describe({
       return problem;
     }
     if (existing?.kind === signalKind) {
-      return `${label} · Click to turn it around: trains stop at it from the other side`;
+      return signalKind === "block"
+        ? `${label} · Click to change which way it faces: both ways, one way, the other · The arrows on the track show which trains stop at it`
+        : `${label} · Click to turn it around · The arrow on the track shows which trains stop at it`;
     }
     if (cost > balance) {
       return "Not enough money";
     }
     return existing
       ? `${label} · Click to replace the ${SIGNALS[existing.kind].label.toLowerCase()} here · ${formatMoney(cost)}`
-      : `${label} · ${formatMoney(cost)} · Trains stop in front of it until it lets them through · Click it again to turn it around`;
+      : `${label} · ${formatMoney(cost)} · Trains stop in front of it until it lets them through · ${signalKind === "block" ? "It faces both ways: click it again for one way only" : "Click it again to turn it around"}`;
   }
 
   if (order) {
