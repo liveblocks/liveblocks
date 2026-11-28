@@ -25,7 +25,7 @@ const FEATURES: Feature[] = [
     icon: <TruckIcon />,
     title: "Run vehicles",
     description:
-      "With the vehicle tool, click two of your stations to buy a bus, truck, train or ship that carries passengers and cargo between them. A station takes everything around it, so one vehicle can carry passengers and freight together. Click an industry, or open the Cargo window, to see what needs to go where. Click a vehicle to watch it, follow it or sell it.",
+      "With the vehicle tool, click two of your stations to buy a bus, truck, train or ship that carries passengers and cargo between them. A station takes everything around it, so one vehicle can carry passengers and freight together. Click an industry, or open the Cargo window, to see what needs to go where. Click a vehicle to watch it, follow it or sell it. Press X to see through buildings when a station is hard to find.",
   },
   {
     icon: <UsersIcon />,
@@ -37,7 +37,7 @@ const FEATURES: Feature[] = [
     icon: <GlobeIcon />,
     title: "Shared world",
     description:
-      "Tracks are shared, so you can connect to another company's network. Towns grow along a grid of streets, from cottages to skyscrapers, but only while vehicles call at their stations, and industries make more once enough of their output is carried away. The Stats window has graphs of how every company is doing, and the Theme window changes the look of the map, for you alone. Your company window starts a new map, in three sizes.",
+      "Tracks are shared, so you can connect to another company's network. Towns grow along a grid of streets, from cottages to skyscrapers, but only while vehicles call at their stations, and industries make more once enough of their output is carried away. The game can be paused or fast-forwarded, for everyone at once. The Stats window has graphs of how every company is doing, and the Theme window changes the look of the map and of the windows, for you alone. Your company window starts a new map: a mainland or an island, in the snow, the desert or the jungle.",
   },
 ];
 
