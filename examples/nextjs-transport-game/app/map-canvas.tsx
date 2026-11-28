@@ -6,14 +6,22 @@ import { PointerEvent, type RefObject, useEffect, useRef } from "react";
 import {
   clearingCost,
   snapshotView,
+  stationPlan,
+  stationProblem,
   trackPlan,
   trackProblem,
 } from "@/game/actions";
 import { type Clock, gameTime } from "@/game/clock";
 import { applyTheme, type Theme } from "@/game/render/theme";
 import { COMPANIES, TILE_H, TILE_W } from "@/game/constants";
-import { distanceToVehicle, type PathPoint, vehiclePoint } from "@/game/motion";
-import { lineBetween, type Network } from "@/game/network";
+import {
+  distanceToVehicle,
+  headDistance,
+  isInside,
+  type PathPoint,
+  vehiclePoint,
+} from "@/game/motion";
+import { lineBetween, type Network, straightLine } from "@/game/network";
 import {
   type Camera,
   type MapView,
@@ -31,7 +39,9 @@ import type {
 } from "@/game/types";
 import { nearestTown, type World } from "@/game/world";
 
-export type LineTool = LineKind | "bulldoze";
+// The tools that are dragged across the map. A train station is one too:
+// its platform is as long as the line that was dragged.
+export type LineTool = LineKind | "rail-station" | "bulldoze";
 
 // A spot the map should move to, in tile coordinates. Every new object moves
 // the map again, even to the same spot.
@@ -54,7 +64,11 @@ type Props = {
   balance: number;
   tool: Tool;
   routeFrom: number | null;
+  // Whether the stations of a vehicle that is being bought are being
+  // picked: clicks are for stations only
+  picking: boolean;
   selectedStation: number | null;
+  selectedDepot: number | null;
   highlightedVehicle: string | null;
   // The vehicle that the map keeps in the middle of the screen, if any
   follow: string | null;
@@ -119,6 +133,7 @@ function isLineTool(tool: Tool): tool is LineTool {
     tool === "road" ||
     tool === "rail" ||
     tool === "canal" ||
+    tool === "rail-station" ||
     tool === "bulldoze"
   );
 }
@@ -154,6 +169,7 @@ export function MapCanvas(props: Props) {
     preview: null,
     routeFrom: props.routeFrom,
     selectedStation: props.selectedStation,
+    selectedDepot: props.selectedDepot,
     highlightedVehicle: props.highlightedVehicle,
     cursors: [],
     clock: props.clock,
@@ -171,6 +187,7 @@ export function MapCanvas(props: Props) {
       tool: props.tool,
       routeFrom: props.routeFrom,
       selectedStation: props.selectedStation,
+      selectedDepot: props.selectedDepot,
       highlightedVehicle: props.highlightedVehicle,
       clock: props.clock,
       xray: props.xray,
@@ -418,7 +435,7 @@ export function MapCanvas(props: Props) {
   // Town names can be clicked, but only with the select tool: with any other
   // tool, a click builds on the tile under the name
   const townAt = (event: PointerEvent<HTMLCanvasElement>) => {
-    if (latest.current.tool !== "select") {
+    if (latest.current.tool !== "select" || latest.current.picking) {
       return null;
     }
     const rect = event.currentTarget.getBoundingClientRect();
@@ -448,7 +465,8 @@ export function MapCanvas(props: Props) {
   };
 
   // The vehicle under a point of the map, if one is on its way there. One
-  // that is loading at a station leaves the click to the station.
+  // that is at a station leaves the click to the station, and one that is
+  // still inside its depot to the depot.
   const vehicleAt = (point: { x: number; y: number }) => {
     const { size } = latest.current.world;
     const time = gameTime(scene.current.clock, Date.now());
@@ -464,7 +482,10 @@ export function MapCanvas(props: Props) {
         (camera.current.zoom * Math.hypot(TILE_W, TILE_H) * 0.5)
     );
     for (const [id, vehicle] of scene.current.vehicles) {
-      if (vehicle.path.length < 2 || vehicle.departAt > time) {
+      if (
+        vehicle.status === "dock" ||
+        isInside(vehicle, headDistance(vehicle, time))
+      ) {
         continue;
       }
       const distance = distanceToVehicle(vehicle, size, time, x, y, at);
@@ -486,21 +507,42 @@ export function MapCanvas(props: Props) {
   // Only reads what is kept up to date in refs, so it can also be called
   // from the keyboard listeners above
   const updateLine = (current: Drag, tile: number) => {
-    const { world, tool, network, stations, balance, onDragPlan } =
+    const { world, tool, network, stations, myCompany, balance, onDragPlan } =
       latest.current;
     if (!isLineTool(tool)) {
       return;
     }
-    const tiles = lineBetween(
-      world.size,
-      current.startTile,
-      tile,
-      current.flipped
-    );
+    // A platform is straight
+    const tiles =
+      tool === "rail-station"
+        ? straightLine(world.size, current.startTile, tile)
+        : lineBetween(world.size, current.startTile, tile, current.flipped);
     current.tiles = tiles;
     current.lastTile = tile;
 
     const view = snapshotView(network, stations);
+    if (tool === "rail-station") {
+      const plan = stationPlan(world, view, "rail", tiles, myCompany);
+      const tooExpensive = plan.cost > balance;
+      const bad = new Set(
+        plan.build.filter(
+          (each) => tooExpensive || stationProblem(world, view, "rail", each)
+        )
+      );
+      // Without anything wrong with one tile, it is the line as a whole
+      // that can't be a platform
+      scene.current.preview = {
+        tiles,
+        bad: plan.problem && bad.size === 0 ? new Set(tiles) : bad,
+        tone: "build",
+      };
+      onDragPlan({
+        tiles: plan.build.length,
+        cost: plan.cost,
+        problem: plan.problem ?? (tooExpensive ? "Not enough money" : null),
+      });
+      return;
+    }
     if (tool === "bulldoze") {
       const cost = clearingCost(world, view, tiles);
       scene.current.preview = { tiles, bad: NO_TILES, tone: "remove" };
@@ -643,7 +685,8 @@ export function MapCanvas(props: Props) {
       const town = townAt(event);
       const point = pointAt(event);
       const tile = tileOf(point);
-      const vehicle = tool === "select" ? vehicleAt(point) : null;
+      const vehicle =
+        tool === "select" && !latest.current.picking ? vehicleAt(point) : null;
       if (town !== null) {
         onTownClick(town);
       } else if (vehicle !== null) {

@@ -15,17 +15,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Window } from "@/components/window";
-import { gameTime } from "@/game/clock";
-import { CARGO, MAX_VEHICLES_PER_COMPANY, TRANSPORT } from "@/game/constants";
-import {
-  cargoBetween,
-  companyBalance,
-  formatMoney,
-  loadOf,
-} from "@/game/economy";
-import type { CompanyData, StationData, Vehicle } from "@/game/types";
+import { CARGO, MAX_VEHICLES_PER_COMPANY } from "@/game/constants";
+import { companyBalance, formatMoney, loadOf } from "@/game/economy";
+import { modelOf, priceOf } from "@/game/motion";
+import type { Stations } from "@/game/stations";
+import type { CompanyData, Vehicle } from "@/game/types";
 import type { World } from "@/game/world";
-import { useClock } from "@/hooks/use-now";
+import { useNow } from "@/hooks/use-now";
+import { vehicleName, vehicleState } from "./vehicle-window";
 
 // The league table: every company that has been started, richest first
 export function CompaniesWindow({
@@ -113,7 +110,7 @@ export function VehiclesWindow({
 }: {
   world: World;
   myCompany: string;
-  stations: ReadonlyMap<string, StationData>;
+  stations: Stations;
   vehicles: ReadonlyMap<string, Vehicle>;
   onHighlight: (vehicleId: string | null) => void;
   // Opens the vehicle's own window
@@ -142,7 +139,11 @@ export function VehiclesWindow({
             Connect them with a road or a railway. Docks only need open water
             between them.
           </li>
-          <li>Pick the vehicle tool and click both stations.</li>
+          <li>
+            Build a garage, an engine shed or a shipyard next to that road,
+            railway or water.
+          </li>
+          <li>Click it, choose a vehicle, and then click both stations.</li>
         </ol>
       ) : (
         <ul
@@ -178,39 +179,38 @@ function VehicleRow({
 }: {
   world: World;
   vehicle: Vehicle;
-  stations: ReadonlyMap<string, StationData>;
+  stations: Stations;
   onHighlight: () => void;
   onSelect: () => void;
   onClone: () => void;
   onSell: () => void;
 }) {
-  const clock = useClock();
+  const now = useNow();
   const [from, to] = vehicle.stops;
-  const passengers =
-    cargoBetween(world, Number(from), Number(to)).includes("passengers") ||
-    cargoBetween(world, Number(to), Number(from)).includes("passengers");
-  let Icon = passengers ? Bus : Truck;
+  let Icon = vehicleName(world, vehicle, stations) === "Bus" ? Bus : Truck;
   if (vehicle.kind === "rail") {
     Icon = TrainFront;
   } else if (vehicle.kind === "water") {
     Icon = Ship;
   }
-  // Without a path, `departAt` is when the vehicle next looks for a route
-  const stalled =
-    vehicle.path.length < 2 && vehicle.departAt > gameTime(clock, Date.now());
+  const model = modelOf(vehicle);
+  const price = priceOf(model, vehicle.cars);
+  const wrecked = vehicle.status === "wreck";
+  const state = vehicleState(vehicle, now, "its next station");
+  const stalled = state.bad;
   const onBoard = loadOf(vehicle);
 
-  let status = "Heading out empty";
-  if (stalled) {
-    status = "Can't find a way to its next station";
-  } else if (onBoard.length > 0) {
+  // What it is waiting for says more than what it is carrying
+  let status = state.text;
+  if (status.startsWith("Heading") && onBoard.length > 0) {
     status = `Carrying ${onBoard
       .map(
         ({ cargo, amount }) => `${amount} ${CARGO[cargo].label.toLowerCase()}`
       )
       .join(" and ")}`;
-  } else if (vehicle.trips === 0) {
-    status = "Getting ready";
+  } else if (status.startsWith("Heading")) {
+    status =
+      vehicle.leg < 0 ? "Heading to its first station" : "Heading out empty";
   }
 
   return (
@@ -231,9 +231,12 @@ function VehicleRow({
         )}
         <span className="min-w-0 flex-1">
           <span className="block truncate font-bold">
-            {stations.get(from)?.name ?? "?"} → {stations.get(to)?.name ?? "?"}
+            {stations.at(from)?.name ?? "?"} → {stations.at(to)?.name ?? "?"}
           </span>
-          <span className="block truncate opacity-75">{status}</span>
+          <span className="block truncate opacity-75">
+            {model.name}
+            {vehicle.kind === "rail" ? ` + ${vehicle.cars}` : ""} · {status}
+          </span>
         </span>
       </button>
       <span
@@ -244,7 +247,9 @@ function VehicleRow({
         {vehicle.earned > 0 ? "+" : ""}
         {formatMoney(vehicle.earned)}
       </span>
-      <span className="hidden shrink-0 gap-px text-ui-text group-hover:flex">
+      <span
+        className={`hidden shrink-0 gap-px text-ui-text ${wrecked ? "" : "group-hover:flex"}`}
+      >
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -257,7 +262,7 @@ function VehicleRow({
             </button>
           </TooltipTrigger>
           <TooltipContent sideOffset={4}>
-            Buy another one · {formatMoney(TRANSPORT[vehicle.kind].vehicleCost)}
+            Buy another one · {formatMoney(price)}
           </TooltipContent>
         </Tooltip>
         <Tooltip>
@@ -272,7 +277,7 @@ function VehicleRow({
             </button>
           </TooltipTrigger>
           <TooltipContent sideOffset={4}>
-            Sell · {formatMoney(TRANSPORT[vehicle.kind].vehicleCost / 2)} back
+            Sell · {formatMoney(Math.round(price / 2))} back
           </TooltipContent>
         </Tooltip>
       </span>

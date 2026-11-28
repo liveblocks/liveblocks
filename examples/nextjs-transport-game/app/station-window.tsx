@@ -3,56 +3,65 @@
 import { Window } from "@/components/window";
 import { CARGO, TRANSPORT } from "@/game/constants";
 import { getStationInfo, industryState, waitingAt } from "@/game/economy";
-import type {
-  CompanyData,
-  IndustryState,
-  StationData,
-  Vehicle,
-} from "@/game/types";
+import { type Network, SIDES } from "@/game/network";
+import {
+  carriagesAt,
+  platformLength,
+  type Station,
+  type Stations,
+} from "@/game/stations";
+import type { CompanyData, IndustryState, Vehicle } from "@/game/types";
 import { INDUSTRY, type World } from "@/game/world";
 import { useNow } from "@/hooks/use-now";
 
 type Props = {
   world: World;
-  tile: number;
-  station: StationData;
+  network: Network;
+  // All the tiles of the station count as one
+  station: Station;
+  stations: Stations;
   owner: CompanyData | undefined;
   vehicles: ReadonlyMap<string, Vehicle>;
   industries: ReadonlyMap<string, IndustryState>;
   // When the map started, on the game clock
   startedAt: number;
-  mine: boolean;
-  onStartRoute: () => void;
   onClose: () => void;
 };
 
 export function StationWindow({
   world,
-  tile,
+  network,
   station,
+  stations,
   owner,
   vehicles,
   industries,
   startedAt,
-  mine,
-  onStartRoute,
   onClose,
 }: Props) {
   // Waiting cargo isn't stored as a number that ticks up: it is computed
   // from when a vehicle last loaded some
   const now = useNow();
 
-  const info = getStationInfo(world, tile);
+  const info = getStationInfo(world, station.tiles);
   const waiting = waitingAt(
     world,
-    tile,
+    station.tiles,
     station,
     (industry) => industryState(industries.get(String(industry.id)), startedAt),
     now
   );
-  const serving = [...vehicles.values()].filter((vehicle) =>
-    vehicle.stops.includes(String(tile))
+  const serving = [...vehicles.values()].filter(
+    (vehicle) =>
+      vehicle.status !== "wreck" &&
+      vehicle.stops.some((stop) => stations.at(stop)?.id === station.id)
   ).length;
+  // A station can have several platforms side by side
+  const length = Math.max(
+    ...station.tiles.flatMap((tile) =>
+      SIDES.map((side) => platformLength(network, station, tile, side))
+    )
+  );
 
   return (
     <Window title={station.name} className="w-64" onClose={onClose}>
@@ -66,6 +75,14 @@ export function StationWindow({
             {owner?.name ?? "Unknown"} · {TRANSPORT[station.kind].stationLabel}
           </span>
         </p>
+        {station.kind === "rail" ? (
+          <p className="text-ui-muted">
+            Its {station.tiles.length > length ? "longest " : ""}platform is{" "}
+            {length} {length === 1 ? "tile" : "tiles"} long: enough for{" "}
+            {carriagesAt(length)} carriages to load and unload. Drag the station
+            tool along it to make it longer.
+          </p>
+        ) : null}
 
         <div>
           <h3 className="mb-0.5 font-bold">Waiting here</h3>
@@ -116,16 +133,6 @@ export function StationWindow({
             ? "No vehicle stops here yet"
             : `${serving} ${serving === 1 ? "vehicle stops" : "vehicles stop"} here`}
         </p>
-
-        {mine ? (
-          <button
-            type="button"
-            className="win-button self-end"
-            onClick={onStartRoute}
-          >
-            New vehicle from here
-          </button>
-        ) : null}
       </div>
     </Window>
   );

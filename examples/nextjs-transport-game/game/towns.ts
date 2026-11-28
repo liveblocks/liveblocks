@@ -10,6 +10,7 @@ import {
 } from "./constants";
 import { peopleIn } from "./economy";
 import { createRng, hashInt } from "./rng";
+import type { Stations } from "./stations";
 import type { TownGrowth, Vehicle } from "./types";
 import {
   buildingTiles,
@@ -577,16 +578,21 @@ export function stationTown(world: World, tile: number) {
   return near ? town.id : null;
 }
 
-// The tiles of the stations that vehicles are running to. A vehicle that
-// can't find a way to its next station isn't transporting anything.
+// The stations that vehicles are running to, as the tile each one goes by.
+// A vehicle that can't find a way to its next station isn't transporting
+// anything.
 export function servedStations(
-  vehicles: Iterable<Pick<Vehicle, "stops" | "path">>
+  vehicles: Iterable<Pick<Vehicle, "stops" | "status">>,
+  stations: Stations
 ) {
   const served = new Set<number>();
   for (const vehicle of vehicles) {
-    if (vehicle.path.length >= 2) {
+    if (vehicle.status === "run" || vehicle.status === "dock") {
       for (const stop of vehicle.stops) {
-        served.add(Number(stop));
+        const station = stations.at(stop);
+        if (station) {
+          served.add(station.tile);
+        }
       }
     }
   }

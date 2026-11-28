@@ -1,10 +1,13 @@
 import {
-  TRAIN_LENGTH,
-  TRAIN_WAGON_GAP,
-  TRAIN_WAGONS,
-  TRANSPORT,
+  CAR_COST,
+  CAR_GAP,
+  CAR_RUNNING_COST,
+  DEFAULT_MODEL,
+  type Model,
+  MODELS,
+  VEHICLE_LENGTH,
 } from "./constants";
-import type { Vehicle } from "./types";
+import type { Transport, Vehicle } from "./types";
 
 export type PathPoint = {
   // Position in tile coordinates
@@ -15,32 +18,82 @@ export type PathPoint = {
   dy: number;
 };
 
-export function travelMs(vehicle: Pick<Vehicle, "kind" | "path">) {
-  return ((vehicle.path.length - 1) / TRANSPORT[vehicle.kind].speed) * 1000;
+type Moving = Pick<
+  Vehicle,
+  "kind" | "model" | "path" | "status" | "from" | "departAt" | "limit"
+>;
+
+export function modelOf(vehicle: { kind: Transport; model: string }): Model {
+  return (
+    MODELS.find((model) => model.id === vehicle.model) ??
+    MODELS.find((model) => model.id === DEFAULT_MODEL[vehicle.kind])!
+  );
 }
 
-// When the vehicle next needs attention: either it reaches the end of its
-// current leg, or (without a route) it is time to look for one again.
-export function dueAt(vehicle: Pick<Vehicle, "kind" | "path" | "departAt">) {
-  return vehicle.path.length >= 2
-    ? vehicle.departAt + travelMs(vehicle)
-    : vehicle.departAt;
+// What a vehicle of this model costs to buy, carries, and costs to run per
+// tile. For a train that depends on how many carriages it has.
+export function priceOf(model: Model, cars: number) {
+  return model.kind === "rail" ? model.cost + cars * CAR_COST : model.cost;
+}
+export function capacityOf(model: Model, cars: number) {
+  return model.kind === "rail" ? model.capacity * cars : model.capacity;
+}
+export function runningCostOf(model: Model, cars: number) {
+  return model.kind === "rail"
+    ? model.runningCost + cars * CAR_RUNNING_COST
+    : model.runningCost;
 }
 
-// How far along its path the front of a vehicle is at a given time, in tiles.
-// Trains start a leg with their whole length already on the path, so that the
-// wagons trail behind the locomotive inside the station they are leaving.
-export function headDistance(
-  vehicle: Pick<Vehicle, "kind" | "path" | "departAt">,
+// How far along its path the front of a vehicle is at a given time, in
+// tiles. It set off from `from` at `departAt`, and stops at `limit` until
+// it is given more.
+export function headDistance(vehicle: Moving, time: number) {
+  if (vehicle.status !== "run") {
+    return vehicle.limit;
+  }
+  const elapsed = Math.max(0, time - vehicle.departAt) / 1000;
+  return Math.min(
+    vehicle.limit,
+    vehicle.from + elapsed * modelOf(vehicle).speed
+  );
+}
+
+// When a vehicle gets to `distance` along its path, if nothing stops it
+export function timeAt(vehicle: Moving, distance: number) {
+  return (
+    vehicle.departAt +
+    (Math.max(0, distance - vehicle.from) / modelOf(vehicle).speed) * 1000
+  );
+}
+
+// How far a vehicle reaches in front of and behind the point it is at. The
+// carriages of a train trail behind its engine.
+export function reachOf(vehicle: Pick<Vehicle, "kind" | "cars">) {
+  const half = VEHICLE_LENGTH[vehicle.kind] / 2;
+  return {
+    front: half,
+    back: vehicle.kind === "rail" ? vehicle.cars * CAR_GAP + half : half,
+  };
+}
+
+// The first and the last tile of its path that a vehicle is on, as indexes
+// into `path`
+export function tilesUnder(
+  vehicle: Moving & Pick<Vehicle, "cars">,
   time: number
 ) {
-  const length = vehicle.path.length - 1;
-  if (length <= 0) {
-    return 0;
-  }
-  const lead = vehicle.kind === "rail" ? Math.min(TRAIN_LENGTH, length) : 0;
-  const elapsed = Math.max(0, time - vehicle.departAt) / 1000;
-  return Math.min(length, lead + elapsed * TRANSPORT[vehicle.kind].speed);
+  const { front, back } = reachOf(vehicle);
+  const distance = headDistance(vehicle, time);
+  return {
+    first: Math.max(0, Math.floor(distance - back + 0.5)),
+    last: Math.min(vehicle.path.length - 1, Math.floor(distance + front + 0.5)),
+  };
+}
+
+// A new vehicle waits inside its depot, out of sight, and so does every
+// part of it that hasn't come out yet
+export function isInside(vehicle: Pick<Vehicle, "leg">, distance: number) {
+  return vehicle.leg < 0 && distance < 0.5;
 }
 
 // Point at `distance` tiles along a path of tiles. Vehicles go straight
@@ -98,44 +151,32 @@ export function pointOnPath(
   return out;
 }
 
-// Where a vehicle is at a given time, in tile coordinates. One that has no
-// route waits at the station it is at.
+// Where a vehicle is at a given time, in tile coordinates
 export function vehiclePoint(
-  vehicle: Pick<Vehicle, "kind" | "path" | "departAt" | "stops" | "leg">,
+  vehicle: Moving,
   size: number,
   time: number,
   out: PathPoint
 ): PathPoint {
-  if (vehicle.path.length < 2) {
-    const tile = Number(vehicle.stops[vehicle.leg % vehicle.stops.length]);
-    out.x = (tile % size) + 0.5;
-    out.y = Math.floor(tile / size) + 0.5;
-    out.dx = 1;
-    out.dy = 0;
-    return out;
-  }
   return pointOnPath(vehicle.path, size, headDistance(vehicle, time), out);
 }
 
 // How far a point of the map is from a vehicle, in tiles. A train is as
-// close as the closest of its cars. `scratch` is overwritten.
+// close as the closest of its carriages. `scratch` is overwritten.
 export function distanceToVehicle(
-  vehicle: Pick<Vehicle, "kind" | "path" | "departAt" | "stops" | "leg">,
+  vehicle: Moving & Pick<Vehicle, "cars">,
   size: number,
   time: number,
   x: number,
   y: number,
   scratch: PathPoint
 ) {
-  vehiclePoint(vehicle, size, time, scratch);
-  let nearest = Math.hypot(scratch.x - x, scratch.y - y);
-  if (vehicle.kind === "rail" && vehicle.path.length >= 2) {
-    const head = headDistance(vehicle, time);
-    for (let car = 1; car <= TRAIN_WAGONS; car++) {
-      const distance = Math.max(0, head - car * TRAIN_WAGON_GAP);
-      pointOnPath(vehicle.path, size, distance, scratch);
-      nearest = Math.min(nearest, Math.hypot(scratch.x - x, scratch.y - y));
-    }
+  const head = headDistance(vehicle, time);
+  let nearest = Infinity;
+  const cars = vehicle.kind === "rail" ? vehicle.cars : 0;
+  for (let car = 0; car <= cars; car++) {
+    pointOnPath(vehicle.path, size, Math.max(0, head - car * CAR_GAP), scratch);
+    nearest = Math.min(nearest, Math.hypot(scratch.x - x, scratch.y - y));
   }
   return nearest;
 }

@@ -58,7 +58,13 @@ export type StationInfo = {
   industries: Industry[];
 };
 
-const stationInfoCache = new WeakMap<World, Map<number, StationInfo>>();
+// One tile, or all the tiles of a station
+export type Tiles = number | readonly number[];
+
+const stationInfoCache = new WeakMap<
+  World,
+  Map<number | string, StationInfo>
+>();
 
 // How many tiles around it a station on this tile serves. Only docks are
 // built out on the water, away from what they serve. A dock on a canal is
@@ -67,43 +73,51 @@ export function catchmentOf(world: World, tile: number) {
   return world.terrain[tile] === WATER ? DOCK_CATCHMENT : CATCHMENT;
 }
 
-export function getStationInfo(world: World, tile: number): StationInfo {
+// What a station serves: everything within reach of one of its tiles. A
+// station that covers more tiles reaches further.
+export function getStationInfo(world: World, tiles: Tiles): StationInfo {
   let cache = stationInfoCache.get(world);
   if (!cache) {
     cache = new Map();
     stationInfoCache.set(world, cache);
   }
-  const cached = cache.get(tile);
+  const key = typeof tiles === "number" ? tiles : tiles.join();
+  const cached = cache.get(key);
   if (cached) {
     return cached;
   }
 
   const { size } = world;
-  const x = tile % size;
-  const y = Math.floor(tile / size);
+  const all = typeof tiles === "number" ? [tiles] : tiles;
   const industries = new Set<Industry>();
+  const seen = new Set<number>();
   let houses = 0;
   let population = 0;
 
-  const reach = catchmentOf(world, tile);
-  for (let dy = -reach; dy <= reach; dy++) {
-    for (let dx = -reach; dx <= reach; dx++) {
-      const tx = x + dx;
-      const ty = y + dy;
-      if (tx < 0 || ty < 0 || tx >= size || ty >= size) {
-        continue;
-      }
-      const other = ty * size + tx;
-      if (world.houseAt[other] >= 0) {
-        const house = world.houses[world.houseAt[other]];
-        houses++;
-        // A building that covers several tiles counts for as much of it as
-        // is within reach
-        population +=
-          peopleIn(house) / (BUILDINGS[house.variant].size ?? 1) ** 2;
-      }
-      if (world.industryAt[other] >= 0) {
-        industries.add(world.industries[world.industryAt[other]]);
+  for (const tile of all) {
+    const x = tile % size;
+    const y = Math.floor(tile / size);
+    const reach = catchmentOf(world, tile);
+    for (let dy = -reach; dy <= reach; dy++) {
+      for (let dx = -reach; dx <= reach; dx++) {
+        const tx = x + dx;
+        const ty = y + dy;
+        const other = ty * size + tx;
+        if (tx < 0 || ty < 0 || tx >= size || ty >= size || seen.has(other)) {
+          continue;
+        }
+        seen.add(other);
+        if (world.houseAt[other] >= 0) {
+          const house = world.houses[world.houseAt[other]];
+          houses++;
+          // A building that covers several tiles counts for as much of it
+          // as is within reach
+          population +=
+            peopleIn(house) / (BUILDINGS[house.variant].size ?? 1) ** 2;
+        }
+        if (world.industryAt[other] >= 0) {
+          industries.add(world.industries[world.industryAt[other]]);
+        }
       }
     }
   }
@@ -130,10 +144,10 @@ export function getStationInfo(world: World, tile: number): StationInfo {
     accepts: [...accepts],
     houses,
     population,
-    town: nearestTown(world, x, y),
+    town: nearestTown(world, all[0] % size, Math.floor(all[0] / size)),
     industries: [...industries],
   };
-  cache.set(tile, info);
+  cache.set(key, info);
   return info;
 }
 
@@ -246,7 +260,7 @@ export function loadFromIndustry(
 // at the industries that make it.
 export function waitingAt(
   world: World,
-  tile: number,
+  tile: Tiles,
   station: Pick<StationData, "stock" | "builtAt">,
   industryOf: (industry: Industry) => IndustryState,
   time: number
@@ -287,8 +301,8 @@ export function loadOf(vehicle: Pick<VehicleData, "load">) {
 // The cargo a vehicle would carry on a trip between two stations
 export function cargoBetween(
   world: World,
-  fromTile: number,
-  toTile: number
+  fromTile: Tiles,
+  toTile: Tiles
 ): Cargo[] {
   const accepted = getStationInfo(world, toTile).accepts;
   return getStationInfo(world, fromTile)
@@ -304,14 +318,14 @@ function listCargo(cargo: readonly Cargo[]) {
 // who just tried to buy one
 export function nothingToCarry(
   world: World,
-  from: { tile: number; name: string },
-  to: { tile: number; name: string }
+  from: { tiles: Tiles; name: string },
+  to: { tiles: Tiles; name: string }
 ) {
   const reasons = [
     [from, to],
     [to, from],
   ].flatMap(([origin, destination]) => {
-    const supply = getStationInfo(world, origin.tile).supply;
+    const supply = getStationInfo(world, origin.tiles).supply;
     return supply.length > 0
       ? [
           `${destination.name} doesn't accept ${listCargo(
@@ -345,7 +359,7 @@ export function tradePartners(world: World, industry: Industry) {
 }
 
 // Whether a station on this tile would serve this industry
-export function servesIndustry(world: World, tile: number, industry: Industry) {
+export function servesIndustry(world: World, tile: Tiles, industry: Industry) {
   return getStationInfo(world, tile).industries.some(
     (each) => each.id === industry.id
   );
@@ -477,14 +491,15 @@ export function trackCost(
 // the company's owner and `earned` only moves forward with a vehicle's trips,
 // so two clients never overwrite each other's money.
 export function companyBalance(
-  company: Pick<CompanyData, "spent" | "banked"> | undefined,
+  company: Pick<CompanyData, "spent" | "banked" | "scrapped"> | undefined,
   vehicles: Iterable<Pick<VehicleData, "owner" | "earned">>,
   userId: string
 ) {
   if (!company) {
     return START_MONEY;
   }
-  let balance = START_MONEY + company.banked - company.spent;
+  let balance =
+    START_MONEY + company.banked + (company.scrapped ?? 0) - company.spent;
   for (const vehicle of vehicles) {
     if (vehicle.owner === userId) {
       balance += vehicle.earned;

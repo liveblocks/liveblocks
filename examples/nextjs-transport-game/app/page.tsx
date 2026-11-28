@@ -15,7 +15,12 @@ export default function Page() {
   return (
     <RoomProvider
       id={roomId}
-      initialPresence={{ cursor: null, tool: "select", company: null }}
+      initialPresence={{
+        cursor: null,
+        tool: "select",
+        company: null,
+        away: false,
+      }}
       initialStorage={{
         // Derived from the room id rather than random, so players joining an
         // empty room at the same time all start on the same map
@@ -29,6 +34,9 @@ export default function Page() {
         roads: new LiveMap(),
         rails: new LiveMap(),
         canals: new LiveMap(),
+        railLinks: new LiveMap(),
+        signals: new LiveMap(),
+        depots: new LiveMap(),
         stations: new LiveMap(),
         vehicles: new LiveMap(),
         companies: new LiveMap(),

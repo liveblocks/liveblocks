@@ -3,7 +3,9 @@ import type { Climate, Landscape } from "./game/climate";
 import type { Clock } from "./game/clock";
 import type {
   CompanyData,
+  DepotData,
   IndustryState,
+  SignalData,
   StationData,
   StatsSample,
   Tool,
@@ -30,11 +32,18 @@ declare global {
       cursor: { x: number; y: number } | null;
       tool: Tool;
       company: string | null;
+      // Whether the game is in a tab that isn't showing. Browsers slow such
+      // tabs down, so they leave moving the vehicles to someone else.
+      away: boolean;
     };
 
     // Everything players build. The terrain, towns and industries are not
     // stored: every client generates them from `seed`.
     Storage: {
+      // Which shape of Storage this is: see `upgradeStorage`, which sets it.
+      // New rooms have none yet, and neither do rooms from before the game
+      // had depots and signals.
+      version?: number;
       seed: number;
       // How many tiles the map has on each side
       size: number;
@@ -61,6 +70,14 @@ declare global {
       roads: LiveMap<string, string>;
       rails: LiveMap<string, string>;
       canals: LiveMap<string, string>;
+      // Railway tile → the sides of the tile its track runs to. Unlike
+      // roads, railways only join up where they were built to: two tracks
+      // can run side by side.
+      railLinks: LiveMap<string, number>;
+      // Railway tile → the signal that stands beside it
+      signals: LiveMap<string, SignalData>;
+      // Tile → the depot built on it
+      depots: LiveMap<string, DepotData>;
       // Industry id → what it has waiting, and how much it makes
       industries: LiveMap<string, IndustryState>;
       // Tile → station

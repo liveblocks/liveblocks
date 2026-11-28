@@ -26,6 +26,9 @@ export type Cargo =
   | "cocoa"
   | "gems";
 
+// The three kinds of railway signal: see `SIGNALS` in `constants.ts`
+export type SignalKind = "block" | "path" | "oneway";
+
 export type Tool =
   | "select"
   | "road"
@@ -34,7 +37,12 @@ export type Tool =
   | "road-station"
   | "rail-station"
   | "water-station"
-  | "vehicle"
+  | "road-depot"
+  | "rail-depot"
+  | "water-depot"
+  | "signal-block"
+  | "signal-path"
+  | "signal-oneway"
   | "bulldoze";
 
 // Cargo waiting at a station. Amounts are evaluated lazily: `amount` is what
@@ -71,19 +79,59 @@ export type StationData = {
   stock: Stock;
 };
 
+// A signal beside a piece of railway. `side` is the side of its tile that
+// trains leave by when they pass it: one of the direction bits in
+// `network.ts`.
+export type SignalData = {
+  owner: string;
+  kind: SignalKind;
+  side: number;
+};
+
+// Where a company buys its vehicles. They come out on the side of its tile
+// that `side` says, onto the road, railway or water next to it.
+export type DepotData = {
+  owner: string;
+  kind: Transport;
+  side: number;
+  builtAt: number;
+};
+
+// What a vehicle is doing:
+// - "run": it is on its way, or standing still at the end of what it may
+//   drive on, waiting for the way ahead to clear
+// - "dock": it is at the end of its path, at a station. It loads until
+//   `departAt`, and sets off again as soon as it can after that.
+// - "lost": there is no way to its next station. It looks again at
+//   `departAt`.
+// - "wreck": it crashed at `departAt`, and is cleared away a while later
+export type VehicleStatus = "run" | "dock" | "lost" | "wreck";
+
 export type VehicleData = {
   owner: string;
   kind: Transport;
-  // Tile keys of the stations this vehicle shuttles between
+  // What was bought: the id of one of the `MODELS`
+  model: string;
+  // How many carriages a train pulls. Other vehicles have none.
+  cars: number;
+  // Tile keys of the stations this vehicle shuttles between: any tile of
+  // each station
   stops: string[];
   // Index of the current leg: the vehicle travels from `stops[leg % n]` to
-  // `stops[(leg + 1) % n]`
+  // `stops[(leg + 1) % n]`. A new vehicle is on leg -1, from its depot to
+  // its first station.
   leg: number;
-  // Tiles of the current leg. Empty while the vehicle is waiting for a route.
+  // The tiles the vehicle is following, one after the other. The first one
+  // is its depot while it is on leg -1.
   path: number[];
-  // When the vehicle leaves (or left) the station at the start of `path`.
-  // Everyone derives the vehicle's position from this timestamp.
+  status: VehicleStatus;
+  // Everyone derives the vehicle's position from these three: it was `from`
+  // tiles along `path` at `departAt`, and has been moving since, as far as
+  // `limit`. The tiles from where it is up to `limit` are its own: no other
+  // vehicle may be given them, which is what keeps vehicles apart.
+  from: number;
   departAt: number;
+  limit: number;
   // What is on board for this leg: a vehicle takes along every kind of
   // cargo that its next station accepts
   load: Load;
@@ -108,6 +156,9 @@ export type CompanyData = {
   spent: number;
   banked: number;
   foundedAt: number;
+  // What its vehicles that were lost in crashes had earned. Only whoever
+  // moves the vehicles writes this.
+  scrapped?: number;
 };
 
 // How far a town had grown at a given time, and how many of its stations

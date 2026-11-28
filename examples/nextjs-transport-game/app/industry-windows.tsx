@@ -19,13 +19,9 @@ import {
   servesIndustry,
   tradePartners,
 } from "@/game/economy";
-import type {
-  Cargo,
-  CompanyData,
-  IndustryState,
-  StationData,
-} from "@/game/types";
+import type { Cargo, CompanyData, IndustryState } from "@/game/types";
 import { type Industry, INDUSTRY, type World } from "@/game/world";
+import type { Stations } from "@/game/stations";
 import { useNow } from "@/hooks/use-now";
 
 function Row({
@@ -66,7 +62,7 @@ export function IndustryWindow({
   saved: IndustryState | undefined;
   // When the map started, on the game clock
   startedAt: number;
-  stations: ReadonlyMap<string, StationData>;
+  stations: Stations;
   companies: ReadonlyMap<string, CompanyData>;
   onShowIndustry: (industry: Industry) => void;
   onClose: () => void;
@@ -90,8 +86,8 @@ export function IndustryWindow({
     outlook = `${service}% of it has been carried away lately. Keep that at ${wanted}% or more and it makes twice as much.`;
   }
   const partners = tradePartners(world, industry);
-  const serving = [...stations].filter(([key]) =>
-    servesIndustry(world, Number(key), industry)
+  const serving = stations.all.filter((station) =>
+    servesIndustry(world, station.tiles, industry)
   );
 
   return (
@@ -172,8 +168,8 @@ export function IndustryWindow({
                 None yet. Build one a few tiles from here.
               </li>
             ) : null}
-            {serving.map(([key, station]) => (
-              <li key={key} className="flex items-center gap-1.5">
+            {serving.map((station) => (
+              <li key={station.id} className="flex items-center gap-1.5">
                 <span
                   className="size-2.5 shrink-0 border border-ui-edge"
                   style={{
