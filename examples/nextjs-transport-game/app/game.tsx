@@ -207,6 +207,8 @@ export function Game() {
   const [selectedTown, setSelectedTown] = useState<number | null>(null);
   const [selectedIndustry, setSelectedIndustry] = useState<number | null>(null);
   const [choosingMap, setChoosingMap] = useState(false);
+  // Buildings are see-through, for this player only
+  const [xray, setXray] = useState(false);
   // Where the map was last asked to go, e.g. to an industry picked in a list
   const [focus, setFocus] = useState<Focus>(null);
   const [highlightedVehicle, setHighlightedVehicle] = useState<string | null>(
@@ -440,6 +442,10 @@ export function Game() {
         latestToggleSpeed.current(letter === "p" ? "paused" : "fast");
         return;
       }
+      if (letter === "x") {
+        setXray((on) => !on);
+        return;
+      }
       const match = TOOLS.find((each) => each.shortcut === event.key);
       if (match && myCompany !== null) {
         selectTool(match.id);
@@ -598,6 +604,7 @@ export function Game() {
           follow={following ? selectedVehicle : null}
           clock={clock}
           theme={theme}
+          xray={xray}
           focus={focus}
           view={mapView}
           onHover={setHover}
@@ -615,8 +622,10 @@ export function Game() {
               tool={tool}
               history={history}
               speed={speed}
+              xray={xray}
               onSelect={selectTool}
               onSpeed={changeSpeed}
+              onXray={setXray}
             />
           ) : null}
           {selectedStation !== null && selected ? (

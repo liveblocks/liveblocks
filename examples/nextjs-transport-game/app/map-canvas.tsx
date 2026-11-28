@@ -61,6 +61,8 @@ type Props = {
   clock: Clock;
   // How the map is drawn
   theme: Theme;
+  // Whether buildings are see-through
+  xray: boolean;
   focus: Focus;
   // What the map is drawn with, for the cameras in vehicle windows
   view: RefObject<MapView | null>;
@@ -155,6 +157,7 @@ export function MapCanvas(props: Props) {
     highlightedVehicle: props.highlightedVehicle,
     cursors: [],
     clock: props.clock,
+    xray: props.xray,
   });
 
   useEffect(() => {
@@ -170,6 +173,7 @@ export function MapCanvas(props: Props) {
       selectedStation: props.selectedStation,
       highlightedVehicle: props.highlightedVehicle,
       clock: props.clock,
+      xray: props.xray,
     });
   });
 

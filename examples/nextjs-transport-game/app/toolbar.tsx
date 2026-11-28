@@ -3,6 +3,7 @@
 import {
   Anchor,
   FastForward,
+  Ghost,
   type LucideIcon,
   MousePointer2,
   Pause,
@@ -166,14 +167,18 @@ export function Toolbar({
   tool,
   history,
   speed,
+  xray,
   onSelect,
   onSpeed,
+  onXray,
 }: {
   tool: Tool;
   history: History;
   speed: Speed;
+  xray: boolean;
   onSelect: (tool: Tool) => void;
   onSpeed: (speed: Speed) => void;
+  onXray: (xray: boolean) => void;
 }) {
   const isMac = useIsMac();
   const steps = [
@@ -256,6 +261,27 @@ export function Toolbar({
             </TooltipContent>
           </Tooltip>
         ))}
+        <div className="win-divider mx-0.5" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="win-button size-8 p-0"
+              aria-label="X-ray"
+              aria-pressed={xray}
+              onClick={() => onXray(!xray)}
+            >
+              <Ghost className="size-[18px]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={6}>
+            <span className="font-bold">X-ray</span> (X)
+            <div>
+              See through buildings, to find the stations and tracks behind
+              them. Only you see this.
+            </div>
+          </TooltipContent>
+        </Tooltip>
       </div>
     </Window>
   );

@@ -101,6 +101,8 @@ export type Scene = {
   // Vehicles are drawn where they are on the game clock, so they stand
   // still while the game is paused
   clock: Clock;
+  // Buildings are see-through, to show the stations and tracks behind them
+  xray: boolean;
 };
 
 type StaticItem = {
@@ -110,7 +112,12 @@ type StaticItem = {
   y: number;
   // Trees disappear when something is built on their tile
   tile: number;
+  // A building: see-through in x-ray mode
+  building: boolean;
 };
+
+// How solid buildings are in x-ray mode
+const XRAY_ALPHA = 0.22;
 
 type DynamicItem = {
   depth: number;
@@ -381,7 +388,8 @@ export class Renderer {
       x: number,
       y: number,
       footprint: number,
-      tile: number
+      tile: number,
+      building: boolean
     ) => {
       this.statics.push({
         depth: x + y + footprint,
@@ -389,6 +397,7 @@ export class Renderer {
         x: worldX(x, y) - sprite.ax,
         y: worldY(x, y) - sprite.ay,
         tile,
+        building,
       });
     };
 
@@ -397,7 +406,7 @@ export class Renderer {
       if (count > 0) {
         const variants = sprites.trees[Math.min(count, 3) - 1];
         const variant = variants[hashInt(tile + world.seed) % variants.length];
-        place(variant, tile % size, Math.floor(tile / size), 1, tile);
+        place(variant, tile % size, Math.floor(tile / size), 1, tile, false);
       }
     }
     for (let index = 0; index < world.houses.length; index++) {
@@ -407,7 +416,14 @@ export class Renderer {
       }
       const colors = sprites.houses[house.variant];
       const color = colors[hashInt(house.y * size + house.x) % colors.length];
-      place(color, house.x, house.y, BUILDINGS[house.variant].size ?? 1, -1);
+      place(
+        color,
+        house.x,
+        house.y,
+        BUILDINGS[house.variant].size ?? 1,
+        -1,
+        true
+      );
     }
     for (const industry of world.industries) {
       place(
@@ -415,7 +431,8 @@ export class Renderer {
         industry.x,
         industry.y,
         INDUSTRY_SIZE,
-        -1
+        -1,
+        true
       );
       this.labels.push({
         x: industry.x + 1,
@@ -577,6 +594,10 @@ export class Renderer {
               scene.network.rail[item.tile] ||
               scene.network.canal[item.tile]));
         if (!hidden) {
+          const ghost = scene.xray && item.building;
+          if (ghost) {
+            ctx.globalAlpha = XRAY_ALPHA;
+          }
           ctx.drawImage(
             spriteImage(sprite, detail),
             item.x,
@@ -584,6 +605,9 @@ export class Renderer {
             sprite.width,
             sprite.height
           );
+          if (ghost) {
+            ctx.globalAlpha = 1;
+          }
         }
       } else {
         dynamicIndex++;
