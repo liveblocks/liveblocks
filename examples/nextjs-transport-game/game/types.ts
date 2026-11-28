@@ -77,10 +77,10 @@ export type CompanyData = {
   foundedAt: number;
 };
 
-// How far a town had grown at a given time, and how many stations it had
-// around it then, which sets how fast it has been growing since. Like cargo
-// at a station, growth isn't updated on a timer: it is worked out from this
-// and from the clock.
+// How far a town had grown at a given time, and how many of its stations
+// vehicles were calling at then, which sets how fast it has been growing
+// since. Like cargo at a station, growth isn't updated on a timer: it is
+// worked out from this and from the clock.
 export type TownGrowth = { steps: number; at: number; stations: number };
 
 export type ActionResult =

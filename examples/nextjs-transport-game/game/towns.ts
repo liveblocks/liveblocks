@@ -4,13 +4,12 @@ import {
   PARK,
   SHOPS,
   STADIUM,
-  TOWN_GROWTH_PER_MINUTE,
   TOWN_GROWTH_PER_STATION,
   TOWN_MAX_STATIONS,
   TOWN_RADIUS,
 } from "./constants";
 import { createRng, hashInt } from "./rng";
-import type { TownGrowth } from "./types";
+import type { TownGrowth, Vehicle } from "./types";
 import {
   buildingTiles,
   type House,
@@ -28,9 +27,11 @@ import {
 //
 // None of that is stored. Each town has a fixed list of growth steps that
 // every client works out from the map seed, and how far down that list a
-// town is only depends on the clock and on the stations around it. So all
-// players see the same buildings appear at the same time, without anyone
-// writing them to Storage.
+// town is only depends on the clock and on the stations in it that vehicles
+// call at. So all players see the same buildings appear at the same time,
+// without anyone writing them to Storage.
+//
+// A town that nobody transports anything to or from doesn't grow at all.
 
 export type GrowthStep =
   | { kind: "street" | "house" | "upgrade"; tile: number }
@@ -41,8 +42,10 @@ export type GrowthStep =
 const MAX_TIER = BUILDING_TIERS - 1;
 // Buildings are allowed to get taller as a town moves through its first
 // steps. After this many, the only thing left is to catch up.
-const STEPS_TO_FULL_HEIGHT = 240;
-const MAX_STEPS = 600;
+const STEPS_TO_FULL_HEIGHT = 900;
+const MAX_STEPS = 3000;
+// How much shorter buildings get with every tile away from the center
+const HEIGHT_FALLOFF = 0.42;
 // How good a tile is for more street: making a street longer is better than
 // starting a new one at a corner (which scores 1), and closing a gap between
 // two pieces of the same street is best
@@ -51,36 +54,32 @@ const STREET_GAP = 6;
 // The two streets through the center of a town grow faster than the others
 const MAIN_STREET = 1.5;
 
-const plans = new WeakMap<World, GrowthStep[][]>();
+const plans = new WeakMap<World, (GrowthStep[] | undefined)[]>();
 
-// The growth steps of every town, in order. `world` has to be the world as
-// generated from its seed, not one that already grew.
-export function townPlans(world: World) {
-  let result = plans.get(world);
-  if (!result) {
-    // Towns are planned one after the other on the same scratch copy of the
-    // map, so they keep out of each other's way
-    const streets = world.townRoads.slice();
-    const tiers = new Int8Array(world.size * world.size).fill(-1);
-    for (const house of world.houses) {
-      const corner = house.y * world.size + house.x;
-      for (const tile of buildingTiles(world.size, corner, house.variant)) {
-        tiers[tile] = house.variant;
-      }
-    }
-    result = world.towns.map((town) => planTown(world, town, streets, tiers));
-    plans.set(world, result);
+// The growth steps of a town, in order. `world` has to be the world as
+// generated from its seed, not one that already grew. A town is only
+// planned when someone asks: most towns on a map never get a station.
+export function townPlan(world: World, town: number) {
+  let planned = plans.get(world);
+  if (!planned) {
+    planned = [];
+    plans.set(world, planned);
   }
-  return result;
+  return (planned[town] ??= planTown(world, world.towns[town]));
 }
 
-function planTown(
-  world: World,
-  town: Town,
-  streets: Uint8Array,
-  tiers: Int8Array
-) {
+function planTown(world: World, town: Town) {
   const { size } = world;
+  // A scratch copy of the map to plan on. Towns can't get in each other's
+  // way: each one only builds on the land that is closest to it.
+  const streets = world.townRoads.slice();
+  const tiers = new Int8Array(size * size).fill(-1);
+  for (const house of world.houses) {
+    const corner = house.y * size + house.x;
+    for (const tile of buildingTiles(size, corner, house.variant)) {
+      tiers[tile] = house.variant;
+    }
+  }
   const rng = createRng(hashInt(world.seed + (town.id + 1) * 7919));
 
   const neighbor = (tile: number, dx: number, dy: number) => {
@@ -89,20 +88,20 @@ function planTown(
     return x < 0 || y < 0 || x >= size || y >= size ? -1 : y * size + x;
   };
   const isStreet = (tile: number) => tile >= 0 && streets[tile] === 1;
+  // Towns are round: everything about how they grow goes by the distance
+  // to their center as the crow flies
   const distance = (tile: number) =>
-    Math.max(
-      Math.abs((tile % size) - town.x),
-      Math.abs(Math.floor(tile / size) - town.y)
-    );
+    Math.hypot((tile % size) - town.x, Math.floor(tile / size) - town.y);
 
-  // Where this town can grow: dry land around its center that is closer to
-  // it than to any other town
+  // Where this town can grow: dry land in a circle around its center that
+  // is closer to it than to any other town
   const area: number[] = [];
   for (let dy = -TOWN_RADIUS; dy <= TOWN_RADIUS; dy++) {
     for (let dx = -TOWN_RADIUS; dx <= TOWN_RADIUS; dx++) {
       const tile = neighbor(town.y * size + town.x, dx, dy);
       if (
         tile >= 0 &&
+        withinTown(dx, dy) &&
         world.terrain[tile] !== WATER &&
         world.industryAt[tile] < 0 &&
         nearestTown(world, tile % size, Math.floor(tile / size)) === town
@@ -117,7 +116,10 @@ function planTown(
   const tallest = (tile: number, progress: number) => {
     const variation = (hashInt(tile * 31 + world.seed) % 100) / 100;
     const tier =
-      1.6 + 2.6 * progress - 0.7 * Math.max(0, distance(tile) - 1) + variation;
+      1.6 +
+      2.6 * progress -
+      HEIGHT_FALLOFF * Math.max(0, distance(tile) - 1) +
+      variation;
     return Math.max(0, Math.min(MAX_TIER, Math.floor(tier)));
   };
 
@@ -364,8 +366,13 @@ export function growWorld(
     }
   }
 
-  townPlans(world).forEach((plan, town) => {
-    const count = Math.min(plan.length, Math.floor(steps[town] ?? 0));
+  world.towns.forEach((_, town) => {
+    const wanted = Math.floor(steps[town] ?? 0);
+    if (wanted <= 0) {
+      return;
+    }
+    const plan = townPlan(world, town);
+    const count = Math.min(plan.length, wanted);
     for (let index = 0; index < count; index++) {
       const step = plan[index];
       const { kind, tile } = step;
@@ -421,18 +428,39 @@ export function growWorld(
   return { ...world, townRoads, trees, houseAt, houses, towns };
 }
 
-// The town that a station on this tile helps grow, if it is close to one
+// Whether a tile this far from the center of a town is inside the circle
+// that the town can grow to fill
+function withinTown(dx: number, dy: number, margin = 0) {
+  return Math.hypot(dx, dy) <= TOWN_RADIUS + 0.5 + margin;
+}
+
+// The town that a station on this tile helps grow, if it is in one or right
+// next to it
 export function stationTown(world: World, tile: number) {
   const x = tile % world.size;
   const y = Math.floor(tile / world.size);
   const town = nearestTown(world, x, y);
-  const near =
-    town !== null &&
-    Math.max(Math.abs(town.x - x), Math.abs(town.y - y)) <= TOWN_RADIUS + 1;
+  const near = town !== null && withinTown(town.x - x, town.y - y, 1);
   return near ? town.id : null;
 }
 
-// How many stations each town has around it
+// The tiles of the stations that vehicles are running to. A vehicle that
+// can't find a way to its next station isn't transporting anything.
+export function servedStations(
+  vehicles: Iterable<Pick<Vehicle, "stops" | "path">>
+) {
+  const served = new Set<number>();
+  for (const vehicle of vehicles) {
+    if (vehicle.path.length >= 2) {
+      for (const stop of vehicle.stops) {
+        served.add(Number(stop));
+      }
+    }
+  }
+  return [...served].sort((a, b) => a - b);
+}
+
+// How many of those stations each town has
 export function townStations(world: World, stationTiles: Iterable<number>) {
   const counts = world.towns.map(() => 0);
   for (const tile of stationTiles) {
@@ -444,25 +472,77 @@ export function townStations(world: World, stationTiles: Iterable<number>) {
   return counts;
 }
 
-// Growth steps per minute of a town with this many stations around it
+// Growth steps per minute of a small town with this many stations that
+// vehicles call at. Without any, it doesn't grow.
 export function townGrowthRate(stations: number) {
-  return (
-    TOWN_GROWTH_PER_MINUTE +
-    TOWN_GROWTH_PER_STATION * Math.min(stations, TOWN_MAX_STATIONS)
-  );
+  return TOWN_GROWTH_PER_STATION * Math.min(stations, TOWN_MAX_STATIONS);
 }
 
-// How many steps a town has grown by now. `saved` is the town's entry in
-// Storage, written the last time the number of stations around it changed.
-// A town without one has been growing on its own since the map started.
+// The bigger a town gets, the slower it grows: a town that is `progress` of
+// the way to its full size (0 to 1) grows at this fraction of its rate. That
+// is close to full speed for a small town, a tenth of it at 80% of the way,
+// and next to nothing for the last few buildings.
+export function townGrowthPace(progress: number) {
+  const left = 1 - Math.min(1, Math.max(0, progress)) ** 2;
+  return left * left;
+}
+
+// How long it takes to get to `progress` at that pace, as a multiple of the
+// time it would take to get all the way at full speed. This is the integral
+// of 1 / townGrowthPace.
+function growthEffort(progress: number) {
+  return progress / (2 * (1 - progress * progress)) + Math.atanh(progress) / 2;
+}
+
+// The other way around: how far a town gets with that much time
+function growthProgress(effort: number) {
+  let low = 0;
+  let high = 1;
+  for (let round = 0; round < 40; round++) {
+    const middle = (low + high) / 2;
+    if (growthEffort(middle) < effort) {
+      low = middle;
+    } else {
+      high = middle;
+    }
+  }
+  return low;
+}
+
+// How many steps a town has grown by now, out of the `capacity` steps it
+// takes to be fully grown. `saved` is the town's entry in Storage, written
+// the last time the number of stations that vehicles call at changed. A
+// town without one never had any, so it never grew.
 export function townGrowth(
   saved: TownGrowth | undefined,
-  startedAt: number,
+  capacity: number,
   now: number
 ) {
-  const from = saved ?? { steps: 0, at: startedAt, stations: 0 };
-  const minutes = Math.max(0, now - from.at) / 60_000;
-  return from.steps + townGrowthRate(from.stations) * minutes;
+  if (!saved) {
+    return 0;
+  }
+  const rate = townGrowthRate(saved.stations);
+  if (rate === 0 || saved.steps >= capacity) {
+    return Math.min(saved.steps, capacity);
+  }
+  const minutes = Math.max(0, now - saved.at) / 60_000;
+  const effort =
+    growthEffort(saved.steps / capacity) + (rate * minutes) / capacity;
+  return capacity * growthProgress(effort);
+}
+
+// The same for a town on the map, which only needs planning once it grows.
+// `world` has to be the world as generated from its seed.
+export function townSteps(
+  world: World,
+  town: number,
+  saved: TownGrowth | undefined,
+  now: number
+) {
+  if (!saved || (saved.steps <= 0 && saved.stations === 0)) {
+    return 0;
+  }
+  return townGrowth(saved, townPlan(world, town).length, now);
 }
 
 export type TownStats = {

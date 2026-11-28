@@ -60,9 +60,10 @@ import { buildNetwork, type Network } from "@/game/network";
 import {
   type Built,
   growWorld,
-  townGrowth,
-  townPlans,
+  servedStations,
+  townPlan,
   townStations,
+  townSteps as townStepsAt,
   townStats,
 } from "@/game/towns";
 import type { ActionResult, Tool, Transport } from "@/game/types";
@@ -157,7 +158,10 @@ export function Game() {
   const isMac = useIsMac();
   const clock = useClock();
   const paused = clock.pausedAt !== null;
-  const townSteps = useTownSteps(generated, stationTiles, clock);
+  // Towns only grow around stations that vehicles are running to
+  const servedKeys = servedStations(vehicles.values()).join();
+  const servedTiles = useMemo(() => toTiles(servedKeys), [servedKeys]);
+  const townSteps = useTownSteps(generated, servedTiles, clock);
   const world = useMemo(
     () => growWorld(generated, townSteps, built),
     [generated, townSteps, built]
@@ -573,10 +577,12 @@ export function Game() {
               key={selectedTown}
               world={world}
               town={selectedTown}
-              stations={townStations(world, stationTiles)[selectedTown]}
-              grown={
-                townSteps[selectedTown] >=
-                townPlans(generated)[selectedTown].length
+              stations={townStations(world, servedTiles)[selectedTown]}
+              progress={
+                townSteps[selectedTown] > 0
+                  ? townSteps[selectedTown] /
+                    townPlan(generated, selectedTown).length
+                  : 0
               }
               onClose={() => setSelectedTown(null)}
             />
@@ -825,31 +831,26 @@ function useMyCompany(notify: (text: string, color: string | null) => void) {
 }
 
 // How many steps each town has grown by now. Nobody stores this: it follows
-// from the clock, from the stations around the town, and from the growth
-// saved in Storage the last time one of those stations was built or removed.
+// from the clock, from the stations in the town that vehicles call at, and
+// from the growth saved in Storage the last time that number changed.
 // `world` is the world as generated, before any growth.
 function useTownSteps(
   world: World,
-  stationTiles: readonly number[],
+  servedTiles: readonly number[],
   clock: Clock
 ) {
   const saved = useStorage((root) => root.towns);
-  const startedAt = useStorage((root) => root.startedAt);
 
   const measure = useCallback(() => {
-    const plans = townPlans(world);
+    const now = gameTime(clock, Date.now());
     return world.towns.map(({ id }) =>
-      Math.min(
-        plans[id].length,
-        Math.floor(
-          townGrowth(saved[id], startedAt, gameTime(clock, Date.now()))
-        )
-      )
+      Math.floor(townStepsAt(world, id, saved[id], now))
     );
-  }, [world, saved, startedAt, clock]);
+  }, [world, saved, clock]);
 
   // Towns grow at the speed saved in Storage. When the number of stations
-  // around one changes, save how far it got, and its new speed.
+  // that vehicles call at changes for one, save how far it got, and its new
+  // speed.
   const room = useRoom();
   const sync = useMutation(
     ({ storage }) =>
@@ -857,13 +858,13 @@ function useTownSteps(
     [world]
   );
   useEffect(() => {
-    const stations = townStations(world, stationTiles);
+    const stations = townStations(world, servedTiles);
     if (
       world.towns.some(({ id }) => (saved[id]?.stations ?? 0) !== stations[id])
     ) {
       room.history.disable(sync);
     }
-  }, [room, world, stationTiles, saved, sync]);
+  }, [room, world, servedTiles, saved, sync]);
 
   const [steps, setSteps] = useState(measure);
   useEffect(() => {

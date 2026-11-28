@@ -2,16 +2,16 @@
 
 import { Window } from "@/components/window";
 import { BUILDING_TIERS, BUILDINGS, TOWN_MAX_STATIONS } from "@/game/constants";
-import { townGrowthRate, townStats } from "@/game/towns";
+import { townGrowthPace, townGrowthRate, townStats } from "@/game/towns";
 import type { World } from "@/game/world";
 
 type Props = {
   world: World;
   town: number;
-  // How many stations are close enough to make the town grow faster
+  // How many of the town's stations vehicles call at, which makes it grow
   stations: number;
-  // Whether the town has nothing left to build
-  grown: boolean;
+  // How far the town is to its full size, from 0 to 1
+  progress: number;
   onClose: () => void;
 };
 
@@ -20,7 +20,14 @@ function pluralize(label: string) {
 }
 
 // Opens when a town's name is clicked on the map
-export function TownWindow({ world, town, stations, grown, onClose }: Props) {
+export function TownWindow({
+  world,
+  town,
+  stations,
+  progress,
+  onClose,
+}: Props) {
+  const grown = progress >= 0.995;
   const { name } = world.towns[town];
   const { population, buildings, tallest, counts } = townStats(world)[town];
   // What the town has besides houses and offices, e.g. "Church, 2 shops"
@@ -37,15 +44,28 @@ export function TownWindow({ world, town, stations, grown, onClose }: Props) {
       return `${count} ${label.endsWith("s") ? label : pluralize(label)}`;
     })
     .join(", ");
-  const seconds = Math.round(60 / townGrowthRate(stations));
+  const perMinute = townGrowthRate(stations) * townGrowthPace(progress);
 
-  let service = "No station nearby yet. Towns grow faster with stations.";
+  let growth = "Not growing";
+  if (grown) {
+    growth = "Fully grown";
+  } else if (perMinute >= 1) {
+    growth = `Something new every ${Math.round(60 / perMinute)}s`;
+  } else if (perMinute > 0) {
+    growth = `Something new every ${Math.round(1 / perMinute)} min`;
+  }
+
+  let service =
+    "Nothing is transported here yet. Towns only grow when vehicles call at a station in them.";
   if (stations >= TOWN_MAX_STATIONS) {
-    service = `${stations} stations nearby. More won't speed it up.`;
+    service = `Vehicles call at ${stations} stations here. More won't speed it up.`;
   } else if (stations > 0) {
-    service = `${stations} ${
+    service = `Vehicles call at ${stations} ${
       stations === 1 ? "station" : "stations"
-    } nearby. Each one makes it grow faster.`;
+    } here. Each one makes it grow faster.`;
+  }
+  if (stations > 0 && progress > 0.6) {
+    service += " Big towns grow slowly.";
   }
 
   return (
@@ -67,9 +87,7 @@ export function TownWindow({ world, town, stations, grown, onClose }: Props) {
             </>
           ) : null}
           <dt>Growth</dt>
-          <dd className="text-right tabular-nums">
-            {grown ? "Fully grown" : `Something new every ${seconds}s`}
-          </dd>
+          <dd className="text-right tabular-nums">{growth}</dd>
         </dl>
         <p>{grown ? "This town has no room left to grow." : service}</p>
       </div>

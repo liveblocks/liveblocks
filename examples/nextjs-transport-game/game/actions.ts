@@ -17,7 +17,7 @@ import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
 import { advance } from "./simulation";
 import { gameTime } from "./clock";
-import { townGrowth, townStations } from "./towns";
+import { servedStations, townStations, townSteps } from "./towns";
 import type {
   ActionResult,
   LineKind,
@@ -280,23 +280,27 @@ export function demolitionCost(world: World, tiles: readonly number[]) {
   return cost;
 }
 
-// How fast a town grows depends on the stations around it. A town keeps
-// growing at the speed that was last saved for it, so when its number of
-// stations changes (one is built, removed, or brought back with undo), how
-// far it has grown until now is saved along with the new number, and it
-// carries on from there. Every client does this when it sees the change:
-// what they save is the same to within a few milliseconds of growth, so it
-// doesn't matter whose write lands last. Returns whether anything was saved.
+// How fast a town grows depends on how many of its stations vehicles call
+// at. A town keeps growing at the speed that was last saved for it, so when
+// that number changes (a vehicle is bought or sold, loses its way, or comes
+// back with undo), how far the town has grown until now is saved along with
+// the new number, and it carries on from there. Every client does this when
+// it sees the change: what they save is the same to within a few
+// milliseconds of growth, so it doesn't matter whose write lands last.
+// Returns whether anything was saved.
 export function syncTownGrowth(root: Root, world: World, now: number) {
-  const stations = [...root.get("stations").keys()].map(Number);
-  const counts = townStations(world, stations);
+  const vehicles = [...root.get("vehicles").values()].map((vehicle) => ({
+    stops: vehicle.get("stops"),
+    path: vehicle.get("path"),
+  }));
+  const counts = townStations(world, servedStations(vehicles));
   const towns = root.get("towns");
   let changed = false;
   for (const { id } of world.towns) {
     const saved = towns.get(String(id));
     if ((saved?.stations ?? 0) !== counts[id]) {
       towns.set(String(id), {
-        steps: townGrowth(saved, root.get("startedAt"), now),
+        steps: townSteps(world, id, saved, now),
         at: now,
         stations: counts[id],
       });

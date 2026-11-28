@@ -79,14 +79,15 @@ export const PARK = 7;
 export const STADIUM = 8;
 
 // Towns grow one step at a time: a new house, another piece of street, or a
-// bigger building. This is how many steps a town takes per minute, and how
-// many more for each station close to it (up to a few stations).
-export const TOWN_GROWTH_PER_MINUTE = 4;
-export const TOWN_GROWTH_PER_STATION = 4;
+// bigger building. They only grow when something is transported to or from
+// them: this is how many steps a small town takes per minute for each of its
+// stations that vehicles call at (up to a few stations). Towns slow down a
+// lot as they get close to their full size.
+export const TOWN_GROWTH_PER_STATION = 8;
 export const TOWN_MAX_STATIONS = 4;
-// How far from its center a town can grow, and how close a station has to be
-// to make it grow faster
-export const TOWN_RADIUS = 6;
+// How far from its center a town can grow, in every direction, and how
+// close a station has to be to make it grow
+export const TOWN_RADIUS = 12;
 export const MAX_VEHICLES_PER_COMPANY = 30;
 
 // Time a vehicle spends at a station between two legs
