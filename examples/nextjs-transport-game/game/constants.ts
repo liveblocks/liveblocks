@@ -2,14 +2,10 @@ import type { Cargo, LineKind, Transport } from "./types";
 
 // The maps a game can be played on. A map has as many tiles on each side as
 // its size says, and a new game starts on the smallest one.
-export const MAP_SIZES: readonly {
-  size: number;
-  label: string;
-  detail: string;
-}[] = [
-  { size: 64, label: "Small", detail: "7 towns" },
-  { size: 96, label: "Medium", detail: "16 towns" },
-  { size: 128, label: "Large", detail: "28 towns" },
+export const MAP_SIZES: readonly { size: number; label: string }[] = [
+  { size: 64, label: "Small" },
+  { size: 96, label: "Medium" },
+  { size: 128, label: "Large" },
 ];
 export const DEFAULT_MAP_SIZE = 64;
 export const TILE_W = 64;
@@ -129,6 +125,10 @@ export const CARGO: Record<
   wood: { label: "Wood", rate: 2.6, color: "#8a5a33" },
   grain: { label: "Grain", rate: 3, color: "#e2b93b" },
   oil: { label: "Oil", rate: 3.4, color: "#56606e" },
+  gold: { label: "Gold", rate: 5.2, color: "#e8c547" },
+  copper: { label: "Copper ore", rate: 2.8, color: "#b5673c" },
+  water: { label: "Water", rate: 2.4, color: "#5aa7d8" },
+  fruit: { label: "Fruit", rate: 3.2, color: "#e2703a" },
 };
 
 export const CARGO_KINDS: readonly Cargo[] = [
@@ -137,6 +137,10 @@ export const CARGO_KINDS: readonly Cargo[] = [
   "wood",
   "grain",
   "oil",
+  "gold",
+  "copper",
+  "water",
+  "fruit",
 ];
 
 // Cost per tile

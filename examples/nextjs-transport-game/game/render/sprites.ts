@@ -1,5 +1,6 @@
 import { TILE_H, TILE_W } from "../constants";
 import { createRng, type Rng } from "../rng";
+import type { Climate } from "../climate";
 import type { IndustryType } from "../world";
 import {
   box,
@@ -14,6 +15,7 @@ import {
   shade,
   windowBand,
 } from "./shapes";
+import { type Look, LOOKS } from "./looks";
 import { currentTheme, ink, outline, type Theme } from "./theme";
 
 // Everything that never changes (trees, houses, industries) is drawn once
@@ -127,28 +129,103 @@ function drawTree(
   x: number,
   y: number,
   conifer: boolean,
-  scale: number,
-  color: string
+  scale: number
 ) {
-  groundShadow(ctx, x, y, 6 * scale);
+  const { kind, color } = conifer ? look.conifer : look.leafy;
+  groundShadow(ctx, x, y, (kind === "cactus" ? 4 : 6) * scale);
+
+  if (kind === "cactus") {
+    ctx.fillStyle = ink(color);
+    ctx.beginPath();
+    ctx.roundRect(
+      x - 1.6 * scale,
+      y - 12 * scale,
+      3.2 * scale,
+      12 * scale,
+      1.6
+    );
+    ctx.roundRect(x - 5 * scale, y - 9 * scale, 2.2 * scale, 5 * scale, 1.1);
+    ctx.roundRect(x - 5 * scale, y - 5.6 * scale, 4 * scale, 2 * scale, 1);
+    ctx.roundRect(
+      x + 2.8 * scale,
+      y - 10.5 * scale,
+      2.2 * scale,
+      4.5 * scale,
+      1.1
+    );
+    ctx.roundRect(x + 1 * scale, y - 7.6 * scale, 4 * scale, 2 * scale, 1);
+    ctx.fill();
+    outline(ctx);
+    return;
+  }
+
+  if (kind === "palm") {
+    const top = y - 15 * scale;
+    ctx.strokeStyle = ink("#8a6a45");
+    ctx.lineWidth = 1.8 * scale;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(x + 2.5 * scale, y - 8 * scale, x + scale, top);
+    ctx.stroke();
+    // Fronds hang down all around the top of the trunk
+    const fronds: [number, number, string][] = [
+      [-8, 3, shade(color, 0.8)],
+      [8.5, 3.5, shade(color, 0.8)],
+      [-7, -3.5, color],
+      [7.5, -3, color],
+      [-3, 6, shade(color, 0.9)],
+      [4, 6.5, shade(color, 0.9)],
+      [0.5, -6, shade(color, 1.1)],
+    ];
+    ctx.lineWidth = 2.4 * scale;
+    for (const [dx, dy, frond] of fronds) {
+      ctx.strokeStyle = ink(frond);
+      ctx.beginPath();
+      ctx.moveTo(x + scale, top);
+      ctx.quadraticCurveTo(
+        x + scale + dx * 0.55 * scale,
+        top + (dy - 5) * 0.6 * scale,
+        x + scale + dx * scale,
+        top + dy * scale
+      );
+      ctx.stroke();
+    }
+    ctx.lineCap = "butt";
+    return;
+  }
+
   ctx.fillStyle = ink("#6b4a2b");
   ctx.fillRect(x - 1, y - 5 * scale, 2, 5 * scale);
 
-  if (conifer) {
-    for (let tier = 0; tier < 3; tier++) {
-      const half = (6.5 - tier * 1.5) * scale;
-      const base = y - (3 + tier * 5) * scale;
-      ctx.beginPath();
-      ctx.moveTo(x - half, base);
-      ctx.lineTo(x + half, base);
-      ctx.lineTo(x, base - 9 * scale);
-      ctx.closePath();
-      ctx.fillStyle = ink(shade(color, 0.8 + tier * 0.12));
-      ctx.fill();
-    }
-  } else {
+  if (kind === "round") {
     circle(ctx, x, y - 10 * scale, 6.5 * scale, shade(color, 0.85));
     circle(ctx, x - 1.5 * scale, y - 11.5 * scale, 4.2 * scale, color);
+    return;
+  }
+
+  for (let tier = 0; tier < 3; tier++) {
+    const half = (6.5 - tier * 1.5) * scale;
+    const base = y - (3 + tier * 5) * scale;
+    ctx.beginPath();
+    ctx.moveTo(x - half, base);
+    ctx.lineTo(x + half, base);
+    ctx.lineTo(x, base - 9 * scale);
+    ctx.closePath();
+    ctx.fillStyle = ink(shade(color, 0.8 + tier * 0.12));
+    ctx.fill();
+    if (kind === "snowy") {
+      // Snow lies on the top of every layer of branches
+      ctx.beginPath();
+      ctx.moveTo(x - half * 0.62, base - 9 * scale * 0.38);
+      ctx.lineTo(x - half * 0.2, base - 9 * scale * 0.3);
+      ctx.lineTo(x + half * 0.15, base - 9 * scale * 0.42);
+      ctx.lineTo(x + half * 0.62, base - 9 * scale * 0.38);
+      ctx.lineTo(x, base - 9 * scale);
+      ctx.closePath();
+      ctx.fillStyle = ink("#f4f8fb");
+      ctx.fill();
+    }
   }
 }
 
@@ -188,18 +265,75 @@ function drawTrees(
       ox + (tree.x - tree.y) * HALF_W,
       oy + (tree.x + tree.y) * HALF_H,
       tree.conifer,
-      tree.scale,
-      tree.conifer ? "#2f7a4a" : "#4f9a3f"
+      tree.scale
     );
   }
 }
 
-const WALLS = ["#f3ead9", "#e6d3b8", "#f7f2e8", "#dcb99c"];
-const ROOFS = ["#b4533c", "#8c5a44", "#5f6b7a", "#a8452f"];
+// The climate that the sprite being drawn is for. Sprites are drawn again
+// when the map is zoomed in, long after they were made, so every sprite
+// sets this itself before it draws.
+let look: Look = LOOKS.normal;
+
 const OFFICES = ["#cfd6de", "#d9cfc3", "#b9c7d6", "#e4dccb"];
 
 const BRICK = "#9a6b55";
 const DOOR = "#7a5236";
+
+// The roof of a house: pitched, or a flat slab where houses are built
+// that way
+function houseGable(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  z: number,
+  rise: number,
+  color: string,
+  wallColor: string,
+  ridgeAlongX = true
+) {
+  if (look.flatRoofs) {
+    box(ctx, ox, oy, x0, y0, x1, y1, z, z + 2.5, color);
+  } else {
+    gableRoof(
+      ctx,
+      ox,
+      oy,
+      x0,
+      y0,
+      x1,
+      y1,
+      z,
+      rise,
+      color,
+      wallColor,
+      ridgeAlongX
+    );
+  }
+}
+
+function houseHip(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  z: number,
+  rise: number,
+  color: string
+) {
+  if (look.flatRoofs) {
+    box(ctx, ox, oy, x0, y0, x1, y1, z, z + 2.5, color);
+  } else {
+    hipRoof(ctx, ox, oy, x0, y0, x1, y1, z, rise, color);
+  }
+}
 
 // A chimney standing on the front slope of a roof
 function chimney(
@@ -211,6 +345,9 @@ function chimney(
   z0: number,
   z1: number
 ) {
+  if (look.flatRoofs) {
+    return;
+  }
   box(ctx, ox, oy, x, y, x + 0.08, y + 0.08, z0, z1, BRICK, shade(BRICK, 0.7));
 }
 
@@ -223,8 +360,8 @@ function drawCottage(
   color: number,
   shape: number
 ) {
-  const wall = WALLS[(color + shape) % WALLS.length];
-  const roof = ROOFS[color % ROOFS.length];
+  const wall = look.walls[(color + shape) % look.walls.length];
+  const roof = look.roofs[color % look.roofs.length];
   groundShadow(ctx, ox, oy + HALF_H + 3, 19);
 
   if (shape === 1) {
@@ -234,17 +371,17 @@ function drawCottage(
     windowBand(ctx, ox, oy, "left", 0.45, 0.55, 0.72, 0, 5, DOOR);
     windowBand(ctx, ox, oy, "left", 0.64, 0.78, 0.72, 2.5, 5.5, GLASS);
     windowBand(ctx, ox, oy, "right", 0.42, 0.6, 0.86, 2.5, 5.5, GLASS);
-    gableRoof(ctx, ox, oy, 0.1, 0.26, 0.9, 0.76, 7, 7, roof, wall);
+    houseGable(ctx, ox, oy, 0.1, 0.26, 0.9, 0.76, 7, 7, roof, wall);
     chimney(ctx, ox, oy, 0.24, 0.58, 10.5, 16);
   } else if (shape === 2) {
     // Two wings in an L
     box(ctx, ox, oy, 0.16, 0.18, 0.84, 0.54, 0, 8, wall);
     windowBand(ctx, ox, oy, "left", 0.22, 0.36, 0.54, 3, 6, GLASS);
-    gableRoof(ctx, ox, oy, 0.12, 0.14, 0.88, 0.58, 8, 7, roof, wall);
+    houseGable(ctx, ox, oy, 0.12, 0.14, 0.88, 0.58, 8, 7, roof, wall);
     box(ctx, ox, oy, 0.46, 0.5, 0.82, 0.86, 0, 8, wall);
     windowBand(ctx, ox, oy, "left", 0.56, 0.72, 0.86, 3, 6, GLASS);
     windowBand(ctx, ox, oy, "right", 0.62, 0.72, 0.82, 0, 5, DOOR);
-    gableRoof(ctx, ox, oy, 0.42, 0.46, 0.86, 0.9, 8, 7, roof, wall, false);
+    houseGable(ctx, ox, oy, 0.42, 0.46, 0.86, 0.9, 8, 7, roof, wall, false);
   } else if (shape === 3) {
     // A square villa of two floors, under a roof that comes to a point
     box(ctx, ox, oy, 0.22, 0.22, 0.78, 0.78, 0, 13, wall);
@@ -256,11 +393,11 @@ function drawCottage(
       windowBand(ctx, ox, oy, side, 0.3, 0.44, 0.78, 8, 11, GLASS);
       windowBand(ctx, ox, oy, side, 0.56, 0.7, 0.78, 8, 11, GLASS);
     }
-    hipRoof(ctx, ox, oy, 0.17, 0.17, 0.83, 0.83, 13, 9, roof);
+    houseHip(ctx, ox, oy, 0.17, 0.17, 0.83, 0.83, 13, 9, roof);
   } else if (shape === 4) {
     // Two small houses that share a wall
     [0.1, 0.52].forEach((from, index) => {
-      const own = WALLS[(color + shape + index) % WALLS.length];
+      const own = look.walls[(color + shape + index) % look.walls.length];
       box(ctx, ox, oy, from, 0.26, from + 0.38, 0.78, 0, 8, own);
       windowBand(
         ctx,
@@ -286,7 +423,7 @@ function drawCottage(
         5.5,
         GLASS
       );
-      gableRoof(
+      houseGable(
         ctx,
         ox,
         oy,
@@ -296,7 +433,7 @@ function drawCottage(
         0.82,
         8,
         7,
-        ROOFS[(color + index) % ROOFS.length],
+        look.roofs[(color + index) % look.roofs.length],
         own,
         false
       );
@@ -307,7 +444,7 @@ function drawCottage(
     box(ctx, ox, oy, 0.12, 0.12, 0.62, 0.62, 0, 8, wall);
     windowBand(ctx, ox, oy, "left", 0.3, 0.4, 0.62, 0, 5, DOOR);
     windowBand(ctx, ox, oy, "right", 0.26, 0.46, 0.62, 2.5, 5.5, GLASS);
-    gableRoof(
+    houseGable(
       ctx,
       ox,
       oy,
@@ -326,16 +463,14 @@ function drawCottage(
       ox + (0.8 - 0.42) * HALF_W,
       oy + (0.8 + 0.42) * HALF_H,
       false,
-      0.75,
-      "#4f9a3f"
+      0.75
     );
     drawTree(
       ctx,
       ox + (0.36 - 0.82) * HALF_W,
       oy + (0.36 + 0.82) * HALF_H,
       color % 2 === 1,
-      0.7,
-      color % 2 === 1 ? "#2f7a4a" : "#4f9a3f"
+      0.7
     );
     box(ctx, ox, oy, 0.08, 0.9, 0.94, 0.94, 0, 2.5, "#3f8a3a");
     box(ctx, ox, oy, 0.9, 0.08, 0.94, 0.9, 0, 2.5, "#3f8a3a");
@@ -343,7 +478,7 @@ function drawCottage(
     box(ctx, ox, oy, 0.24, 0.24, 0.76, 0.76, 0, 8, wall);
     windowBand(ctx, ox, oy, "left", 0.44, 0.56, 0.76, 0, 5, DOOR);
     windowBand(ctx, ox, oy, "right", 0.36, 0.5, 0.76, 3, 6, GLASS);
-    gableRoof(
+    houseGable(
       ctx,
       ox,
       oy,
@@ -368,8 +503,8 @@ function drawTownhouse(
   color: number,
   shape: number
 ) {
-  const wall = WALLS[(color + 1 + shape) % WALLS.length];
-  const roof = ROOFS[(color + 2) % ROOFS.length];
+  const wall = look.walls[(color + 1 + shape) % look.walls.length];
+  const roof = look.roofs[(color + 2) % look.roofs.length];
   groundShadow(ctx, ox, oy + HALF_H + 3, 22);
 
   if (shape === 1) {
@@ -394,7 +529,7 @@ function drawTownhouse(
       windowBand(ctx, ox, oy, "right", 0.28, 0.44, 0.86, z, z + 3.5, GLASS);
       windowBand(ctx, ox, oy, "right", 0.56, 0.72, 0.86, z, z + 3.5, GLASS);
     }
-    gableRoof(ctx, ox, oy, 0.1, 0.16, 0.9, 0.84, 15, 8, roof, wall);
+    houseGable(ctx, ox, oy, 0.1, 0.16, 0.9, 0.84, 15, 8, roof, wall);
     chimney(ctx, ox, oy, 0.26, 0.6, 19, 26);
     chimney(ctx, ox, oy, 0.66, 0.6, 19, 26);
   } else if (shape === 2) {
@@ -430,7 +565,7 @@ function drawTownhouse(
       windowBand(ctx, ox, oy, side, 0.56, 0.8, 0.86, 3, 7.5, GLASS);
     }
     windowBand(ctx, ox, oy, "left", 0.45, 0.53, 0.86, 0, 6, DOOR);
-    const upper = WALLS[(color + shape + 2) % WALLS.length];
+    const upper = look.walls[(color + shape + 2) % look.walls.length];
     box(ctx, ox, oy, 0.14, 0.14, 0.64, 0.64, 11, 23, upper, shade(roof, 0.9));
     for (const z of [13.5, 18.5]) {
       windowBand(ctx, ox, oy, "left", 0.2, 0.58, 0.64, z, z + 3, GLASS);
@@ -555,7 +690,7 @@ function drawOffice(
 
   if (shape === 1) {
     // Tall windows between piers, under a heavy cornice
-    const stone = WALLS[(color + 3) % WALLS.length];
+    const stone = look.walls[(color + 3) % look.walls.length];
     box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 0, height, stone);
     for (const from of [0.2, 0.37, 0.54, 0.71]) {
       for (const side of ["left", "right"] as const) {
@@ -887,7 +1022,7 @@ const AWNINGS = ["#d9534f", "#3f8fbf", "#4a9d5b", "#e0a030"];
 
 // A row of shops, with striped awnings over their windows
 function drawShops(ctx: Ctx, ox: number, oy: number, color: number) {
-  const wall = WALLS[(color + 2) % WALLS.length];
+  const wall = look.walls[(color + 2) % look.walls.length];
   const awning = AWNINGS[color % AWNINGS.length];
   groundShadow(ctx, ox, oy + HALF_H + 3, 22);
   box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 0, 14, wall, "#a9a498");
@@ -991,7 +1126,7 @@ function drawChurch(ctx: Ctx, ox: number, oy: number) {
 
 // A lawn with paths to a fountain, and trees around it
 function drawPark(ctx: Ctx, ox: number, oy: number, variant: number) {
-  flat(ctx, ox, oy, 0.05, 0.05, 0.95, 0.95, "#93cf6b");
+  flat(ctx, ox, oy, 0.05, 0.05, 0.95, 0.95, look.lawn);
   flat(ctx, ox, oy, 0.45, 0.05, 0.55, 0.95, "#e3d6ad");
   flat(ctx, ox, oy, 0.05, 0.45, 0.95, 0.55, "#e3d6ad");
   cylinder(ctx, ox, oy, 0.5, 0.5, 0.15, 0, 2.5, "#cfc9bb", "#74b6e6");
@@ -1236,7 +1371,7 @@ const INDUSTRY_ARTISTS: Record<
   },
 
   forest(ctx, ox, oy, rng) {
-    ground(ctx, ox, oy, "#5f9c48");
+    ground(ctx, ox, oy, shade(look.wooded, 0.9));
     drawTrees(ctx, ox, oy, rng, 16, 2, 0.9, (x, y) => x < 1.1 || y < 1.1);
     box(ctx, ox, oy, 1.3, 1.35, 1.78, 1.75, 0, 7, "#9a6a3e");
     gableRoof(ctx, ox, oy, 1.26, 1.31, 1.82, 1.79, 7, 6, "#5b3d24", "#9a6a3e");
@@ -1336,9 +1471,188 @@ const INDUSTRY_ARTISTS: Record<
     ctx.fillStyle = ink("#f59e0b");
     ctx.fill();
   },
+
+  gold_mine(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#9c8f7a");
+    mound(ctx, ox, oy, 0.55, 0.55, 0.42, 22, "#8a7c66");
+    // The way into the hill
+    box(ctx, ox, oy, 0.62, 0.86, 0.9, 0.96, 0, 9, "#6b4a2b", "#4a3a2c");
+    windowBand(ctx, ox, oy, "left", 0.68, 0.84, 0.96, 0, 7, "#1f1c1a");
+    // The winding tower over the shaft
+    box(ctx, ox, oy, 1.3, 0.4, 1.62, 0.72, 0, 14, "#a58a66");
+    box(ctx, ox, oy, 1.38, 0.48, 1.54, 0.64, 14, 40, "#55595f");
+    cylinder(ctx, ox, oy, 1.46, 0.56, 0.12, 40, 43, "#3a3d42");
+    box(ctx, ox, oy, 0.3, 1.25, 0.95, 1.7, 0, 9, "#b08a5e");
+    gableRoof(ctx, ox, oy, 0.26, 1.21, 0.99, 1.74, 9, 6, "#6a5a4a", "#b08a5e");
+    mound(ctx, ox, oy, 1.45, 1.45, 0.26, 9, "#e2b93b");
+    mound(ctx, ox, oy, 1.6, 1.2, 0.16, 6, "#f0cf5a");
+  },
+
+  bank(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#b9b5ab");
+    flat(ctx, ox, oy, 0.2, 1.5, 1.8, 1.9, "#cdc8bc");
+    // Steps up to a front of columns under a pediment
+    box(ctx, ox, oy, 0.22, 0.22, 1.78, 1.52, 0, 3, "#d8d2c4");
+    box(ctx, ox, oy, 0.3, 0.3, 1.7, 1.4, 3, 26, "#ece5d3");
+    for (let column = 0; column < 6; column++) {
+      const x = 0.4 + column * 0.22;
+      windowBand(ctx, ox, oy, "left", x, x + 0.1, 1.4, 5, 22, "#b9ae97");
+    }
+    windowBand(ctx, ox, oy, "left", 0.9, 1.1, 1.4, 3, 14, "#5a4632");
+    for (const z of [7, 16]) {
+      windowBand(ctx, ox, oy, "right", 0.42, 1.28, 1.7, z, z + 5, GLASS);
+    }
+    box(ctx, ox, oy, 0.26, 0.26, 1.74, 1.44, 26, 29, "#d8d2c4");
+    gableRoof(
+      ctx,
+      ox,
+      oy,
+      0.26,
+      0.26,
+      1.74,
+      1.44,
+      29,
+      8,
+      "#8f9aa3",
+      "#ece5d3",
+      false
+    );
+  },
+
+  copper_mine(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#b89468");
+    // An open pit, dug down in steps
+    flat(ctx, ox, oy, 0.15, 0.15, 1.2, 1.2, "#a67c52");
+    flat(ctx, ox, oy, 0.3, 0.3, 1.05, 1.05, "#8f6541");
+    flat(ctx, ox, oy, 0.45, 0.45, 0.9, 0.9, "#754f33");
+    flat(ctx, ox, oy, 0.58, 0.58, 0.78, 0.78, "#5c3d28");
+    box(ctx, ox, oy, 1.35, 0.3, 1.75, 0.8, 0, 16, "#8d9197", "#6f7379");
+    box(ctx, ox, oy, 1.42, 0.8, 1.62, 1.35, 6, 9, "#55595f");
+    mound(ctx, ox, oy, 1.5, 1.5, 0.3, 12, "#b5673c");
+    mound(ctx, ox, oy, 0.6, 1.6, 0.22, 8, "#9a5a36");
+    box(ctx, ox, oy, 0.95, 1.5, 1.2, 1.8, 0, 6, "#d9c9a6", "#8a6a4c");
+  },
+
+  smelter(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#9f9c95");
+    for (const x of [0.4, 0.8]) {
+      cylinder(ctx, ox, oy, x, 0.4, 0.1, 0, 46, "#7d6a60", "#2f2a28");
+      cylinder(ctx, ox, oy, x, 0.4, 0.1, 36, 39, "#d8d2c4");
+    }
+    box(ctx, ox, oy, 0.2, 0.7, 1.4, 1.75, 0, 20, "#8a5f4c", "#6d7177");
+    // Light of the furnaces inside
+    windowBand(ctx, ox, oy, "left", 0.35, 0.65, 1.75, 0, 9, "#f59e0b");
+    windowBand(ctx, ox, oy, "left", 0.85, 1.25, 1.75, 11, 16, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.85, 1.6, 1.4, 11, 16, GLASS);
+    gableRoof(ctx, ox, oy, 0.2, 0.7, 1.4, 1.75, 20, 5, "#5d6167", "#8a5f4c");
+    cylinder(ctx, ox, oy, 1.6, 0.5, 0.2, 0, 18, "#b9bec4");
+    mound(ctx, ox, oy, 1.65, 1.5, 0.2, 8, "#b5673c");
+  },
+
+  water_supply(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#d9c48e");
+    // A spring, and the pond it fills
+    const px = ox + (0.75 - 0.8) * HALF_W;
+    const py = oy + (0.75 + 0.8) * HALF_H;
+    ctx.beginPath();
+    ctx.ellipse(px, py, 24, 11, 0, 0, Math.PI * 2);
+    ctx.fillStyle = ink("#7aa36a");
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(px, py, 20, 8.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = ink(look.water);
+    ctx.fill();
+    drawTree(ctx, px - 22, py - 2, false, 0.9);
+    drawTree(ctx, px + 4, py - 11, false, 0.75);
+    // A wind pump
+    const wx = ox + (1.5 - 0.5) * HALF_W;
+    const wy = oy + (1.5 + 0.5) * HALF_H;
+    derrick(ctx, wx, wy, 34);
+    circle(ctx, wx, wy - 35, 7, "#c9ced4");
+    circle(ctx, wx, wy - 35, 1.8, "#3a3d42");
+    box(ctx, ox, oy, 1.25, 1.3, 1.75, 1.72, 0, 9, "#eadfc6", "#a7adb4");
+    cylinder(ctx, ox, oy, 1.02, 1.55, 0.13, 0, 9, "#b9bec4", "#8fbfe0");
+  },
+
+  water_tower(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#cdbb8c");
+    for (const [x, y] of [
+      [0.62, 0.62],
+      [1.02, 0.62],
+      [0.62, 1.02],
+      [1.02, 1.02],
+    ]) {
+      cylinder(ctx, ox, oy, x, y, 0.035, 0, 30, "#6f757c");
+    }
+    cylinder(ctx, ox, oy, 0.82, 0.82, 0.07, 0, 30, "#8d9399");
+    cylinder(ctx, ox, oy, 0.82, 0.82, 0.38, 30, 46, "#dfe6ea", "#c2ccd2");
+    cylinder(ctx, ox, oy, 0.82, 0.82, 0.38, 36, 39, "#5aa7d8");
+    cylinder(ctx, ox, oy, 0.82, 0.82, 0.1, 46, 49, "#a7adb4");
+    box(ctx, ox, oy, 1.3, 1.25, 1.75, 1.7, 0, 9, "#eadfc6", "#b98a62");
+    windowBand(ctx, ox, oy, "left", 1.45, 1.6, 1.7, 0, 6, DOOR);
+    cylinder(ctx, ox, oy, 0.45, 1.55, 0.16, 0, 8, "#b9bec4", "#8fbfe0");
+  },
+
+  plantation(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#6fae4e");
+    // Fruit trees in rows
+    for (let row = 0; row < 4; row++) {
+      for (let column = 0; column < 4; column++) {
+        if (row > 1 && column > 1) {
+          continue;
+        }
+        const x = 0.26 + column * 0.42;
+        const y = 0.26 + row * 0.42;
+        const px = ox + (x - y) * HALF_W;
+        const py = oy + (x + y) * HALF_H;
+        groundShadow(ctx, px, py, 6);
+        ctx.fillStyle = ink("#6b4a2b");
+        ctx.fillRect(px - 1, py - 5, 2, 5);
+        circle(ctx, px, py - 9, 6, "#3f8f3a");
+        for (const [dx, dy] of [
+          [-2.5, -1],
+          [2, 1.5],
+          [0.5, -3.5],
+        ]) {
+          circle(ctx, px + dx, py - 9 + dy, 1.3, "#f08a2c");
+        }
+      }
+    }
+    box(ctx, ox, oy, 1.2, 1.25, 1.8, 1.75, 0, 9, "#e9d9b0");
+    windowBand(ctx, ox, oy, "left", 1.4, 1.6, 1.75, 0, 6, "#7a5236");
+    gableRoof(ctx, ox, oy, 1.15, 1.2, 1.85, 1.8, 9, 7, "#b5533c", "#e9d9b0");
+  },
+
+  food_plant(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#aaa69d");
+    for (const x of [0.38, 0.72, 1.06]) {
+      cylinder(ctx, ox, oy, x, 0.4, 0.15, 0, 30, "#e3e6e8", "#bfc5ca");
+    }
+    box(ctx, ox, oy, 0.2, 0.75, 1.45, 1.8, 0, 16, "#f0ede4", "#b9bec4");
+    box(ctx, ox, oy, 0.2, 0.75, 1.45, 1.8, 16, 18, "#3f8fbf", "#b9bec4");
+    windowBand(ctx, ox, oy, "left", 0.3, 1.35, 1.8, 7, 11, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.85, 1.7, 1.45, 7, 11, GLASS);
+    windowBand(ctx, ox, oy, "left", 0.5, 0.8, 1.8, 0, 5, "#55595f");
+    box(ctx, ox, oy, 1.45, 1.15, 1.85, 1.8, 0, 9, "#d9d4c6", "#9da2a7");
+    cylinder(ctx, ox, oy, 1.6, 0.5, 0.07, 0, 36, "#b9bec4", "#4a4a4a");
+  },
 };
 
-export function createSprites(createCanvas: CanvasFactory): Sprites {
+export function createSprites(
+  createCanvas: CanvasFactory,
+  climate: Climate
+): Sprites {
+  const mine = LOOKS[climate];
+  const make = (
+    tiles: number,
+    height: number,
+    draw: (ctx: Ctx, ox: number, oy: number) => void
+  ): Sprite =>
+    makeSprite(createCanvas, tiles, height, (ctx, ox, oy) => {
+      look = mine;
+      draw(ctx, ox, oy);
+    });
+
   // Randomly placed details start from a fixed seed per sprite, so that a
   // sprite looks the same every time it's drawn
   const trees: Sprite[][] = [];
@@ -1348,7 +1662,7 @@ export function createSprites(createCanvas: CanvasFactory): Sprites {
       const seed = 7 + count * 4 + variant;
       const conifers = variant % 2 === 0 ? 0.75 : 0.25;
       variants.push(
-        makeSprite(createCanvas, 1, 30, (ctx, ox, oy) =>
+        make(1, 30, (ctx, ox, oy) =>
           drawTrees(ctx, ox, oy, createRng(seed), count, 1, conifers)
         )
       );
@@ -1367,7 +1681,7 @@ export function createSprites(createCanvas: CanvasFactory): Sprites {
   ];
   const houses = houseArtists.map(({ draw, height, shapes }) =>
     Array.from({ length: shapes * 4 }, (_, index) =>
-      makeSprite(createCanvas, 1, height, (ctx, ox, oy) =>
+      make(1, height, (ctx, ox, oy) =>
         draw(ctx, ox, oy, index % 4, Math.floor(index / 4))
       )
     )
@@ -1375,21 +1689,17 @@ export function createSprites(createCanvas: CanvasFactory): Sprites {
   // Then the places people go to: shops, a church, a park and a stadium
   houses.push(
     [0, 1, 2, 3].map((color) =>
-      makeSprite(createCanvas, 1, 22, (ctx, ox, oy) =>
-        drawShops(ctx, ox, oy, color)
-      )
+      make(1, 22, (ctx, ox, oy) => drawShops(ctx, ox, oy, color))
     ),
-    [makeSprite(createCanvas, 1, 60, drawChurch)],
+    [make(1, 60, drawChurch)],
     [0, 1, 2].map((variant) =>
-      makeSprite(createCanvas, 1, 30, (ctx, ox, oy) =>
-        drawPark(ctx, ox, oy, variant)
-      )
+      make(1, 30, (ctx, ox, oy) => drawPark(ctx, ox, oy, variant))
     ),
-    [makeSprite(createCanvas, 2, 44, drawStadium)]
+    [make(2, 44, drawStadium)]
   );
 
   const industry = (type: IndustryType) =>
-    makeSprite(createCanvas, 2, 56, (ctx, ox, oy) =>
+    make(2, 56, (ctx, ox, oy) =>
       INDUSTRY_ARTISTS[type](ctx, ox, oy, createRng(7))
     );
 
@@ -1405,6 +1715,14 @@ export function createSprites(createCanvas: CanvasFactory): Sprites {
       factory: industry("factory"),
       oil_wells: industry("oil_wells"),
       refinery: industry("refinery"),
+      gold_mine: industry("gold_mine"),
+      bank: industry("bank"),
+      copper_mine: industry("copper_mine"),
+      smelter: industry("smelter"),
+      water_supply: industry("water_supply"),
+      water_tower: industry("water_tower"),
+      plantation: industry("plantation"),
+      food_plant: industry("food_plant"),
     },
   };
 }

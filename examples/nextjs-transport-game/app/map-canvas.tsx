@@ -290,7 +290,7 @@ export function MapCanvas(props: Props) {
       rendererRef.current = null;
       latest.current.view.current = null;
     };
-  }, [world.seed, world.size]);
+  }, [world.seed, world.size, world.climate, world.landscape]);
 
   useEffect(() => {
     rendererRef.current?.setWorld(world);

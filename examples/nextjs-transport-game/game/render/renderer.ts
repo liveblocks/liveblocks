@@ -59,6 +59,7 @@ import {
   spriteImage,
   spriteScale,
 } from "./sprites";
+import { LOOKS } from "./looks";
 import { currentTheme, ink, reduceColors, type Theme } from "./theme";
 
 export type Camera = {
@@ -141,7 +142,6 @@ type Label = {
   minZoom: number;
 };
 
-const WATER_COLOR = "#4b90d2";
 const POPUP_MS = 1800;
 const POPUP_RISE = 60;
 // How far above its center a town's name is drawn, depending on its tallest
@@ -234,6 +234,7 @@ function buildTerrainChunk(world: World, x0: number, y0: number): TerrainChunk {
   const { size } = world;
   const x1 = Math.min(size, x0 + TERRAIN_CHUNK);
   const y1 = Math.min(size, y0 + TERRAIN_CHUNK);
+  const look = LOOKS[world.climate];
   const ground = new Map<string, Path2D>();
   const grid = new Path2D();
   const ripples = new Path2D();
@@ -254,11 +255,11 @@ function buildTerrainChunk(world: World, x0: number, y0: number): TerrainChunk {
         continue;
       }
 
-      let base = "#7fbb58";
+      let base = look.grass;
       if (terrain === SAND) {
-        base = "#e3d4a2";
+        base = look.sand;
       } else if (terrain === GRASS && world.trees[tile] > 0) {
-        base = "#6fae50";
+        base = look.wooded;
       }
       const color = shade(base, 0.95 + Math.round(variation * 5) * 0.02);
       let path = ground.get(color);
@@ -360,7 +361,7 @@ export class Renderer {
     this.fontFamily = fontFamily;
     this.terrain = buildTerrain(world);
     this.createCanvas = createCanvas;
-    this.sprites = createSprites(createCanvas);
+    this.sprites = createSprites(createCanvas, world.climate);
     this.populate();
   }
 
@@ -538,7 +539,7 @@ export class Renderer {
     const { zoom } = camera;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = ink(WATER_COLOR);
+    ctx.fillStyle = ink(LOOKS[this.world.climate].water);
     ctx.fillRect(0, 0, width, height);
 
     ctx.setTransform(
@@ -772,7 +773,7 @@ export class Renderer {
     }
     ctx.save();
     ctx.transform(HALF_W, HALF_H, -HALF_W, HALF_H, 0, 0);
-    ctx.fillStyle = ink(WATER_COLOR);
+    ctx.fillStyle = ink(LOOKS[this.world.climate].water);
     ctx.fill(this.canalPath);
     ctx.fillStyle = ink("#6f757c");
     ctx.fill(this.canalWallPath);

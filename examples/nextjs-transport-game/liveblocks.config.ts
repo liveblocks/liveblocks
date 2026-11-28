@@ -1,4 +1,5 @@
 import type { LiveMap, LiveObject } from "@liveblocks/client";
+import type { Climate, Landscape } from "./game/climate";
 import type { Clock } from "./game/clock";
 import type {
   CompanyData,
@@ -37,6 +38,10 @@ declare global {
       seed: number;
       // How many tiles the map has on each side
       size: number;
+      // What kind of map it is: see `game/climate.ts`. Rooms from before
+      // there was a choice have neither.
+      climate?: Climate;
+      landscape?: Landscape;
       // When this map was started, on the game clock. Industries have been
       // producing since then.
       startedAt: number;

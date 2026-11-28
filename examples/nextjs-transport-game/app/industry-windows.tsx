@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Window } from "@/components/window";
 import {
   CARGO,
+  CARGO_KINDS,
   INDUSTRY_MAX_LEVEL,
   INDUSTRY_PERIOD_MS,
   INDUSTRY_SHARE,
@@ -196,8 +197,6 @@ export function IndustryWindow({
   );
 }
 
-const FREIGHT: Cargo[] = ["coal", "wood", "grain", "oil"];
-
 // The whole economy of the map at a glance: every cargo, where it comes
 // from, and where it has to go
 export function CargoWindow({
@@ -216,10 +215,17 @@ export function CargoWindow({
       (industry) => INDUSTRY[industry.type][role] === cargo
     );
 
+  // Which cargo there is differs per kind of map
+  const freight = CARGO_KINDS.filter(
+    (cargo) =>
+      industries(cargo, "produces").length > 0 ||
+      industries(cargo, "accepts").length > 0
+  );
+
   return (
     <Window title="Cargo" className="w-72" onClose={onClose}>
       <div className="win-inset mt-[3px] flex max-h-[50vh] flex-col gap-2 overflow-y-auto px-1 py-1.5">
-        {FREIGHT.map((cargo) => (
+        {freight.map((cargo) => (
           <section key={cargo}>
             <h3 className="flex items-center gap-1.5 px-1.5 font-bold">
               <span

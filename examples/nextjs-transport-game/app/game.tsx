@@ -38,6 +38,7 @@ import {
   syncTownGrowth,
   timeOf,
 } from "@/game/actions";
+import { type MapOptions, mapOptions } from "@/game/climate";
 import { type Clock, gameTime, type Speed, speedOf } from "@/game/clock";
 import {
   BUILDINGS,
@@ -135,6 +136,12 @@ export function Game() {
   const size = MAP_SIZES.some((option) => option.size === storedSize)
     ? storedSize
     : DEFAULT_MAP_SIZE;
+  const climate = useStorage((root) => root.climate);
+  const landscape = useStorage((root) => root.landscape);
+  const map = useMemo(
+    () => mapOptions({ climate, landscape }),
+    [climate, landscape]
+  );
   const roads = useStorage((root) => root.roads);
   const rails = useStorage((root) => root.rails);
   const canals = useStorage((root) => root.canals);
@@ -148,7 +155,10 @@ export function Game() {
 
   // The map isn't synced: every player generates the same one from the seed.
   // Its towns then grow with time, around whatever players have built.
-  const generated = useMemo(() => generateWorld(seed, size), [seed, size]);
+  const generated = useMemo(
+    () => generateWorld(seed, size, map),
+    [seed, size, map]
+  );
   const stationKeys = [...stations.keys()].join();
   // A street can run through a road stop, but not through other stations
   const noStreetKeys = [...stations]
@@ -360,18 +370,19 @@ export function Game() {
 
   const room = useRoom();
   const resetStorage = useMutation(
-    ({ storage }, newSize: number) =>
+    ({ storage }, newSize: number, options: MapOptions) =>
       resetGame(
         storage,
         Math.floor(Math.random() * 2 ** 31),
         newSize,
+        options,
         Date.now()
       ),
     []
   );
   // A new map is the one thing that can't be undone
-  const reset = (newSize: number) =>
-    room.history.disable(() => resetStorage(newSize));
+  const reset = (newSize: number, options: MapOptions) =>
+    room.history.disable(() => resetStorage(newSize, options));
 
   // The game runs at the same speed for everyone, so that isn't one
   // player's to undo
@@ -541,9 +552,9 @@ export function Game() {
     }
   };
 
-  const onNewMap = (newSize: number) => {
+  const onNewMap = (newSize: number, options: MapOptions) => {
     setChoosingMap(false);
-    reset(newSize);
+    reset(newSize, options);
     announce(`${company?.name ?? "Someone"} started a new map`);
   };
 
@@ -750,6 +761,7 @@ export function Game() {
         {choosingMap ? (
           <NewMapWindow
             size={size}
+            map={map}
             onStart={onNewMap}
             onClose={() => setChoosingMap(false)}
           />

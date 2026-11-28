@@ -9,7 +9,16 @@ export type LineKind = TrackKind | "canal";
 // water, canals included, from dock to dock.
 export type Transport = TrackKind | "water";
 
-export type Cargo = "passengers" | "coal" | "wood" | "grain" | "oil";
+export type Cargo =
+  | "passengers"
+  | "coal"
+  | "wood"
+  | "grain"
+  | "oil"
+  | "gold"
+  | "copper"
+  | "water"
+  | "fruit";
 
 export type Tool =
   | "select"

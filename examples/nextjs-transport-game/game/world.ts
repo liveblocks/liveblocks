@@ -1,3 +1,10 @@
+import {
+  type Climate,
+  CLIMATES,
+  DEFAULT_MAP,
+  type Landscape,
+  type MapOptions,
+} from "./climate";
 import { BUILDINGS, CHURCH, PARK, SHOPS, STADIUM } from "./constants";
 import { createRng, type Rng } from "./rng";
 import type { Cargo } from "./types";
@@ -14,7 +21,15 @@ export type IndustryType =
   | "farm"
   | "factory"
   | "oil_wells"
-  | "refinery";
+  | "refinery"
+  | "gold_mine"
+  | "bank"
+  | "copper_mine"
+  | "smelter"
+  | "water_supply"
+  | "water_tower"
+  | "plantation"
+  | "food_plant";
 
 export const INDUSTRY: Record<
   IndustryType,
@@ -34,6 +49,14 @@ export const INDUSTRY: Record<
   factory: { label: "Factory", accepts: "grain" },
   oil_wells: { label: "Oil Wells", produces: "oil", rate: 1 },
   refinery: { label: "Oil Refinery", accepts: "oil" },
+  gold_mine: { label: "Gold Mine", produces: "gold", rate: 0.5 },
+  bank: { label: "Bank", accepts: "gold" },
+  copper_mine: { label: "Copper Mine", produces: "copper", rate: 1 },
+  smelter: { label: "Smelter", accepts: "copper" },
+  water_supply: { label: "Water Supply", produces: "water", rate: 1.2 },
+  water_tower: { label: "Water Tower", accepts: "water" },
+  plantation: { label: "Fruit Plantation", produces: "fruit", rate: 0.8 },
+  food_plant: { label: "Food Plant", accepts: "fruit" },
 };
 
 // Industries cover a square of this many tiles
@@ -98,6 +121,8 @@ export function buildingTiles(size: number, tile: number, variant: number) {
 export type World = {
   seed: number;
   size: number;
+  climate: Climate;
+  landscape: Landscape;
   terrain: Uint8Array;
   // Per-tile random value, used to vary how tiles are drawn
   shade: Uint8Array;
@@ -154,22 +179,6 @@ const TOWN_SUFFIXES = [
   "bridge",
 ];
 
-const CONSUMERS: IndustryType[] = [
-  "power_station",
-  "sawmill",
-  "factory",
-  "refinery",
-];
-const PRODUCERS: IndustryType[] = [
-  "coal_mine",
-  "coal_mine",
-  "forest",
-  "forest",
-  "farm",
-  "farm",
-  "oil_wells",
-];
-
 function smooth(t: number) {
   return t * t * (3 - 2 * t);
 }
@@ -217,12 +226,42 @@ export function nearestTown(world: World, x: number, y: number): Town | null {
   return world.towns.length > 0 ? nearestTownOf(world.towns, x, y) : null;
 }
 
+// How many towns a map of this size has, if there is room for all of them
+export function townsOn(size: number, landscape: Landscape) {
+  const scale = (size * size) / (64 * 64);
+  return Math.round(7 * scale * (landscape === "island" ? ISLAND_LAND : 1));
+}
+
+// How far inland a tile of an island map is: 0 out at sea, 1 where the land
+// is as high as it would be on the mainland
+function inland(x: number, y: number, size: number) {
+  const center = (size - 1) / 2;
+  const dx = Math.abs(x - center) / center;
+  const dy = Math.abs(y - center) / center;
+  // Halfway between a square and a circle, so the coast follows the edges
+  // of the map and cuts off its corners
+  const out = (Math.max(dx, dy) + Math.hypot(dx, dy)) / 2;
+  return smooth(Math.max(0, Math.min(1, (1 - out) / ISLAND_COAST)));
+}
+
+// How much of the way from the edge of an island map to its center it takes
+// for the land to come up out of the sea
+const ISLAND_COAST = 0.2;
+// How much less land an island map has than a mainland one
+const ISLAND_LAND = 0.7;
+
 // Bigger maps have the same kind of landscape, and more of everything on
 // it. `size` is the length of a side, in tiles.
-export function generateWorld(seed: number, size: number): World {
+export function generateWorld(
+  seed: number,
+  size: number,
+  { climate, landscape }: MapOptions = DEFAULT_MAP
+): World {
   const count = size * size;
-  // How many times bigger than the smallest map this one is
-  const scale = count / (64 * 64);
+  const island = landscape === "island";
+  const country = CLIMATES[climate];
+  // How many times bigger than the smallest map this one is, counting land
+  const scale = (count / (64 * 64)) * (island ? ISLAND_LAND : 1);
   const rng = createRng(seed);
 
   const terrain = new Uint8Array(count);
@@ -238,7 +277,8 @@ export function generateWorld(seed: number, size: number): World {
   const inBounds = (x: number, y: number) =>
     x >= 0 && y >= 0 && x < size && y < size;
 
-  // Terrain. The lowest fifth of the height map becomes water.
+  // Terrain. The lowest part of the height map becomes water: a fifth of
+  // it, in most climates.
   const large = valueNoise(rng, size, 18);
   const medium = valueNoise(rng, size, 8);
   const small = valueNoise(rng, size, 4);
@@ -247,7 +287,19 @@ export function generateWorld(seed: number, size: number): World {
     height[i] = 0.55 * large[i] + 0.3 * medium[i] + 0.15 * small[i];
     shade[i] = Math.floor(rng() * 256);
   }
-  const waterLevel = Float32Array.from(height).sort()[Math.floor(count * 0.2)];
+  const waterLevel =
+    Float32Array.from(height).sort()[Math.floor(count * country.water)];
+  if (island) {
+    // The land slopes down into the sea toward the edges of the map
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const shore = inland(x, y, size);
+        const edge = Math.min(x, y, size - 1 - x, size - 1 - y);
+        height[y * size + x] =
+          edge < 3 ? -1 : height[y * size + x] - (1 - shore) * 0.6;
+      }
+    }
+  }
   for (let i = 0; i < count; i++) {
     terrain[i] = height[i] < waterLevel ? WATER : GRASS;
   }
@@ -274,9 +326,9 @@ export function generateWorld(seed: number, size: number): World {
     if (terrain[i] !== GRASS) {
       continue;
     }
-    if (woodland[i] > 0.62) {
+    if (woodland[i] > country.woodland) {
       trees[i] = 1 + Math.floor(rng() * 3);
-    } else if (rng() < 0.04) {
+    } else if (rng() < country.strayTrees) {
       trees[i] = 1;
     }
   }
@@ -287,7 +339,7 @@ export function generateWorld(seed: number, size: number): World {
   // How big each town starts out, from 0 (a hamlet: a crossroads with a
   // few cottages) to 1 (a town with offices and several streets)
   const townSizes: number[] = [];
-  const townCount = Math.round(7 * scale);
+  const townCount = townsOn(size, landscape);
   for (
     let attempt = 0;
     attempt < 800 * scale && towns.length < townCount;
@@ -548,7 +600,7 @@ export function generateWorld(seed: number, size: number): World {
   // Every round of the plan adds one more set of industries. Consumers come
   // first, so producers can be placed far away from them.
   const rounds = Math.max(1, Math.round(scale));
-  const plan = [CONSUMERS, PRODUCERS].flatMap((types) =>
+  const plan = [country.consumers, country.producers].flatMap((types) =>
     Array.from({ length: rounds }, () => types).flat()
   );
   for (const type of plan) {
@@ -602,6 +654,8 @@ export function generateWorld(seed: number, size: number): World {
   return {
     seed,
     size,
+    climate,
+    landscape,
     terrain,
     shade,
     trees,

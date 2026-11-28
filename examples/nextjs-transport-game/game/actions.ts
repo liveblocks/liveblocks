@@ -17,6 +17,7 @@ import {
 } from "./economy";
 import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
+import type { MapOptions } from "./climate";
 import {
   type Clock,
   gameTime,
@@ -746,6 +747,7 @@ export function resetGame(
   root: Root,
   seed: number,
   size: number,
+  { climate, landscape }: MapOptions,
   wallTime: number
 ) {
   setSpeed(root, "play", wallTime);
@@ -753,6 +755,8 @@ export function resetGame(
   root.update({
     seed,
     size,
+    climate,
+    landscape,
     startedAt: now,
     towns: new LiveMap(),
     industries: new LiveMap(),
