@@ -119,6 +119,8 @@ type StaticItem = {
 
 // How solid buildings are in x-ray mode
 const XRAY_ALPHA = 0.22;
+// How dark it is past the edges of the map, next to the water on it
+const BEYOND_THE_MAP = 0.62;
 
 type DynamicItem = {
   depth: number;
@@ -539,7 +541,10 @@ export class Renderer {
     const { zoom } = camera;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = ink(LOOKS[this.world.climate].water);
+    // Past the edges of the map it is darker than its water, so that it
+    // shows where the map ends
+    const { water } = LOOKS[this.world.climate];
+    ctx.fillStyle = ink(shade(water, BEYOND_THE_MAP));
     ctx.fillRect(0, 0, width, height);
 
     ctx.setTransform(
@@ -550,6 +555,15 @@ export class Renderer {
       dpr * (width / 2 - camera.x * zoom),
       dpr * (height / 2 - camera.y * zoom)
     );
+    const { size } = this.world;
+    ctx.beginPath();
+    ctx.moveTo(worldX(0, 0), worldY(0, 0));
+    ctx.lineTo(worldX(size, 0), worldY(size, 0));
+    ctx.lineTo(worldX(size, size), worldY(size, size));
+    ctx.lineTo(worldX(0, size), worldY(0, size));
+    ctx.closePath();
+    ctx.fillStyle = ink(water);
+    ctx.fill();
 
     const left = camera.x - width / 2 / zoom;
     const right = camera.x + width / 2 / zoom;
