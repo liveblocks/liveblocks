@@ -161,6 +161,7 @@ export function Game() {
           .flatMap((layer) => Object.keys(layer))
           .map(Number)
       ),
+      canals: new Set(Object.keys(canals).map(Number)),
       noStreets: new Set(toTiles(noStreetKeys)),
       demolished: new Set(Object.keys(demolished).map(Number)),
     }),

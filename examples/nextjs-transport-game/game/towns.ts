@@ -435,6 +435,8 @@ function planTown(world: World, town: Town) {
 // stations and docks), and tiles where a house was demolished
 export type Built = {
   tracks: ReadonlySet<number>;
+  // The ones of those that are canals
+  canals: ReadonlySet<number>;
   noStreets: ReadonlySet<number>;
   demolished: ReadonlySet<number>;
 };
@@ -456,14 +458,39 @@ export function growWorld(
 
   for (const house of world.houses) {
     const tile = house.y * size + house.x;
-    const gone = buildingTiles(size, tile, house.variant).some((covered) =>
-      built.demolished.has(covered)
+    const gone = buildingTiles(size, tile, house.variant).some(
+      (covered) => built.demolished.has(covered) || built.tracks.has(covered)
     );
     if (!gone) {
       tiers[tile] = house.variant;
       townOf[tile] = house.town;
     }
   }
+
+  // A street crosses a canal on a bridge, but doesn't run on top of one:
+  // not where the canal goes on the same way as the street does
+  const alongCanal = (tile: number) => {
+    if (!built.canals.has(tile)) {
+      return false;
+    }
+    const x = tile % size;
+    const y = Math.floor(tile / size);
+    const town = nearestTown(world, x, y);
+    if (!town) {
+      return false;
+    }
+    const { northSouth, eastWest } = streetLines(town, x, y);
+    const canal = (dx: number, dy: number) =>
+      x + dx >= 0 &&
+      x + dx < size &&
+      y + dy >= 0 &&
+      y + dy < size &&
+      built.canals.has(tile + dy * size + dx);
+    return (
+      (northSouth && (canal(0, -1) || canal(0, 1))) ||
+      (eastWest && (canal(-1, 0) || canal(1, 0)))
+    );
+  };
 
   world.towns.forEach((_, town) => {
     const wanted = Math.floor(steps[town] ?? 0);
@@ -476,7 +503,7 @@ export function growWorld(
       const step = plan[index];
       const { kind, tile } = step;
       if (kind === "street") {
-        if (!built.noStreets.has(tile)) {
+        if (!built.noStreets.has(tile) && !alongCanal(tile)) {
           townRoads[tile] = 1;
           trees[tile] = 0;
         }
