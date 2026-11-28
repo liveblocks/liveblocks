@@ -1694,6 +1694,71 @@ function drawRoadVehicle(
   }
 }
 
+// A diesel engine: a long hood over the motor, the driver's cab, and a
+// short nose in front of it
+function drawLocomotive(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  dx: number,
+  dy: number,
+  color: string
+) {
+  // A part of the engine, `along` tiles ahead of its middle
+  const part = (
+    along: number,
+    length: number,
+    width: number,
+    z0: number,
+    z1: number,
+    side: string,
+    top = side
+  ) =>
+    orientedBox(
+      ctx,
+      x + dx * along,
+      y + dy * along,
+      dx,
+      dy,
+      length,
+      width,
+      z0,
+      z1,
+      side,
+      top
+    );
+  const dark = "#2f3237";
+  const roof = shade(color, 0.8);
+
+  const hood = () => {
+    part(-0.08, 0.24, 0.16, 2.5, 6, color);
+    part(-0.08, 0.24, 0.16, 6, 7.2, "#f4f4f5");
+    part(-0.08, 0.24, 0.16, 7.2, 10, color, roof);
+    part(-0.04, 0.06, 0.09, 10, 10.8, dark, "#565b63");
+    part(-0.14, 0.035, 0.05, 10, 12.6, dark, "#1c1d20");
+  };
+  const cab = () => {
+    part(0.085, 0.09, 0.18, 2.5, 8, color);
+    part(0.085, 0.09, 0.18, 8, 11, "#22303f");
+    part(0.085, 0.1, 0.19, 11, 12.3, roof, shade(color, 1.15));
+  };
+  const nose = () => {
+    part(0.165, 0.07, 0.16, 2.5, 6, color);
+    part(0.165, 0.07, 0.16, 6, 7.2, "#f4f4f5", color);
+    part(0.201, 0.006, 0.08, 3.8, 5.4, "#fff3b0");
+  };
+
+  part(0, 0.41, 0.18, 0.8, 2.5, dark);
+  // Whichever end is further from the camera goes first
+  const parts = [hood, cab, nose];
+  if (dx + dy < 0) {
+    parts.reverse();
+  }
+  for (const draw of parts) {
+    draw();
+  }
+}
+
 function drawTrainCar(
   ctx: Ctx,
   x: number,
@@ -1708,8 +1773,7 @@ function drawTrainCar(
   shadow(ctx, x, y, dx, dy, 0.42, 0.22);
 
   if (locomotive) {
-    orientedBox(ctx, x, y, dx, dy, 0.38, 0.18, 1.5, 10, color);
-    orientedBox(ctx, x, y, dx, dy, 0.3, 0.14, 10, 12, "#3f4348", "#565b63");
+    drawLocomotive(ctx, x, y, dx, dy, color);
     return;
   }
 
