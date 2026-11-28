@@ -2,13 +2,17 @@
 
 import { useStorage } from "@liveblocks/react/suspense";
 import { useEffect, useMemo, useState } from "react";
-import { type Clock, gameTime } from "@/game/clock";
+import { type Clock, gameTime, storedClock } from "@/game/clock";
 
 // The game clock, which stands still while the game is paused
 export function useClock(): Clock {
+  const clock = useStorage((root) => root.clock);
   const pausedAt = useStorage((root) => root.pausedAt);
   const pausedFor = useStorage((root) => root.pausedFor);
-  return useMemo(() => ({ pausedAt, pausedFor }), [pausedAt, pausedFor]);
+  return useMemo(
+    () => storedClock({ clock, pausedAt, pausedFor }),
+    [clock, pausedAt, pausedFor]
+  );
 }
 
 // The current time in the game, refreshed on an interval. Many numbers in

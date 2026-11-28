@@ -1,4 +1,5 @@
 import type { LiveMap, LiveObject } from "@liveblocks/client";
+import type { Clock } from "./game/clock";
 import type {
   CompanyData,
   IndustryState,
@@ -39,10 +40,13 @@ declare global {
       // When this map was started, on the game clock. Industries have been
       // producing since then.
       startedAt: number;
-      // The game clock stands still while the game is paused: see
-      // `game/clock.ts`. Pausing only writes these two.
-      pausedAt: number | null;
-      pausedFor: number;
+      // The game clock, which stands still while the game is paused and runs
+      // ahead while it is fast-forwarded: see `game/clock.ts`. Changing the
+      // speed of the game only writes this.
+      clock?: Clock;
+      // What rooms from before the game had speeds kept instead
+      pausedAt?: number | null;
+      pausedFor?: number;
       // Town id → how far the town had grown when the number of its stations
       // that vehicles call at last changed, which changes how fast it grows
       // from then on. Nobody writes a town's new buildings here: every client

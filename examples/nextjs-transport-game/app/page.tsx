@@ -3,6 +3,7 @@
 import { LiveMap } from "@liveblocks/client";
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
 import { Loader2 } from "lucide-react";
+import { SPEEDS } from "@/game/clock";
 import { DEFAULT_MAP_SIZE } from "@/game/constants";
 import { hashString } from "@/game/rng";
 import { useExampleRoomId } from "@/hooks/use-example-room-id";
@@ -21,8 +22,7 @@ export default function Page() {
         seed: hashString(roomId),
         size: DEFAULT_MAP_SIZE,
         startedAt: Date.now(),
-        pausedAt: null,
-        pausedFor: 0,
+        clock: { at: 0, time: 0, speed: SPEEDS.play },
         towns: new LiveMap(),
         industries: new LiveMap(),
         stats: new LiveMap(),

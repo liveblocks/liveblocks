@@ -26,18 +26,19 @@ import {
   buyVehicle,
   cloneVehicle,
   ensureCompany,
+  clockOf,
   recordStats,
   resetGame,
   runSimulation,
   sellVehicle,
-  setPaused,
+  setSpeed,
   snapshotView,
   stationCost,
   stationProblem,
   syncTownGrowth,
   timeOf,
 } from "@/game/actions";
-import { type Clock, gameTime } from "@/game/clock";
+import { type Clock, gameTime, type Speed, speedOf } from "@/game/clock";
 import {
   BUILDINGS,
   CARGO,
@@ -170,7 +171,7 @@ export function Game() {
   const isMac = useIsMac();
   const clock = useClock();
   const [theme, setTheme] = useTheme();
-  const paused = clock.pausedAt !== null;
+  const speed = speedOf(clock);
   // Towns only grow around stations that vehicles are running to
   const servedKeys = servedStations(vehicles.values()).join();
   const servedTiles = useMemo(() => toTiles(servedKeys), [servedKeys]);
@@ -370,17 +371,30 @@ export function Game() {
   const reset = (newSize: number) =>
     room.history.disable(() => resetStorage(newSize));
 
-  // The game is paused for everyone, so it isn't one player's to undo
-  const pause = useMutation(
-    ({ storage }, on: boolean) => setPaused(storage, on, Date.now()),
+  // The game runs at the same speed for everyone, so that isn't one
+  // player's to undo
+  const storeSpeed = useMutation(
+    ({ storage }, next: Speed) => setSpeed(storage, next, Date.now()),
     []
   );
-  const togglePause = () => {
-    room.history.disable(() => pause(!paused));
-    announce(
-      `${company?.name ?? "Someone"} ${paused ? "resumed" : "paused"} the game`
-    );
+  const changeSpeed = (next: Speed) => {
+    if (next === speed) {
+      return;
+    }
+    room.history.disable(() => storeSpeed(next));
+    const did =
+      next === "paused"
+        ? "paused the game"
+        : next === "fast"
+          ? "is fast-forwarding the game"
+          : speed === "paused"
+            ? "resumed the game"
+            : "set the game back to normal speed";
+    announce(`${company?.name ?? "Someone"} ${did}`);
   };
+  // The keys switch a speed on, and off again
+  const toggleSpeed = (toggled: Speed) =>
+    changeSpeed(speed === toggled ? "play" : toggled);
 
   // A hidden cheat: Ctrl + Alt + M adds money to your company
   const cheat = useMutation(({ storage, self }) => {
@@ -388,9 +402,9 @@ export function Game() {
     return id !== null && addMoney(storage, id, CHEAT_MONEY);
   }, []);
 
-  const latestTogglePause = useRef(togglePause);
+  const latestToggleSpeed = useRef(toggleSpeed);
   useEffect(() => {
-    latestTogglePause.current = togglePause;
+    latestToggleSpeed.current = toggleSpeed;
   });
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -421,8 +435,9 @@ export function Game() {
         setSelectedStation(null);
         return;
       }
-      if (event.key.toLowerCase() === "p" && myCompany !== null) {
-        latestTogglePause.current();
+      const letter = event.key.toLowerCase();
+      if ((letter === "p" || letter === "f") && myCompany !== null) {
+        latestToggleSpeed.current(letter === "p" ? "paused" : "fast");
         return;
       }
       const match = TOOLS.find((each) => each.shortcut === event.key);
@@ -599,9 +614,9 @@ export function Game() {
             <Toolbar
               tool={tool}
               history={history}
-              paused={paused}
+              speed={speed}
               onSelect={selectTool}
-              onTogglePause={togglePause}
+              onSpeed={changeSpeed}
             />
           ) : null}
           {selectedStation !== null && selected ? (
@@ -669,9 +684,9 @@ export function Game() {
           ) : null}
         </div>
 
-        {paused ? (
+        {speed !== "play" ? (
           <div className="win pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 font-bold">
-            Game paused
+            {speed === "paused" ? "Game paused" : "Fast forward"}
           </div>
         ) : null}
 
@@ -1010,10 +1025,11 @@ function useSimulation(world: World, network: Network) {
 
   const tick = useMutation(({ storage, self, others }) => {
     // Nothing arrives anywhere while the game is paused
-    if (storage.get("pausedAt") !== null) {
+    const clock = clockOf(storage);
+    if (clock.speed === 0) {
       return;
     }
-    const now = timeOf(storage, Date.now());
+    const now = gameTime(clock, Date.now());
     const managed = new Set(others.map((other) => other.presence.company));
     const isHost = others.every(
       (other) => other.connectionId > self.connectionId
@@ -1027,7 +1043,8 @@ function useSimulation(world: World, network: Network) {
       (vehicle) =>
         vehicle.owner === self.presence.company ||
         (isHost &&
-          (!managed.has(vehicle.owner) || dueAt(vehicle) < now - OVERDUE_MS))
+          (!managed.has(vehicle.owner) ||
+            dueAt(vehicle) < now - OVERDUE_MS * clock.speed))
     );
   }, []);
 
@@ -1053,7 +1070,7 @@ function useStatsRecorder(world: World) {
   });
 
   const record = useMutation(({ storage, self, others }) => {
-    if (storage.get("pausedAt") !== null) {
+    if (clockOf(storage).speed === 0) {
       return;
     }
     const isHost = others.every(

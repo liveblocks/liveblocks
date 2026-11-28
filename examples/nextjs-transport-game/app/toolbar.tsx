@@ -2,6 +2,8 @@
 
 import {
   Anchor,
+  FastForward,
+  type LucideIcon,
   MousePointer2,
   Pause,
   Play,
@@ -21,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Window } from "@/components/window";
+import { type Speed, SPEEDS } from "@/game/clock";
 import { BUILDINGS, TRACK, TRANSPORT } from "@/game/constants";
 import { formatMoney } from "@/game/economy";
 import type { Tool } from "@/game/types";
@@ -126,20 +129,52 @@ export type History = {
   redo: () => void;
 };
 
+// The speed of the game is the same for everyone: one of these is always
+// pressed in
+const SPEED_BUTTONS: {
+  id: Speed;
+  label: string;
+  detail: string;
+  shortcut: string | null;
+  icon: LucideIcon;
+}[] = [
+  {
+    id: "paused",
+    label: "Pause",
+    detail:
+      "Stops vehicles, cargo and towns for everyone. You can still build.",
+    shortcut: "P",
+    icon: Pause,
+  },
+  {
+    id: "play",
+    label: "Play",
+    detail: "The game runs at its normal speed, for everyone",
+    shortcut: null,
+    icon: Play,
+  },
+  {
+    id: "fast",
+    label: "Fast forward",
+    detail: `Everything goes ${SPEEDS.fast} times as fast, for everyone`,
+    shortcut: "F",
+    icon: FastForward,
+  },
+];
+
 export function Toolbar({
   tool,
   history,
-  paused,
+  speed,
   onSelect,
-  onTogglePause,
+  onSpeed,
 }: {
   tool: Tool;
   history: History;
-  paused: boolean;
+  speed: Speed;
   onSelect: (tool: Tool) => void;
-  onTogglePause: () => void;
+  onSpeed: (speed: Speed) => void;
 }) {
-  const PauseIcon = paused ? Play : Pause;
   const isMac = useIsMac();
   const steps = [
     {
@@ -201,25 +236,26 @@ export function Toolbar({
           </Tooltip>
         ))}
         <div className="win-divider mx-0.5" />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="win-button size-8 p-0"
-              aria-label={paused ? "Resume the game" : "Pause the game"}
-              aria-pressed={paused}
-              onClick={onTogglePause}
-            >
-              <PauseIcon className="size-[18px]" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" sideOffset={6}>
-            <span className="font-bold">{paused ? "Resume" : "Pause"}</span> (P)
-            <div>
-              Stops vehicles, cargo and towns for everyone. You can still build.
-            </div>
-          </TooltipContent>
-        </Tooltip>
+        {SPEED_BUTTONS.map(({ id, label, detail, shortcut, icon: Icon }) => (
+          <Tooltip key={id}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="win-button size-8 p-0"
+                aria-label={label}
+                aria-pressed={speed === id}
+                onClick={() => onSpeed(id)}
+              >
+                <Icon className="size-[18px]" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={6}>
+              <span className="font-bold">{label}</span>
+              {shortcut ? ` (${shortcut})` : null}
+              <div>{detail}</div>
+            </TooltipContent>
+          </Tooltip>
+        ))}
       </div>
     </Window>
   );

@@ -17,7 +17,13 @@ import {
 } from "./economy";
 import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
-import { gameTime } from "./clock";
+import {
+  type Clock,
+  gameTime,
+  type Speed,
+  storedClock,
+  withSpeed,
+} from "./clock";
 import { advance } from "./simulation";
 import { servedStations, townStations, townStats, townSteps } from "./towns";
 import type {
@@ -35,26 +41,27 @@ import { buildingTiles, isBlocked, WATER, type World } from "./world";
 // root of Liveblocks Storage, so they can be called from `useMutation`.
 type Root = LiveObject<Liveblocks["Storage"]>;
 
-// What time it is in the game, for the `now` that actions are given
-export function timeOf(root: Root, wallTime: number) {
-  return gameTime(
-    { pausedAt: root.get("pausedAt"), pausedFor: root.get("pausedFor") },
-    wallTime
-  );
+export function clockOf(root: Root): Clock {
+  return storedClock({
+    clock: root.get("clock"),
+    pausedAt: root.get("pausedAt"),
+    pausedFor: root.get("pausedFor"),
+  });
 }
 
-// Pauses the game for everyone, or lets it run again. While it is paused
-// the game clock stands still, so vehicles stop where they are, no cargo
-// piles up and towns don't grow. Players can still build.
-export function setPaused(root: Root, paused: boolean, wallTime: number) {
-  const pausedAt = root.get("pausedAt");
-  if (paused && pausedAt === null) {
-    root.set("pausedAt", wallTime);
-  } else if (!paused && pausedAt !== null) {
-    root.update({
-      pausedAt: null,
-      pausedFor: root.get("pausedFor") + Math.max(0, wallTime - pausedAt),
-    });
+// What time it is in the game, for the `now` that actions are given
+export function timeOf(root: Root, wallTime: number) {
+  return gameTime(clockOf(root), wallTime);
+}
+
+// Pauses the game for everyone, lets it run, or fast-forwards it. While it
+// is paused the game clock stands still, so vehicles stop where they are, no
+// cargo piles up and towns don't grow. Players can still build.
+export function setSpeed(root: Root, speed: Speed, wallTime: number) {
+  const clock = clockOf(root);
+  const next = withSpeed(clock, speed, wallTime);
+  if (next.speed !== clock.speed || !root.get("clock")) {
+    root.set("clock", next);
   }
 }
 
@@ -741,7 +748,7 @@ export function resetGame(
   size: number,
   wallTime: number
 ) {
-  setPaused(root, false, wallTime);
+  setSpeed(root, "play", wallTime);
   const now = timeOf(root, wallTime);
   root.update({
     seed,
