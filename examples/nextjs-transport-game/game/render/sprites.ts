@@ -249,7 +249,7 @@ function drawCottage(
     // A square villa of two floors, under a roof that comes to a point
     box(ctx, ox, oy, 0.22, 0.22, 0.78, 0.78, 0, 13, wall);
     windowBand(ctx, ox, oy, "left", 0.45, 0.55, 0.78, 0, 5.5, DOOR);
-    windowBand(ctx, ox, oy, "left", 0.62, 0.72, 0.78, 2.5, 5.5, GLASS);
+    windowBand(ctx, ox, oy, "left", 0.28, 0.38, 0.78, 2.5, 5.5, GLASS);
     windowBand(ctx, ox, oy, "right", 0.3, 0.44, 0.78, 2.5, 5.5, GLASS);
     windowBand(ctx, ox, oy, "right", 0.56, 0.7, 0.78, 2.5, 5.5, GLASS);
     for (const side of ["left", "right"] as const) {
