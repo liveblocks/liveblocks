@@ -271,10 +271,10 @@ function addSignalArrow(
 ) {
   const point = (along: number, across: number) =>
     [x + dx * along - dy * across, y + dy * along + dx * across] as const;
-  path.moveTo(...point(0.17, 0));
-  path.lineTo(...point(-0.14, 0.15));
-  path.lineTo(...point(-0.05, 0));
-  path.lineTo(...point(-0.14, -0.15));
+  path.moveTo(...point(0.1, 0));
+  path.lineTo(...point(-0.08, 0.085));
+  path.lineTo(...point(-0.03, 0));
+  path.lineTo(...point(-0.08, -0.085));
   path.closePath();
 }
 
@@ -953,7 +953,7 @@ export class Renderer {
     ctx.save();
     ctx.transform(HALF_W, HALF_H, -HALF_W, HALF_H, 0, 0);
     ctx.lineJoin = "round";
-    ctx.lineWidth = 0.05;
+    ctx.lineWidth = 0.035;
     ctx.strokeStyle = ink("#2c2f34");
     ctx.stroke(this.signalArrowPath);
     ctx.fillStyle = ink("#ffe45c");
@@ -1753,9 +1753,10 @@ const TILE_RISE = Math.sqrt(2 * (HALF_W * HALF_W - HALF_H * HALF_H));
 // A signal: a traffic light on a pole, turned to face the trains that it is
 // for, which are going the way of (dx, dy). From the front it shows both of
 // its lights. From behind it shows its back, with a small light for what it
-// says. Path signals have a white board behind the lights, and one-way ones
-// a no-entry sign under them. All of it is drawn in perspective, as it
-// stands across the track.
+// says. Path signals have a white rim around the lights. One-way ones also
+// have a no-entry sign on the pole, which faces the other way: it is for
+// the trains that come from behind. All of it is drawn in perspective, as
+// it stands across the track.
 function drawSignal(
   ctx: Ctx,
   x: number,
@@ -1804,57 +1805,62 @@ function drawSignal(
   ctx.beginPath();
   ctx.ellipse(px, py, 3, 1.5, 0, 0, Math.PI * 2);
   ctx.fill();
+  const signAt = 0.02;
+  const signHeight = 8.4;
   if (kind !== "oneway") {
     post();
   } else if (front) {
+    // The back of the sign
+    onFace(signAt, signHeight, () => disc(3.3, "#8d9299"));
     post();
-    onFace(-0.02, 9.2, () => {
-      disc(2.8, "#d92d20");
-      ctx.fillStyle = ink("#ffffff");
-      ctx.fillRect(-1.9, -0.65, 3.8, 1.3);
-    });
   } else if (sideways) {
     post();
     orientedBox(
       ctx,
-      x - dx * 0.025,
-      y - dy * 0.025,
+      x + dx * signAt,
+      y + dy * signAt,
       dx,
       dy,
       0.02,
-      0.14,
-      6.4,
-      12,
+      0.17,
+      signHeight - 3.3,
+      signHeight + 3.3,
       "#d92d20"
     );
   } else {
-    onFace(-0.02, 9.2, () => disc(2.8, "#8d9299"));
     post();
+    onFace(signAt, signHeight, () => {
+      disc(3.6, "#ffffff");
+      disc(3.1, "#d92d20");
+      ctx.fillStyle = ink("#ffffff");
+      ctx.fillRect(-2.1, -0.75, 4.2, 1.5);
+    });
   }
 
   const head = () =>
     orientedBox(ctx, x, y, dx, dy, 0.07, 0.2, 13.5, 23.5, "#24262b");
-  const board = () =>
+  const rimAt = 0.045;
+  const rim = () =>
     orientedBox(
       ctx,
-      x + dx * 0.05,
-      y + dy * 0.05,
+      x + dx * rimAt,
+      y + dy * rimAt,
       dx,
       dy,
-      0.03,
-      0.3,
-      12,
-      25,
+      0.02,
+      0.25,
+      12.6,
+      24.4,
       "#f4f4f5"
     );
   if (kind === "block") {
     head();
   } else if (facing > 0) {
-    board();
+    rim();
     head();
   } else {
     head();
-    board();
+    rim();
   }
 
   const red = green ? "#4d1a17" : "#ff3b30";
@@ -1882,7 +1888,14 @@ function drawSignal(
       );
     }
   } else {
-    const back = kind === "block" ? 0.035 : 0.065;
+    const back = kind === "block" ? 0.035 : rimAt + 0.01;
+    if (kind !== "block") {
+      // The dark back of the lights, inside the white rim
+      onFace(back, 18.5, () => {
+        ctx.fillStyle = ink("#24262b");
+        ctx.fillRect(-0.1 * TILE_RISE, -5, 0.2 * TILE_RISE, 10);
+      });
+    }
     const height = green ? 16.4 : 20.9;
     onFace(back, height, () => disc(1.9, "#17181b"));
     onFace(back, height, () => disc(1.1, green ? "#46f06f" : "#ff3b30"));
