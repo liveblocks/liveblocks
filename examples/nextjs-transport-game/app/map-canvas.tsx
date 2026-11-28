@@ -10,6 +10,7 @@ import {
   trackProblem,
 } from "@/game/actions";
 import { type Clock, gameTime } from "@/game/clock";
+import { applyTheme, type Theme } from "@/game/render/theme";
 import { COMPANIES, TILE_H } from "@/game/constants";
 import { type PathPoint, vehiclePoint } from "@/game/motion";
 import { lineBetween, type Network } from "@/game/network";
@@ -58,6 +59,8 @@ type Props = {
   // The vehicle that the map keeps in the middle of the screen, if any
   follow: string | null;
   clock: Clock;
+  // How the map is drawn
+  theme: Theme;
   focus: Focus;
   // What the map is drawn with, for the cameras in vehicle windows
   view: RefObject<MapView | null>;
@@ -187,6 +190,11 @@ export function MapCanvas(props: Props) {
 
   // Rendering loop. The renderer is rebuilt for every new map, and
   // kept when the same map only changes, e.g. when a house is demolished.
+  const { theme } = props;
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");

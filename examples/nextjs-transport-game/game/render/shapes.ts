@@ -1,4 +1,5 @@
 import { TILE_H, TILE_W } from "../constants";
+import { currentTheme, ink, outline } from "./theme";
 
 // The map is drawn in a classic 2:1 isometric projection. Tile coordinates
 // (x, y) grow toward the bottom right and bottom left of the screen, and z is
@@ -51,15 +52,7 @@ export function shade(color: string, factor: number) {
   return result;
 }
 
-// Fills a polygon given in tile coordinates. (ox, oy) is where the tile-space
-// origin sits on the canvas.
-export function quad(
-  ctx: Ctx,
-  ox: number,
-  oy: number,
-  points: readonly Point3[],
-  fill: string
-) {
+function trace(ctx: Ctx, ox: number, oy: number, points: readonly Point3[]) {
   ctx.beginPath();
   for (let i = 0; i < points.length; i++) {
     const [x, y, z] = points[i];
@@ -72,8 +65,21 @@ export function quad(
     }
   }
   ctx.closePath();
-  ctx.fillStyle = fill;
+}
+
+// Fills a polygon given in tile coordinates. (ox, oy) is where the tile-space
+// origin sits on the canvas.
+export function quad(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  points: readonly Point3[],
+  fill: string
+) {
+  trace(ctx, ox, oy, points);
+  ctx.fillStyle = ink(fill);
   ctx.fill();
+  outline(ctx);
 }
 
 // An axis-aligned block, lit from the left
@@ -254,6 +260,8 @@ export function hipRoof(
   }
 }
 
+export const GLASS = "#5d7f9c";
+
 // A band of windows on the left (y-facing) or right (x-facing) side of a block
 export function windowBand(
   ctx: Ctx,
@@ -267,10 +275,7 @@ export function windowBand(
   z1: number,
   color: string
 ) {
-  quad(
-    ctx,
-    ox,
-    oy,
+  const points: Point3[] =
     side === "left"
       ? [
           [from, at, z1],
@@ -283,9 +288,23 @@ export function windowBand(
           [at, to, z1],
           [at, to, z0],
           [at, from, z0],
-        ],
-    color
-  );
+        ];
+
+  // In themes where it is dark, the lights are on behind most windows.
+  // Which ones only depends on where the window is, so a building looks
+  // the same every time it's drawn.
+  const { lights } = currentTheme();
+  if (
+    lights &&
+    color === GLASS &&
+    Math.floor(from * 97 + at * 57 + z0 * 13) % 5 < 3
+  ) {
+    trace(ctx, ox, oy, points);
+    ctx.fillStyle = lights;
+    ctx.fill();
+    return;
+  }
+  quad(ctx, ox, oy, points, color);
 }
 
 export function cylinder(
@@ -308,8 +327,8 @@ export function cylinder(
   const ry = radius * Math.SQRT2 * HALF_H;
 
   const gradient = ctx.createLinearGradient(px - rx, 0, px + rx, 0);
-  gradient.addColorStop(0, shade(color, 0.92));
-  gradient.addColorStop(1, shade(color, 0.62));
+  gradient.addColorStop(0, ink(shade(color, 0.92)));
+  gradient.addColorStop(1, ink(shade(color, 0.62)));
 
   ctx.beginPath();
   ctx.moveTo(px - rx, top);
@@ -319,11 +338,13 @@ export function cylinder(
   ctx.closePath();
   ctx.fillStyle = gradient;
   ctx.fill();
+  outline(ctx);
 
   ctx.beginPath();
   ctx.ellipse(px, top, rx, ry, 0, 0, Math.PI * 2);
-  ctx.fillStyle = topColor;
+  ctx.fillStyle = ink(topColor);
   ctx.fill();
+  outline(ctx);
 }
 
 // A block rotated to face any direction (dx, dy), used for vehicles. Only

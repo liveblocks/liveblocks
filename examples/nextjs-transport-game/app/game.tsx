@@ -78,6 +78,7 @@ import {
 import type { MapView } from "@/game/render/renderer";
 import { useMoneyFloaters } from "@/hooks/use-money-floaters";
 import { useIsMac } from "@/hooks/use-is-mac";
+import { useTheme } from "@/hooks/use-theme";
 import { useClock } from "@/hooks/use-now";
 import { CompanyPicker } from "./company-picker";
 import { CompaniesWindow, VehiclesWindow } from "./company-windows";
@@ -91,6 +92,7 @@ import {
 } from "./map-canvas";
 import { StationWindow } from "./station-window";
 import { StatsWindow } from "./stats-window";
+import { ThemeWindow } from "./theme-window";
 import { type OpenWindows, Taskbar } from "./taskbar";
 import { type History, Toolbar, TOOLS } from "./toolbar";
 import { TownWindow } from "./town-window";
@@ -166,6 +168,7 @@ export function Game() {
   );
   const isMac = useIsMac();
   const clock = useClock();
+  const [theme, setTheme] = useTheme();
   const paused = clock.pausedAt !== null;
   // Towns only grow around stations that vehicles are running to
   const servedKeys = servedStations(vehicles.values()).join();
@@ -214,7 +217,13 @@ export function Game() {
   // On small screens the map comes first: windows start closed
   const [open, setOpen] = useState<OpenWindows>(() => {
     const roomy = window.innerWidth >= 900;
-    return { companies: roomy, vehicles: roomy, cargo: false, stats: false };
+    return {
+      companies: roomy,
+      vehicles: roomy,
+      cargo: false,
+      stats: false,
+      theme: false,
+    };
   });
 
   useSimulation(world, network);
@@ -572,6 +581,7 @@ export function Game() {
           highlightedVehicle={highlightedVehicle ?? selectedVehicle}
           follow={following ? selectedVehicle : null}
           clock={clock}
+          theme={theme}
           focus={focus}
           view={mapView}
           onHover={setHover}
@@ -686,6 +696,13 @@ export function Game() {
               onClone={onClone}
               onSell={(vehicleId) => settle(sell(vehicleId))}
               onClose={() => setOpen({ ...open, vehicles: false })}
+            />
+          ) : null}
+          {open.theme ? (
+            <ThemeWindow
+              theme={theme}
+              onPick={setTheme}
+              onClose={() => setOpen({ ...open, theme: false })}
             />
           ) : null}
           {open.stats ? (

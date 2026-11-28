@@ -59,6 +59,7 @@ import {
   spriteImage,
   spriteScale,
 } from "./sprites";
+import { currentTheme, ink, reduceColors, type Theme } from "./theme";
 
 export type Camera = {
   // World position at the center of the screen
@@ -319,6 +320,10 @@ export class Renderer {
   // A picture of all the ground, made the first time the map is seen from
   // far away. Drawing thousands of tiny tiles one by one is slow.
   private farTerrain: HTMLCanvasElement | null = null;
+  private farTerrainTheme: Theme | null = null;
+  // Small pictures of the main view and of a second view, for themes that
+  // draw the map with big pixels
+  private readonly small: (HTMLCanvasElement | null)[] = [null, null];
   private readonly sprites: ReturnType<typeof createSprites>;
   private statics: StaticItem[] = [];
   private labels: Label[] = [];
@@ -449,9 +454,74 @@ export class Renderer {
   ) {
     const { width, height, dpr } = viewport;
     const { zoom } = camera;
+    const { pixel } = currentTheme();
+    const time = gameTime(scene.clock, now);
+
+    if (pixel > 1) {
+      // The map is drawn small, reduced to a few colors, and then blown up
+      const index = secondary ? 1 : 0;
+      const picture = (this.small[index] ??= this.createCanvas(1, 1));
+      const smallWidth = Math.ceil(width / pixel);
+      const smallHeight = Math.ceil(height / pixel);
+      if (picture.width !== smallWidth || picture.height !== smallHeight) {
+        picture.width = smallWidth;
+        picture.height = smallHeight;
+      }
+      const small = picture.getContext("2d", { willReadFrequently: true });
+      if (small) {
+        this.drawMap(
+          small,
+          { width, height, dpr: 1 / pixel },
+          camera,
+          scene,
+          time,
+          secondary
+        );
+        reduceColors(small, smallWidth, smallHeight);
+        ctx.setTransform(dpr * pixel, 0, 0, dpr * pixel, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(picture, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+      }
+    } else {
+      this.drawMap(ctx, viewport, camera, scene, time, secondary);
+    }
+    if (secondary) {
+      return;
+    }
+
+    ctx.setTransform(
+      dpr * zoom,
+      0,
+      0,
+      dpr * zoom,
+      dpr * (width / 2 - camera.x * zoom),
+      dpr * (height / 2 - camera.y * zoom)
+    );
+    this.drawOverlays(ctx, scene, zoom);
+
+    // Labels and markers keep the same size on screen whatever the zoom
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const screenX = (wx: number) => (wx - camera.x) * zoom + width / 2;
+    const screenY = (wy: number) => (wy - camera.y) * zoom + height / 2;
+    this.drawLabels(ctx, scene, zoom, screenX, screenY, now, time);
+  }
+
+  // The map itself: the ground and everything that stands or moves on it
+  private drawMap(
+    ctx: Ctx,
+    viewport: Viewport,
+    camera: Camera,
+    scene: Scene,
+    time: number,
+    secondary: boolean
+  ) {
+    const { width, height, dpr } = viewport;
+    const { zoom } = camera;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = WATER_COLOR;
+    ctx.fillStyle = ink(WATER_COLOR);
     ctx.fillRect(0, 0, width, height);
 
     ctx.setTransform(
@@ -472,7 +542,6 @@ export class Renderer {
     this.drawCanals(ctx, scene.network);
 
     this.drawStationPads(ctx, scene);
-    const time = gameTime(scene.clock, now);
     const { dynamics, underBridges } = this.collectDynamics(ctx, scene, time);
     for (const ship of underBridges) {
       ship.draw();
@@ -521,17 +590,6 @@ export class Renderer {
         dynamic.draw();
       }
     }
-
-    if (secondary) {
-      return;
-    }
-    this.drawOverlays(ctx, scene, zoom);
-
-    // Labels and markers keep the same size on screen whatever the zoom
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const screenX = (wx: number) => (wx - camera.x) * zoom + width / 2;
-    const screenY = (wy: number) => (wy - camera.y) * zoom + height / 2;
-    this.drawLabels(ctx, scene, zoom, screenX, screenY, now, time);
   }
 
   private drawTerrain(
@@ -548,7 +606,10 @@ export class Renderer {
     const { size } = this.world;
     const scale = Math.min(0.5 * dpr, FAR_PICTURE_WIDTH / (size * TILE_W));
     if (size > TERRAIN_CHUNK * 4 && zoom * dpr <= scale) {
-      this.farTerrain ??= this.paintTerrain(scale);
+      if (!this.farTerrain || this.farTerrainTheme !== currentTheme()) {
+        this.farTerrain = this.paintTerrain(scale);
+        this.farTerrainTheme = currentTheme();
+      }
       ctx.drawImage(
         this.farTerrain,
         worldX(0, size),
@@ -578,7 +639,7 @@ export class Renderer {
     );
     for (const chunk of visible) {
       for (const { color, path } of chunk.ground) {
-        ctx.fillStyle = color;
+        ctx.fillStyle = ink(color);
         ctx.fill(path);
       }
     }
@@ -586,9 +647,9 @@ export class Renderer {
     // as tiles are drawn a little over their edges.
     ctx.lineWidth = 1 / zoom;
     for (const chunk of visible) {
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
+      ctx.strokeStyle = ink("rgba(255, 255, 255, 0.28)");
       ctx.stroke(chunk.ripples);
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+      ctx.strokeStyle = currentTheme().grid ?? ink("rgba(0, 0, 0, 0.06)");
       ctx.stroke(chunk.grid);
     }
   }
@@ -687,13 +748,13 @@ export class Renderer {
     }
     ctx.save();
     ctx.transform(HALF_W, HALF_H, -HALF_W, HALF_H, 0, 0);
-    ctx.fillStyle = WATER_COLOR;
+    ctx.fillStyle = ink(WATER_COLOR);
     ctx.fill(this.canalPath);
-    ctx.fillStyle = "#6f757c";
+    ctx.fillStyle = ink("#6f757c");
     ctx.fill(this.canalWallPath);
     ctx.lineWidth = 0.07;
     ctx.lineCap = "square";
-    ctx.strokeStyle = "#b4b9bf";
+    ctx.strokeStyle = ink("#b4b9bf");
     ctx.stroke(this.canalBankPath);
     ctx.restore();
   }
@@ -719,7 +780,7 @@ export class Renderer {
       ctx.translate(0, drop);
       ctx.transform(HALF_W, HALF_H, -HALF_W, HALF_H, 0, 0);
       ctx.lineWidth = width;
-      ctx.strokeStyle = color;
+      ctx.strokeStyle = ink(color);
       ctx.lineJoin = "round";
       ctx.lineCap = dash ? "butt" : "round";
       ctx.setLineDash(dash ?? []);
@@ -759,11 +820,14 @@ export class Renderer {
       const tile = Number(key);
       tileDiamond(ctx, tile % size, Math.floor(tile / size), 1);
       // Docks are out on the water: only their berth is marked
-      ctx.fillStyle =
-        station.kind === "water" ? "rgba(255, 255, 255, 0.2)" : "#c9c3b6";
+      ctx.fillStyle = ink(
+        station.kind === "water" ? "rgba(255, 255, 255, 0.2)" : "#c9c3b6"
+      );
       ctx.fill();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = scene.companies.get(station.owner)?.color ?? "#888888";
+      ctx.strokeStyle = ink(
+        scene.companies.get(station.owner)?.color ?? "#888888"
+      );
       ctx.stroke();
     }
   }

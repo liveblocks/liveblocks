@@ -15,6 +15,7 @@ export type OpenWindows = {
   vehicles: boolean;
   cargo: boolean;
   stats: boolean;
+  theme: boolean;
 };
 
 type Props = {
@@ -70,6 +71,14 @@ export function Taskbar({
         onClick={() => onToggle("stats")}
       >
         <span>Stats</span>
+      </button>
+      <button
+        type="button"
+        className="win-button font-bold max-sm:hidden"
+        aria-pressed={open.theme}
+        onClick={() => onToggle("theme")}
+      >
+        <span>Theme</span>
       </button>
       <div className="win-divider" />
 

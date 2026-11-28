@@ -6,6 +6,7 @@ import {
   type Ctx,
   cylinder,
   gableRoof,
+  GLASS,
   HALF_H,
   HALF_W,
   hipRoof,
@@ -13,13 +14,16 @@ import {
   shade,
   windowBand,
 } from "./shapes";
+import { currentTheme, ink, outline, type Theme } from "./theme";
 
 // Everything that never changes (trees, houses, industries) is drawn once
 // into a small off-screen canvas, then stamped onto the map every frame.
 export type Sprite = {
   canvas: HTMLCanvasElement;
-  // How many canvas pixels the picture has per world pixel
+  // How many canvas pixels the picture has per world pixel, and the theme
+  // it was drawn in
   scale: number;
+  theme: Theme | null;
   // Size in world pixels, and where the tile-space origin is inside of it
   width: number;
   height: number;
@@ -52,7 +56,8 @@ const PADDING = 3;
 // world pixel covers this many screen pixels
 export function spriteScale(screenPixels: number) {
   return Math.max(
-    MIN_SPRITE_SCALE,
+    // Big pixels need fewer of them
+    currentTheme().pixel > 1 ? 1 : MIN_SPRITE_SCALE,
     Math.min(MAX_SPRITE_SCALE, Math.ceil(screenPixels - 0.01))
   );
 }
@@ -66,12 +71,13 @@ function paint(sprite: Sprite, scale: number) {
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   sprite.draw(ctx, sprite.ax, sprite.ay);
   sprite.scale = scale;
+  sprite.theme = currentTheme();
 }
 
 // The sprite's picture, with this many pixels per world pixel. Each sprite
 // only keeps one version, so memory use doesn't grow while zooming.
 export function spriteImage(sprite: Sprite, scale: number) {
-  if (sprite.scale !== scale) {
+  if (sprite.scale !== scale || sprite.theme !== currentTheme()) {
     paint(sprite, scale);
   }
   return sprite.canvas;
@@ -90,6 +96,7 @@ function makeSprite(
   const sprite: Sprite = {
     canvas: createCanvas(1, 1),
     scale: 0,
+    theme: null,
     width,
     height,
     ax: tiles * HALF_W + PADDING,
@@ -103,14 +110,15 @@ function makeSprite(
 function circle(ctx: Ctx, x: number, y: number, radius: number, fill: string) {
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
-  ctx.fillStyle = fill;
+  ctx.fillStyle = ink(fill);
   ctx.fill();
+  outline(ctx);
 }
 
 function groundShadow(ctx: Ctx, x: number, y: number, rx: number) {
   ctx.beginPath();
   ctx.ellipse(x, y, rx, rx / 2, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(0, 0, 0, 0.16)";
+  ctx.fillStyle = ink("rgba(0, 0, 0, 0.16)");
   ctx.fill();
 }
 
@@ -123,7 +131,7 @@ function drawTree(
   color: string
 ) {
   groundShadow(ctx, x, y, 6 * scale);
-  ctx.fillStyle = "#6b4a2b";
+  ctx.fillStyle = ink("#6b4a2b");
   ctx.fillRect(x - 1, y - 5 * scale, 2, 5 * scale);
 
   if (conifer) {
@@ -135,7 +143,7 @@ function drawTree(
       ctx.lineTo(x + half, base);
       ctx.lineTo(x, base - 9 * scale);
       ctx.closePath();
-      ctx.fillStyle = shade(color, 0.8 + tier * 0.12);
+      ctx.fillStyle = ink(shade(color, 0.8 + tier * 0.12));
       ctx.fill();
     }
   } else {
@@ -189,7 +197,6 @@ function drawTrees(
 const WALLS = ["#f3ead9", "#e6d3b8", "#f7f2e8", "#dcb99c"];
 const ROOFS = ["#b4533c", "#8c5a44", "#5f6b7a", "#a8452f"];
 const OFFICES = ["#cfd6de", "#d9cfc3", "#b9c7d6", "#e4dccb"];
-const GLASS = "#5d7f9c";
 
 const BRICK = "#9a6b55";
 const DOOR = "#7a5236";
@@ -789,7 +796,7 @@ const SKYSCRAPERS = [
 // A mast with a red light on top, for the tallest buildings
 function mast(ctx: Ctx, ox: number, oy: number, z0: number, z1: number) {
   box(ctx, ox, oy, 0.485, 0.485, 0.515, 0.515, z0, z1, "#c8ced6");
-  ctx.fillStyle = "#e5484d";
+  ctx.fillStyle = ink("#e5484d");
   ctx.fillRect(ox - 1, oy + HALF_H - z1 - 2, 2, 2);
 }
 
@@ -1004,9 +1011,9 @@ function drawPark(ctx: Ctx, ox: number, oy: number, variant: number) {
 function floodlight(ctx: Ctx, ox: number, oy: number, x: number, y: number) {
   const px = ox + (x - y) * HALF_W;
   const py = oy + (x + y) * HALF_H;
-  ctx.fillStyle = "#6f757d";
+  ctx.fillStyle = ink("#6f757d");
   ctx.fillRect(px - 0.7, py - 36, 1.4, 36);
-  ctx.fillStyle = "#f4f1dc";
+  ctx.fillStyle = ink("#f4f1dc");
   ctx.fillRect(px - 3.5, py - 40, 7, 4.5);
 }
 
@@ -1177,13 +1184,13 @@ function mound(
   ctx.quadraticCurveTo(px + rx * 0.6, py - height * 0.7, px + rx, py);
   ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI);
   ctx.closePath();
-  ctx.fillStyle = color;
+  ctx.fillStyle = ink(color);
   ctx.fill();
 }
 
 function derrick(ctx: Ctx, x: number, y: number, height: number) {
   groundShadow(ctx, x, y, 9);
-  ctx.strokeStyle = "#3a3d42";
+  ctx.strokeStyle = ink("#3a3d42");
   ctx.lineWidth = 1.4;
   ctx.beginPath();
   ctx.moveTo(x - 7, y);
@@ -1195,7 +1202,7 @@ function derrick(ctx: Ctx, x: number, y: number, height: number) {
     ctx.lineTo(x + half, y - height * t);
   }
   ctx.stroke();
-  ctx.fillStyle = "#3a3d42";
+  ctx.fillStyle = ink("#3a3d42");
   ctx.fillRect(x - 2, y - height - 2, 4, 3);
 }
 
@@ -1303,7 +1310,7 @@ const INDUSTRY_ARTISTS: Record<
       const py = oy + (x + y) * HALF_H;
       ctx.beginPath();
       ctx.ellipse(px + 6, py + 3, 9, 4, 0, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(20, 20, 24, 0.55)";
+      ctx.fillStyle = ink("rgba(20, 20, 24, 0.55)");
       ctx.fill();
       derrick(ctx, px, py, 30);
     }
@@ -1326,7 +1333,7 @@ const INDUSTRY_ARTISTS: Record<
     ctx.quadraticCurveTo(flameX - 1, flameY - 5, flameX, flameY - 9);
     ctx.quadraticCurveTo(flameX + 2, flameY - 4, flameX + 3, flameY);
     ctx.closePath();
-    ctx.fillStyle = "#f59e0b";
+    ctx.fillStyle = ink("#f59e0b");
     ctx.fill();
   },
 };
