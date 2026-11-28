@@ -1,4 +1,9 @@
-import { TRAIN_LENGTH, TRANSPORT } from "./constants";
+import {
+  TRAIN_LENGTH,
+  TRAIN_WAGON_GAP,
+  TRAIN_WAGONS,
+  TRANSPORT,
+} from "./constants";
 import type { Vehicle } from "./types";
 
 export type PathPoint = {
@@ -110,4 +115,27 @@ export function vehiclePoint(
     return out;
   }
   return pointOnPath(vehicle.path, size, headDistance(vehicle, time), out);
+}
+
+// How far a point of the map is from a vehicle, in tiles. A train is as
+// close as the closest of its cars. `scratch` is overwritten.
+export function distanceToVehicle(
+  vehicle: Pick<Vehicle, "kind" | "path" | "departAt" | "stops" | "leg">,
+  size: number,
+  time: number,
+  x: number,
+  y: number,
+  scratch: PathPoint
+) {
+  vehiclePoint(vehicle, size, time, scratch);
+  let nearest = Math.hypot(scratch.x - x, scratch.y - y);
+  if (vehicle.kind === "rail" && vehicle.path.length >= 2) {
+    const head = headDistance(vehicle, time);
+    for (let car = 1; car <= TRAIN_WAGONS; car++) {
+      const distance = Math.max(0, head - car * TRAIN_WAGON_GAP);
+      pointOnPath(vehicle.path, size, distance, scratch);
+      nearest = Math.min(nearest, Math.hypot(scratch.x - x, scratch.y - y));
+    }
+  }
+  return nearest;
 }

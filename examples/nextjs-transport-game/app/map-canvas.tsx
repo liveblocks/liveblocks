@@ -11,8 +11,8 @@ import {
 } from "@/game/actions";
 import { type Clock, gameTime } from "@/game/clock";
 import { applyTheme, type Theme } from "@/game/render/theme";
-import { COMPANIES, TILE_H } from "@/game/constants";
-import { type PathPoint, vehiclePoint } from "@/game/motion";
+import { COMPANIES, TILE_H, TILE_W } from "@/game/constants";
+import { distanceToVehicle, type PathPoint, vehiclePoint } from "@/game/motion";
 import { lineBetween, type Network } from "@/game/network";
 import {
   type Camera,
@@ -94,6 +94,12 @@ type Drag = {
 // whatever its size
 const minZoom = (size: number) => Math.min(0.35, 22 / size);
 const MAX_ZOOM = 2.5;
+// A click this close to a vehicle is a click on it: so many tiles, and at
+// least so many pixels on screen, as vehicles are small and don't sit still
+const VEHICLE_REACH = 0.75;
+const VEHICLE_REACH_PIXELS = 24;
+// How far above the ground the middle of a vehicle is drawn, in pixels
+const VEHICLE_MIDDLE = 5;
 const PAN_KEYS: Record<string, [number, number]> = {
   ArrowUp: [0, -1],
   ArrowDown: [0, 1],
@@ -443,14 +449,21 @@ export function MapCanvas(props: Props) {
     const { size } = latest.current.world;
     const time = gameTime(scene.current.clock, Date.now());
     const at: PathPoint = { x: 0, y: 0, dx: 1, dy: 0 };
+    // Vehicles stand a little above the ground they are on, so what looks
+    // like their middle is a bit further up the screen than where they are
+    const x = point.x + VEHICLE_MIDDLE / TILE_H;
+    const y = point.y + VEHICLE_MIDDLE / TILE_H;
     let nearest: string | null = null;
-    let nearestDistance = 0.55;
+    let nearestDistance = Math.max(
+      VEHICLE_REACH,
+      VEHICLE_REACH_PIXELS /
+        (camera.current.zoom * Math.hypot(TILE_W, TILE_H) * 0.5)
+    );
     for (const [id, vehicle] of scene.current.vehicles) {
       if (vehicle.path.length < 2 || vehicle.departAt > time) {
         continue;
       }
-      vehiclePoint(vehicle, size, time, at);
-      const distance = Math.hypot(at.x - point.x, at.y - point.y);
+      const distance = distanceToVehicle(vehicle, size, time, x, y, at);
       if (distance < nearestDistance) {
         nearest = id;
         nearestDistance = distance;
