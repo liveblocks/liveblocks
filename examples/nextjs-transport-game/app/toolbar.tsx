@@ -25,7 +25,12 @@ import {
 } from "@/components/ui/tooltip";
 import { Window } from "@/components/window";
 import { type Speed, SPEEDS } from "@/game/clock";
-import { BUILDINGS, TRACK, TRANSPORT } from "@/game/constants";
+import {
+  BUILDINGS,
+  STREET_REMOVAL_COST,
+  TRACK,
+  TRANSPORT,
+} from "@/game/constants";
 import { formatMoney } from "@/game/economy";
 import type { Tool } from "@/game/types";
 import { useIsMac } from "@/hooks/use-is-mac";
@@ -117,7 +122,7 @@ export const TOOLS: {
   {
     id: "bulldoze",
     label: "Clear",
-    detail: `Remove your tracks, canals and stations · Demolish buildings, from ${formatMoney(BUILDINGS[0].demolishCost)}`,
+    detail: `Remove your tracks, canals and stations · Clear town streets, ${formatMoney(STREET_REMOVAL_COST)} a tile, and buildings, from ${formatMoney(BUILDINGS[0].demolishCost)}`,
     shortcut: "9",
     icon: Trash2,
   },

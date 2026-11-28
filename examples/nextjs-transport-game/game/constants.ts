@@ -109,6 +109,8 @@ export const INDUSTRY_PERIOD_MS = 120_000;
 export const INDUSTRY_MAX_LEVEL = 3;
 
 export const BRIDGE_MULTIPLIER = 5;
+// What taking away a tile of a town's street costs
+export const STREET_REMOVAL_COST = 250;
 export const TREE_CLEAR_COST = 40;
 
 export const CARGO: Record<

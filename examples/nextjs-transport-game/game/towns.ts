@@ -432,7 +432,7 @@ function planTown(world: World, town: Town) {
 
 // What a town's growth needs to work around: tiles with roads, railways or
 // canals that players built, the stations a street can't run through (train
-// stations and docks), and tiles where a house was demolished
+// stations and docks), and tiles that players cleared of a house or a street
 export type Built = {
   tracks: ReadonlySet<number>;
   // The ones of those that are canals
@@ -442,9 +442,9 @@ export type Built = {
 };
 
 // The world, with each town grown by the given number of steps. Players
-// always win over towns: nothing appears where they built, and a house they
-// demolished stays gone. `world` has to be the world as generated from its
-// seed, which is left untouched.
+// always win over towns: nothing appears where they built, and a house or a
+// street they removed stays gone. `world` has to be the world as generated
+// from its seed, which is left untouched.
 export function growWorld(
   world: World,
   steps: readonly number[],
@@ -452,6 +452,9 @@ export function growWorld(
 ): World {
   const { size } = world;
   const townRoads = world.townRoads.slice();
+  for (const tile of built.demolished) {
+    townRoads[tile] = 0;
+  }
   const trees = world.trees.slice();
   const tiers = new Int8Array(size * size).fill(-1);
   const townOf = new Uint8Array(size * size);
@@ -503,7 +506,11 @@ export function growWorld(
       const step = plan[index];
       const { kind, tile } = step;
       if (kind === "street") {
-        if (!built.noStreets.has(tile) && !alongCanal(tile)) {
+        if (
+          !built.noStreets.has(tile) &&
+          !built.demolished.has(tile) &&
+          !alongCanal(tile)
+        ) {
           townRoads[tile] = 1;
           trees[tile] = 0;
         }

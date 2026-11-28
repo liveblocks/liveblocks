@@ -4,7 +4,7 @@ import { useRoom, useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { Minus, Plus } from "lucide-react";
 import { PointerEvent, type RefObject, useEffect, useRef } from "react";
 import {
-  demolitionCost,
+  clearingCost,
   snapshotView,
   trackPlan,
   trackProblem,
@@ -500,8 +500,9 @@ export function MapCanvas(props: Props) {
     current.tiles = tiles;
     current.lastTile = tile;
 
+    const view = snapshotView(network, stations);
     if (tool === "bulldoze") {
-      const cost = demolitionCost(world, tiles);
+      const cost = clearingCost(world, view, tiles);
       scene.current.preview = { tiles, bad: NO_TILES, tone: "remove" };
       onDragPlan({
         tiles: tiles.length,
@@ -511,7 +512,6 @@ export function MapCanvas(props: Props) {
       return;
     }
 
-    const view = snapshotView(network, stations);
     const plan = trackPlan(world, view, tool, tiles);
     const tooExpensive = plan.cost > balance;
     const bad = new Set(

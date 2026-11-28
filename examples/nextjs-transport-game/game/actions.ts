@@ -6,6 +6,7 @@ import {
   MAX_VEHICLES_PER_COMPANY,
   STATS_PERIOD_MS,
   STATS_SAMPLES,
+  STREET_REMOVAL_COST,
   TRANSPORT,
 } from "./constants";
 import {
@@ -279,14 +280,34 @@ function demolishCost(world: World, tile: number) {
   return house ? BUILDINGS[house.variant].demolishCost : 0;
 }
 
-// What demolishing the buildings on these tiles would cost. A building that
-// covers several of them is only paid for once.
-export function demolitionCost(world: World, tiles: readonly number[]) {
+// Whether the bulldozer would take a town's street off this tile. A station
+// or a railway on it goes first.
+function hasLooseStreet(world: World, view: TileView, tile: number) {
+  return (
+    world.townRoads[tile] === 1 &&
+    !view.hasRail(tile) &&
+    view.stationKind(tile) === null
+  );
+}
+
+// What clearing these tiles of what a town built on them would cost: its
+// buildings and its streets. A building that covers several of the tiles is
+// only paid for once.
+export function clearingCost(
+  world: World,
+  view: TileView,
+  tiles: readonly number[]
+) {
   const buildings = new Set(tiles.map((tile) => world.houseAt[tile]));
   let cost = 0;
   for (const index of buildings) {
     cost +=
       index >= 0 ? BUILDINGS[world.houses[index].variant].demolishCost : 0;
+  }
+  for (const tile of tiles) {
+    if (world.houseAt[tile] < 0 && hasLooseStreet(world, view, tile)) {
+      cost += STREET_REMOVAL_COST;
+    }
   }
   return cost;
 }
@@ -403,9 +424,9 @@ export function buildStation(
 }
 
 // Clears the given tiles: the company's own stations, tracks and canals are
-// removed for free, and buildings are demolished for a price. One thing is
-// removed per tile at a time: a station first, then the track it was on,
-// and a bridge before the canal under it.
+// removed for free, and a town's buildings and streets for a price. One
+// thing is removed per tile at a time: a station first, then the track it
+// was on, and a bridge before the canal under it.
 export function bulldoze(
   root: Root,
   world: World,
@@ -423,6 +444,7 @@ export function bulldoze(
     return fail("Your company isn't ready yet");
   }
   const balance = liveBalance(root, companyId);
+  const view = liveView(root, world);
 
   let removed = 0;
   let cost = 0;
@@ -469,6 +491,20 @@ export function bulldoze(
       }
       stations.delete(key);
       removed++;
+    } else if (
+      hasLooseStreet(world, view, tile) &&
+      (roads.get(key) ?? companyId) === companyId
+    ) {
+      if (cost + STREET_REMOVAL_COST > balance) {
+        problem = "Not enough money";
+        continue;
+      }
+      // The town doesn't lay a street here again. A road that the company
+      // had there before the town grew over it goes as well.
+      demolished.set(key, companyId);
+      roads.delete(key);
+      cost += STREET_REMOVAL_COST;
+      removed++;
     } else {
       const mine = [rails, roads, canals].find(
         (layer) => layer.get(key) === companyId
@@ -478,8 +514,6 @@ export function bulldoze(
         removed++;
       } else if (rails.has(key) || roads.has(key) || canals.has(key)) {
         problem = "That belongs to another company";
-      } else if (world.townRoads[tile]) {
-        problem = "Town streets can't be removed";
       }
     }
   }
