@@ -48,6 +48,7 @@ import {
   DEFAULT_MAP_SIZE,
   MAP_SIZES,
   STADIUM,
+  STREET_REMOVAL_COST,
   TRACK,
   TRANSPORT,
 } from "@/game/constants";
@@ -1162,11 +1163,11 @@ function describe({
       return (
         dragPlan.problem ??
         (dragPlan.cost > 0
-          ? `Clear ${tiles} · Demolishing buildings costs ${formatMoney(dragPlan.cost)}`
+          ? `Clear ${tiles} · Removing the town's buildings and streets costs ${formatMoney(dragPlan.cost)}`
           : `Clear ${tiles}`)
       );
     }
-    return `Clear · Click or drag over your tracks and stations to remove them, or over buildings to demolish them, from ${formatMoney(BUILDINGS[0].demolishCost)} for a cottage`;
+    return `Clear · Click or drag over your tracks and stations to remove them, or over a town's streets (${formatMoney(STREET_REMOVAL_COST)} a tile) and buildings (from ${formatMoney(BUILDINGS[0].demolishCost)})`;
   }
 
   const kind = STATION_TOOLS[tool];
