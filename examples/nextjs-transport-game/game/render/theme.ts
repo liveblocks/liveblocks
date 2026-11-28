@@ -60,7 +60,8 @@ export const THEMES: Theme[] = [
     ...PLAIN,
     id: "pixel",
     name: "Pixel",
-    description: "Chunky pixels and fewer colors, like a game from the nineties",
+    description:
+      "Chunky pixels and fewer colors, like a game from the nineties",
     pixel: 2,
   },
   {

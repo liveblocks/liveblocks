@@ -336,6 +336,16 @@ export function generateWorld(seed: number, size: number): World {
           return;
         }
         const tile = sy * size + sx;
+        // Never right next to a street of another town that runs the same
+        // way: that would look like one street, twice as wide
+        const beside = (side: number) => {
+          const bx = sx + dy * side;
+          const by = sy + dx * side;
+          return inBounds(bx, by) && townRoads[by * size + bx] === 1;
+        };
+        if (step > 0 && !townRoads[tile] && (beside(-1) || beside(1))) {
+          return;
+        }
         if (!townRoads[tile]) {
           townRoads[tile] = 1;
           streets.push(tile);
@@ -452,11 +462,17 @@ export function generateWorld(seed: number, size: number): World {
           }
           const tile = hy * size + hx;
           const lines = streetLines(town, hx, hy);
+          // Where two towns meet, a house can be on the land of the other
+          // town: it keeps off the streets of that one too
+          const theirs = streetLines(nearestTownOf(towns, hx, hy), hx, hy);
           if (
             terrain[tile] === WATER ||
             houseAt[tile] >= 0 ||
+            townRoads[tile] === 1 ||
             lines.northSouth ||
-            lines.eastWest
+            lines.eastWest ||
+            theirs.northSouth ||
+            theirs.eastWest
           ) {
             continue;
           }

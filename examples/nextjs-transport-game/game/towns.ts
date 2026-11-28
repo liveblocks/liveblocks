@@ -55,6 +55,128 @@ const STREET_GAP = 6;
 // The two streets through the center of a town grow faster than the others
 const MAIN_STREET = 1.5;
 
+// Which streets of a town's grid can run through a tile
+const NORTH_SOUTH = 1;
+const EAST_WEST = 2;
+
+// Where a town can build, and which of its tiles are for streets
+export type TownLayout = {
+  // The land the town can grow on: dry land in a circle around its center
+  // that is closer to it than to any other town
+  area: number[];
+  // Tiles on a neighboring town's land where this town can only lay street
+  borrowed: number[];
+  // Per tile of the map: which streets of the grid can run through it.
+  // Buildings only go where none can.
+  lines: Uint8Array;
+};
+
+// Every town has its own grid of streets, and two grids don't line up. Where
+// the land of two towns meets, a street of one could end up right next to a
+// street of the other, side by side for as far as their border goes. So
+// there, the two towns share one street: the one that is already there,
+// or else the one of the town that was founded first. The other town gives
+// up its own, builds on that tile instead, and helps lay the shared street.
+export function townLayout(world: World, town: Town): TownLayout {
+  const { size } = world;
+  const area: number[] = [];
+  const borrowed: number[] = [];
+  const lines = new Uint8Array(size * size);
+
+  for (let dy = -TOWN_RADIUS; dy <= TOWN_RADIUS; dy++) {
+    for (let dx = -TOWN_RADIUS; dx <= TOWN_RADIUS; dx++) {
+      const x = town.x + dx;
+      const y = town.y + dy;
+      if (x < 0 || y < 0 || x >= size || y >= size) {
+        continue;
+      }
+      const tile = y * size + x;
+      if (
+        withinTown(dx, dy) &&
+        world.terrain[tile] !== WATER &&
+        world.industryAt[tile] < 0 &&
+        nearestTown(world, x, y) === town
+      ) {
+        area.push(tile);
+        const { northSouth, eastWest } = streetLines(town, x, y);
+        if (world.houseAt[tile] < 0) {
+          lines[tile] =
+            (northSouth ? NORTH_SOUTH : 0) | (eastWest ? EAST_WEST : 0);
+        }
+      }
+    }
+  }
+
+  for (const tile of area) {
+    const x = tile % size;
+    const y = Math.floor(tile / size);
+    for (const line of [NORTH_SOUTH, EAST_WEST]) {
+      if (!(lines[tile] & line)) {
+        continue;
+      }
+      // The tiles on either side of the street
+      for (const side of [-1, 1]) {
+        const nx = line === NORTH_SOUTH ? x + side : x;
+        const ny = line === NORTH_SOUTH ? y : y + side;
+        if (nx < 0 || ny < 0 || nx >= size || ny >= size) {
+          continue;
+        }
+        const next = ny * size + nx;
+        const other = nearestTown(world, nx, ny);
+        if (!other || world.terrain[next] === WATER) {
+          continue;
+        }
+        if (other === town) {
+          // A street of another town that already runs alongside, on this
+          // town's land
+          const ax = line === NORTH_SOUTH ? 0 : 1;
+          const ay = line === NORTH_SOUTH ? 1 : 0;
+          const road = (rx: number, ry: number) =>
+            rx >= 0 &&
+            ry >= 0 &&
+            rx < size &&
+            ry < size &&
+            world.townRoads[ry * size + rx] === 1;
+          if (
+            world.townRoads[tile] !== 1 &&
+            road(nx, ny) &&
+            !(lines[next] & line) &&
+            (road(nx - ax, ny - ay) || road(nx + ax, ny + ay))
+          ) {
+            lines[tile] &= ~line;
+          }
+          continue;
+        }
+        const theirs = streetLines(other, nx, ny);
+        if (!(line === NORTH_SOUTH ? theirs.northSouth : theirs.eastWest)) {
+          continue;
+        }
+        const mine =
+          world.townRoads[tile] === 1 ||
+          (world.townRoads[next] !== 1 && town.id < other.id);
+        if (!mine) {
+          lines[tile] &= ~line;
+          if (!lines[next]) {
+            borrowed.push(next);
+          }
+          // Streets that cross the border here can join the shared one
+          const crossing = streetLines(town, nx, ny);
+          lines[next] |=
+            line |
+            (line === NORTH_SOUTH
+              ? crossing.eastWest
+                ? EAST_WEST
+                : 0
+              : crossing.northSouth
+                ? NORTH_SOUTH
+                : 0);
+        }
+      }
+    }
+  }
+  return { area, borrowed, lines };
+}
+
 const plans = new WeakMap<World, (GrowthStep[] | undefined)[]>();
 
 // The growth steps of a town, in order. `world` has to be the world as
@@ -94,23 +216,8 @@ function planTown(world: World, town: Town) {
   const distance = (tile: number) =>
     Math.hypot((tile % size) - town.x, Math.floor(tile / size) - town.y);
 
-  // Where this town can grow: dry land in a circle around its center that
-  // is closer to it than to any other town
-  const area: number[] = [];
-  for (let dy = -TOWN_RADIUS; dy <= TOWN_RADIUS; dy++) {
-    for (let dx = -TOWN_RADIUS; dx <= TOWN_RADIUS; dx++) {
-      const tile = neighbor(town.y * size + town.x, dx, dy);
-      if (
-        tile >= 0 &&
-        withinTown(dx, dy) &&
-        world.terrain[tile] !== WATER &&
-        world.industryAt[tile] < 0 &&
-        nearestTown(world, tile % size, Math.floor(tile / size)) === town
-      ) {
-        area.push(tile);
-      }
-    }
-  }
+  const { area, borrowed, lines } = townLayout(world, town);
+  const everywhere = [...area, ...borrowed];
 
   // The tallest building a tile can have. Buildings get taller toward the
   // center, and everywhere as the town gets older.
@@ -124,14 +231,12 @@ function planTown(world: World, town: Town) {
     return Math.max(0, Math.min(MAX_TIER, Math.floor(tier)));
   };
 
-  const linesAt = (tile: number) =>
-    streetLines(town, tile % size, Math.floor(tile / size));
-
   // How good a tile is for a new piece of street, or 0 if it can't have one.
   // Streets only follow the lines of the town's grid, and only get there
   // from a street that is already on that line or crosses it.
   const streetScore = (tile: number) => {
-    const { northSouth, eastWest } = linesAt(tile);
+    const northSouth = (lines[tile] & NORTH_SOUTH) !== 0;
+    const eastWest = (lines[tile] & EAST_WEST) !== 0;
     let score = 0;
     for (const [dx, dy] of [
       [1, 0],
@@ -172,16 +277,10 @@ function planTown(world: World, town: Town) {
     const sites: { tile: number; weight: number }[] = [];
     for (const corner of area) {
       const tiles = buildingTiles(size, corner, variant);
-      const free = tiles.every((tile) => {
-        const lines = linesAt(tile);
-        return (
-          inArea.has(tile) &&
-          !streets[tile] &&
-          !lines.northSouth &&
-          !lines.eastWest &&
-          tiers[tile] <= 1
-        );
-      });
+      const free = tiles.every(
+        (tile) =>
+          inArea.has(tile) && !streets[tile] && !lines[tile] && tiers[tile] <= 1
+      );
       if (!free || !tiles.some(nextToStreet)) {
         continue;
       }
@@ -267,13 +366,12 @@ function planTown(world: World, town: Town) {
     const upgrades: { tile: number; weight: number }[] = [];
     const streetEnds: { tile: number; weight: number }[] = [];
 
-    for (const tile of area) {
+    for (const tile of everywhere) {
       if (streets[tile]) {
         continue;
       }
       const far = distance(tile);
-      const lines = linesAt(tile);
-      if (lines.northSouth || lines.eastWest) {
+      if (lines[tile]) {
         const score = streetScore(tile);
         if (score > 0) {
           streetEnds.push({ tile, weight: score / (1 + far / 4) });
