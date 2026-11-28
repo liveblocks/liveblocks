@@ -74,6 +74,7 @@ import {
   type World,
 } from "@/game/world";
 import { useMoneyFloaters } from "@/hooks/use-money-floaters";
+import { useIsMac } from "@/hooks/use-is-mac";
 import { useClock } from "@/hooks/use-now";
 import { CompanyPicker } from "./company-picker";
 import { CompaniesWindow, VehiclesWindow } from "./company-windows";
@@ -153,6 +154,7 @@ export function Game() {
     }),
     [roads, rails, canals, noStreetKeys, demolished]
   );
+  const isMac = useIsMac();
   const clock = useClock();
   const paused = clock.pausedAt !== null;
   const townSteps = useTownSteps(generated, stationTiles, clock);
@@ -515,6 +517,7 @@ export function Game() {
           dragPlan,
           routeFrom,
           balance,
+          flipKey: isMac ? "Option (⌥)" : "Alt",
         });
 
   return (
@@ -967,6 +970,7 @@ function describe({
   dragPlan,
   routeFrom,
   balance,
+  flipKey,
 }: {
   world: World;
   network: Network;
@@ -980,6 +984,8 @@ function describe({
   dragPlan: DragPlan;
   routeFrom: number | null;
   balance: number;
+  // What the key that flips the corner of a line is called on this device
+  flipKey: string;
 }) {
   if (tool === "road" || tool === "rail" || tool === "canal") {
     const { label, cost } = TRACK[tool];
@@ -990,8 +996,8 @@ function describe({
       );
     }
     return tool === "canal"
-      ? `${label} · Drag across land to dig a waterway for ships · Hold Alt to flip the corner · ${formatMoney(cost)} per tile`
-      : `${label} · Drag across the map to build · Hold Alt to flip the corner · ${formatMoney(cost)} per tile`;
+      ? `${label} · Drag across land to dig a waterway for ships · Hold ${flipKey} to flip the corner · ${formatMoney(cost)} per tile`
+      : `${label} · Drag across the map to build · Hold ${flipKey} to flip the corner · ${formatMoney(cost)} per tile`;
   }
 
   if (tool === "bulldoze") {

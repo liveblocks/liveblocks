@@ -24,6 +24,7 @@ import { Window } from "@/components/window";
 import { BUILDINGS, TRACK, TRANSPORT } from "@/game/constants";
 import { formatMoney } from "@/game/economy";
 import type { Tool } from "@/game/types";
+import { useIsMac } from "@/hooks/use-is-mac";
 
 function RoadIcon({ className }: { className?: string }) {
   return (
@@ -139,17 +140,18 @@ export function Toolbar({
   onTogglePause: () => void;
 }) {
   const PauseIcon = paused ? Play : Pause;
+  const isMac = useIsMac();
   const steps = [
     {
       label: "Undo",
-      shortcut: "Ctrl+Z",
+      shortcut: isMac ? "⌘Z" : "Ctrl+Z",
       icon: Undo2,
       enabled: history.canUndo,
       run: history.undo,
     },
     {
       label: "Redo",
-      shortcut: "Ctrl+Shift+Z",
+      shortcut: isMac ? "⇧⌘Z" : "Ctrl+Shift+Z",
       icon: Redo2,
       enabled: history.canRedo,
       run: history.redo,
@@ -212,8 +214,7 @@ export function Toolbar({
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom" sideOffset={6}>
-            <span className="font-bold">{paused ? "Resume" : "Pause"}</span>{" "}
-            (P)
+            <span className="font-bold">{paused ? "Resume" : "Pause"}</span> (P)
             <div>
               Stops vehicles, cargo and towns for everyone. You can still build.
             </div>

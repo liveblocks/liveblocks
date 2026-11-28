@@ -192,7 +192,8 @@ function VehicleRow({
     Icon = Ship;
   }
   // Without a path, `departAt` is when the vehicle next looks for a route
-  const stalled = vehicle.path.length < 2 && vehicle.departAt > gameTime(clock, Date.now());
+  const stalled =
+    vehicle.path.length < 2 && vehicle.departAt > gameTime(clock, Date.now());
   const onBoard = loadOf(vehicle);
 
   let status = "Heading out empty";
