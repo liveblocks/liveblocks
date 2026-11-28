@@ -672,11 +672,11 @@ export class Renderer {
     ctx.transform(HALF_W, HALF_H, -HALF_W, HALF_H, 0, 0);
     ctx.fillStyle = WATER_COLOR;
     ctx.fill(this.canalPath);
-    ctx.fillStyle = "#8b8779";
+    ctx.fillStyle = "#6f757c";
     ctx.fill(this.canalWallPath);
     ctx.lineWidth = 0.07;
     ctx.lineCap = "square";
-    ctx.strokeStyle = "#d3ccbb";
+    ctx.strokeStyle = "#b4b9bf";
     ctx.stroke(this.canalBankPath);
     ctx.restore();
   }
