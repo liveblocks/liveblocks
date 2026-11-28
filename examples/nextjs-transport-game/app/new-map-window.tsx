@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import { Window } from "@/components/window";
 import {
   type Climate,
@@ -38,15 +38,18 @@ function Choice<Option extends string | number>({
   // What the picked option means
   children: ReactNode;
 }) {
+  const labelId = useId();
   return (
-    <fieldset className="pt-2">
-      <legend className="float-left w-full px-1 pb-1 font-bold">{label}</legend>
+    <div role="group" aria-labelledby={labelId} className="pt-2">
+      <div id={labelId} className="px-1 pb-1 font-bold">
+        {label}
+      </div>
       <div className="flex gap-px">
         {options.map((option) => (
           <button
             key={option.id}
             type="button"
-            className="win-button flex-1"
+            className="win-button min-w-0 flex-1"
             aria-pressed={picked === option.id}
             onClick={() => onPick(option.id)}
           >
@@ -55,7 +58,7 @@ function Choice<Option extends string | number>({
         ))}
       </div>
       <p className="px-1 pt-1 text-ui-muted">{children}</p>
-    </fieldset>
+    </div>
   );
 }
 
