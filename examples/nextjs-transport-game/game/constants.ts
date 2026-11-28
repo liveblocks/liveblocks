@@ -75,7 +75,7 @@ export const STADIUM = 8;
 // them: this is how many steps a small town takes per minute for each of its
 // stations that vehicles call at (up to a few stations). Towns slow down a
 // lot as they get close to their full size.
-export const TOWN_GROWTH_PER_STATION = 8;
+export const TOWN_GROWTH_PER_STATION = 1.6;
 export const TOWN_MAX_STATIONS = 4;
 // How far from its center a town can grow, in every direction, and how
 // close a station has to be to make it grow

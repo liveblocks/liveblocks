@@ -58,7 +58,7 @@ export function TownWindow({
   let service =
     "Nothing is transported here yet. Towns only grow when vehicles call at a station in them.";
   if (stations >= TOWN_MAX_STATIONS) {
-    service = `Vehicles call at ${stations} stations here. More won't speed it up.`;
+    service = `Vehicles call at ${stations} stations here. Only the first ${TOWN_MAX_STATIONS} count, so more won't speed it up.`;
   } else if (stations > 0) {
     service = `Vehicles call at ${stations} ${
       stations === 1 ? "station" : "stations"
