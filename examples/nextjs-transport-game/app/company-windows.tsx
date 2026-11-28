@@ -58,18 +58,18 @@ export function CompaniesWindow({
     <Window title="Companies" className="w-72" onClose={onClose}>
       <ol className="win-inset mt-[3px] flex flex-col">
         {ranking.length === 0 ? (
-          <li className="px-1.5 py-1 text-[#808080]">No company started yet</li>
+          <li className="px-1.5 py-1 text-ui-faint">No company started yet</li>
         ) : null}
         {ranking.map((entry, index) => (
           <li
             key={entry.id}
             className={`flex items-center gap-2 px-1.5 py-1 ${
-              entry.id === myCompany ? "bg-[#000080] text-white" : ""
+              entry.id === myCompany ? "bg-ui-accent text-ui-accent-text" : ""
             }`}
           >
             <span className="w-3 tabular-nums">{index + 1}</span>
             <span
-              className="size-3 shrink-0 border border-black"
+              className="size-3 shrink-0 border border-ui-edge"
               style={{ background: entry.company.color }}
             />
             <span className="min-w-0 flex-1">
@@ -83,9 +83,7 @@ export function CompaniesWindow({
             </span>
             <span
               className={`tabular-nums ${
-                entry.balance < 0 && entry.id !== myCompany
-                  ? "text-[#c00000]"
-                  : ""
+                entry.balance < 0 && entry.id !== myCompany ? "text-ui-bad" : ""
               }`}
             >
               {formatMoney(entry.balance)}
@@ -217,7 +215,7 @@ function VehicleRow({
 
   return (
     <li
-      className="group flex items-center gap-2 px-1.5 py-1 hover:bg-[#000080] hover:text-white"
+      className="group flex items-center gap-2 px-1.5 py-1 hover:bg-ui-accent hover:text-ui-accent-text"
       onMouseEnter={onHighlight}
     >
       <button
@@ -227,7 +225,7 @@ function VehicleRow({
         onClick={onSelect}
       >
         {stalled ? (
-          <TriangleAlert className="size-4 shrink-0 text-[#c00000] group-hover:text-white" />
+          <TriangleAlert className="size-4 shrink-0 text-ui-bad group-hover:text-ui-accent-text" />
         ) : (
           <Icon className="size-4 shrink-0" />
         )}
@@ -240,13 +238,13 @@ function VehicleRow({
       </button>
       <span
         className={`tabular-nums group-hover:hidden ${
-          vehicle.earned < 0 ? "text-[#c00000]" : "text-[#006000]"
+          vehicle.earned < 0 ? "text-ui-bad" : "text-ui-good"
         }`}
       >
         {vehicle.earned > 0 ? "+" : ""}
         {formatMoney(vehicle.earned)}
       </span>
-      <span className="hidden shrink-0 gap-px text-black group-hover:flex">
+      <span className="hidden shrink-0 gap-px text-ui-text group-hover:flex">
         <Tooltip>
           <TooltipTrigger asChild>
             <button

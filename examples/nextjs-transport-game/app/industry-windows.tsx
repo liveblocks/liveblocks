@@ -39,7 +39,7 @@ function Row({
     <li>
       <button
         type="button"
-        className="flex w-full items-center gap-2 px-1.5 py-0.5 text-left hover:bg-[#000080] hover:text-white"
+        className="flex w-full items-center gap-2 px-1.5 py-0.5 text-left hover:bg-ui-accent hover:text-ui-accent-text"
         onClick={onClick}
       >
         {children}
@@ -115,9 +115,9 @@ export function IndustryWindow({
                 {Math.floor(waiting).toLocaleString("en-US")}
               </span>
             </div>
-            <div className="h-2 border border-[#808080] bg-white">
+            <div className="h-2 border border-ui-line bg-ui-field">
               <div
-                className="h-full bg-[#000080]"
+                className="h-full bg-ui-accent"
                 style={{ width: `${Math.min(1, waiting / cap) * 100}%` }}
               />
             </div>
@@ -144,7 +144,7 @@ export function IndustryWindow({
           </h3>
           <ul className="win-inset flex flex-col py-0.5">
             {partners.length === 0 ? (
-              <li className="px-1.5 py-0.5 text-[#808080]">
+              <li className="px-1.5 py-0.5 text-ui-faint">
                 Nowhere on this map
               </li>
             ) : null}
@@ -168,14 +168,14 @@ export function IndustryWindow({
           <h3 className="mb-0.5 font-bold">Stations in reach</h3>
           <ul className="win-inset flex flex-col gap-0.5 px-1.5 py-1">
             {serving.length === 0 ? (
-              <li className="text-[#808080]">
+              <li className="text-ui-faint">
                 None yet. Build one a few tiles from here.
               </li>
             ) : null}
             {serving.map(([key, station]) => (
               <li key={key} className="flex items-center gap-1.5">
                 <span
-                  className="size-2.5 shrink-0 border border-black"
+                  className="size-2.5 shrink-0 border border-ui-edge"
                   style={{
                     background:
                       companies.get(station.owner)?.color ?? "#a3a3a3",
@@ -229,7 +229,7 @@ export function CargoWindow({
           <section key={cargo}>
             <h3 className="flex items-center gap-1.5 px-1.5 font-bold">
               <span
-                className="size-2.5 shrink-0 border border-black"
+                className="size-2.5 shrink-0 border border-ui-edge"
                 style={{ background: CARGO[cargo].color }}
               />
               {CARGO[cargo].label}
@@ -254,7 +254,7 @@ export function CargoWindow({
         <section>
           <h3 className="flex items-center gap-1.5 px-1.5 font-bold">
             <span
-              className="size-2.5 shrink-0 border border-black"
+              className="size-2.5 shrink-0 border border-ui-edge"
               style={{ background: CARGO.passengers.color }}
             />
             {CARGO.passengers.label}

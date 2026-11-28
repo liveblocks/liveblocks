@@ -56,23 +56,23 @@ export function CompanyPicker({
             return (
               <li
                 key={preset.id}
-                className="flex items-center gap-2.5 border-b border-[#dfdfdf] px-2 py-1.5 last:border-b-0"
+                className="flex items-center gap-2.5 border-b border-ui-rule px-2 py-1.5 last:border-b-0"
               >
                 <span
-                  className="size-6 shrink-0 border border-black"
+                  className="size-6 shrink-0 border border-ui-edge"
                   style={{ background: preset.color }}
                 />
                 <span className="min-w-0 flex-1">
                   <span
                     className={`block truncate font-bold ${
-                      manager ? "text-[#808080]" : ""
+                      manager ? "text-ui-faint" : ""
                     }`}
                   >
                     {preset.name}
                   </span>
                   <span
                     className={`block truncate ${
-                      manager ? "text-[#c00000]" : "text-[#404040]"
+                      manager ? "text-ui-bad" : "text-ui-muted"
                     }`}
                   >
                     {status}

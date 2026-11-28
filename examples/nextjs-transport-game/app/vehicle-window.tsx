@@ -151,7 +151,7 @@ export function VehicleWindow({
 
         <p className="flex items-center gap-1.5">
           <span
-            className="size-3 shrink-0 border border-black"
+            className="size-3 shrink-0 border border-ui-edge"
             style={{ background: owner?.color ?? "#a3a3a3" }}
           />
           <span className="truncate">{owner?.name ?? "Unknown"}</span>
@@ -161,7 +161,7 @@ export function VehicleWindow({
             {nameOf(vehicle.stops[0])} ↔ {nameOf(vehicle.stops[1])}
           </span>
           <br />
-          <span className={stalled ? "text-[#c00000]" : ""}>{status}</span>
+          <span className={stalled ? "text-ui-bad" : ""}>{status}</span>
         </p>
 
         <div>
@@ -171,9 +171,9 @@ export function VehicleWindow({
               {carried} of {capacity}
             </span>
           </div>
-          <div className="h-2 border border-[#808080] bg-white">
+          <div className="h-2 border border-ui-line bg-ui-field">
             <div
-              className="h-full bg-[#000080]"
+              className="h-full bg-ui-accent"
               style={{ width: `${Math.min(1, carried / capacity) * 100}%` }}
             />
           </div>
@@ -197,7 +197,7 @@ export function VehicleWindow({
           <dt>Profit so far</dt>
           <dd
             className={`text-right font-bold tabular-nums ${
-              vehicle.earned < 0 ? "text-[#c00000]" : "text-[#006000]"
+              vehicle.earned < 0 ? "text-ui-bad" : "text-ui-good"
             }`}
           >
             {formatMoney(vehicle.earned)}

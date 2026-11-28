@@ -69,7 +69,8 @@ function perMinute(series: Series): Series {
   return { ...series, points };
 }
 
-const WORLD = { id: "world", color: "#000080" };
+// Not a company: drawn in the color the interface uses for what stands out
+const WORLD = { id: "world", color: "var(--ui-accent)" };
 
 const GRAPHS: Graph[] = [
   {
@@ -171,7 +172,7 @@ function Chart({
   return (
     <svg
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      className="win-inset block w-full bg-white"
+      className="win-inset block w-full"
       role="img"
       aria-label="Graph"
     >
@@ -182,7 +183,7 @@ function Chart({
             x2={WIDTH - 4}
             y1={y(value)}
             y2={y(value)}
-            stroke={value === 0 ? "#808080" : "#d4d0c8"}
+            className={value === 0 ? "stroke-ui-line" : "stroke-ui-rule"}
             strokeWidth={1}
           />
           <text
@@ -190,13 +191,13 @@ function Chart({
             y={y(value) + 3}
             textAnchor="end"
             fontSize={9}
-            fill="#404040"
+            className="fill-ui-muted"
           >
             {format(value)}
           </text>
         </g>
       ))}
-      <text x={LEFT} y={HEIGHT - 3} fontSize={9} fill="#404040">
+      <text x={LEFT} y={HEIGHT - 3} fontSize={9} className="fill-ui-muted">
         {minutes < 1 ? "Just now" : `${minutes} min ago`}
       </text>
       <text
@@ -204,7 +205,7 @@ function Chart({
         y={HEIGHT - 3}
         textAnchor="end"
         fontSize={9}
-        fill="#404040"
+        className="fill-ui-muted"
       >
         Now
       </text>
@@ -278,7 +279,7 @@ export function StatsWindow({
         </div>
 
         {series.length === 0 ? (
-          <p className="win-inset px-1.5 py-6 text-center text-[#606060]">
+          <p className="win-inset px-1.5 py-6 text-center text-ui-muted">
             Nothing to show yet. Graphs fill in as the game goes on.
           </p>
         ) : (
@@ -289,7 +290,7 @@ export function StatsWindow({
           {series.map((each) => (
             <li key={each.id} className="flex items-center gap-1.5">
               <span
-                className="size-2.5 shrink-0 border border-black"
+                className="size-2.5 shrink-0 border border-ui-edge"
                 style={{ background: each.color }}
               />
               <span className="min-w-0 flex-1 truncate">{each.label}</span>
@@ -299,7 +300,7 @@ export function StatsWindow({
             </li>
           ))}
         </ul>
-        <p className="text-[#606060]">{graph.detail}</p>
+        <p className="text-ui-muted">{graph.detail}</p>
       </div>
     </Window>
   );

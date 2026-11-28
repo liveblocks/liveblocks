@@ -94,7 +94,7 @@ export function Taskbar({
                 onClick={onSwitchCompany}
               >
                 <span
-                  className="size-3 shrink-0 border border-black"
+                  className="size-3 shrink-0 border border-ui-edge"
                   style={{ background: company.color }}
                 />
                 <span>{company.name}</span>
@@ -106,7 +106,7 @@ export function Taskbar({
           </Tooltip>
           <div
             className={`win-status font-bold tabular-nums ${
-              balance < 0 ? "text-[#c00000]" : ""
+              balance < 0 ? "text-ui-bad" : ""
             }`}
           >
             {formatMoney(balance)}

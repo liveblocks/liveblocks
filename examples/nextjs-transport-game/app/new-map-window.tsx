@@ -54,7 +54,7 @@ function Choice<Option extends string | number>({
           </button>
         ))}
       </div>
-      <p className="px-1 pt-1 text-[#404040]">{children}</p>
+      <p className="px-1 pt-1 text-ui-muted">{children}</p>
     </fieldset>
   );
 }

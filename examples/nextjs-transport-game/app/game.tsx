@@ -81,6 +81,7 @@ import type { MapView } from "@/game/render/renderer";
 import { useMoneyFloaters } from "@/hooks/use-money-floaters";
 import { useIsMac } from "@/hooks/use-is-mac";
 import { useTheme } from "@/hooks/use-theme";
+import { useUiTheme } from "@/hooks/use-ui-theme";
 import { useClock } from "@/hooks/use-now";
 import { CompanyPicker } from "./company-picker";
 import { CompaniesWindow, VehiclesWindow } from "./company-windows";
@@ -181,6 +182,7 @@ export function Game() {
   const isMac = useIsMac();
   const clock = useClock();
   const [theme, setTheme] = useTheme();
+  const [uiTheme, setUiTheme] = useUiTheme();
   const speed = speedOf(clock);
   // Towns only grow around stations that vehicles are running to
   const servedKeys = servedStations(vehicles.values()).join();
@@ -737,7 +739,9 @@ export function Game() {
           {open.theme ? (
             <ThemeWindow
               theme={theme}
+              uiTheme={uiTheme}
               onPick={setTheme}
+              onPickUi={setUiTheme}
               onClose={() => setOpen({ ...open, theme: false })}
             />
           ) : null}
@@ -783,7 +787,7 @@ export function Game() {
               className="win flex animate-in items-center gap-1.5 px-2 py-1 fade-in slide-in-from-bottom-1"
             >
               <span
-                className="size-2.5 shrink-0 border border-black"
+                className="size-2.5 shrink-0 border border-ui-edge"
                 style={{ background: toast.color ?? "#c00000" }}
               />
               {toast.text}

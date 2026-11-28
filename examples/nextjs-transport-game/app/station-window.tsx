@@ -59,7 +59,7 @@ export function StationWindow({
       <div className="flex flex-col gap-1.5 px-1 pt-1.5 pb-1">
         <p className="flex items-center gap-1.5">
           <span
-            className="size-3 shrink-0 border border-black"
+            className="size-3 shrink-0 border border-ui-edge"
             style={{ background: owner?.color ?? "#a3a3a3" }}
           />
           <span className="truncate">
@@ -71,7 +71,7 @@ export function StationWindow({
           <h3 className="mb-0.5 font-bold">Waiting here</h3>
           <ul className="win-inset flex flex-col gap-1 px-1.5 py-1">
             {info.supply.length === 0 ? (
-              <li className="text-[#808080]">Nothing is produced nearby</li>
+              <li className="text-ui-faint">Nothing is produced nearby</li>
             ) : null}
             {waiting.map(({ cargo, amount, cap, rate }) => {
               const makers = info.industries
@@ -87,13 +87,13 @@ export function StationWindow({
                       {Math.floor(amount).toLocaleString("en-US")}
                     </span>
                   </div>
-                  <div className="h-2 border border-[#808080] bg-white">
+                  <div className="h-2 border border-ui-line bg-ui-field">
                     <div
-                      className="h-full bg-[#000080]"
+                      className="h-full bg-ui-accent"
                       style={{ width: `${Math.min(1, amount / cap) * 100}%` }}
                     />
                   </div>
-                  <p className="text-[#606060]">
+                  <p className="text-ui-muted">
                     {cargo === "passengers"
                       ? `About ${Math.round(rate * 60)} a minute, from the ${info.population.toLocaleString("en-US")} people in reach`
                       : `About ${Math.round(rate * 60)} a minute, at ${makers.join(" and ")}`}

@@ -111,6 +111,17 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-ui-text: var(--ui-text);
+  --color-ui-muted: var(--ui-muted);
+  --color-ui-faint: var(--ui-faint);
+  --color-ui-bad: var(--ui-bad);
+  --color-ui-good: var(--ui-good);
+  --color-ui-field: var(--ui-field);
+  --color-ui-rule: var(--ui-rule);
+  --color-ui-line: var(--ui-line);
+  --color-ui-edge: var(--ui-edge);
+  --color-ui-accent: var(--ui-accent);
+  --color-ui-accent-text: var(--ui-accent-text);
 }
 
 @layer base {
@@ -123,40 +134,467 @@
 }
 
 /*
- * The game's interface floats over the map in windows that look like desktop
- * software from the late 90s: gray, beveled, with a blue title bar.
+ * The game's interface floats over the map in windows. What they look like
+ * is up to the player: every look below sets the same list of properties,
+ * and the classes further down are built from those. "Classic", the one the
+ * game starts with, looks like desktop software from the late 90s: gray,
+ * beveled, with a blue title bar.
+ *
+ * A look applies to everything inside an element with its `data-ui`, so
+ * the window that lists them can show each button in its own look.
  */
+:root,
+[data-ui="classic"] {
+  --win-face: #c0c0c0;
+  --win-light: #ffffff;
+  --win-soft: #dfdfdf;
+  --win-shade: #808080;
+  --win-dark: #0a0a0a;
+
+  --ui-font: Tahoma, "MS Sans Serif", Verdana, Geneva, sans-serif;
+  --ui-font-size: 12px;
+  --ui-face: var(--win-face);
+  --ui-text: #000000;
+  --ui-muted: #505050;
+  --ui-faint: #808080;
+  --ui-bad: #c00000;
+  --ui-good: #006000;
+  /* Lists and readouts, the lines between their rows, and thin borders */
+  --ui-field: #ffffff;
+  --ui-rule: #dfdfdf;
+  --ui-line: #808080;
+  --ui-edge: #000000;
+  /* The selected row of a list, and the filled part of a meter */
+  --ui-accent: #000080;
+  --ui-accent-text: #ffffff;
+
+  --ui-window-padding: 3px;
+  --ui-window-radius: 0px;
+  --ui-window-border: 0 solid transparent;
+  --ui-window-backdrop: none;
+  --ui-window-shadow:
+    inset -1px -1px var(--win-dark), inset 1px 1px var(--win-soft),
+    inset -2px -2px var(--win-shade), inset 2px 2px var(--win-light),
+    3px 3px 0 rgb(0 0 0 / 0.3);
+
+  --ui-title-bg: linear-gradient(90deg, #000080, #1084d0);
+  --ui-title-text: #ffffff;
+  --ui-title-height: 20px;
+  --ui-title-padding: 0 2px 0 5px;
+  --ui-title-margin: 0;
+  --ui-title-radius: 0px;
+  --ui-title-weight: 700;
+  --ui-title-align: left;
+  --ui-title-transform: none;
+  --ui-title-border: 0 solid transparent;
+  --ui-title-button-width: 16px;
+  --ui-title-button-height: 14px;
+  --ui-title-button-bg: var(--win-face);
+  --ui-title-button-text: #000000;
+  --ui-title-button-radius: 0px;
+  --ui-title-button-shadow:
+    inset -1px -1px var(--win-dark), inset 1px 1px var(--win-light),
+    inset -2px -2px var(--win-shade), inset 2px 2px var(--win-soft);
+
+  --ui-button-bg: var(--win-face);
+  --ui-button-hover: var(--win-face);
+  --ui-button-active: var(--win-face);
+  --ui-button-text: #000000;
+  --ui-button-radius: 0px;
+  --ui-button-shadow:
+    inset -1px -1px var(--win-dark), inset 1px 1px var(--win-light),
+    inset -2px -2px var(--win-shade), inset 2px 2px var(--win-soft);
+  /* A button that is held down, or that stays pushed in: the classic look
+     gives the second kind a checkered face */
+  --ui-pressed-bg: repeating-conic-gradient(
+      var(--win-light) 0% 25%,
+      var(--win-face) 0% 50%
+    )
+    0 0 / 2px 2px;
+  --ui-pressed-text: #000000;
+  --ui-pressed-shadow:
+    inset 1px 1px var(--win-dark), inset -1px -1px var(--win-light),
+    inset 2px 2px var(--win-shade), inset -2px -2px var(--win-soft);
+  --ui-press-shift: 1px;
+  --ui-disabled-text: var(--win-shade);
+  --ui-disabled-shadow: 1px 1px var(--win-light);
+  --ui-focus: 1px dotted #000000;
+  --ui-focus-offset: -4px;
+
+  --ui-inset-radius: 0px;
+  --ui-inset-shadow:
+    inset 1px 1px var(--win-shade), inset -1px -1px var(--win-light),
+    inset 2px 2px var(--win-dark), inset -2px -2px var(--win-soft);
+  --ui-status-shadow:
+    inset 1px 1px var(--win-shade), inset -1px -1px var(--win-light);
+  --ui-divider-shadow:
+    inset 1px 0 var(--win-shade), inset -1px 0 var(--win-light);
+}
+
+/* White cards with round corners and soft shadows */
+[data-ui="modern"] {
+  --ui-font: var(--font-inter), system-ui, sans-serif;
+  --ui-font-size: 12.5px;
+  --ui-face: #ffffff;
+  --ui-text: #18181b;
+  --ui-muted: #52525b;
+  --ui-faint: #a1a1aa;
+  --ui-bad: #dc2626;
+  --ui-good: #15803d;
+  --ui-field: #fafafa;
+  --ui-rule: #e4e4e7;
+  --ui-line: #d4d4d8;
+  --ui-edge: rgb(0 0 0 / 0.25);
+  --ui-accent: #2563eb;
+  --ui-accent-text: #ffffff;
+
+  --ui-window-padding: 6px;
+  --ui-window-radius: 12px;
+  --ui-window-shadow: 0 0 0 1px rgb(0 0 0 / 0.08), 0 10px 30px rgb(0 0 0 / 0.2);
+
+  --ui-title-bg: transparent;
+  --ui-title-text: #18181b;
+  --ui-title-height: 24px;
+  --ui-title-padding: 0 2px 0 6px;
+  --ui-title-margin: 0 0 2px;
+  --ui-title-weight: 600;
+  --ui-title-button-width: 20px;
+  --ui-title-button-height: 20px;
+  --ui-title-button-bg: transparent;
+  --ui-title-button-hover: #f4f4f5;
+  --ui-title-button-text: #71717a;
+  --ui-title-button-radius: 6px;
+  --ui-title-button-shadow: none;
+
+  --ui-button-bg: #f4f4f5;
+  --ui-button-hover: #e4e4e7;
+  --ui-button-active: #d4d4d8;
+  --ui-button-text: #18181b;
+  --ui-button-radius: 7px;
+  --ui-button-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+  --ui-pressed-bg: #2563eb;
+  --ui-pressed-text: #ffffff;
+  --ui-pressed-shadow: none;
+  --ui-press-shift: 0px;
+  --ui-disabled-text: #a1a1aa;
+  --ui-disabled-shadow: none;
+  --ui-focus: 2px solid #2563eb;
+  --ui-focus-offset: 1px;
+
+  --ui-inset-radius: 8px;
+  --ui-inset-shadow: inset 0 0 0 1px #e4e4e7;
+  --ui-status-shadow: none;
+  --ui-divider-shadow: inset 1px 0 #e4e4e7;
+}
+
+/* Brushed gray, a centered title and traffic lights in the corner */
+[data-ui="mac"] {
+  --ui-font: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --ui-font-size: 12.5px;
+  --ui-face: #ececec;
+  --ui-text: #262626;
+  --ui-muted: #5a5a5a;
+  --ui-faint: #8e8e93;
+  --ui-bad: #d70015;
+  --ui-good: #1d7a34;
+  --ui-field: #ffffff;
+  --ui-rule: #e5e5e5;
+  --ui-line: #c2c2c2;
+  --ui-edge: rgb(0 0 0 / 0.3);
+  --ui-accent: #0a7aff;
+  --ui-accent-text: #ffffff;
+
+  --ui-window-padding: 6px;
+  --ui-window-radius: 10px;
+  --ui-window-shadow: 0 0 0 1px rgb(0 0 0 / 0.22), 0 14px 36px rgb(0 0 0 / 0.3);
+
+  --ui-title-bg: linear-gradient(#e9e9e9, #d4d4d4);
+  --ui-title-text: #3c3c3c;
+  --ui-title-height: 24px;
+  --ui-title-padding: 0 8px;
+  --ui-title-margin: -6px -6px 6px;
+  --ui-title-radius: 10px 10px 0 0;
+  --ui-title-weight: 600;
+  --ui-title-align: center;
+  --ui-title-border: 1px solid #b9b9b9;
+  --ui-title-button-width: 12px;
+  --ui-title-button-height: 12px;
+  --ui-title-button-text: rgb(0 0 0 / 0.55);
+  --ui-title-button-radius: 999px;
+  --ui-title-button-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.25);
+
+  --ui-button-bg: linear-gradient(#ffffff, #f2f2f2);
+  --ui-button-hover: linear-gradient(#ffffff, #f8f8f8);
+  --ui-button-active: linear-gradient(#e6e6e6, #dcdcdc);
+  --ui-button-text: #262626;
+  --ui-button-radius: 6px;
+  --ui-button-shadow:
+    inset 0 0 0 0.5px rgb(0 0 0 / 0.28), 0 1px 1px rgb(0 0 0 / 0.08);
+  --ui-pressed-bg: linear-gradient(#58a6ff, #0a7aff);
+  --ui-pressed-text: #ffffff;
+  --ui-pressed-shadow:
+    inset 0 0 0 0.5px rgb(0 0 0 / 0.3), 0 1px 1px rgb(0 0 0 / 0.1);
+  --ui-press-shift: 0px;
+  --ui-disabled-text: #a9a9a9;
+  --ui-disabled-shadow: none;
+  --ui-focus: 3px solid rgb(10 122 255 / 0.5);
+  --ui-focus-offset: 0px;
+
+  --ui-inset-radius: 5px;
+  --ui-inset-shadow: inset 0 0 0 1px #c8c8c8;
+  --ui-status-shadow: none;
+  --ui-divider-shadow: inset 1px 0 #c8c8c8;
+}
+
+/* Solid blocks of color: no bevels, no shadows, no round corners */
+[data-ui="flat"] {
+  --ui-font: system-ui, "Segoe UI", sans-serif;
+  --ui-font-size: 12.5px;
+  --ui-face: #ecf0f1;
+  --ui-text: #2c3e50;
+  --ui-muted: #5d6d7e;
+  --ui-faint: #95a5a6;
+  --ui-bad: #c0392b;
+  --ui-good: #1e8449;
+  --ui-field: #ffffff;
+  --ui-rule: #ecf0f1;
+  --ui-line: #bdc3c7;
+  --ui-edge: #2c3e50;
+  --ui-accent: #16a085;
+  --ui-accent-text: #ffffff;
+
+  --ui-window-padding: 4px;
+  --ui-window-shadow: none;
+  --ui-window-border: 0 solid transparent;
+
+  --ui-title-bg: #2c3e50;
+  --ui-title-text: #ecf0f1;
+  --ui-title-height: 24px;
+  --ui-title-padding: 0 4px 0 8px;
+  --ui-title-margin: -4px -4px 4px;
+  --ui-title-weight: 600;
+  --ui-title-button-width: 18px;
+  --ui-title-button-height: 18px;
+  --ui-title-button-bg: #34495e;
+  --ui-title-button-hover: #16a085;
+  --ui-title-button-text: #ecf0f1;
+  --ui-title-button-shadow: none;
+
+  --ui-button-bg: #d5dbdf;
+  --ui-button-hover: #c4ccd1;
+  --ui-button-active: #b3bdc3;
+  --ui-button-text: #2c3e50;
+  --ui-button-radius: 0px;
+  --ui-button-shadow: none;
+  --ui-pressed-bg: #16a085;
+  --ui-pressed-text: #ffffff;
+  --ui-pressed-shadow: none;
+  --ui-press-shift: 0px;
+  --ui-disabled-text: #95a5a6;
+  --ui-disabled-shadow: none;
+  --ui-focus: 2px solid #16a085;
+  --ui-focus-offset: 1px;
+
+  --ui-inset-shadow: none;
+  --ui-status-shadow: none;
+  --ui-divider-shadow: inset 2px 0 #bdc3c7;
+}
+
+/* Easy on the eyes at night */
+[data-ui="dark"] {
+  --ui-font: var(--font-inter), system-ui, sans-serif;
+  --ui-font-size: 12.5px;
+  --ui-face: #1f2126;
+  --ui-text: #e8e8ea;
+  --ui-muted: #a5a8b0;
+  --ui-faint: #74777f;
+  --ui-bad: #ff6b6b;
+  --ui-good: #5fd38a;
+  --ui-field: #16171b;
+  --ui-rule: #2b2d33;
+  --ui-line: #44474f;
+  --ui-edge: rgb(255 255 255 / 0.35);
+  --ui-accent: #4c8dff;
+  --ui-accent-text: #ffffff;
+
+  --ui-window-padding: 6px;
+  --ui-window-radius: 10px;
+  --ui-window-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.1), 0 10px 30px rgb(0 0 0 / 0.5);
+
+  --ui-title-bg: transparent;
+  --ui-title-text: #e8e8ea;
+  --ui-title-height: 24px;
+  --ui-title-padding: 0 2px 0 6px;
+  --ui-title-margin: 0 0 2px;
+  --ui-title-weight: 600;
+  --ui-title-button-width: 20px;
+  --ui-title-button-height: 20px;
+  --ui-title-button-bg: transparent;
+  --ui-title-button-hover: #2c2f36;
+  --ui-title-button-text: #a5a8b0;
+  --ui-title-button-radius: 6px;
+  --ui-title-button-shadow: none;
+
+  --ui-button-bg: #2c2f36;
+  --ui-button-hover: #383b44;
+  --ui-button-active: #444853;
+  --ui-button-text: #e8e8ea;
+  --ui-button-radius: 7px;
+  --ui-button-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07);
+  --ui-pressed-bg: #4c8dff;
+  --ui-pressed-text: #ffffff;
+  --ui-pressed-shadow: none;
+  --ui-press-shift: 0px;
+  --ui-disabled-text: #5f626a;
+  --ui-disabled-shadow: none;
+  --ui-focus: 2px solid #4c8dff;
+  --ui-focus-offset: 1px;
+
+  --ui-inset-radius: 8px;
+  --ui-inset-shadow: inset 0 0 0 1px #2b2d33;
+  --ui-status-shadow: none;
+  --ui-divider-shadow: inset 1px 0 #3a3d45;
+}
+
+/* Frosted panes that let the map show through */
+[data-ui="glass"] {
+  --ui-font: var(--font-inter), system-ui, sans-serif;
+  --ui-font-size: 12.5px;
+  --ui-face: rgb(255 255 255 / 0.6);
+  --ui-text: #101418;
+  --ui-muted: #333a42;
+  --ui-faint: #5d6670;
+  --ui-bad: #b91c1c;
+  --ui-good: #166534;
+  --ui-field: rgb(255 255 255 / 0.5);
+  --ui-rule: rgb(0 0 0 / 0.08);
+  --ui-line: rgb(0 0 0 / 0.25);
+  --ui-edge: rgb(0 0 0 / 0.35);
+  --ui-accent: rgb(16 20 24 / 0.82);
+  --ui-accent-text: #ffffff;
+
+  --ui-window-padding: 7px;
+  --ui-window-radius: 16px;
+  --ui-window-backdrop: blur(14px) saturate(1.5);
+  --ui-window-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.65), 0 10px 30px rgb(0 0 0 / 0.22);
+
+  --ui-title-bg: transparent;
+  --ui-title-text: #101418;
+  --ui-title-height: 24px;
+  --ui-title-padding: 0 2px 0 7px;
+  --ui-title-margin: 0 0 2px;
+  --ui-title-weight: 600;
+  --ui-title-button-width: 20px;
+  --ui-title-button-height: 20px;
+  --ui-title-button-bg: rgb(255 255 255 / 0.45);
+  --ui-title-button-hover: rgb(255 255 255 / 0.85);
+  --ui-title-button-text: #333a42;
+  --ui-title-button-radius: 999px;
+  --ui-title-button-shadow: none;
+
+  --ui-button-bg: rgb(255 255 255 / 0.45);
+  --ui-button-hover: rgb(255 255 255 / 0.75);
+  --ui-button-active: rgb(255 255 255 / 0.9);
+  --ui-button-text: #101418;
+  --ui-button-radius: 999px;
+  --ui-button-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.7);
+  --ui-pressed-bg: rgb(16 20 24 / 0.82);
+  --ui-pressed-text: #ffffff;
+  --ui-pressed-shadow: none;
+  --ui-press-shift: 0px;
+  --ui-disabled-text: rgb(16 20 24 / 0.35);
+  --ui-disabled-shadow: none;
+  --ui-focus: 2px solid rgb(16 20 24 / 0.7);
+  --ui-focus-offset: 1px;
+
+  --ui-inset-radius: 10px;
+  --ui-inset-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6);
+  --ui-status-shadow: none;
+  --ui-divider-shadow: inset 1px 0 rgb(0 0 0 / 0.15);
+}
+
+/* Green letters on a black screen */
+[data-ui="terminal"] {
+  --ui-font: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --ui-font-size: 11.5px;
+  --ui-face: #060a06;
+  --ui-text: #3dff7a;
+  --ui-muted: #2bc45c;
+  --ui-faint: #1d8a40;
+  --ui-bad: #ff5c5c;
+  --ui-good: #3dff7a;
+  --ui-field: #030503;
+  --ui-rule: #123d1f;
+  --ui-line: #1d8a40;
+  --ui-edge: #3dff7a;
+  --ui-accent: #3dff7a;
+  --ui-accent-text: #060a06;
+
+  --ui-window-padding: 4px;
+  --ui-window-shadow: inset 0 0 0 1px #3dff7a, 0 0 18px rgb(61 255 122 / 0.25);
+
+  --ui-title-bg: #3dff7a;
+  --ui-title-text: #060a06;
+  --ui-title-height: 20px;
+  --ui-title-padding: 0 3px 0 7px;
+  --ui-title-margin: -4px -4px 4px;
+  --ui-title-transform: uppercase;
+  --ui-title-button-width: 16px;
+  --ui-title-button-height: 14px;
+  --ui-title-button-bg: #060a06;
+  --ui-title-button-text: #3dff7a;
+  --ui-title-button-shadow: none;
+
+  --ui-button-bg: transparent;
+  --ui-button-hover: #0f2a17;
+  --ui-button-active: #17442a;
+  --ui-button-text: #3dff7a;
+  --ui-button-radius: 0px;
+  --ui-button-shadow: inset 0 0 0 1px #1d8a40;
+  --ui-pressed-bg: #3dff7a;
+  --ui-pressed-text: #060a06;
+  --ui-pressed-shadow: none;
+  --ui-press-shift: 0px;
+  --ui-disabled-text: #1d6a34;
+  --ui-disabled-shadow: none;
+  --ui-focus: 1px dashed #3dff7a;
+  --ui-focus-offset: 2px;
+
+  --ui-inset-shadow: inset 0 0 0 1px #1d8a40;
+  --ui-status-shadow: inset 0 0 0 1px #123d1f;
+  --ui-divider-shadow: inset 1px 0 #1d8a40;
+}
+
 @layer components {
   .win {
-    --win-face: #c0c0c0;
-    --win-light: #ffffff;
-    --win-soft: #dfdfdf;
-    --win-shade: #808080;
-    --win-dark: #0a0a0a;
-
-    padding: 3px;
-    background: var(--win-face);
-    color: #000000;
-    font-family: Tahoma, "MS Sans Serif", Verdana, Geneva, sans-serif;
-    font-size: 12px;
+    padding: var(--ui-window-padding);
+    border: var(--ui-window-border);
+    border-radius: var(--ui-window-radius);
+    background: var(--ui-face);
+    backdrop-filter: var(--ui-window-backdrop);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-font-size);
     line-height: 1.35;
-    box-shadow:
-      inset -1px -1px var(--win-dark),
-      inset 1px 1px var(--win-soft),
-      inset -2px -2px var(--win-shade),
-      inset 2px 2px var(--win-light),
-      3px 3px 0 rgb(0 0 0 / 0.3);
+    box-shadow: var(--ui-window-shadow);
   }
 
   .win-title {
     display: flex;
     align-items: center;
     gap: 4px;
-    height: 20px;
-    padding: 0 2px 0 5px;
-    background: linear-gradient(90deg, #000080, #1084d0);
-    color: #ffffff;
-    font-weight: 700;
+    height: var(--ui-title-height);
+    margin: var(--ui-title-margin);
+    padding: var(--ui-title-padding);
+    border-bottom: var(--ui-title-border);
+    border-radius: var(--ui-title-radius);
+    background: var(--ui-title-bg);
+    color: var(--ui-title-text);
+    font-weight: var(--ui-title-weight);
+    text-align: var(--ui-title-align);
+    text-transform: var(--ui-title-transform);
     cursor: move;
     user-select: none;
     touch-action: none;
@@ -165,15 +603,16 @@
   .win-title-button {
     display: grid;
     place-items: center;
-    width: 16px;
-    height: 14px;
-    background: var(--win-face);
-    color: #000000;
-    box-shadow:
-      inset -1px -1px var(--win-dark),
-      inset 1px 1px var(--win-light),
-      inset -2px -2px var(--win-shade),
-      inset 2px 2px var(--win-soft);
+    width: var(--ui-title-button-width);
+    height: var(--ui-title-button-height);
+    border-radius: var(--ui-title-button-radius);
+    background: var(--ui-title-button-bg);
+    color: var(--ui-title-button-text);
+    box-shadow: var(--ui-title-button-shadow);
+  }
+
+  .win-title-button:hover {
+    background: var(--ui-title-button-hover, var(--ui-title-button-bg));
   }
 
   .win-button {
@@ -183,75 +622,70 @@
     gap: 5px;
     min-height: 23px;
     padding: 3px 9px;
-    background: var(--win-face);
-    color: #000000;
+    border-radius: var(--ui-button-radius);
+    background: var(--ui-button-bg);
+    color: var(--ui-button-text);
+    font-family: var(--ui-font);
     white-space: nowrap;
-    box-shadow:
-      inset -1px -1px var(--win-dark),
-      inset 1px 1px var(--win-light),
-      inset -2px -2px var(--win-shade),
-      inset 2px 2px var(--win-soft);
+    box-shadow: var(--ui-button-shadow);
+  }
+
+  .win-button:hover:not(:disabled) {
+    background: var(--ui-button-hover);
   }
 
   .win-button:focus-visible {
-    outline: 1px dotted #000000;
-    outline-offset: -4px;
+    outline: var(--ui-focus);
+    outline-offset: var(--ui-focus-offset);
   }
 
   .win-button:disabled {
-    color: var(--win-shade);
-    text-shadow: 1px 1px var(--win-light);
+    color: var(--ui-disabled-text);
+    text-shadow: var(--ui-disabled-shadow);
+  }
+
+  .win-button:active:not(:disabled) {
+    background: var(--ui-button-active);
   }
 
   .win-title-button:active,
   .win-button:active:not(:disabled),
   .win-button[aria-pressed="true"] {
-    box-shadow:
-      inset 1px 1px var(--win-dark),
-      inset -1px -1px var(--win-light),
-      inset 2px 2px var(--win-shade),
-      inset -2px -2px var(--win-soft);
+    box-shadow: var(--ui-pressed-shadow);
   }
 
   .win-button:active:not(:disabled) > *,
   .win-button[aria-pressed="true"] > * {
-    translate: 1px 1px;
+    translate: var(--ui-press-shift) var(--ui-press-shift);
   }
 
-  /* A toolbar button that stays pushed in gets the classic checkered face */
-  .win-button[aria-pressed="true"] {
-    background: repeating-conic-gradient(
-        var(--win-light) 0% 25%,
-        var(--win-face) 0% 50%
-      )
-      0 0 / 2px 2px;
+  /* A button that stays pushed in: the tool in hand, the speed of the game */
+  .win-button[aria-pressed="true"],
+  .win-button[aria-pressed="true"]:hover,
+  .win-button[aria-pressed="true"]:active {
+    background: var(--ui-pressed-bg);
+    color: var(--ui-pressed-text);
   }
 
   /* A field sunk into the window: lists, readouts, the status line */
   .win-inset {
-    background: #ffffff;
-    box-shadow:
-      inset 1px 1px var(--win-shade),
-      inset -1px -1px var(--win-light),
-      inset 2px 2px var(--win-dark),
-      inset -2px -2px var(--win-soft);
+    border-radius: var(--ui-inset-radius);
+    background: var(--ui-field);
+    box-shadow: var(--ui-inset-shadow);
     padding: 2px;
   }
 
   .win-status {
     padding: 3px 6px;
-    box-shadow:
-      inset 1px 1px var(--win-shade),
-      inset -1px -1px var(--win-light);
+    border-radius: var(--ui-inset-radius);
+    box-shadow: var(--ui-status-shadow);
   }
 
   .win-divider {
     width: 2px;
     align-self: stretch;
     margin: 2px 3px;
-    box-shadow:
-      inset 1px 0 var(--win-shade),
-      inset -1px 0 var(--win-light);
+    box-shadow: var(--ui-divider-shadow);
   }
 
   /* Amounts of money that float up from the cursor when spent or received */
@@ -282,6 +716,30 @@
       1px 2px 0 rgb(0 0 0 / 0.5);
     animation: money-float 1.3s ease-out forwards;
   }
+}
+
+/*
+ * The Mac look has no icons on its title bar buttons until the pointer is
+ * over them: they are a red and a yellow light, at the other end. These
+ * rules are outside of any layer, to win from the classes on the icons.
+ */
+[data-ui="mac"] .win-title-button {
+  order: -1;
+  background: #febc2e;
+}
+
+[data-ui="mac"] .win-title-button[aria-label="Close"] {
+  order: -2;
+  background: #ff5f57;
+}
+
+[data-ui="mac"] .win-title-button > svg {
+  margin: 0;
+  opacity: 0;
+}
+
+[data-ui="mac"] .win-title:hover .win-title-button > svg {
+  opacity: 1;
 }
 
 /* Align Liveblocks UI with the app's primary color. */
