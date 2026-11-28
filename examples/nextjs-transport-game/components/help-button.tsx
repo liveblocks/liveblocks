@@ -19,13 +19,19 @@ const FEATURES: Feature[] = [
     icon: <RouteIcon />,
     title: "Build a network",
     description:
-      "Pick the road or rail tool and drag across the map to lay track, then place stations next to towns and industries. Docks go on the water by the shore, and ships need no track at all: dig a canal to bring them inland.",
+      "The Build window has a menu for railways, one for roads and one for waterways, and each stays open until you close it. Drag across the map to lay track, then place stations next to towns and industries. Drag a train station for a platform as long as your trains, and drag along it again to make it longer. Docks go on the water by the shore, and ships need no track at all: dig a canal to bring them inland.",
   },
   {
     icon: <TruckIcon />,
     title: "Run vehicles",
     description:
-      "With the vehicle tool, click two of your stations to buy a bus, truck, train or ship that carries passengers and cargo between them. A station takes everything around it, so one vehicle can carry passengers and freight together. Click an industry, or open the Cargo window, to see what needs to go where. Click a vehicle to watch it, follow it or sell it. Press X to see through buildings when a station is hard to find.",
+      "Vehicles are bought at a depot: build a garage, an engine shed or a shipyard next to your road, railway or water, click it, choose one of its vehicles (and for a train, how many carriages), then click the two stations it should run between. A station takes everything around it, so one vehicle can carry passengers and freight together. Click an industry, or open the Cargo window, to see what needs to go where. Click a vehicle to watch it, follow it or sell it. Press X to see through buildings when a station is hard to find.",
+  },
+  {
+    icon: <SignalIcon />,
+    title: "Keep them apart",
+    description:
+      "Vehicles can't drive through each other. Buses and trucks queue, and a canal has room for one ship at a time. Trains that meet on the same track crash, and both are lost: lay two tracks, one for each way, and put signals beside them. A block signal lets a train through when the track behind it is empty, a path signal when the train's own way to the next signal is free, and a one-way path signal can't be passed from behind. Only the carriages that fit beside a platform load and unload.",
   },
   {
     icon: <UsersIcon />,
@@ -37,7 +43,7 @@ const FEATURES: Feature[] = [
     icon: <GlobeIcon />,
     title: "Shared world",
     description:
-      "Tracks are shared, so you can connect to another company's network. Towns grow along a grid of streets, from cottages to skyscrapers, but only while vehicles call at their stations, and industries make more once enough of their output is carried away. The game can be paused or fast-forwarded, for everyone at once. The Stats window has graphs of how every company is doing, and the Theme window changes the look of the map and of the windows, for you alone. Your company window starts a new map: a mainland or an island, in the snow, the desert or the jungle.",
+      "Roads are shared, so your buses and trucks can drive on another company's. Towns grow along a grid of streets, from cottages to skyscrapers, but only while vehicles call at their stations, and industries make more once enough of their output is carried away. The game can be paused or fast-forwarded, for everyone at once. The Stats window has graphs of how every company is doing, and the Theme window changes the look of the map and of the windows, for you alone. Your company window starts a new map: a mainland or an island, in the snow, the desert or the jungle.",
   },
 ];
 
@@ -289,6 +295,17 @@ function RouteIcon() {
       <circle cx={6} cy={19} r={3} />
       <path d="M9 19h8.5a3.5 3.5 0 100-7h-11a3.5 3.5 0 010-7H15" />
       <circle cx={18} cy={5} r={3} />
+    </FeatureIconBase>
+  );
+}
+
+function SignalIcon() {
+  return (
+    <FeatureIconBase>
+      <rect x={8} y={2} width={8} height={14} rx={2} />
+      <circle cx={12} cy={6.5} r={1} />
+      <circle cx={12} cy={11.5} r={1} />
+      <path d="M12 16v6" />
     </FeatureIconBase>
   );
 }
