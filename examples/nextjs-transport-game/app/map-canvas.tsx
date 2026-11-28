@@ -2,18 +2,20 @@
 
 import { useRoom, useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { Minus, Plus } from "lucide-react";
-import { PointerEvent, useEffect, useRef } from "react";
+import { PointerEvent, type RefObject, useEffect, useRef } from "react";
 import {
   demolitionCost,
   snapshotView,
   trackPlan,
   trackProblem,
 } from "@/game/actions";
-import type { Clock } from "@/game/clock";
+import { type Clock, gameTime } from "@/game/clock";
 import { COMPANIES, TILE_H } from "@/game/constants";
+import { type PathPoint, vehiclePoint } from "@/game/motion";
 import { lineBetween, type Network } from "@/game/network";
 import {
   type Camera,
+  type MapView,
   Renderer,
   type Scene,
   type Viewport,
@@ -53,13 +55,20 @@ type Props = {
   routeFrom: number | null;
   selectedStation: number | null;
   highlightedVehicle: string | null;
+  // The vehicle that the map keeps in the middle of the screen, if any
+  follow: string | null;
   clock: Clock;
   focus: Focus;
+  // What the map is drawn with, for the cameras in vehicle windows
+  view: RefObject<MapView | null>;
   onHover: (tile: number | null) => void;
   onDragPlan: (plan: DragPlan) => void;
   onLine: (tool: LineTool, tiles: number[]) => void;
   onTileClick: (tile: number) => void;
   onTownClick: (town: number) => void;
+  onVehicleClick: (vehicleId: string) => void;
+  // The player moved the map themselves
+  onStopFollow: () => void;
 };
 
 type Drag = {
@@ -197,6 +206,7 @@ export function MapCanvas(props: Props) {
       getComputedStyle(canvas).fontFamily || "sans-serif"
     );
     rendererRef.current = renderer;
+    latest.current.view.current = { renderer, scene: scene.current };
 
     // Start on the town closest to the middle of the map
     const middle = world.size / 2;
@@ -209,6 +219,7 @@ export function MapCanvas(props: Props) {
     scene.current.hover = null;
     scene.current.preview = null;
 
+    const followPoint: PathPoint = { x: 0, y: 0, dx: 1, dy: 0 };
     let frame = 0;
     let previous = performance.now();
     const loop = (time: number) => {
@@ -221,11 +232,29 @@ export function MapCanvas(props: Props) {
         panX += PAN_KEYS[key][0];
         panY += PAN_KEYS[key][1];
       }
+      const { follow, onStopFollow } = latest.current;
+      const followed = follow ? scene.current.vehicles.get(follow) : undefined;
       if (panX !== 0 || panY !== 0) {
         const speed = (900 * elapsed) / camera.current.zoom;
         camera.current.x += panX * speed;
         camera.current.y += panY * speed;
         clampCamera();
+        if (follow) {
+          onStopFollow();
+        }
+      } else if (followed && !isPanning(drag.current)) {
+        // Ease the map toward the vehicle that is being followed
+        vehiclePoint(
+          followed,
+          latest.current.world.size,
+          gameTime(scene.current.clock, Date.now()),
+          followPoint
+        );
+        const ease = Math.min(1, elapsed * 6);
+        camera.current.x +=
+          (worldX(followPoint.x, followPoint.y) - camera.current.x) * ease;
+        camera.current.y +=
+          (worldY(followPoint.x, followPoint.y) - camera.current.y) * ease;
       }
 
       renderer.render(
@@ -241,6 +270,7 @@ export function MapCanvas(props: Props) {
     return () => {
       cancelAnimationFrame(frame);
       rendererRef.current = null;
+      latest.current.view.current = null;
     };
   }, [world.seed, world.size]);
 
@@ -399,6 +429,28 @@ export function MapCanvas(props: Props) {
     return x >= 0 && y >= 0 && x < size && y < size ? y * size + x : null;
   };
 
+  // The vehicle under a point of the map, if one is on its way there. One
+  // that is loading at a station leaves the click to the station.
+  const vehicleAt = (point: { x: number; y: number }) => {
+    const { size } = latest.current.world;
+    const time = gameTime(scene.current.clock, Date.now());
+    const at: PathPoint = { x: 0, y: 0, dx: 1, dy: 0 };
+    let nearest: string | null = null;
+    let nearestDistance = 0.55;
+    for (const [id, vehicle] of scene.current.vehicles) {
+      if (vehicle.path.length < 2 || vehicle.departAt > time) {
+        continue;
+      }
+      vehiclePoint(vehicle, size, time, at);
+      const distance = Math.hypot(at.x - point.x, at.y - point.y);
+      if (distance < nearestDistance) {
+        nearest = id;
+        nearestDistance = distance;
+      }
+    }
+    return nearest;
+  };
+
   const setHover = (tile: number | null) => {
     if (scene.current.hover !== tile) {
       scene.current.hover = tile;
@@ -490,6 +542,9 @@ export function MapCanvas(props: Props) {
     const dx = event.clientX - (current?.x ?? 0);
     const dy = event.clientY - (current?.y ?? 0);
     if (current?.pointerId === event.pointerId && Math.hypot(dx, dy) > 4) {
+      if (!current.moved && current.mode !== "line" && latest.current.follow) {
+        latest.current.onStopFollow();
+      }
       current.moved = true;
     }
 
@@ -534,8 +589,14 @@ export function MapCanvas(props: Props) {
       return;
     }
     drag.current = null;
-    const { tool, onLine, onDragPlan, onTileClick, onTownClick } =
-      latest.current;
+    const {
+      tool,
+      onLine,
+      onDragPlan,
+      onTileClick,
+      onTownClick,
+      onVehicleClick,
+    } = latest.current;
 
     // The map was let go: the cursor follows the pointer again
     if (isPanning(current)) {
@@ -555,9 +616,13 @@ export function MapCanvas(props: Props) {
       }
     } else if (current.mode === "click" && !current.moved) {
       const town = townAt(event);
-      const tile = tileOf(pointAt(event));
+      const point = pointAt(event);
+      const tile = tileOf(point);
+      const vehicle = tool === "select" ? vehicleAt(point) : null;
       if (town !== null) {
         onTownClick(town);
+      } else if (vehicle !== null) {
+        onVehicleClick(vehicle);
       } else if (tile !== null) {
         onTileClick(tile);
       }

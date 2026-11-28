@@ -92,3 +92,22 @@ export function pointOnPath(
   out.dy = ty / length;
   return out;
 }
+
+// Where a vehicle is at a given time, in tile coordinates. One that has no
+// route waits at the station it is at.
+export function vehiclePoint(
+  vehicle: Pick<Vehicle, "kind" | "path" | "departAt" | "stops" | "leg">,
+  size: number,
+  time: number,
+  out: PathPoint
+): PathPoint {
+  if (vehicle.path.length < 2) {
+    const tile = Number(vehicle.stops[vehicle.leg % vehicle.stops.length]);
+    out.x = (tile % size) + 0.5;
+    out.y = Math.floor(tile / size) + 0.5;
+    out.dx = 1;
+    out.dy = 0;
+    return out;
+  }
+  return pointOnPath(vehicle.path, size, headDistance(vehicle, time), out);
+}

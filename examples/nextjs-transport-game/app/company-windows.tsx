@@ -108,6 +108,7 @@ export function VehiclesWindow({
   stations,
   vehicles,
   onHighlight,
+  onSelect,
   onClone,
   onSell,
   onClose,
@@ -117,6 +118,8 @@ export function VehiclesWindow({
   stations: ReadonlyMap<string, StationData>;
   vehicles: ReadonlyMap<string, Vehicle>;
   onHighlight: (vehicleId: string | null) => void;
+  // Opens the vehicle's own window
+  onSelect: (vehicleId: string) => void;
   onClone: (vehicleId: string) => void;
   onSell: (vehicleId: string) => void;
   onClose: () => void;
@@ -155,6 +158,7 @@ export function VehiclesWindow({
               vehicle={vehicle}
               stations={stations}
               onHighlight={() => onHighlight(id)}
+              onSelect={() => onSelect(id)}
               onClone={() => onClone(id)}
               onSell={() => onSell(id)}
             />
@@ -170,6 +174,7 @@ function VehicleRow({
   vehicle,
   stations,
   onHighlight,
+  onSelect,
   onClone,
   onSell,
 }: {
@@ -177,6 +182,7 @@ function VehicleRow({
   vehicle: Vehicle;
   stations: ReadonlyMap<string, StationData>;
   onHighlight: () => void;
+  onSelect: () => void;
   onClone: () => void;
   onSell: () => void;
 }) {
@@ -214,17 +220,24 @@ function VehicleRow({
       className="group flex items-center gap-2 px-1.5 py-1 hover:bg-[#000080] hover:text-white"
       onMouseEnter={onHighlight}
     >
-      {stalled ? (
-        <TriangleAlert className="size-4 shrink-0 text-[#c00000] group-hover:text-white" />
-      ) : (
-        <Icon className="size-4 shrink-0" />
-      )}
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-bold">
-          {stations.get(from)?.name ?? "?"} → {stations.get(to)?.name ?? "?"}
+      <button
+        type="button"
+        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        aria-label="Show this vehicle"
+        onClick={onSelect}
+      >
+        {stalled ? (
+          <TriangleAlert className="size-4 shrink-0 text-[#c00000] group-hover:text-white" />
+        ) : (
+          <Icon className="size-4 shrink-0" />
+        )}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-bold">
+            {stations.get(from)?.name ?? "?"} → {stations.get(to)?.name ?? "?"}
+          </span>
+          <span className="block truncate opacity-75">{status}</span>
         </span>
-        <span className="block truncate opacity-75">{status}</span>
-      </span>
+      </button>
       <span
         className={`tabular-nums group-hover:hidden ${
           vehicle.earned < 0 ? "text-[#c00000]" : "text-[#006000]"

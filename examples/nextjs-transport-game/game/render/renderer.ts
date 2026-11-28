@@ -339,6 +339,7 @@ export class Renderer {
   private popups: Popup[] = [];
 
   // Where town names were last drawn on screen, so they can be clicked
+  private detail = spriteScale(1);
   private townLabels: { town: number; x: number; y: number; width: number }[] =
     [];
 
@@ -441,7 +442,10 @@ export class Renderer {
     viewport: Viewport,
     camera: Camera,
     scene: Scene,
-    now: number
+    now: number,
+    // A second, smaller view of the same map, e.g. the camera that follows
+    // a vehicle. It only shows the map itself, without labels or markers.
+    secondary = false
   ) {
     const { width, height, dpr } = viewport;
     const { zoom } = camera;
@@ -477,7 +481,12 @@ export class Renderer {
 
     // Buildings, trees, stations and vehicles, from the back of the map to
     // the front, so that things closer to the camera cover what's behind
-    const detail = spriteScale(dpr * zoom);
+    // Sprites only keep one version of their picture, so a second view
+    // makes do with the one the main view asked for
+    if (!secondary) {
+      this.detail = spriteScale(dpr * zoom);
+    }
+    const { detail } = this;
     let staticIndex = 0;
     let dynamicIndex = 0;
     while (
@@ -513,6 +522,9 @@ export class Renderer {
       }
     }
 
+    if (secondary) {
+      return;
+    }
     this.drawOverlays(ctx, scene, zoom);
 
     // Labels and markers keep the same size on screen whatever the zoom
@@ -1622,3 +1634,7 @@ function drawTrainCar(
     orientedBox(ctx, x, y, dx, dy, 0.33, 0.14, 5, 8.5, load, shade(load, 1.2));
   }
 }
+
+// What the map is drawn with, and what is on it right now. The camera in a
+// vehicle's window draws the same map a second time, around the vehicle.
+export type MapView = { renderer: Renderer; scene: Scene };

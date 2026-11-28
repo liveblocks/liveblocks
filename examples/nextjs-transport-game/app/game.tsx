@@ -74,6 +74,7 @@ import {
   WATER,
   type World,
 } from "@/game/world";
+import type { MapView } from "@/game/render/renderer";
 import { useMoneyFloaters } from "@/hooks/use-money-floaters";
 import { useIsMac } from "@/hooks/use-is-mac";
 import { useClock } from "@/hooks/use-now";
@@ -91,6 +92,7 @@ import { StationWindow } from "./station-window";
 import { type OpenWindows, Taskbar } from "./taskbar";
 import { type History, Toolbar, TOOLS } from "./toolbar";
 import { TownWindow } from "./town-window";
+import { VehicleWindow } from "./vehicle-window";
 
 type Toast = {
   id: number;
@@ -200,6 +202,10 @@ export function Game() {
   const [highlightedVehicle, setHighlightedVehicle] = useState<string | null>(
     null
   );
+  // The vehicle whose window is open, and whether the map follows it around
+  const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
+  const [following, setFollowing] = useState(false);
+  const mapView = useRef<MapView | null>(null);
   // On small screens the map comes first: windows start closed
   const [open, setOpen] = useState<OpenWindows>(() => {
     const roomy = window.innerWidth >= 900;
@@ -412,6 +418,22 @@ export function Game() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [selectTool, cheat, floatMoney, myCompany, history]);
 
+  // So can a vehicle whose window is open, e.g. when it is sold
+  const watched =
+    selectedVehicle !== null ? vehicles.get(selectedVehicle) : undefined;
+  useEffect(() => {
+    if (selectedVehicle !== null && !watched) {
+      setSelectedVehicle(null);
+      setFollowing(false);
+    }
+  }, [selectedVehicle, watched]);
+  const showVehicle = (vehicleId: string) => {
+    if (vehicleId !== selectedVehicle) {
+      setFollowing(false);
+    }
+    setSelectedVehicle(vehicleId);
+  };
+
   // The station a route starts from can disappear, e.g. when it is undone
   useEffect(() => {
     if (routeFrom !== null && !stations.has(String(routeFrom))) {
@@ -541,14 +563,18 @@ export function Game() {
           tool={tool}
           routeFrom={routeFrom}
           selectedStation={selectedStation}
-          highlightedVehicle={highlightedVehicle}
+          highlightedVehicle={highlightedVehicle ?? selectedVehicle}
+          follow={following ? selectedVehicle : null}
           clock={clock}
           focus={focus}
+          view={mapView}
           onHover={setHover}
           onDragPlan={setDragPlan}
           onLine={(lineTool, tiles) => settle(buildLine(lineTool, tiles))}
           onTileClick={onTileClick}
           onTownClick={setSelectedTown}
+          onVehicleClick={showVehicle}
+          onStopFollow={() => setFollowing(false)}
         />
 
         <div className="pointer-events-none absolute top-2 left-2 flex flex-col items-start gap-2">
@@ -574,6 +600,26 @@ export function Game() {
               mine={selected.owner === myCompany}
               onStartRoute={() => onStartRoute(selectedStation)}
               onClose={() => setSelectedStation(null)}
+            />
+          ) : null}
+          {selectedVehicle !== null && watched ? (
+            <VehicleWindow
+              key={selectedVehicle}
+              world={world}
+              vehicleId={selectedVehicle}
+              vehicle={watched}
+              stations={stations}
+              owner={companies.get(watched.owner)}
+              mine={watched.owner === myCompany}
+              following={following}
+              view={mapView}
+              onFollow={setFollowing}
+              onClone={() => onClone(selectedVehicle)}
+              onSell={() => settle(sell(selectedVehicle))}
+              onClose={() => {
+                setSelectedVehicle(null);
+                setFollowing(false);
+              }}
             />
           ) : null}
           {selectedTown !== null && world.towns[selectedTown] ? (
@@ -630,6 +676,7 @@ export function Game() {
               stations={stations}
               vehicles={vehicles}
               onHighlight={setHighlightedVehicle}
+              onSelect={showVehicle}
               onClone={onClone}
               onSell={(vehicleId) => settle(sell(vehicleId))}
               onClose={() => setOpen({ ...open, vehicles: false })}
@@ -1084,7 +1131,7 @@ function describe({
   }
 
   if (hover === null) {
-    return "Drag to move around · Scroll to zoom · Click a station, an industry or a town to inspect it";
+    return "Drag to move around · Scroll to zoom · Click a station, a vehicle, an industry or a town to inspect it";
   }
 
   const station = stations.get(String(hover));
