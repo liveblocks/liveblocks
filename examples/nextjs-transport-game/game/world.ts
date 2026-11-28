@@ -284,6 +284,9 @@ export function generateWorld(seed: number, size: number): World {
   // Towns
   const usedNames = new Set<string>();
   const townStreets: number[][] = [];
+  // How big each town starts out, from 0 (a hamlet: a crossroads with a
+  // few cottages) to 1 (a town with offices and several streets)
+  const townSizes: number[] = [];
   const townCount = Math.round(7 * scale);
   for (
     let attempt = 0;
@@ -344,23 +347,30 @@ export function generateWorld(seed: number, size: number): World {
     // a few buildings long. Which way they lie differs per town.
     const long = 4 + Math.floor(rng() * 3);
     const sideStreetsAlongX = rng() < 0.5;
+    const townSize = rng();
 
-    // Two main streets cross in the center
-    layStreet(x, y, 1, 0, 3 + Math.floor(rng() * 3));
-    layStreet(x, y, -1, 0, 3 + Math.floor(rng() * 3));
-    layStreet(x, y, 0, 1, 3 + Math.floor(rng() * 2));
-    layStreet(x, y, 0, -1, 3 + Math.floor(rng() * 2));
-    // And most towns start with a side street or two, one block away
-    for (const side of [-1, 1]) {
-      if (rng() > 0.7) {
-        continue;
-      }
-      const [dx, dy] = sideStreetsAlongX ? [1, 0] : [0, 1];
-      const cornerX = x + dy * side * 3;
-      const cornerY = y + dx * side * 3;
-      if (inBounds(cornerX, cornerY) && townRoads[cornerY * size + cornerX]) {
-        layStreet(cornerX, cornerY, dx, dy, 1 + Math.floor(rng() * 3));
-        layStreet(cornerX, cornerY, -dx, -dy, 1 + Math.floor(rng() * 3));
+    // Two main streets cross in the center: one tile long in each
+    // direction for the smallest hamlet, up to eight for the biggest town
+    const arm = () => 1 + Math.round(townSize * 5) + Math.floor(rng() * 3);
+    layStreet(x, y, 1, 0, arm());
+    layStreet(x, y, -1, 0, arm());
+    layStreet(x, y, 0, 1, arm());
+    layStreet(x, y, 0, -1, arm());
+    // Bigger towns also start with side streets, a block or two away
+    for (const blocks of [1, 2]) {
+      for (const side of [-1, 1]) {
+        if (rng() > townSize * 1.4 - (blocks - 1) * 0.5) {
+          continue;
+        }
+        const [dx, dy] = sideStreetsAlongX ? [1, 0] : [0, 1];
+        const cornerX = x + dy * side * 3 * blocks;
+        const cornerY = y + dx * side * 3 * blocks;
+        if (inBounds(cornerX, cornerY) && townRoads[cornerY * size + cornerX]) {
+          const reach = () =>
+            1 + Math.floor(rng() * (2 + townSize * 4)) - (blocks - 1);
+          layStreet(cornerX, cornerY, dx, dy, reach());
+          layStreet(cornerX, cornerY, -dx, -dy, reach());
+        }
       }
     }
 
@@ -374,12 +384,13 @@ export function generateWorld(seed: number, size: number): World {
       blockY: sideStreetsAlongX ? 3 : long,
     });
     townStreets.push(streets);
+    townSizes.push(townSize);
   }
 
-  // Some towns have a stadium from the start, at the edge of town. The
-  // others get one when they have grown for a while.
+  // Some of the bigger towns have a stadium from the start, at the edge of
+  // town. The others get one when they have grown for a while.
   for (const town of towns) {
-    if (rng() > 0.35) {
+    if (rng() > 0.6 || townSizes[town.id] < 0.45) {
       continue;
     }
     const sites: number[] = [];
@@ -428,6 +439,7 @@ export function generateWorld(seed: number, size: number): World {
   // keep off the tiles where the town's streets will run as it grows.
   towns.forEach((town, townIndex) => {
     const first = houses.length;
+    const townSize = townSizes[townIndex];
     for (const street of townStreets[townIndex]) {
       const sx = street % size;
       const sy = Math.floor(street / size);
@@ -448,21 +460,15 @@ export function generateWorld(seed: number, size: number): World {
           ) {
             continue;
           }
-          const chance = dx === 0 || dy === 0 ? 0.8 : 0.45;
+          // Small towns are sparser, and only have houses. Bigger ones are
+          // built up, with offices in the center.
+          const chance = (dx === 0 || dy === 0 ? 0.55 : 0.2) + 0.35 * townSize;
           if (rng() > chance) {
             continue;
           }
-          const distance = Math.max(
-            Math.abs(hx - town.x),
-            Math.abs(hy - town.y)
-          );
-          const roll = rng();
-          let variant = roll < 0.15 ? 1 : 0;
-          if (distance <= 1) {
-            variant = roll < 0.7 ? 2 : 1;
-          } else if (distance <= 3) {
-            variant = roll < 0.6 ? 1 : 0;
-          }
+          const distance = Math.hypot(hx - town.x, hy - town.y);
+          const height = 0.4 + 2.6 * townSize - 0.55 * distance + rng();
+          const variant = Math.max(0, Math.min(3, Math.floor(height)));
           houseAt[tile] = houses.length;
           houses.push({ x: hx, y: hy, variant, town: town.id });
           town.houses++;
@@ -470,13 +476,16 @@ export function generateWorld(seed: number, size: number): World {
       }
     }
 
-    // A few of them are not houses: every town has a church and shops near
-    // its center, and most have a park
-    const places = [CHURCH, SHOPS];
-    if (rng() < 0.5) {
+    // A few of them are not houses: every town has a church near its
+    // center, all but the smallest have shops, and most have a park
+    const places = [CHURCH];
+    if (townSize > 0.2) {
       places.push(SHOPS);
     }
-    if (rng() < 0.6) {
+    if (rng() < townSize) {
+      places.push(SHOPS);
+    }
+    if (rng() < 0.2 + 0.6 * townSize) {
       places.push(PARK);
     }
     for (const variant of places) {
@@ -485,7 +494,7 @@ export function generateWorld(seed: number, size: number): World {
         .slice(first)
         .filter(
           (house) =>
-            house.variant <= 1 &&
+            house.variant <= 3 &&
             Math.max(Math.abs(house.x - town.x), Math.abs(house.y - town.y)) <=
               reach
         );
