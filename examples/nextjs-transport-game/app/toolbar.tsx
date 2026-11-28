@@ -3,12 +3,12 @@
 import {
   Anchor,
   FastForward,
-  Ghost,
   type LucideIcon,
   MousePointer2,
   Pause,
   Play,
   Redo2,
+  ScanEye,
   Signpost,
   TrainTrack,
   Trash2,
@@ -271,7 +271,7 @@ export function Toolbar({
               aria-pressed={xray}
               onClick={() => onXray(!xray)}
             >
-              <Ghost className="size-[18px]" />
+              <ScanEye className="size-[18px]" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom" sideOffset={6}>
