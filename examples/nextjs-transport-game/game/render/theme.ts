@@ -60,8 +60,8 @@ export const THEMES: Theme[] = [
     ...PLAIN,
     id: "pixel",
     name: "Pixel",
-    description: "Big pixels and few colors, like a game from the nineties",
-    pixel: 3,
+    description: "Chunky pixels and fewer colors, like a game from the nineties",
+    pixel: 2,
   },
   {
     ...PLAIN,
@@ -206,7 +206,7 @@ export function outline(ctx: CanvasRenderingContext2D) {
 
 // How many shades of red, green and blue are left in a picture with big
 // pixels
-const SHADES = 8;
+const SHADES = 12;
 const STEP = 255 / (SHADES - 1);
 // The order in which neighboring pixels round up, so that colors in between
 // two shades become a fine pattern of both instead of a flat band. The
