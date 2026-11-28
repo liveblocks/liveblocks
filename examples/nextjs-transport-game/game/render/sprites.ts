@@ -280,6 +280,9 @@ const OFFICES = ["#cfd6de", "#d9cfc3", "#b9c7d6", "#e4dccb"];
 const BRICK = "#9a6b55";
 const DOOR = "#7a5236";
 
+// How thick the slab of a flat roof is
+const FLAT_ROOF = 2.5;
+
 // The roof of a house: pitched, or a flat slab where houses are built
 // that way
 function houseGable(
@@ -297,7 +300,7 @@ function houseGable(
   ridgeAlongX = true
 ) {
   if (look.flatRoofs) {
-    box(ctx, ox, oy, x0, y0, x1, y1, z, z + 2.5, color);
+    box(ctx, ox, oy, x0, y0, x1, y1, z, z + FLAT_ROOF, color);
   } else {
     gableRoof(
       ctx,
@@ -329,7 +332,7 @@ function houseHip(
   color: string
 ) {
   if (look.flatRoofs) {
-    box(ctx, ox, oy, x0, y0, x1, y1, z, z + 2.5, color);
+    box(ctx, ox, oy, x0, y0, x1, y1, z, z + FLAT_ROOF, color);
   } else {
     hipRoof(ctx, ox, oy, x0, y0, x1, y1, z, rise, color);
   }
@@ -377,11 +380,21 @@ function drawCottage(
     // Two wings in an L
     box(ctx, ox, oy, 0.16, 0.18, 0.84, 0.54, 0, 8, wall);
     windowBand(ctx, ox, oy, "left", 0.22, 0.36, 0.54, 3, 6, GLASS);
-    houseGable(ctx, ox, oy, 0.12, 0.14, 0.88, 0.58, 8, 7, roof, wall);
-    box(ctx, ox, oy, 0.46, 0.5, 0.82, 0.86, 0, 8, wall);
+    if (!look.flatRoofs) {
+      gableRoof(ctx, ox, oy, 0.12, 0.14, 0.88, 0.58, 8, 7, roof, wall);
+    }
+    // Under one flat roof, the walls of both wings line up as well
+    const side = look.flatRoofs ? 0.84 : 0.82;
+    box(ctx, ox, oy, 0.46, 0.5, side, 0.86, 0, 8, wall);
     windowBand(ctx, ox, oy, "left", 0.56, 0.72, 0.86, 3, 6, GLASS);
-    windowBand(ctx, ox, oy, "right", 0.62, 0.72, 0.82, 0, 5, DOOR);
-    houseGable(ctx, ox, oy, 0.42, 0.46, 0.86, 0.9, 8, 7, roof, wall, false);
+    windowBand(ctx, ox, oy, "right", 0.62, 0.72, side, 0, 5, DOOR);
+    if (look.flatRoofs) {
+      // One slab over both wings, in two parts that share their far edge
+      box(ctx, ox, oy, 0.12, 0.14, 0.88, 0.58, 8, 8 + FLAT_ROOF, roof);
+      box(ctx, ox, oy, 0.42, 0.5, 0.88, 0.9, 8, 8 + FLAT_ROOF, roof);
+    } else {
+      gableRoof(ctx, ox, oy, 0.42, 0.46, 0.86, 0.9, 8, 7, roof, wall, false);
+    }
   } else if (shape === 3) {
     // A square villa of two floors, under a roof that comes to a point
     box(ctx, ox, oy, 0.22, 0.22, 0.78, 0.78, 0, 13, wall);
