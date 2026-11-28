@@ -2,7 +2,9 @@ import type { Brand } from "./utils";
 
 const PLACEHOLDER_BASE_URL = "https://localhost:9999";
 const ABSOLUTE_URL_REGEX = /^[a-zA-Z][a-zA-Z\d+\-.]*?:/;
-const TRAILING_SLASH_URL_REGEX = /\/(?:(?:\?|#).*)?$/;
+// Matches a trailing slash at the end of the pathname only, i.e. right before
+// the search/hash (if any), not a slash at the end of the search or hash.
+const TRAILING_SLASH_URL_REGEX = /^[^?#]*\/(?:[?#].*)?$/;
 
 export type QueryParams =
   | Record<string, string | number | null | undefined>
