@@ -131,6 +131,11 @@ type Toast = {
 
 // How often whoever moves the vehicles does so
 const TICK_MS = STEP_MS;
+// How long a client waits before it starts moving the vehicles, once it is
+// its turn. By then whoever did it before has heard about it and stopped,
+// and what they last wrote has arrived, so two clients never hand the same
+// piece of track to two trains.
+const TAKEOVER_MS = 1000;
 // How often to check whether it is time to write down the statistics
 const STATS_TICK_MS = 2000;
 
@@ -1295,10 +1300,16 @@ function useSimulation(
   // What this client remembers about the vehicles from one time to the
   // next, for as long as it is the one moving them
   const memory = useRef(newMemory());
+  const hostSince = useRef<number | null>(null);
 
   const tick = useMutation(({ storage, self, others }) => {
     if (!isHost(self, others)) {
       memory.current = newMemory();
+      hostSince.current = null;
+      return [];
+    }
+    hostSince.current ??= Date.now();
+    if (Date.now() - hostSince.current < TAKEOVER_MS) {
       return [];
     }
     // Nothing moves while the game is paused
