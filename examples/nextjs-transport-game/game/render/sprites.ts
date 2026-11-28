@@ -8,6 +8,7 @@ import {
   gableRoof,
   HALF_H,
   HALF_W,
+  hipRoof,
   quad,
   shade,
   windowBand,
@@ -35,7 +36,8 @@ export type CanvasFactory = (
 export type Sprites = {
   // [tree count - 1][variant]
   trees: Sprite[][];
-  // [house variant][color]
+  // [house variant][look]: every kind of building comes in several shapes
+  // and colors
   houses: Sprite[][];
   industries: Record<IndustryType, Sprite>;
 };
@@ -189,40 +191,441 @@ const ROOFS = ["#b4533c", "#8c5a44", "#5f6b7a", "#a8452f"];
 const OFFICES = ["#cfd6de", "#d9cfc3", "#b9c7d6", "#e4dccb"];
 const GLASS = "#5d7f9c";
 
-function drawCottage(ctx: Ctx, ox: number, oy: number, color: number) {
-  const wall = WALLS[color % WALLS.length];
+const BRICK = "#9a6b55";
+const DOOR = "#7a5236";
+
+// A chimney standing on the front slope of a roof
+function chimney(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  x: number,
+  y: number,
+  z0: number,
+  z1: number
+) {
+  box(ctx, ox, oy, x, y, x + 0.08, y + 0.08, z0, z1, BRICK, shade(BRICK, 0.7));
+}
+
+// Every kind of building comes in a few shapes, each in a few colors, so
+// that no two streets look the same. `shape` picks the shape.
+function drawCottage(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  color: number,
+  shape: number
+) {
+  const wall = WALLS[(color + shape) % WALLS.length];
   const roof = ROOFS[color % ROOFS.length];
   groundShadow(ctx, ox, oy + HALF_H + 3, 19);
-  box(ctx, ox, oy, 0.24, 0.24, 0.76, 0.76, 0, 8, wall);
-  windowBand(ctx, ox, oy, "left", 0.44, 0.56, 0.76, 0, 5, "#7a5236");
-  windowBand(ctx, ox, oy, "right", 0.36, 0.5, 0.76, 3, 6, GLASS);
-  gableRoof(ctx, ox, oy, 0.2, 0.2, 0.8, 0.8, 8, 8, roof, wall, color % 2 === 0);
+
+  if (shape === 1) {
+    // A long bungalow
+    box(ctx, ox, oy, 0.14, 0.3, 0.86, 0.72, 0, 7, wall);
+    windowBand(ctx, ox, oy, "left", 0.22, 0.36, 0.72, 2.5, 5.5, GLASS);
+    windowBand(ctx, ox, oy, "left", 0.45, 0.55, 0.72, 0, 5, DOOR);
+    windowBand(ctx, ox, oy, "left", 0.64, 0.78, 0.72, 2.5, 5.5, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.42, 0.6, 0.86, 2.5, 5.5, GLASS);
+    gableRoof(ctx, ox, oy, 0.1, 0.26, 0.9, 0.76, 7, 7, roof, wall);
+    chimney(ctx, ox, oy, 0.24, 0.58, 10.5, 16);
+  } else if (shape === 2) {
+    // Two wings in an L
+    box(ctx, ox, oy, 0.16, 0.18, 0.84, 0.54, 0, 8, wall);
+    windowBand(ctx, ox, oy, "left", 0.22, 0.36, 0.54, 3, 6, GLASS);
+    gableRoof(ctx, ox, oy, 0.12, 0.14, 0.88, 0.58, 8, 7, roof, wall);
+    box(ctx, ox, oy, 0.46, 0.5, 0.82, 0.86, 0, 8, wall);
+    windowBand(ctx, ox, oy, "left", 0.56, 0.72, 0.86, 3, 6, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.62, 0.72, 0.82, 0, 5, DOOR);
+    gableRoof(ctx, ox, oy, 0.42, 0.46, 0.86, 0.9, 8, 7, roof, wall, false);
+  } else if (shape === 3) {
+    // A square villa of two floors, under a roof that comes to a point
+    box(ctx, ox, oy, 0.22, 0.22, 0.78, 0.78, 0, 13, wall);
+    windowBand(ctx, ox, oy, "left", 0.45, 0.55, 0.78, 0, 5.5, DOOR);
+    windowBand(ctx, ox, oy, "left", 0.62, 0.72, 0.78, 2.5, 5.5, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.3, 0.44, 0.78, 2.5, 5.5, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.56, 0.7, 0.78, 2.5, 5.5, GLASS);
+    for (const side of ["left", "right"] as const) {
+      windowBand(ctx, ox, oy, side, 0.3, 0.44, 0.78, 8, 11, GLASS);
+      windowBand(ctx, ox, oy, side, 0.56, 0.7, 0.78, 8, 11, GLASS);
+    }
+    hipRoof(ctx, ox, oy, 0.17, 0.17, 0.83, 0.83, 13, 9, roof);
+  } else if (shape === 4) {
+    // Two small houses that share a wall
+    [0.1, 0.52].forEach((from, index) => {
+      const own = WALLS[(color + shape + index) % WALLS.length];
+      box(ctx, ox, oy, from, 0.26, from + 0.38, 0.78, 0, 8, own);
+      windowBand(
+        ctx,
+        ox,
+        oy,
+        "left",
+        from + 0.06,
+        from + 0.15,
+        0.78,
+        0,
+        5,
+        DOOR
+      );
+      windowBand(
+        ctx,
+        ox,
+        oy,
+        "left",
+        from + 0.2,
+        from + 0.32,
+        0.78,
+        2.5,
+        5.5,
+        GLASS
+      );
+      gableRoof(
+        ctx,
+        ox,
+        oy,
+        from - 0.03,
+        0.22,
+        from + 0.41,
+        0.82,
+        8,
+        7,
+        ROOFS[(color + index) % ROOFS.length],
+        own,
+        false
+      );
+    });
+    windowBand(ctx, ox, oy, "right", 0.4, 0.6, 0.9, 2.5, 5.5, GLASS);
+  } else if (shape === 5) {
+    // A small house at the back of a garden
+    box(ctx, ox, oy, 0.12, 0.12, 0.62, 0.62, 0, 8, wall);
+    windowBand(ctx, ox, oy, "left", 0.3, 0.4, 0.62, 0, 5, DOOR);
+    windowBand(ctx, ox, oy, "right", 0.26, 0.46, 0.62, 2.5, 5.5, GLASS);
+    gableRoof(
+      ctx,
+      ox,
+      oy,
+      0.08,
+      0.08,
+      0.66,
+      0.66,
+      8,
+      7,
+      roof,
+      wall,
+      color % 2 === 0
+    );
+    drawTree(
+      ctx,
+      ox + (0.8 - 0.42) * HALF_W,
+      oy + (0.8 + 0.42) * HALF_H,
+      false,
+      0.75,
+      "#4f9a3f"
+    );
+    drawTree(
+      ctx,
+      ox + (0.36 - 0.82) * HALF_W,
+      oy + (0.36 + 0.82) * HALF_H,
+      color % 2 === 1,
+      0.7,
+      color % 2 === 1 ? "#2f7a4a" : "#4f9a3f"
+    );
+    box(ctx, ox, oy, 0.08, 0.9, 0.94, 0.94, 0, 2.5, "#3f8a3a");
+    box(ctx, ox, oy, 0.9, 0.08, 0.94, 0.9, 0, 2.5, "#3f8a3a");
+  } else {
+    box(ctx, ox, oy, 0.24, 0.24, 0.76, 0.76, 0, 8, wall);
+    windowBand(ctx, ox, oy, "left", 0.44, 0.56, 0.76, 0, 5, DOOR);
+    windowBand(ctx, ox, oy, "right", 0.36, 0.5, 0.76, 3, 6, GLASS);
+    gableRoof(
+      ctx,
+      ox,
+      oy,
+      0.2,
+      0.2,
+      0.8,
+      0.8,
+      8,
+      8,
+      roof,
+      wall,
+      color % 2 === 0
+    );
+  }
 }
 
-function drawTownhouse(ctx: Ctx, ox: number, oy: number, color: number) {
-  const wall = WALLS[(color + 1) % WALLS.length];
+// Townhouses and small blocks of flats
+function drawTownhouse(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  color: number,
+  shape: number
+) {
+  const wall = WALLS[(color + 1 + shape) % WALLS.length];
   const roof = ROOFS[(color + 2) % ROOFS.length];
   groundShadow(ctx, ox, oy + HALF_H + 3, 22);
-  box(ctx, ox, oy, 0.16, 0.16, 0.84, 0.84, 0, 18, wall, shade(roof, 0.9));
-  for (const z of [4, 11]) {
-    windowBand(ctx, ox, oy, "left", 0.24, 0.42, 0.84, z, z + 4, GLASS);
-    windowBand(ctx, ox, oy, "left", 0.56, 0.74, 0.84, z, z + 4, GLASS);
-    windowBand(ctx, ox, oy, "right", 0.24, 0.42, 0.84, z, z + 4, GLASS);
-    windowBand(ctx, ox, oy, "right", 0.56, 0.74, 0.84, z, z + 4, GLASS);
+
+  if (shape === 1) {
+    // A terrace of three floors under a pitched roof, with chimneys
+    box(ctx, ox, oy, 0.14, 0.2, 0.86, 0.8, 0, 15, wall);
+    for (const z of [3, 9.5]) {
+      for (const from of [0.2, 0.43, 0.66]) {
+        const isDoor = z === 3 && from === 0.43;
+        windowBand(
+          ctx,
+          ox,
+          oy,
+          "left",
+          from,
+          from + (isDoor ? 0.1 : 0.14),
+          0.8,
+          isDoor ? 0 : z,
+          z + 3.5,
+          isDoor ? DOOR : GLASS
+        );
+      }
+      windowBand(ctx, ox, oy, "right", 0.28, 0.44, 0.86, z, z + 3.5, GLASS);
+      windowBand(ctx, ox, oy, "right", 0.56, 0.72, 0.86, z, z + 3.5, GLASS);
+    }
+    gableRoof(ctx, ox, oy, 0.1, 0.16, 0.9, 0.84, 15, 8, roof, wall);
+    chimney(ctx, ox, oy, 0.26, 0.6, 19, 26);
+    chimney(ctx, ox, oy, 0.66, 0.6, 19, 26);
+  } else if (shape === 2) {
+    // A block of flats with balconies
+    box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 0, 24, wall);
+    for (const z of [3, 10, 17]) {
+      windowBand(ctx, ox, oy, "left", 0.2, 0.8, 0.86, z, z + 4, GLASS);
+      windowBand(ctx, ox, oy, "right", 0.22, 0.46, 0.86, z, z + 4, GLASS);
+      windowBand(ctx, ox, oy, "right", 0.54, 0.78, 0.86, z, z + 4, GLASS);
+      if (z > 3) {
+        box(ctx, ox, oy, 0.2, 0.86, 0.8, 0.93, z - 1.5, z + 0.5, "#ece7dc");
+      }
+    }
+    box(
+      ctx,
+      ox,
+      oy,
+      0.12,
+      0.12,
+      0.88,
+      0.88,
+      24,
+      25.5,
+      shade(wall, 0.92),
+      shade(roof, 0.9)
+    );
+    box(ctx, ox, oy, 0.3, 0.3, 0.5, 0.5, 25.5, 29, "#9aa3ad");
+  } else if (shape === 3) {
+    // Two floors at the front, with more flats set back above them
+    box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 0, 11, wall, "#b8b2a4");
+    for (const side of ["left", "right"] as const) {
+      windowBand(ctx, ox, oy, side, 0.2, 0.42, 0.86, 3, 7.5, GLASS);
+      windowBand(ctx, ox, oy, side, 0.56, 0.8, 0.86, 3, 7.5, GLASS);
+    }
+    windowBand(ctx, ox, oy, "left", 0.45, 0.53, 0.86, 0, 6, DOOR);
+    const upper = WALLS[(color + shape + 2) % WALLS.length];
+    box(ctx, ox, oy, 0.14, 0.14, 0.64, 0.64, 11, 23, upper, shade(roof, 0.9));
+    for (const z of [13.5, 18.5]) {
+      windowBand(ctx, ox, oy, "left", 0.2, 0.58, 0.64, z, z + 3, GLASS);
+      windowBand(ctx, ox, oy, "right", 0.2, 0.58, 0.64, z, z + 3, GLASS);
+    }
+    cylinder(ctx, ox, oy, 0.76, 0.76, 0.045, 11, 14.5, "#4f9a3f");
+  } else if (shape === 4) {
+    // An older block, with rooms under a steep roof
+    box(ctx, ox, oy, 0.16, 0.16, 0.84, 0.84, 0, 14, wall);
+    for (const z of [2.5, 8.5]) {
+      for (const from of [0.22, 0.44, 0.66]) {
+        windowBand(
+          ctx,
+          ox,
+          oy,
+          "left",
+          from,
+          from + 0.12,
+          0.84,
+          z,
+          z + 3.5,
+          GLASS
+        );
+        windowBand(
+          ctx,
+          ox,
+          oy,
+          "right",
+          from,
+          from + 0.12,
+          0.84,
+          z,
+          z + 3.5,
+          GLASS
+        );
+      }
+    }
+    quad(
+      ctx,
+      ox,
+      oy,
+      [
+        [0.14, 0.86, 14],
+        [0.86, 0.86, 14],
+        [0.74, 0.74, 21],
+        [0.26, 0.74, 21],
+      ],
+      roof
+    );
+    quad(
+      ctx,
+      ox,
+      oy,
+      [
+        [0.86, 0.14, 14],
+        [0.86, 0.86, 14],
+        [0.74, 0.74, 21],
+        [0.74, 0.26, 21],
+      ],
+      shade(roof, 0.75)
+    );
+    quad(
+      ctx,
+      ox,
+      oy,
+      [
+        [0.26, 0.26, 21],
+        [0.74, 0.26, 21],
+        [0.74, 0.74, 21],
+        [0.26, 0.74, 21],
+      ],
+      shade(roof, 1.12)
+    );
+    for (const from of [0.3, 0.6]) {
+      windowBand(
+        ctx,
+        ox,
+        oy,
+        "left",
+        from,
+        from + 0.1,
+        0.81,
+        15.5,
+        18.5,
+        "#f3ead9"
+      );
+      windowBand(
+        ctx,
+        ox,
+        oy,
+        "right",
+        from,
+        from + 0.1,
+        0.81,
+        15.5,
+        18.5,
+        "#d9cfbd"
+      );
+    }
+  } else {
+    box(ctx, ox, oy, 0.16, 0.16, 0.84, 0.84, 0, 18, wall, shade(roof, 0.9));
+    for (const z of [4, 11]) {
+      for (const side of ["left", "right"] as const) {
+        windowBand(ctx, ox, oy, side, 0.24, 0.42, 0.84, z, z + 4, GLASS);
+        windowBand(ctx, ox, oy, side, 0.56, 0.74, 0.84, z, z + 4, GLASS);
+      }
+    }
+    box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 18, 19.5, shade(roof, 1.05));
   }
-  box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 18, 19.5, shade(roof, 1.05));
 }
 
-function drawOffice(ctx: Ctx, ox: number, oy: number, color: number) {
-  const wall = OFFICES[color % OFFICES.length];
+function drawOffice(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  color: number,
+  shape: number
+) {
+  const wall = OFFICES[(color + shape) % OFFICES.length];
   const height = 30 + (color % 3) * 5;
   groundShadow(ctx, ox, oy + HALF_H + 3, 23);
-  box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 0, height, wall, shade(wall, 1.2));
-  for (let z = 4; z + 4 < height; z += 6.5) {
-    windowBand(ctx, ox, oy, "left", 0.2, 0.8, 0.86, z, z + 3.5, GLASS);
-    windowBand(ctx, ox, oy, "right", 0.2, 0.8, 0.86, z, z + 3.5, GLASS);
+
+  if (shape === 1) {
+    // Tall windows between piers, under a heavy cornice
+    const stone = WALLS[(color + 3) % WALLS.length];
+    box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 0, height, stone);
+    for (const from of [0.2, 0.37, 0.54, 0.71]) {
+      for (const side of ["left", "right"] as const) {
+        windowBand(
+          ctx,
+          ox,
+          oy,
+          side,
+          from,
+          from + 0.09,
+          0.86,
+          8,
+          height - 3,
+          GLASS
+        );
+      }
+    }
+    windowBand(ctx, ox, oy, "left", 0.2, 0.8, 0.86, 1.5, 6, shade(GLASS, 0.8));
+    windowBand(ctx, ox, oy, "right", 0.2, 0.8, 0.86, 1.5, 6, shade(GLASS, 0.8));
+    box(
+      ctx,
+      ox,
+      oy,
+      0.11,
+      0.11,
+      0.89,
+      0.89,
+      height,
+      height + 2.5,
+      shade(stone, 0.9),
+      shade(stone, 0.8)
+    );
+  } else if (shape === 2) {
+    // A slab at the back, behind a low glass hall
+    box(
+      ctx,
+      ox,
+      oy,
+      0.14,
+      0.14,
+      0.86,
+      0.56,
+      0,
+      height + 6,
+      wall,
+      shade(wall, 1.2)
+    );
+    for (let z = 15; z + 4 < height + 6; z += 6.5) {
+      windowBand(ctx, ox, oy, "left", 0.2, 0.8, 0.56, z, z + 3.5, GLASS);
+    }
+    for (let z = 4; z + 4 < height + 6; z += 6.5) {
+      windowBand(ctx, ox, oy, "right", 0.19, 0.51, 0.86, z, z + 3.5, GLASS);
+    }
+    box(
+      ctx,
+      ox,
+      oy,
+      0.2,
+      0.56,
+      0.86,
+      0.86,
+      0,
+      11,
+      shade(wall, 0.92),
+      "#aab3bd"
+    );
+    windowBand(ctx, ox, oy, "left", 0.25, 0.81, 0.86, 2, 9, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.6, 0.82, 0.86, 2, 9, GLASS);
+    box(ctx, ox, oy, 0.3, 0.24, 0.5, 0.44, height + 6, height + 9, "#9aa3ad");
+  } else {
+    box(ctx, ox, oy, 0.14, 0.14, 0.86, 0.86, 0, height, wall, shade(wall, 1.2));
+    for (let z = 4; z + 4 < height; z += 6.5) {
+      windowBand(ctx, ox, oy, "left", 0.2, 0.8, 0.86, z, z + 3.5, GLASS);
+      windowBand(ctx, ox, oy, "right", 0.2, 0.8, 0.86, z, z + 3.5, GLASS);
+    }
+    box(ctx, ox, oy, 0.4, 0.4, 0.62, 0.62, height, height + 4, "#9aa3ad");
   }
-  box(ctx, ox, oy, 0.4, 0.4, 0.62, 0.62, height, height + 4, "#9aa3ad");
 }
 
 // Rows of windows all the way up both visible sides of a block
@@ -264,19 +667,115 @@ function floors(
   }
 }
 
+// A round tower: floors of wall and glass, one on top of the other
+function roundFloors(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  radius: number,
+  z0: number,
+  z1: number,
+  wall: string,
+  glass: string,
+  every = 5.5
+) {
+  for (let z = z0; z < z1; z += every) {
+    const glassFrom = Math.min(z1, z + every - 3);
+    const glassTo = Math.min(z1, z + every);
+    cylinder(ctx, ox, oy, 0.5, 0.5, radius, z, glassFrom, wall, wall);
+    if (glassTo > glassFrom) {
+      cylinder(ctx, ox, oy, 0.5, 0.5, radius, glassFrom, glassTo, glass, glass);
+    }
+  }
+}
+
 const TOWERS = ["#d3d9df", "#e2d6c2", "#bccbd9", "#d9d2c6"];
 
-function drawTower(ctx: Ctx, ox: number, oy: number, color: number) {
-  const wall = TOWERS[color % TOWERS.length];
+function drawTower(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  color: number,
+  shape: number
+) {
+  const wall = TOWERS[(color + shape) % TOWERS.length];
   const height = 56 + (color % 3) * 7;
   groundShadow(ctx, ox, oy + HALF_H + 3, 24);
-  box(ctx, ox, oy, 0.12, 0.12, 0.88, 0.88, 0, 7, shade(wall, 0.8));
-  windowBand(ctx, ox, oy, "left", 0.2, 0.8, 0.88, 1.5, 5.5, GLASS);
-  windowBand(ctx, ox, oy, "right", 0.2, 0.8, 0.88, 1.5, 5.5, GLASS);
-  box(ctx, ox, oy, 0.18, 0.18, 0.82, 0.82, 7, height, wall, shade(wall, 1.15));
-  floors(ctx, ox, oy, 0.18, 0.82, 7, height, GLASS);
-  box(ctx, ox, oy, 0.34, 0.34, 0.6, 0.6, height, height + 5, "#8f98a3");
-  box(ctx, ox, oy, 0.62, 0.4, 0.72, 0.5, height, height + 3, "#a9b1ba");
+
+  if (shape === 1) {
+    // A round tower on a square base
+    box(ctx, ox, oy, 0.12, 0.12, 0.88, 0.88, 0, 7, shade(wall, 0.8));
+    windowBand(ctx, ox, oy, "left", 0.2, 0.8, 0.88, 1.5, 5.5, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.2, 0.8, 0.88, 1.5, 5.5, GLASS);
+    roundFloors(ctx, ox, oy, 0.33, 7, height, wall, GLASS);
+    cylinder(ctx, ox, oy, 0.5, 0.5, 0.33, height, height + 2, wall);
+    cylinder(ctx, ox, oy, 0.5, 0.5, 0.12, height + 2, height + 6, "#8f98a3");
+  } else if (shape === 2) {
+    // Two slim towers, the one at the back taller than the other
+    box(ctx, ox, oy, 0.1, 0.1, 0.9, 0.9, 0, 6, shade(wall, 0.8));
+    box(
+      ctx,
+      ox,
+      oy,
+      0.14,
+      0.14,
+      0.54,
+      0.54,
+      6,
+      height + 8,
+      wall,
+      shade(wall, 1.15)
+    );
+    floors(ctx, ox, oy, 0.14, 0.54, 6, height + 8, GLASS);
+    box(
+      ctx,
+      ox,
+      oy,
+      0.26,
+      0.26,
+      0.42,
+      0.42,
+      height + 8,
+      height + 12,
+      "#8f98a3"
+    );
+    const other = TOWERS[(color + shape + 1) % TOWERS.length];
+    box(
+      ctx,
+      ox,
+      oy,
+      0.48,
+      0.48,
+      0.86,
+      0.86,
+      6,
+      height - 12,
+      other,
+      shade(other, 1.15)
+    );
+    floors(ctx, ox, oy, 0.48, 0.86, 6, height - 12, GLASS);
+    box(ctx, ox, oy, 0.6, 0.6, 0.74, 0.74, height - 12, height - 9, "#a9b1ba");
+  } else {
+    box(ctx, ox, oy, 0.12, 0.12, 0.88, 0.88, 0, 7, shade(wall, 0.8));
+    windowBand(ctx, ox, oy, "left", 0.2, 0.8, 0.88, 1.5, 5.5, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.2, 0.8, 0.88, 1.5, 5.5, GLASS);
+    box(
+      ctx,
+      ox,
+      oy,
+      0.18,
+      0.18,
+      0.82,
+      0.82,
+      7,
+      height,
+      wall,
+      shade(wall, 1.15)
+    );
+    floors(ctx, ox, oy, 0.18, 0.82, 7, height, GLASS);
+    box(ctx, ox, oy, 0.34, 0.34, 0.6, 0.6, height, height + 5, "#8f98a3");
+    box(ctx, ox, oy, 0.62, 0.4, 0.72, 0.5, height, height + 3, "#a9b1ba");
+  }
 }
 
 // [glass, frame] of each skyscraper
@@ -287,39 +786,94 @@ const SKYSCRAPERS = [
   ["#8fb4d6", "#f0ead9"],
 ];
 
-function drawSkyscraper(ctx: Ctx, ox: number, oy: number, color: number) {
-  const [glass, frame] = SKYSCRAPERS[color % SKYSCRAPERS.length];
+// A mast with a red light on top, for the tallest buildings
+function mast(ctx: Ctx, ox: number, oy: number, z0: number, z1: number) {
+  box(ctx, ox, oy, 0.485, 0.485, 0.515, 0.515, z0, z1, "#c8ced6");
+  ctx.fillStyle = "#e5484d";
+  ctx.fillRect(ox - 1, oy + HALF_H - z1 - 2, 2, 2);
+}
+
+function drawSkyscraper(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  color: number,
+  shape: number
+) {
+  const [glass, frame] = SKYSCRAPERS[(color + shape) % SKYSCRAPERS.length];
   const shaft = 84 + (color % 2) * 10;
   const crown = shaft + 20 + (color % 3) * 4;
   groundShadow(ctx, ox, oy + HALF_H + 3, 25);
 
-  // A wide base, a glass shaft, and a narrower crown with a mast on top
+  // A wide base that every skyscraper stands on
   box(ctx, ox, oy, 0.1, 0.1, 0.9, 0.9, 0, 10, frame);
   windowBand(ctx, ox, oy, "left", 0.18, 0.82, 0.9, 2, 8, shade(glass, 0.8));
   windowBand(ctx, ox, oy, "right", 0.18, 0.82, 0.9, 2, 8, shade(glass, 0.8));
-  box(ctx, ox, oy, 0.18, 0.18, 0.82, 0.82, 10, shaft, glass, frame);
-  floors(ctx, ox, oy, 0.18, 0.82, 10, shaft, shade(glass, 1.45));
-  for (const edge of [0.18, 0.5, 0.78]) {
-    windowBand(ctx, ox, oy, "left", edge, edge + 0.04, 0.82, 10, shaft, frame);
-    windowBand(ctx, ox, oy, "right", edge, edge + 0.04, 0.82, 10, shaft, frame);
+
+  if (shape === 1) {
+    // Stone steps that get narrower toward the top
+    const steps = [
+      [0.16, 10, 52],
+      [0.24, 52, 84],
+      [0.32, 84, 106],
+      [0.4, 106, 118],
+    ];
+    for (const [inset, from, to] of steps) {
+      box(ctx, ox, oy, inset, inset, 1 - inset, 1 - inset, from, to, frame);
+      floors(ctx, ox, oy, inset, 1 - inset, from, to, shade(glass, 0.9));
+    }
+    mast(ctx, ox, oy, 118, 134);
+  } else if (shape === 2) {
+    // A round tower of glass
+    roundFloors(
+      ctx,
+      ox,
+      oy,
+      0.36,
+      10,
+      crown - 8,
+      glass,
+      shade(glass, 1.45),
+      11
+    );
+    cylinder(ctx, ox, oy, 0.5, 0.5, 0.36, crown - 8, crown - 6, frame);
+    cylinder(ctx, ox, oy, 0.5, 0.5, 0.2, crown - 6, crown, glass, frame);
+    mast(ctx, ox, oy, crown, crown + 14);
+  } else {
+    // A glass shaft, and a narrower crown with a mast on top
+    box(ctx, ox, oy, 0.18, 0.18, 0.82, 0.82, 10, shaft, glass, frame);
+    floors(ctx, ox, oy, 0.18, 0.82, 10, shaft, shade(glass, 1.45));
+    for (const edge of [0.18, 0.5, 0.78]) {
+      windowBand(
+        ctx,
+        ox,
+        oy,
+        "left",
+        edge,
+        edge + 0.04,
+        0.82,
+        10,
+        shaft,
+        frame
+      );
+      windowBand(
+        ctx,
+        ox,
+        oy,
+        "right",
+        edge,
+        edge + 0.04,
+        0.82,
+        10,
+        shaft,
+        frame
+      );
+    }
+    box(ctx, ox, oy, 0.3, 0.3, 0.7, 0.7, shaft, crown, glass, frame);
+    floors(ctx, ox, oy, 0.3, 0.7, shaft, crown, shade(glass, 1.45));
+    box(ctx, ox, oy, 0.42, 0.42, 0.58, 0.58, crown, crown + 4, "#8f98a3");
+    mast(ctx, ox, oy, crown + 4, crown + 18);
   }
-  box(ctx, ox, oy, 0.3, 0.3, 0.7, 0.7, shaft, crown, glass, frame);
-  floors(ctx, ox, oy, 0.3, 0.7, shaft, crown, shade(glass, 1.45));
-  box(ctx, ox, oy, 0.42, 0.42, 0.58, 0.58, crown, crown + 4, "#8f98a3");
-  box(
-    ctx,
-    ox,
-    oy,
-    0.485,
-    0.485,
-    0.515,
-    0.515,
-    crown + 4,
-    crown + 18,
-    "#c8ced6"
-  );
-  ctx.fillStyle = "#e5484d";
-  ctx.fillRect(ox - 1, oy + HALF_H - crown - 20, 2, 2);
 }
 
 const AWNINGS = ["#d9534f", "#3f8fbf", "#4a9d5b", "#e0a030"];
@@ -795,18 +1349,19 @@ export function createSprites(createCanvas: CanvasFactory): Sprites {
     trees.push(variants);
   }
 
-  // In the same order as `BUILDINGS`, with how tall each one can get
+  // In the same order as `BUILDINGS`, with how tall each one can get and how
+  // many shapes it comes in. Each shape comes in four colors.
   const houseArtists = [
-    { draw: drawCottage, height: 26 },
-    { draw: drawTownhouse, height: 26 },
-    { draw: drawOffice, height: 48 },
-    { draw: drawTower, height: 80 },
-    { draw: drawSkyscraper, height: 150 },
+    { draw: drawCottage, height: 30, shapes: 6 },
+    { draw: drawTownhouse, height: 34, shapes: 5 },
+    { draw: drawOffice, height: 52, shapes: 3 },
+    { draw: drawTower, height: 88, shapes: 3 },
+    { draw: drawSkyscraper, height: 150, shapes: 3 },
   ];
-  const houses = houseArtists.map(({ draw, height }) =>
-    [0, 1, 2, 3].map((color) =>
+  const houses = houseArtists.map(({ draw, height, shapes }) =>
+    Array.from({ length: shapes * 4 }, (_, index) =>
       makeSprite(createCanvas, 1, height, (ctx, ox, oy) =>
-        draw(ctx, ox, oy, color)
+        draw(ctx, ox, oy, index % 4, Math.floor(index / 4))
       )
     )
   );

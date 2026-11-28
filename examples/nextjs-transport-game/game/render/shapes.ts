@@ -221,6 +221,39 @@ export function gableRoof(
   }
 }
 
+// A roof that slopes up from all four sides of a block to a point
+export function hipRoof(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  z: number,
+  rise: number,
+  color: string
+) {
+  const top: Point3 = [(x0 + x1) / 2, (y0 + y1) / 2, z + rise];
+  const corners: Point3[] = [
+    [x0, y0, z],
+    [x1, y0, z],
+    [x1, y1, z],
+    [x0, y1, z],
+  ];
+  // The two sides at the back first, then the two at the front
+  const shades = [0.7, 0.8, 1, 1.1];
+  for (const side of [0, 3, 1, 2]) {
+    quad(
+      ctx,
+      ox,
+      oy,
+      [corners[side], corners[(side + 1) % 4], top],
+      shade(color, shades[side])
+    );
+  }
+}
+
 // A band of windows on the left (y-facing) or right (x-facing) side of a block
 export function windowBand(
   ctx: Ctx,
