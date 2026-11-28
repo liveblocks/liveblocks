@@ -117,7 +117,7 @@ export const LANDSCAPES: Record<Landscape, { label: string; detail: string }> =
     },
     island: {
       label: "Island",
-      detail: "Water all around: only ships get around the coast",
+      detail: "One piece of land with water all around it",
     },
   };
 
