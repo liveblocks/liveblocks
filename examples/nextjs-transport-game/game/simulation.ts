@@ -1,9 +1,17 @@
 import { CARGO, CATCHUP_MS, LOAD_MS, RETRY_MS, TRANSPORT } from "./constants";
-import { getStationInfo, loadOf, stockAt, tileDistance } from "./economy";
+import {
+  getStationInfo,
+  industryState,
+  industryStock,
+  loadFromIndustry,
+  loadOf,
+  tileDistance,
+  waitingAt,
+} from "./economy";
 import { dueAt } from "./motion";
 import { findPath, gridOf, type Network } from "./network";
-import type { Load, StationData, Stock, Vehicle } from "./types";
-import type { World } from "./world";
+import type { IndustryState, Load, StationData, Stock, Vehicle } from "./types";
+import { type Industry, INDUSTRY, type World } from "./world";
 
 const MAX_EVENTS = 500;
 
@@ -13,8 +21,10 @@ type Draft = { -readonly [K in keyof Vehicle]: Vehicle[K] };
 export type SimulationResult = {
   // Vehicles that reached a station, with their next leg planned
   vehicles: Map<string, Vehicle>;
-  // Stations that vehicles loaded cargo from
+  // Stations that vehicles loaded passengers from
   stocks: Map<string, Stock>;
+  // Industries that vehicles loaded from or delivered to, by id
+  industries: Map<string, IndustryState>;
 };
 
 // Runs every vehicle that is due up to `now`. Vehicles don't tick: each one
@@ -30,10 +40,13 @@ export function advance(
   network: Network,
   vehicles: ReadonlyMap<string, Vehicle>,
   stations: ReadonlyMap<string, StationData>,
+  industries: ReadonlyMap<string, IndustryState>,
+  startedAt: number,
   now: number
 ): SimulationResult {
   const changedVehicles = new Map<string, Vehicle>();
   const changedStocks = new Map<string, Stock>();
+  const changedIndustries = new Map<string, IndustryState>();
 
   const vehicleOf = (id: string) =>
     changedVehicles.get(id) ?? vehicles.get(id)!;
@@ -42,6 +55,9 @@ export function advance(
     const stock = changedStocks.get(key);
     return station && stock ? { ...station, stock } : station;
   };
+  const industryOf = (industry: Industry) =>
+    changedIndustries.get(String(industry.id)) ??
+    industryState(industries.get(String(industry.id)), startedAt);
 
   const arrive = (vehicle: Draft) => {
     const count = vehicle.stops.length;
@@ -51,11 +67,26 @@ export function advance(
 
     let income = 0;
     if (destination) {
-      const accepted = getStationInfo(world, Number(toKey)).accepts;
+      const { accepts, industries: nearby } = getStationInfo(
+        world,
+        Number(toKey)
+      );
       const distance = tileDistance(world, Number(fromKey), Number(toKey));
       for (const { cargo, amount } of loadOf(vehicle)) {
-        if (accepted.includes(cargo)) {
-          income += amount * Math.max(1, distance) * CARGO[cargo].rate;
+        if (!accepts.includes(cargo)) {
+          continue;
+        }
+        income += amount * Math.max(1, distance) * CARGO[cargo].rate;
+        // Freight ends up at the industry that wanted it
+        const buyer = nearby.find(
+          (industry) => INDUSTRY[industry.type].accepts === cargo
+        );
+        if (buyer) {
+          const state = industryOf(buyer);
+          changedIndustries.set(String(buyer.id), {
+            ...state,
+            received: state.received + amount,
+          });
         }
       }
     }
@@ -99,12 +130,8 @@ export function advance(
     // it. When more is waiting than fits, the room on board is split evenly
     // between the kinds, and what one kind leaves unused goes to the others.
     const accepted = getStationInfo(world, Number(toKey)).accepts;
-    const waiting = getStationInfo(world, Number(fromKey))
-      .supply.filter((supply) => accepted.includes(supply.cargo))
-      .map(({ cargo, rate }) => ({
-        cargo,
-        amount: stockAt(from, cargo, rate, time),
-      }))
+    const waiting = waitingAt(world, Number(fromKey), from, industryOf, time)
+      .filter((supply) => accepted.includes(supply.cargo))
       .sort((a, b) => a.amount - b.amount);
 
     const load: Load = {};
@@ -113,15 +140,37 @@ export function advance(
     waiting.forEach(({ cargo, amount }, index) => {
       const fairShare = Math.floor(room / (waiting.length - index));
       const taken = Math.min(Math.floor(amount), fairShare);
-      if (taken > 0) {
-        load[cargo] = taken;
+      if (taken <= 0) {
+        return;
+      }
+      load[cargo] = taken;
+      room -= taken;
+      if (cargo === "passengers") {
         stock[cargo] = { amount: amount - taken, at: time };
-        room -= taken;
+        changedStocks.set(fromKey, stock);
+        return;
+      }
+      // Freight comes off the piles of the industries that make it
+      let left = taken;
+      for (const industry of getStationInfo(world, Number(fromKey))
+        .industries) {
+        if (INDUSTRY[industry.type].produces !== cargo || left <= 0) {
+          continue;
+        }
+        const state = industryOf(industry);
+        const part = Math.min(
+          left,
+          Math.floor(industryStock(industry, state, time))
+        );
+        if (part > 0) {
+          changedIndustries.set(
+            String(industry.id),
+            loadFromIndustry(industry, state, part, time)
+          );
+          left -= part;
+        }
       }
     });
-    if (Object.keys(load).length > 0) {
-      changedStocks.set(fromKey, stock);
-    }
 
     vehicle.path = path;
     vehicle.departAt = time + LOAD_MS;
@@ -153,5 +202,9 @@ export function advance(
     changedVehicles.set(nextId, vehicle);
   }
 
-  return { vehicles: changedVehicles, stocks: changedStocks };
+  return {
+    vehicles: changedVehicles,
+    stocks: changedStocks,
+    industries: changedIndustries,
+  };
 }

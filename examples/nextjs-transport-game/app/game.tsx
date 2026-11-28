@@ -133,6 +133,8 @@ export function Game() {
   const stations = useStorageMap((root) => root.stations);
   const vehicles = useStorageMap((root) => root.vehicles);
   const companies = useStorageMap((root) => root.companies);
+  const industries = useStorageMap((root) => root.industries);
+  const startedAt = useStorage((root) => root.startedAt);
 
   // The map isn't synced: every player generates the same one from the seed.
   // Its towns then grow with time, around whatever players have built.
@@ -567,6 +569,8 @@ export function Game() {
               station={selected}
               owner={companies.get(selected.owner)}
               vehicles={vehicles}
+              industries={industries}
+              startedAt={startedAt}
               mine={selected.owner === myCompany}
               onStartRoute={() => onStartRoute(selectedStation)}
               onClose={() => setSelectedStation(null)}
@@ -592,6 +596,8 @@ export function Game() {
               key={selectedIndustry}
               world={world}
               industry={world.industries[selectedIndustry]}
+              saved={industries.get(String(selectedIndustry))}
+              startedAt={startedAt}
               stations={stations}
               companies={companies}
               onShowIndustry={showIndustry}
@@ -1032,14 +1038,20 @@ function describe({
       return "Not enough money";
     }
     const info = getStationInfo(world, hover);
-    const supplies = info.supply.map((entry) => CARGO[entry.cargo].label);
+    const supplies = info.supply.map((entry) =>
+      entry.cargo === "passengers"
+        ? `passengers from ${info.population.toLocaleString("en-US")} people`
+        : CARGO[entry.cargo].label.toLowerCase()
+    );
     const accepts = info.accepts.map((cargo) => CARGO[cargo].label);
     const serves =
       supplies.length + accepts.length === 0
         ? "nothing in range"
         : [
             supplies.length > 0 ? `picks up ${supplies.join(", ")}` : null,
-            accepts.length > 0 ? `accepts ${accepts.join(", ")}` : null,
+            accepts.length > 0
+              ? `accepts ${accepts.join(", ").toLowerCase()}`
+              : null,
           ]
             .filter(Boolean)
             .join(" · ");

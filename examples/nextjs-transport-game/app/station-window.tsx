@@ -1,10 +1,15 @@
 "use client";
 
 import { Window } from "@/components/window";
-import { CARGO, STOCK_CAP, TRANSPORT } from "@/game/constants";
-import { getStationInfo, stockAt } from "@/game/economy";
-import type { CompanyData, StationData, Vehicle } from "@/game/types";
-import type { World } from "@/game/world";
+import { CARGO, TRANSPORT } from "@/game/constants";
+import { getStationInfo, industryState, waitingAt } from "@/game/economy";
+import type {
+  CompanyData,
+  IndustryState,
+  StationData,
+  Vehicle,
+} from "@/game/types";
+import { INDUSTRY, type World } from "@/game/world";
 import { useNow } from "@/hooks/use-now";
 
 type Props = {
@@ -13,6 +18,9 @@ type Props = {
   station: StationData;
   owner: CompanyData | undefined;
   vehicles: ReadonlyMap<string, Vehicle>;
+  industries: ReadonlyMap<string, IndustryState>;
+  // When the map started, on the game clock
+  startedAt: number;
   mine: boolean;
   onStartRoute: () => void;
   onClose: () => void;
@@ -24,6 +32,8 @@ export function StationWindow({
   station,
   owner,
   vehicles,
+  industries,
+  startedAt,
   mine,
   onStartRoute,
   onClose,
@@ -33,6 +43,13 @@ export function StationWindow({
   const now = useNow();
 
   const info = getStationInfo(world, tile);
+  const waiting = waitingAt(
+    world,
+    tile,
+    station,
+    (industry) => industryState(industries.get(String(industry.id)), startedAt),
+    now
+  );
   const serving = [...vehicles.values()].filter((vehicle) =>
     vehicle.stops.includes(String(tile))
   ).length;
@@ -56,20 +73,31 @@ export function StationWindow({
             {info.supply.length === 0 ? (
               <li className="text-[#808080]">Nothing is produced nearby</li>
             ) : null}
-            {info.supply.map(({ cargo, rate }) => {
-              const amount = Math.floor(stockAt(station, cargo, rate, now));
+            {waiting.map(({ cargo, amount, cap, rate }) => {
+              const makers = info.industries
+                .filter(
+                  (industry) => INDUSTRY[industry.type].produces === cargo
+                )
+                .map((industry) => industry.name);
               return (
                 <li key={cargo}>
                   <div className="flex justify-between">
                     <span>{CARGO[cargo].label}</span>
-                    <span className="tabular-nums">{amount}</span>
+                    <span className="tabular-nums">
+                      {Math.floor(amount).toLocaleString("en-US")}
+                    </span>
                   </div>
                   <div className="h-2 border border-[#808080] bg-white">
                     <div
                       className="h-full bg-[#000080]"
-                      style={{ width: `${(amount / STOCK_CAP) * 100}%` }}
+                      style={{ width: `${Math.min(1, amount / cap) * 100}%` }}
                     />
                   </div>
+                  <p className="text-[#606060]">
+                    {cargo === "passengers"
+                      ? `About ${Math.round(rate * 60)} a minute, from the ${info.population.toLocaleString("en-US")} people in reach`
+                      : `About ${Math.round(rate * 60)} a minute, at ${makers.join(" and ")}`}
+                  </p>
                 </li>
               );
             })}

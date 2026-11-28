@@ -2,10 +2,30 @@
 
 import type { ReactNode } from "react";
 import { Window } from "@/components/window";
-import { CARGO, MIN_HOUSES_FOR_PASSENGERS } from "@/game/constants";
-import { servesIndustry, tradePartners } from "@/game/economy";
-import type { Cargo, CompanyData, StationData } from "@/game/types";
+import {
+  CARGO,
+  INDUSTRY_MAX_LEVEL,
+  INDUSTRY_PERIOD_MS,
+  INDUSTRY_SHARE,
+  MIN_HOUSES_FOR_PASSENGERS,
+} from "@/game/constants";
+import {
+  industryCap,
+  industryOutput,
+  industryService,
+  industryState,
+  industryStock,
+  servesIndustry,
+  tradePartners,
+} from "@/game/economy";
+import type {
+  Cargo,
+  CompanyData,
+  IndustryState,
+  StationData,
+} from "@/game/types";
 import { type Industry, INDUSTRY, type World } from "@/game/world";
+import { useNow } from "@/hooks/use-now";
 
 function Row({
   onClick,
@@ -32,6 +52,8 @@ function Row({
 export function IndustryWindow({
   world,
   industry,
+  saved,
+  startedAt,
   stations,
   companies,
   onShowIndustry,
@@ -39,13 +61,33 @@ export function IndustryWindow({
 }: {
   world: World;
   industry: Industry;
+  // What Storage has on this industry, if a vehicle has been to it yet
+  saved: IndustryState | undefined;
+  // When the map started, on the game clock
+  startedAt: number;
   stations: ReadonlyMap<string, StationData>;
   companies: ReadonlyMap<string, CompanyData>;
   onShowIndustry: (industry: Industry) => void;
   onClose: () => void;
 }) {
-  const { produces, accepts, rate } = INDUSTRY[industry.type];
+  const { produces, accepts } = INDUSTRY[industry.type];
   const cargo = produces ?? accepts;
+  // What the industry has waiting isn't stored as a number that ticks up:
+  // it is worked out from the clock
+  const now = useNow();
+  const state = industryState(saved, startedAt);
+  const waiting = industryStock(industry, state, now);
+  const cap = industryCap(state.level);
+  const perMinute = Math.round(industryOutput(industry, state.level) * 60);
+  const service = Math.round(industryService(industry, state, now) * 100);
+  const wanted = Math.round(INDUSTRY_SHARE * 100);
+  const minutes = INDUSTRY_PERIOD_MS / 60_000;
+  let outlook = `Carry away ${wanted}% of it for ${minutes} minutes and it makes twice as much.`;
+  if (state.level >= INDUSTRY_MAX_LEVEL) {
+    outlook = "It can't make more than this.";
+  } else if (state.moved > 0) {
+    outlook = `${service}% of it has been carried away lately. Keep that at ${wanted}% or more and it makes twice as much.`;
+  }
   const partners = tradePartners(world, industry);
   const serving = [...stations].filter(([key]) =>
     servesIndustry(world, Number(key), industry)
@@ -60,9 +102,38 @@ export function IndustryWindow({
               {produces ? "Produces" : "Accepts"}:
             </span>{" "}
             {CARGO[cargo].label}
-            {produces && rate
-              ? ` · about ${Math.round(rate * 60)} a minute`
-              : null}
+            {produces ? ` · about ${perMinute} a minute` : null}
+          </p>
+        ) : null}
+
+        {produces ? (
+          <div>
+            <div className="flex justify-between">
+              <span className="font-bold">Waiting to be carried away</span>
+              <span className="tabular-nums">
+                {Math.floor(waiting).toLocaleString("en-US")}
+              </span>
+            </div>
+            <div className="h-2 border border-[#808080] bg-white">
+              <div
+                className="h-full bg-[#000080]"
+                style={{ width: `${Math.min(1, waiting / cap) * 100}%` }}
+              />
+            </div>
+            <p className="mt-1">
+              {state.level > 0
+                ? `Makes ${2 ** state.level} times what it started with. `
+                : null}
+              {outlook}
+            </p>
+          </div>
+        ) : null}
+        {accepts ? (
+          <p>
+            <span className="font-bold">Delivered so far:</span>{" "}
+            <span className="tabular-nums">
+              {state.received.toLocaleString("en-US")}
+            </span>
           </p>
         ) : null}
 

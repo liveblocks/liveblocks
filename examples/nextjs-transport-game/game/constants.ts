@@ -42,30 +42,26 @@ export const CHEAT_MONEY = 100_000;
 // next one up. The others are places people go to, which stay as they are.
 export const BUILDINGS: readonly {
   label: string;
+  // How many people live or work in it, give or take a few
   residents: number;
-  // How many passengers each of its tiles supplies, compared to a cottage
-  passengers: number;
+  // For the places nobody lives in: how many people come and go
+  visitors?: number;
   demolishCost: number;
   // How many tiles it covers on each side, if more than one
   size?: number;
 }[] = [
-  { label: "Cottage", residents: 14, passengers: 1, demolishCost: 600 },
-  { label: "Townhouse", residents: 38, passengers: 1.5, demolishCost: 900 },
-  {
-    label: "Office block",
-    residents: 110,
-    passengers: 2.5,
-    demolishCost: 2500,
-  },
-  { label: "Tower", residents: 340, passengers: 4, demolishCost: 8000 },
-  { label: "Skyscraper", residents: 950, passengers: 6, demolishCost: 25_000 },
-  { label: "Shops", residents: 0, passengers: 3, demolishCost: 2000 },
-  { label: "Church", residents: 0, passengers: 2, demolishCost: 5000 },
-  { label: "Park", residents: 0, passengers: 1.5, demolishCost: 1000 },
+  { label: "Cottage", residents: 14, demolishCost: 600 },
+  { label: "Townhouse", residents: 38, demolishCost: 900 },
+  { label: "Office block", residents: 110, demolishCost: 2500 },
+  { label: "Tower", residents: 340, demolishCost: 8000 },
+  { label: "Skyscraper", residents: 950, demolishCost: 25_000 },
+  { label: "Shops", residents: 0, visitors: 120, demolishCost: 2000 },
+  { label: "Church", residents: 0, visitors: 60, demolishCost: 5000 },
+  { label: "Park", residents: 0, visitors: 40, demolishCost: 1000 },
   {
     label: "Stadium",
     residents: 0,
-    passengers: 3,
+    visitors: 800,
     demolishCost: 30_000,
     size: 2,
   },
@@ -97,9 +93,19 @@ export const RETRY_MS = 4000;
 // When nobody was online to run a vehicle, at most this much time is replayed
 export const CATCHUP_MS = 60_000;
 
+// How much cargo can pile up, at a station or at an industry that makes it
 export const STOCK_CAP = 240;
-export const HOUSE_PASSENGER_RATE = 0.03;
+// Passengers per second that show up at a station, for every person who
+// lives, works or spends time within its reach
+export const PASSENGERS_PER_PERSON = 0.0012;
 export const MIN_HOUSES_FOR_PASSENGERS = 3;
+
+// An industry only makes so much. When at least this share of what it makes
+// is carried away, for at least this long, it starts making twice as much,
+// a few times over.
+export const INDUSTRY_SHARE = 0.6;
+export const INDUSTRY_PERIOD_MS = 120_000;
+export const INDUSTRY_MAX_LEVEL = 3;
 
 export const BRIDGE_MULTIPLIER = 5;
 export const TREE_CLEAR_COST = 40;

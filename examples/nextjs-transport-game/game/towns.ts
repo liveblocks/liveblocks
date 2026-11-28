@@ -8,6 +8,7 @@ import {
   TOWN_MAX_STATIONS,
   TOWN_RADIUS,
 } from "./constants";
+import { peopleIn } from "./economy";
 import { createRng, hashInt } from "./rng";
 import type { TownGrowth, Vehicle } from "./types";
 import {
@@ -567,13 +568,11 @@ export function townStats(world: World) {
       counts: BUILDINGS.map(() => 0),
     }));
     for (const house of world.houses) {
-      const { residents } = BUILDINGS[house.variant];
       const town = stats[house.town];
       town.buildings++;
       town.counts[house.variant]++;
       if (house.variant < BUILDING_TIERS) {
-        const variation = hashInt(house.x * 131 + house.y) % (residents >> 1);
-        town.population += residents + variation;
+        town.population += peopleIn(house);
         town.tallest = Math.max(town.tallest, house.variant);
       }
     }

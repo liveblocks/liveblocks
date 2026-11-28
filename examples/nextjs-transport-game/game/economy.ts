@@ -5,8 +5,11 @@ import {
   CARGO_KINDS,
   CATCHMENT,
   DOCK_CATCHMENT,
-  HOUSE_PASSENGER_RATE,
+  INDUSTRY_MAX_LEVEL,
+  INDUSTRY_PERIOD_MS,
+  INDUSTRY_SHARE,
   MIN_HOUSES_FOR_PASSENGERS,
+  PASSENGERS_PER_PERSON,
   START_MONEY,
   STOCK_CAP,
   TRACK,
@@ -16,11 +19,13 @@ import { createRng, hashInt } from "./rng";
 import type {
   Cargo,
   CompanyData,
+  IndustryState,
   LineKind,
   StationData,
   VehicleData,
 } from "./types";
 import {
+  type House,
   type Industry,
   INDUSTRY,
   nearestTown,
@@ -29,12 +34,26 @@ import {
   type World,
 } from "./world";
 
+// How many people a building adds to the places around it: the ones who
+// live or work in it (no two buildings have quite as many), or who visit it
+export function peopleIn(house: Pick<House, "x" | "y" | "variant">) {
+  const { residents, visitors } = BUILDINGS[house.variant];
+  return residents > 0
+    ? residents + (hashInt(house.x * 131 + house.y) % (residents >> 1))
+    : (visitors ?? 0);
+}
+
 // What a station placed on a given tile would serve
 export type StationInfo = {
-  // Units per second of each cargo that shows up at the station
+  // What shows up to be carried away from the station: passengers from the
+  // buildings around it, and what the industries around it make. `rate` is
+  // in units per second, for an industry that hasn't grown yet.
   supply: { cargo: Cargo; rate: number }[];
   accepts: Cargo[];
   houses: number;
+  // How many people live, work or spend time within reach. The more there
+  // are, the more passengers turn up.
+  population: number;
   town: Town | null;
   industries: Industry[];
 };
@@ -64,9 +83,7 @@ export function getStationInfo(world: World, tile: number): StationInfo {
   const y = Math.floor(tile / size);
   const industries = new Set<Industry>();
   let houses = 0;
-  // Bigger buildings supply more passengers, so a station in a town that
-  // grows gets busier
-  let passengers = 0;
+  let population = 0;
 
   const reach = catchmentOf(world, tile);
   for (let dy = -reach; dy <= reach; dy++) {
@@ -78,20 +95,24 @@ export function getStationInfo(world: World, tile: number): StationInfo {
       }
       const other = ty * size + tx;
       if (world.houseAt[other] >= 0) {
+        const house = world.houses[world.houseAt[other]];
         houses++;
-        passengers +=
-          BUILDINGS[world.houses[world.houseAt[other]].variant].passengers;
+        // A building that covers several tiles counts for as much of it as
+        // is within reach
+        population +=
+          peopleIn(house) / (BUILDINGS[house.variant].size ?? 1) ** 2;
       }
       if (world.industryAt[other] >= 0) {
         industries.add(world.industries[world.industryAt[other]]);
       }
     }
   }
+  population = Math.round(population);
 
   const supply = new Map<Cargo, number>();
   const accepts = new Set<Cargo>();
   if (houses >= MIN_HOUSES_FOR_PASSENGERS) {
-    supply.set("passengers", passengers * HOUSE_PASSENGER_RATE);
+    supply.set("passengers", population * PASSENGERS_PER_PERSON);
     accepts.add("passengers");
   }
   for (const industry of industries) {
@@ -108,6 +129,7 @@ export function getStationInfo(world: World, tile: number): StationInfo {
     supply: [...supply].map(([cargo, rate]) => ({ cargo, rate })),
     accepts: [...accepts],
     houses,
+    population,
     town: nearestTown(world, x, y),
     industries: [...industries],
   };
@@ -115,8 +137,15 @@ export function getStationInfo(world: World, tile: number): StationInfo {
   return info;
 }
 
-// Cargo waiting at a station at a given time. It piles up at the supply rate
-// since the last time a vehicle loaded some, so nothing needs to "tick".
+// How many passengers can be waiting at a station: a busy station has room
+// for more of them
+export function passengerCap(rate: number) {
+  return Math.max(STOCK_CAP, Math.round(rate * 60));
+}
+
+// Passengers waiting at a station at a given time. They pile up at the
+// supply rate since the last time a vehicle loaded some, so nothing needs to
+// "tick".
 export function stockAt(
   station: Pick<StationData, "stock" | "builtAt">,
   cargo: Cargo,
@@ -125,7 +154,126 @@ export function stockAt(
 ) {
   const entry = station.stock[cargo] ?? { amount: 0, at: station.builtAt };
   const elapsed = Math.max(0, time - entry.at) / 1000;
-  return Math.min(STOCK_CAP, entry.amount + elapsed * rate);
+  return Math.min(passengerCap(rate), entry.amount + elapsed * rate);
+}
+
+// Units per second that an industry makes
+export function industryOutput(industry: Industry, level: number) {
+  return (INDUSTRY[industry.type].rate ?? 0) * 2 ** level;
+}
+
+// How much of it can pile up before the industry stops making more
+export function industryCap(level: number) {
+  return STOCK_CAP * 2 ** level;
+}
+
+// An industry that no vehicle has been to yet has been producing since the
+// map started
+export function industryState(
+  saved: IndustryState | undefined,
+  startedAt: number
+): IndustryState {
+  return (
+    saved ?? {
+      stock: 0,
+      at: startedAt,
+      level: 0,
+      moved: 0,
+      since: startedAt,
+      received: 0,
+    }
+  );
+}
+
+// What an industry has waiting to be carried away at a given time. Every
+// station in reach loads from this same pile, so building more stations
+// around an industry doesn't make it produce more.
+export function industryStock(
+  industry: Industry,
+  state: IndustryState,
+  time: number
+) {
+  const elapsed = Math.max(0, time - state.at) / 1000;
+  return Math.min(
+    industryCap(state.level),
+    state.stock + elapsed * industryOutput(industry, state.level)
+  );
+}
+
+// The share of what an industry made that was carried away, since that was
+// last looked at
+export function industryService(
+  industry: Industry,
+  state: IndustryState,
+  time: number
+) {
+  const made =
+    (industryOutput(industry, state.level) * Math.max(0, time - state.since)) /
+    1000;
+  return made > 0 ? Math.min(1, state.moved / made) : 0;
+}
+
+// A vehicle loads `amount` from an industry. An industry that keeps being
+// emptied grows: when enough of what it made was carried away for long
+// enough, it starts making twice as much.
+export function loadFromIndustry(
+  industry: Industry,
+  state: IndustryState,
+  amount: number,
+  time: number
+): IndustryState {
+  const next = {
+    ...state,
+    stock: Math.max(0, industryStock(industry, state, time) - amount),
+    at: time,
+    moved: state.moved + amount,
+  };
+  if (time - state.since >= INDUSTRY_PERIOD_MS) {
+    if (
+      industryService(industry, next, time) >= INDUSTRY_SHARE &&
+      state.level < INDUSTRY_MAX_LEVEL
+    ) {
+      next.level++;
+    }
+    next.moved = 0;
+    next.since = time;
+  }
+  return next;
+}
+
+// What is waiting at a station at a given time, and how much of it there
+// is room for. Passengers wait at the station itself. Everything else waits
+// at the industries that make it.
+export function waitingAt(
+  world: World,
+  tile: number,
+  station: Pick<StationData, "stock" | "builtAt">,
+  industryOf: (industry: Industry) => IndustryState,
+  time: number
+) {
+  const info = getStationInfo(world, tile);
+  return info.supply.map(({ cargo, rate }) => {
+    if (cargo === "passengers") {
+      return {
+        cargo,
+        amount: stockAt(station, cargo, rate, time),
+        cap: passengerCap(rate),
+        rate,
+      };
+    }
+    let amount = 0;
+    let cap = 0;
+    let output = 0;
+    for (const industry of info.industries) {
+      if (INDUSTRY[industry.type].produces === cargo) {
+        const state = industryOf(industry);
+        amount += industryStock(industry, state, time);
+        cap += industryCap(state.level);
+        output += industryOutput(industry, state.level);
+      }
+    }
+    return { cargo, amount, cap, rate: output };
+  });
 }
 
 // What a vehicle has on board, the biggest load first

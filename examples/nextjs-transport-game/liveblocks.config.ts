@@ -1,6 +1,7 @@
 import type { LiveMap, LiveObject } from "@liveblocks/client";
 import type {
   CompanyData,
+  IndustryState,
   StationData,
   Tool,
   TownGrowth,
@@ -34,21 +35,24 @@ declare global {
       seed: number;
       // How many tiles the map has on each side
       size: number;
-      // When this map was started. Towns have been growing since then, and
-      // nobody writes their new buildings here: every client works out how
-      // far each town has grown from the clock.
+      // When this map was started, on the game clock. Industries have been
+      // producing since then.
       startedAt: number;
       // The game clock stands still while the game is paused: see
       // `game/clock.ts`. Pausing only writes these two.
       pausedAt: number | null;
       pausedFor: number;
-      // Town id → how far the town had grown when the number of stations
-      // around it last changed, which changes how fast it grows from then on
+      // Town id → how far the town had grown when the number of its stations
+      // that vehicles call at last changed, which changes how fast it grows
+      // from then on. Nobody writes a town's new buildings here: every client
+      // works out how far each town has grown from the clock.
       towns: LiveMap<string, TownGrowth>;
       // Tile → id of the company that built on it
       roads: LiveMap<string, string>;
       rails: LiveMap<string, string>;
       canals: LiveMap<string, string>;
+      // Industry id → what it has waiting, and how much it makes
+      industries: LiveMap<string, IndustryState>;
       // Tile → station
       stations: LiveMap<string, LiveObject<StationData>>;
       vehicles: LiveMap<string, LiveObject<VehicleData>>;

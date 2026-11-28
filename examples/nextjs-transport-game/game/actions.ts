@@ -639,7 +639,17 @@ export function runSimulation(
     stations.set(key, live.toJSON());
   }
 
-  const result = advance(world, network, vehicles, stations, now);
+  const industries = new Map(root.get("industries").entries());
+
+  const result = advance(
+    world,
+    network,
+    vehicles,
+    stations,
+    industries,
+    root.get("startedAt"),
+    now
+  );
   for (const [id, vehicle] of result.vehicles) {
     // Only the fields that change from one leg to the next
     root
@@ -657,6 +667,9 @@ export function runSimulation(
   }
   for (const [key, stock] of result.stocks) {
     root.get("stations").get(key)?.set("stock", stock);
+  }
+  for (const [id, state] of result.industries) {
+    root.get("industries").set(id, state);
   }
   return result.vehicles.size;
 }
@@ -676,6 +689,7 @@ export function resetGame(
     size,
     startedAt: now,
     towns: new LiveMap(),
+    industries: new LiveMap(),
     demolished: new LiveMap(),
     roads: new LiveMap(),
     rails: new LiveMap(),

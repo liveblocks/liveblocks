@@ -26,6 +26,24 @@ export type Tool =
 // was waiting at time `at`, and it keeps growing at the station's supply rate.
 export type Stock = { [cargo in Cargo]?: { amount: number; at: number } };
 
+// What an industry has made, and what became of it. Industries aren't in
+// Storage until a vehicle loads or unloads at one.
+export type IndustryState = {
+  // What it makes piles up at the industry itself, for every station in
+  // reach to load from. Like a station's stock, `stock` is what was waiting
+  // at time `at`, and it has been growing since.
+  stock: number;
+  at: number;
+  // Each level doubles how much it makes
+  level: number;
+  // How much has been carried away since `since`. Enough of it, for long
+  // enough, takes the industry up a level.
+  moved: number;
+  since: number;
+  // How much of what it accepts has been delivered to it so far
+  received: number;
+};
+
 // How many units of each kind of cargo a vehicle is carrying
 export type Load = { [cargo in Cargo]?: number };
 
