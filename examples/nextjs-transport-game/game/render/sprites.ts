@@ -1354,6 +1354,173 @@ function derrick(ctx: Ctx, x: number, y: number, height: number) {
   ctx.fillRect(x - 2, y - height - 2, 4, 3);
 }
 
+// Where a point on the ground of a sprite is in its picture
+function spot(ox: number, oy: number, x: number, y: number) {
+  return { px: ox + (x - y) * HALF_W, py: oy + (x + y) * HALF_H };
+}
+
+function oval(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  rx: number,
+  ry: number,
+  color: string
+) {
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fillStyle = ink(color);
+  ctx.fill();
+}
+
+// A round building of snow or ice, built of rows of blocks
+function dome(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  cx: number,
+  cy: number,
+  radius: number,
+  height: number,
+  color: string
+) {
+  const { px, py } = spot(ox, oy, cx, cy);
+  const rx = radius * Math.SQRT2 * HALF_W;
+  const ry = radius * Math.SQRT2 * HALF_H;
+  ctx.beginPath();
+  ctx.ellipse(px, py, rx, height, 0, Math.PI, 0);
+  ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI);
+  ctx.closePath();
+  ctx.fillStyle = ink(color);
+  ctx.fill();
+  outline(ctx);
+  ctx.strokeStyle = ink(shade(color, 0.82));
+  ctx.lineWidth = 0.7;
+  for (const level of [0.3, 0.58, 0.8]) {
+    const narrow = Math.sqrt(1 - level * level);
+    ctx.beginPath();
+    ctx.ellipse(
+      px,
+      py - height * level,
+      rx * narrow,
+      ry * narrow,
+      0,
+      0,
+      Math.PI
+    );
+    ctx.stroke();
+  }
+  // The way in, at the front
+  ctx.beginPath();
+  ctx.ellipse(
+    px + rx * 0.25,
+    py + ry * 0.8,
+    rx * 0.2,
+    height * 0.34,
+    0,
+    Math.PI,
+    0
+  );
+  ctx.closePath();
+  ctx.fillStyle = ink("#35576f");
+  ctx.fill();
+}
+
+// A chimney that is wide at the bottom and narrow at the top
+function cone(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  cx: number,
+  cy: number,
+  radius: number,
+  height: number,
+  color: string
+) {
+  const { px, py } = spot(ox, oy, cx, cy);
+  const rx = radius * Math.SQRT2 * HALF_W;
+  const ry = radius * Math.SQRT2 * HALF_H;
+  const top = rx * 0.3;
+  ctx.beginPath();
+  ctx.moveTo(px - rx, py);
+  ctx.quadraticCurveTo(px - rx * 0.6, py - height * 0.6, px - top, py - height);
+  ctx.lineTo(px + top, py - height);
+  ctx.quadraticCurveTo(px + rx * 0.6, py - height * 0.6, px + rx, py);
+  ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI);
+  ctx.closePath();
+  ctx.fillStyle = ink(color);
+  ctx.fill();
+  outline(ctx);
+  // The side away from the light
+  ctx.beginPath();
+  ctx.moveTo(px + top, py - height);
+  ctx.quadraticCurveTo(px + rx * 0.6, py - height * 0.6, px + rx, py);
+  ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI / 2);
+  ctx.lineTo(px, py - height);
+  ctx.closePath();
+  ctx.fillStyle = ink(shade(color, 0.8));
+  ctx.fill();
+  oval(ctx, px, py - height, top, top / 2, shade(color, 0.45));
+}
+
+// A cut stone, standing on its point
+function gem(ctx: Ctx, x: number, y: number, size: number, color: string) {
+  const half = size * 0.62;
+  const waist = y - size * 1.25;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - half, waist);
+  ctx.lineTo(x - half * 0.55, waist - size * 0.45);
+  ctx.lineTo(x + half * 0.55, waist - size * 0.45);
+  ctx.lineTo(x + half, waist);
+  ctx.closePath();
+  ctx.fillStyle = ink(color);
+  ctx.fill();
+  outline(ctx);
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - half, waist);
+  ctx.lineTo(x - half * 0.55, waist - size * 0.45);
+  ctx.lineTo(x, waist - size * 0.45);
+  ctx.lineTo(x - half * 0.2, waist);
+  ctx.closePath();
+  ctx.fillStyle = ink(shade(color, 1.45));
+  ctx.fill();
+}
+
+// A few things hanging from a bar between two posts, along the x axis
+function rack(
+  ctx: Ctx,
+  ox: number,
+  oy: number,
+  x0: number,
+  x1: number,
+  y: number,
+  height: number,
+  hung: (x: number, y: number) => void
+) {
+  const from = spot(ox, oy, x0, y);
+  const to = spot(ox, oy, x1, y);
+  ctx.strokeStyle = ink("#6b4a2b");
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(from.px, from.py);
+  ctx.lineTo(from.px, from.py - height);
+  ctx.lineTo(to.px, to.py - height);
+  ctx.lineTo(to.px, to.py);
+  ctx.stroke();
+  for (const along of [0.2, 0.4, 0.6, 0.8]) {
+    hung(
+      from.px + (to.px - from.px) * along,
+      from.py + (to.py - from.py) * along - height
+    );
+  }
+}
+
+const SNOW = "#f4f8fb";
+const ICE = "#bfe6f2";
+const ICE_TOP = "#e3f5fb";
+
 const INDUSTRY_ARTISTS: Record<
   IndustryType,
   (ctx: Ctx, ox: number, oy: number, rng: Rng) => void
@@ -1649,6 +1816,306 @@ const INDUSTRY_ARTISTS: Record<
     box(ctx, ox, oy, 1.45, 1.15, 1.85, 1.8, 0, 9, "#d9d4c6", "#9da2a7");
     cylinder(ctx, ox, oy, 1.6, 0.5, 0.07, 0, 36, "#b9bec4", "#4a4a4a");
   },
+
+  fishing_camp(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#e6edf2");
+    // A frozen lake, with holes cut in the ice to fish through
+    const lake = spot(ox, oy, 0.82, 0.86);
+    oval(ctx, lake.px, lake.py, 29, 13, "#d3e5ee");
+    oval(ctx, lake.px, lake.py, 25, 11, "#b5d6e8");
+    for (const [dx, dy] of [
+      [-13, 1],
+      [-2, 6],
+      [13, -1],
+    ]) {
+      oval(ctx, lake.px + dx, lake.py + dy, 3.2, 1.6, "#2f5d82");
+    }
+    // Huts out on the ice
+    box(ctx, ox, oy, 0.5, 0.42, 0.72, 0.64, 0, 7, "#b9543f");
+    gableRoof(ctx, ox, oy, 0.47, 0.39, 0.75, 0.67, 7, 4, SNOW, "#b9543f");
+    box(ctx, ox, oy, 0.98, 0.84, 1.18, 1.04, 0, 7, "#3f7fa6");
+    gableRoof(ctx, ox, oy, 0.95, 0.81, 1.21, 1.07, 7, 4, SNOW, "#3f7fa6");
+    rack(ctx, ox, oy, 1.3, 1.85, 0.5, 11, (x, y) => {
+      oval(ctx, x, y + 3.5, 1.1, 3, "#9fb6c4");
+    });
+    box(ctx, ox, oy, 1.22, 1.25, 1.8, 1.72, 0, 10, "#8a6a55");
+    windowBand(ctx, ox, oy, "left", 1.42, 1.58, 1.72, 0, 6, DOOR);
+    gableRoof(ctx, ox, oy, 1.18, 1.21, 1.84, 1.76, 10, 7, SNOW, "#8a6a55");
+    box(ctx, ox, oy, 0.4, 1.5, 0.62, 1.72, 0, 4, "#c9a36b");
+    box(ctx, ox, oy, 0.66, 1.56, 0.86, 1.76, 0, 4, "#b98f58");
+  },
+
+  cannery(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#d5dde3");
+    cylinder(ctx, ox, oy, 0.42, 0.32, 0.09, 0, 42, "#9a4f43", "#3a3d42");
+    cylinder(ctx, ox, oy, 1.62, 0.48, 0.2, 0, 18, "#c9ced4");
+    box(ctx, ox, oy, 0.2, 0.6, 1.42, 1.8, 0, 15, "#4f7f9c");
+    windowBand(ctx, ox, oy, "left", 0.3, 0.5, 1.8, 0, 7, "#33414c");
+    windowBand(ctx, ox, oy, "left", 0.62, 1.32, 1.8, 7, 11, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.75, 1.65, 1.42, 7, 11, GLASS);
+    gableRoof(ctx, ox, oy, 0.16, 0.56, 1.46, 1.84, 15, 7, SNOW, "#4f7f9c");
+    // Crates of tins, ready to go
+    box(ctx, ox, oy, 1.54, 1.15, 1.8, 1.41, 0, 5, "#c9a36b");
+    box(ctx, ox, oy, 1.54, 1.46, 1.8, 1.72, 0, 5, "#b98f58");
+    box(ctx, ox, oy, 1.58, 1.28, 1.78, 1.56, 5, 9, "#d1ad76");
+  },
+
+  ice_quarry(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#e6edf2");
+    // A frozen lake, sawn out block by block down to the water
+    flat(ctx, ox, oy, 0.12, 0.12, 1.26, 1.26, "#cfe6f1");
+    flat(ctx, ox, oy, 0.28, 0.28, 1.1, 1.1, "#a9d3e6");
+    flat(ctx, ox, oy, 0.44, 0.44, 0.94, 0.94, "#7fb7d3");
+    flat(ctx, ox, oy, 0.58, 0.58, 0.8, 0.8, "#4f86bd");
+    for (const [x, y, z] of [
+      [1.4, 0.26, 0],
+      [1.64, 0.26, 0],
+      [1.52, 0.26, 6],
+      [1.4, 0.56, 0],
+      [1.64, 0.56, 0],
+    ]) {
+      box(ctx, ox, oy, x, y, x + 0.22, y + 0.22, z, z + 6, ICE, ICE_TOP);
+    }
+    const crane = spot(ox, oy, 1.02, 1.5);
+    derrick(ctx, crane.px, crane.py, 26);
+    box(ctx, ox, oy, 1.3, 1.3, 1.78, 1.72, 0, 9, "#b9543f");
+    windowBand(ctx, ox, oy, "left", 1.46, 1.6, 1.72, 0, 6, DOOR);
+    gableRoof(ctx, ox, oy, 1.26, 1.26, 1.82, 1.76, 9, 6, SNOW, "#b9543f");
+    // A sled with a block on it
+    box(ctx, ox, oy, 0.34, 1.52, 0.78, 1.74, 0, 2, "#8a6a45");
+    box(ctx, ox, oy, 0.44, 1.54, 0.68, 1.72, 2, 8, ICE, ICE_TOP);
+  },
+
+  ice_hotel(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#e6edf2");
+    dome(ctx, ox, oy, 0.84, 0.8, 0.52, 32, "#dff1f8");
+    const flag = spot(ox, oy, 0.84, 0.8);
+    ctx.strokeStyle = ink("#55595f");
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(flag.px, flag.py - 32);
+    ctx.lineTo(flag.px, flag.py - 44);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(flag.px, flag.py - 44);
+    ctx.lineTo(flag.px + 8, flag.py - 41.5);
+    ctx.lineTo(flag.px, flag.py - 39);
+    ctx.closePath();
+    ctx.fillStyle = ink("#c8553d");
+    ctx.fill();
+    dome(ctx, ox, oy, 1.56, 0.62, 0.27, 17, "#d3ebf5");
+    dome(ctx, ox, oy, 0.6, 1.56, 0.27, 17, "#e9f6fb");
+    // A hall of ice blocks, with a light on inside
+    box(ctx, ox, oy, 1.24, 1.24, 1.8, 1.74, 0, 12, ICE, ICE_TOP);
+    windowBand(ctx, ox, oy, "left", 1.32, 1.5, 1.74, 0, 8, "#35576f");
+    windowBand(ctx, ox, oy, "left", 1.58, 1.72, 1.74, 4, 8, "#f6d77a");
+    windowBand(ctx, ox, oy, "right", 1.34, 1.64, 1.8, 4, 8, "#f6d77a");
+  },
+
+  sand_pit(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#e6cf96");
+    flat(ctx, ox, oy, 0.14, 0.14, 1.24, 1.24, "#d9bd7c");
+    flat(ctx, ox, oy, 0.3, 0.3, 1.08, 1.08, "#c9a965");
+    flat(ctx, ox, oy, 0.46, 0.46, 0.92, 0.92, "#b89552");
+    // A digger down in the pit
+    box(ctx, ox, oy, 0.56, 0.6, 0.8, 0.78, 0, 4, "#3a3d42");
+    box(ctx, ox, oy, 0.58, 0.6, 0.78, 0.76, 4, 8, "#e2a52b");
+    box(ctx, ox, oy, 0.58, 0.6, 0.68, 0.7, 8, 12, "#f0c040");
+    const arm = spot(ox, oy, 0.76, 0.76);
+    ctx.strokeStyle = ink("#c98a1f");
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(arm.px, arm.py - 8);
+    ctx.lineTo(arm.px + 7, arm.py - 13);
+    ctx.lineTo(arm.px + 11, arm.py - 2);
+    ctx.stroke();
+    mound(ctx, ox, oy, 1.56, 0.56, 0.3, 15, "#f0dfb4");
+    // A belt carries the sand up into a hopper
+    box(ctx, ox, oy, 0.86, 1.42, 1.3, 1.52, 5, 7, "#55595f");
+    box(ctx, ox, oy, 1.3, 1.34, 1.52, 1.6, 0, 12, "#d98a2b", "#b36f1f");
+    mound(ctx, ox, oy, 0.5, 1.58, 0.24, 9, "#ead29a");
+    box(ctx, ox, oy, 1.58, 1.5, 1.84, 1.8, 0, 7, "#eadfc6", "#a7adb4");
+  },
+
+  glassworks(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#b9ad95");
+    // The furnace stands inside a tall cone of brick
+    cone(ctx, ox, oy, 0.62, 0.62, 0.4, 46, "#a8644a");
+    const glow = spot(ox, oy, 0.74, 0.98);
+    ctx.beginPath();
+    ctx.ellipse(glow.px, glow.py, 4, 7, 0, Math.PI, 0);
+    ctx.closePath();
+    ctx.fillStyle = ink("#f59e0b");
+    ctx.fill();
+    mound(ctx, ox, oy, 1.56, 0.46, 0.22, 8, "#ead29a");
+    box(ctx, ox, oy, 1, 0.92, 1.8, 1.76, 0, 14, "#b9785a", "#8e9296");
+    windowBand(ctx, ox, oy, "left", 1.08, 1.72, 1.76, 3, 11, "#a9d9ea");
+    windowBand(ctx, ox, oy, "right", 1, 1.68, 1.8, 3, 11, "#a9d9ea");
+    // Panes of glass, standing in a rack
+    for (const y of [1.42, 1.54, 1.66]) {
+      box(ctx, ox, oy, 0.28, y, 0.76, y + 0.04, 0, 9, ICE, ICE_TOP);
+    }
+  },
+
+  rubber_plantation(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#5f9c46");
+    // Tall, thin trees in rows, each with a cut in its bark and a cup
+    // under it
+    for (let row = 0; row < 4; row++) {
+      for (let column = 0; column < 4; column++) {
+        if (row > 1 && column > 1) {
+          continue;
+        }
+        const { px, py } = spot(
+          ox,
+          oy,
+          0.26 + column * 0.42,
+          0.26 + row * 0.42
+        );
+        groundShadow(ctx, px, py, 5);
+        ctx.fillStyle = ink("#b9ad9a");
+        ctx.fillRect(px - 1, py - 14, 2, 14);
+        ctx.fillStyle = ink("#ffffff");
+        ctx.fillRect(px - 1.6, py - 7, 3.2, 1.2);
+        ctx.fillStyle = ink("#55595f");
+        ctx.fillRect(px - 1.6, py - 5, 3.2, 2);
+        circle(ctx, px, py - 17, 5.5, "#2f7d3a");
+        circle(ctx, px - 1.5, py - 18.5, 3.3, "#3f9447");
+      }
+    }
+    // Sheets of rubber, hung out to dry
+    rack(ctx, ox, oy, 1.15, 1.85, 1.2, 10, (x, y) => {
+      ctx.fillStyle = ink("#ecdcae");
+      ctx.fillRect(x - 2.2, y, 4.4, 7);
+    });
+    box(ctx, ox, oy, 1.22, 1.36, 1.8, 1.78, 0, 8, "#d9c9a6");
+    windowBand(ctx, ox, oy, "left", 1.42, 1.58, 1.78, 0, 6, DOOR);
+    gableRoof(ctx, ox, oy, 1.18, 1.32, 1.84, 1.82, 8, 6, "#6f7f52", "#d9c9a6");
+  },
+
+  tyre_factory(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#a5a39c");
+    cylinder(ctx, ox, oy, 0.42, 0.36, 0.1, 0, 44, "#8d9399", "#3a3d42");
+    box(ctx, ox, oy, 0.2, 0.65, 1.38, 1.8, 0, 17, "#d8d4c8", "#6f7379");
+    box(ctx, ox, oy, 0.2, 0.65, 1.38, 1.8, 17, 19, "#e2a52b", "#6f7379");
+    windowBand(ctx, ox, oy, "left", 0.3, 0.55, 1.8, 0, 7, "#55595f");
+    windowBand(ctx, ox, oy, "left", 0.68, 1.28, 1.8, 8, 12, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.75, 1.7, 1.38, 8, 12, GLASS);
+    // Tyres, in stacks
+    const stacks: [number, number, number][] = [
+      [1.64, 0.42, 4],
+      [1.64, 0.74, 3],
+      [1.6, 1.26, 5],
+      [1.5, 1.6, 2],
+      [1.76, 1.58, 3],
+    ];
+    for (const [x, y, count] of stacks) {
+      for (let tyre = 0; tyre < count; tyre++) {
+        cylinder(
+          ctx,
+          ox,
+          oy,
+          x,
+          y,
+          0.11,
+          tyre * 3.2,
+          tyre * 3.2 + 2.8,
+          "#2b2b2e",
+          "#3a3a3e"
+        );
+      }
+      const top = (count - 1) * 3.2 + 2.8;
+      cylinder(ctx, ox, oy, x, y, 0.05, top, top, "#8d9399", "#8d9399");
+    }
+  },
+
+  cocoa_farm(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#6aa84f");
+    // Low trees, with the pods growing straight from their trunks
+    for (let row = 0; row < 3; row++) {
+      for (let column = 0; column < 3; column++) {
+        if (row === 2 && column === 2) {
+          continue;
+        }
+        const { px, py } = spot(ox, oy, 0.28 + column * 0.4, 0.28 + row * 0.5);
+        groundShadow(ctx, px, py, 6.5);
+        ctx.fillStyle = ink("#6b4a2b");
+        ctx.fillRect(px - 1.3, py - 9, 2.6, 9);
+        circle(ctx, px, py - 13, 6.8, "#3c8a3c");
+        circle(ctx, px - 2, py - 14.5, 4.2, "#4c9c46");
+        oval(ctx, px - 2.4, py - 5.5, 1.3, 2.2, "#e2b93b");
+        oval(ctx, px + 2.4, py - 3.6, 1.3, 2.2, "#c8553d");
+        oval(ctx, px + 2, py - 8, 1.2, 2, "#e08a2c");
+      }
+    }
+    // Beans drying in the sun
+    box(ctx, ox, oy, 1.42, 0.24, 1.84, 0.56, 0, 2.5, "#b9a27c", "#6b3f24");
+    box(ctx, ox, oy, 1.42, 0.64, 1.84, 0.96, 0, 2.5, "#b9a27c", "#7a4a2b");
+    box(ctx, ox, oy, 1.2, 1.24, 1.78, 1.72, 0, 8, "#d9b98c");
+    windowBand(ctx, ox, oy, "left", 1.4, 1.56, 1.72, 0, 6, DOOR);
+    hipRoof(ctx, ox, oy, 1.13, 1.17, 1.85, 1.79, 8, 9, "#c9a85a");
+    cylinder(ctx, ox, oy, 0.98, 1.62, 0.08, 0, 5, "#c9b48a");
+    cylinder(ctx, ox, oy, 0.8, 1.7, 0.08, 0, 5, "#bfa878");
+  },
+
+  chocolate_factory(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#a8a49c");
+    cylinder(ctx, ox, oy, 0.42, 0.36, 0.1, 0, 44, "#b9785a", "#4a3a35");
+    cylinder(ctx, ox, oy, 0.42, 0.36, 0.1, 34, 37, "#f3ead9");
+    cylinder(ctx, ox, oy, 1.6, 0.48, 0.22, 0, 16, "#e9dcc3", "#c9b99a");
+    box(ctx, ox, oy, 0.2, 0.65, 1.35, 1.8, 0, 18, "#7a4a2b", "#8e9296");
+    box(ctx, ox, oy, 0.2, 0.65, 1.35, 1.8, 18, 20, "#f3ead9", "#8e9296");
+    for (const z of [4, 11]) {
+      windowBand(ctx, ox, oy, "left", 0.3, 1.25, 1.8, z, z + 4, "#f3d9a0");
+      windowBand(ctx, ox, oy, "right", 0.75, 1.7, 1.35, z, z + 4, "#f3d9a0");
+    }
+    windowBand(ctx, ox, oy, "left", 0.68, 0.9, 1.8, 0, 8, "#3f2616");
+    box(ctx, ox, oy, 1.35, 1.1, 1.82, 1.8, 0, 10, "#f3ead9", "#9a9ea2");
+    windowBand(ctx, ox, oy, "right", 1.2, 1.7, 1.82, 3, 7, "#c8553d");
+  },
+
+  gem_mine(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#8a9a6a");
+    mound(ctx, ox, oy, 0.6, 0.58, 0.46, 26, "#6f7a66");
+    // The way into the hill, and the rails that come out of it
+    box(ctx, ox, oy, 0.64, 0.9, 0.94, 1, 0, 9, "#6b4a2b", "#4a3a2c");
+    windowBand(ctx, ox, oy, "left", 0.71, 0.87, 1, 0, 7, "#1f1c1a");
+    flat(ctx, ox, oy, 0.75, 1, 0.83, 1.8, "#6f6a60");
+    box(ctx, ox, oy, 0.71, 1.4, 0.87, 1.6, 1, 5, "#8d9399", "#2fae77");
+    const vein = spot(ox, oy, 1.5, 0.52);
+    mound(ctx, ox, oy, 1.5, 0.52, 0.26, 7, "#7d8778");
+    gem(ctx, vein.px - 6, vein.py - 1, 5, "#2fae77");
+    gem(ctx, vein.px + 1, vein.py - 3, 7.5, "#27a06c");
+    gem(ctx, vein.px + 8, vein.py + 1, 4, "#3cc48a");
+    box(ctx, ox, oy, 1.24, 1.2, 1.8, 1.7, 0, 9, "#b08a5e");
+    windowBand(ctx, ox, oy, "left", 1.44, 1.6, 1.7, 0, 6, DOOR);
+    gableRoof(ctx, ox, oy, 1.2, 1.16, 1.84, 1.74, 9, 6, "#5f7a4a", "#b08a5e");
+    const heap = spot(ox, oy, 0.36, 1.6);
+    mound(ctx, ox, oy, 0.36, 1.6, 0.18, 5, "#7d8778");
+    gem(ctx, heap.px, heap.py, 4, "#2fae77");
+  },
+
+  jeweller(ctx, ox, oy) {
+    ground(ctx, ox, oy, "#b9b5ab");
+    flat(ctx, ox, oy, 0.2, 1.5, 1.8, 1.9, "#cdc8bc");
+    box(ctx, ox, oy, 0.3, 0.3, 1.7, 1.45, 0, 20, "#f1ebe0");
+    // Shop windows under an awning
+    windowBand(ctx, ox, oy, "left", 0.4, 0.82, 1.45, 2, 9, "#bfe3ee");
+    windowBand(ctx, ox, oy, "left", 0.92, 1.08, 1.45, 0, 9, "#3a4a3f");
+    windowBand(ctx, ox, oy, "left", 1.18, 1.6, 1.45, 2, 9, "#bfe3ee");
+    windowBand(ctx, ox, oy, "right", 0.45, 1.3, 1.7, 2, 9, "#bfe3ee");
+    box(ctx, ox, oy, 0.34, 1.45, 1.66, 1.56, 10, 12, "#1f6b4d", "#2a8a63");
+    for (const from of [0.45, 0.88, 1.31]) {
+      windowBand(ctx, ox, oy, "left", from, from + 0.24, 1.45, 14, 18, GLASS);
+    }
+    windowBand(ctx, ox, oy, "right", 0.45, 0.8, 1.7, 14, 18, GLASS);
+    windowBand(ctx, ox, oy, "right", 0.95, 1.3, 1.7, 14, 18, GLASS);
+    box(ctx, ox, oy, 0.26, 0.26, 1.74, 1.49, 20, 22, "#d8d2c4");
+    // An emerald the size of a car, up on the roof
+    box(ctx, ox, oy, 0.9, 0.78, 1.1, 0.98, 22, 25, "#8d9399");
+    const sign = spot(ox, oy, 1, 0.88);
+    gem(ctx, sign.px, sign.py - 25, 11, "#2fae77");
+  },
 };
 
 export function createSprites(
@@ -1736,6 +2203,18 @@ export function createSprites(
       water_tower: industry("water_tower"),
       plantation: industry("plantation"),
       food_plant: industry("food_plant"),
+      fishing_camp: industry("fishing_camp"),
+      cannery: industry("cannery"),
+      ice_quarry: industry("ice_quarry"),
+      ice_hotel: industry("ice_hotel"),
+      sand_pit: industry("sand_pit"),
+      glassworks: industry("glassworks"),
+      rubber_plantation: industry("rubber_plantation"),
+      tyre_factory: industry("tyre_factory"),
+      cocoa_farm: industry("cocoa_farm"),
+      chocolate_factory: industry("chocolate_factory"),
+      gem_mine: industry("gem_mine"),
+      jeweller: industry("jeweller"),
     },
   };
 }

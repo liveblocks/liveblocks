@@ -29,7 +29,19 @@ export type IndustryType =
   | "water_supply"
   | "water_tower"
   | "plantation"
-  | "food_plant";
+  | "food_plant"
+  | "fishing_camp"
+  | "cannery"
+  | "ice_quarry"
+  | "ice_hotel"
+  | "sand_pit"
+  | "glassworks"
+  | "rubber_plantation"
+  | "tyre_factory"
+  | "cocoa_farm"
+  | "chocolate_factory"
+  | "gem_mine"
+  | "jeweller";
 
 export const INDUSTRY: Record<
   IndustryType,
@@ -57,6 +69,22 @@ export const INDUSTRY: Record<
   water_tower: { label: "Water Tower", accepts: "water" },
   plantation: { label: "Fruit Plantation", produces: "fruit", rate: 0.8 },
   food_plant: { label: "Food Plant", accepts: "fruit" },
+  fishing_camp: { label: "Fishing Camp", produces: "fish", rate: 0.8 },
+  cannery: { label: "Fish Cannery", accepts: "fish" },
+  ice_quarry: { label: "Ice Quarry", produces: "ice", rate: 1.1 },
+  ice_hotel: { label: "Ice Hotel", accepts: "ice" },
+  sand_pit: { label: "Sand Pit", produces: "sand", rate: 1.2 },
+  glassworks: { label: "Glassworks", accepts: "sand" },
+  rubber_plantation: {
+    label: "Rubber Plantation",
+    produces: "rubber",
+    rate: 0.8,
+  },
+  tyre_factory: { label: "Tyre Factory", accepts: "rubber" },
+  cocoa_farm: { label: "Cocoa Farm", produces: "cocoa", rate: 0.7 },
+  chocolate_factory: { label: "Chocolate Factory", accepts: "cocoa" },
+  gem_mine: { label: "Emerald Mine", produces: "gems", rate: 0.5 },
+  jeweller: { label: "Jeweller", accepts: "gems" },
 };
 
 // Industries cover a square of this many tiles

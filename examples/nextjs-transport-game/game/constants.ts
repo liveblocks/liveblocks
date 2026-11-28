@@ -131,6 +131,12 @@ export const CARGO: Record<
   copper: { label: "Copper ore", rate: 2.8, color: "#b5673c" },
   water: { label: "Water", rate: 2.4, color: "#5aa7d8" },
   fruit: { label: "Fruit", rate: 3.2, color: "#e2703a" },
+  fish: { label: "Fish", rate: 3.2, color: "#8fb4c9" },
+  ice: { label: "Ice", rate: 2.4, color: "#bfe6f2" },
+  sand: { label: "Sand", rate: 2.2, color: "#e0c98a" },
+  rubber: { label: "Rubber", rate: 3.4, color: "#c9a36b" },
+  cocoa: { label: "Cocoa", rate: 3.6, color: "#6b3f24" },
+  gems: { label: "Emeralds", rate: 5.6, color: "#2fae77" },
 };
 
 export const CARGO_KINDS: readonly Cargo[] = [
@@ -143,6 +149,12 @@ export const CARGO_KINDS: readonly Cargo[] = [
   "copper",
   "water",
   "fruit",
+  "fish",
+  "ice",
+  "sand",
+  "rubber",
+  "cocoa",
+  "gems",
 ];
 
 // Cost per tile

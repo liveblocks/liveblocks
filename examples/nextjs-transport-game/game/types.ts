@@ -18,7 +18,13 @@ export type Cargo =
   | "gold"
   | "copper"
   | "water"
-  | "fruit";
+  | "fruit"
+  | "fish"
+  | "ice"
+  | "sand"
+  | "rubber"
+  | "cocoa"
+  | "gems";
 
 export type Tool =
   | "select"
