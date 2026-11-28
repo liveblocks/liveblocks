@@ -408,11 +408,6 @@ function drawChurch(ctx: Ctx, ox: number, oy: number) {
     ],
     shade(slate, 0.66)
   );
-  const top = oy + 0.76 * HALF_H - 50;
-  const middle = ox - 0.24 * HALF_W;
-  ctx.fillStyle = "#e9cf7a";
-  ctx.fillRect(middle - 0.6, top - 6, 1.2, 6);
-  ctx.fillRect(middle - 2.2, top - 4.4, 4.4, 1.2);
 
   box(ctx, ox, oy, 0.38, 0.28, 0.9, 0.72, 0, 13, stone);
   for (const from of [0.46, 0.6, 0.74]) {
