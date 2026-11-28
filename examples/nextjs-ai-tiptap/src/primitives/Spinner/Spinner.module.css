@@ -1,0 +1,22 @@
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.documentSpinner {
+  position: absolute;
+  display: flex;
+  color: var(--color-text-lighter);
+  inset: 0;
+  place-content: center;
+  place-items: center;
+}
